@@ -4,23 +4,40 @@ const state = {
       id: "morfocampo",
       name: "MorfoCampo",
       version: "0.2.1",
-      type: "Sistema autonomo de campo",
+      owner: "Equipe Campo",
+      type: "Campo",
+      status: "Operacional",
       contract: "sister-contracts/0.1.0",
       domains: ["campo_nativo", "silvipastoril", "observacao_campo"],
       modes: ["offline", "local_network", "camponode"],
-      exports: ["observations", "evidence", "audio", "photos", "field_notes", "spatial_context"],
+      exports: ["observations", "evidence", "photos", "field_notes", "spatial_context"],
       policy: ["proveniencia", "schema", "offline"]
     },
     {
       id: "droneops",
       name: "DroneOps",
       version: "0.1.0",
-      type: "Sistema autonomo de missao",
+      owner: "Equipe Geoespacial",
+      type: "Missao",
+      status: "Em validacao",
       contract: "sister-contracts/0.1.0",
       domains: ["drone", "imageamento", "missao_campo", "evidencia_geoespacial"],
-      modes: ["offline", "local_network", "pwa", "embedded_server"],
+      modes: ["offline", "local_network", "pwa"],
       exports: ["mission_plan", "flight_log", "images", "spatial_layers", "evidence_package"],
       policy: ["proveniencia", "schema", "operador", "referencia_espacial"]
+    },
+    {
+      id: "camponode",
+      name: "CampoNode",
+      version: "0.1.0",
+      owner: "Infraestrutura",
+      type: "Infraestrutura",
+      status: "Planejado",
+      contract: "sister-contracts/0.1.0",
+      domains: ["rede_local", "armazenamento", "sincronizacao"],
+      modes: ["offline", "local_network", "edge"],
+      exports: ["sync_log", "node_health", "package_cache"],
+      policy: ["proveniencia", "schema", "auditoria"]
     }
   ],
   contracts: [
@@ -68,6 +85,50 @@ const state = {
       ref: "audit/validation_report.json",
       status: "schema validado"
     }
+  ],
+  integrationResults: [
+    { label: "Manifestos reconhecidos", value: 100 },
+    { label: "Proveniencia minima", value: 96 },
+    { label: "Cobertura CampoSync", value: 82 },
+    { label: "Prontidao para catalogo", value: 74 }
+  ],
+  services: [
+    {
+      name: "Contract Registry",
+      summary: "Schemas, versoes e compatibilidade de contratos.",
+      status: "operacional",
+      score: 100
+    },
+    {
+      name: "Package Ingest",
+      summary: "Entrada de pacotes CampoSync e validacao de manifesto.",
+      status: "em validacao",
+      score: 78
+    },
+    {
+      name: "Evidence Store",
+      summary: "Rastreio de evidencias, checksums e referencias externas.",
+      status: "operacional",
+      score: 92
+    },
+    {
+      name: "Territorial Catalog",
+      summary: "Promocao de objetos territoriais confiaveis.",
+      status: "planejado",
+      score: 45
+    },
+    {
+      name: "API Server",
+      summary: "Exposicao REST para UI, integracoes locais e auditoria.",
+      status: "planejado",
+      score: 32
+    },
+    {
+      name: "Governance Monitor",
+      summary: "Sinais de ADR, DDD, DAI, politicas, LGPD e seguranca.",
+      status: "operacional",
+      score: 88
+    }
   ]
 };
 
@@ -87,6 +148,7 @@ function renderSystems(filter = "") {
       system.name,
       system.id,
       system.type,
+      system.status,
       system.contract,
       ...system.domains,
       ...system.modes,
@@ -98,15 +160,44 @@ function renderSystems(filter = "") {
 
   qs("#systems-grid").innerHTML = systems.map((system) => `
     <article class="system-card">
-      <h3>${system.name}</h3>
-      <p class="system-meta">${system.type} · ${system.version} · ${system.contract}</p>
-      <div class="tag-row" aria-label="Dominios">
-        ${system.domains.map((item) => `<span class="tag">${item}</span>`).join("")}
+      <h4>${system.name}</h4>
+      <p class="system-meta">${system.type} · ${system.version} · ${system.status}</p>
+      <div class="tag-row">
+        ${system.domains.slice(0, 3).map((item) => `<span class="tag">${item}</span>`).join("")}
       </div>
-      <p class="system-meta">Modos: ${system.modes.join(", ")}</p>
-      <p class="system-meta">Exports: ${system.exports.join(", ")}</p>
+      <div class="mini-table">
+        <div><span>Owner</span><strong>${system.owner}</strong></div>
+        <div><span>Contrato</span><strong>${system.contract}</strong></div>
+        <div><span>Modo</span><strong>${system.modes.slice(0, 2).join(", ")}</strong></div>
+      </div>
     </article>
   `).join("");
+}
+
+function renderIntegrationBars() {
+  qs("#integration-bars").innerHTML = state.integrationResults.map((item) => `
+    <article class="result-item">
+      <div class="result-row"><span>${item.label}</span><strong>${item.value}%</strong></div>
+      <div class="bar-track"><div class="bar-fill" style="width: ${item.value}%"></div></div>
+    </article>
+  `).join("");
+}
+
+function renderDiagnostics() {
+  qs("#diagnostic-grid").innerHTML = state.services.map((service) => {
+    const warn = service.score < 80 ? " warn" : "";
+    return `
+      <article class="diagnostic-card">
+        <h3>${service.name}</h3>
+        <p>${service.summary}</p>
+        <div class="service-status">
+          <span class="status-dot${warn}">${service.status}</span>
+          <strong>${service.score}%</strong>
+        </div>
+        <div class="bar-track"><div class="bar-fill" style="width: ${service.score}%"></div></div>
+      </article>
+    `;
+  }).join("");
 }
 
 function renderContracts() {
@@ -140,49 +231,49 @@ function drawMap() {
   const h = canvas.height;
 
   ctx.clearRect(0, 0, w, h);
-  ctx.fillStyle = "#dfe9e3";
+  ctx.fillStyle = "#f8fbfd";
   ctx.fillRect(0, 0, w, h);
 
-  ctx.fillStyle = "#c7d9ce";
+  ctx.fillStyle = "#e1edf2";
   ctx.beginPath();
-  ctx.moveTo(80, 410);
-  ctx.bezierCurveTo(180, 260, 320, 310, 410, 170);
-  ctx.bezierCurveTo(560, -10, 760, 130, 820, 260);
-  ctx.bezierCurveTo(760, 390, 610, 420, 460, 380);
-  ctx.bezierCurveTo(300, 340, 210, 500, 80, 410);
+  ctx.moveTo(60, 275);
+  ctx.bezierCurveTo(190, 120, 370, 250, 510, 105);
+  ctx.bezierCurveTo(690, -10, 870, 90, 1010, 210);
+  ctx.bezierCurveTo(910, 345, 690, 305, 530, 275);
+  ctx.bezierCurveTo(335, 238, 210, 360, 60, 275);
   ctx.fill();
 
-  ctx.strokeStyle = "#497aa6";
-  ctx.lineWidth = 18;
+  ctx.strokeStyle = "#1a7dc4";
+  ctx.lineWidth = 14;
   ctx.beginPath();
-  ctx.moveTo(0, 120);
-  ctx.bezierCurveTo(180, 150, 250, 90, 380, 126);
-  ctx.bezierCurveTo(520, 170, 600, 280, 900, 245);
+  ctx.moveTo(0, 92);
+  ctx.bezierCurveTo(170, 135, 260, 65, 420, 105);
+  ctx.bezierCurveTo(600, 150, 730, 245, 1100, 206);
   ctx.stroke();
 
   const plots = [
-    { x: 240, y: 265, w: 150, h: 84, color: "#8bb58f", label: "Campo nativo" },
-    { x: 445, y: 180, w: 180, h: 100, color: "#c2ad7c", label: "Silvipastoril" },
-    { x: 565, y: 315, w: 150, h: 76, color: "#89a9c6", label: "Voo DroneOps" }
+    { x: 230, y: 168, w: 155, h: 82, color: "#b9dfd8", label: "MorfoCampo" },
+    { x: 480, y: 120, w: 180, h: 86, color: "#d5e8f4", label: "DroneOps" },
+    { x: 705, y: 220, w: 170, h: 74, color: "#e9d199", label: "CampoNode" }
   ];
 
   plots.forEach((plot) => {
     ctx.fillStyle = plot.color;
-    ctx.strokeStyle = "#263d35";
-    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#062d55";
+    ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(plot.x, plot.y, plot.w, plot.h, 12);
+    ctx.roundRect(plot.x, plot.y, plot.w, plot.h, 10);
     ctx.fill();
     ctx.stroke();
-    ctx.fillStyle = "#17211d";
-    ctx.font = "700 18px sans-serif";
-    ctx.fillText(plot.label, plot.x + 18, plot.y + 42);
+    ctx.fillStyle = "#09254b";
+    ctx.font = "900 17px Avenir, sans-serif";
+    ctx.fillText(plot.label, plot.x + 18, plot.y + 44);
   });
 
   const points = [
-    { x: 290, y: 308, label: "M01", color: "#1d7662" },
-    { x: 505, y: 225, label: "D01", color: "#a9443d" },
-    { x: 654, y: 354, label: "L01", color: "#114c42" }
+    { x: 292, y: 210, label: "M01", color: "#1c9b98" },
+    { x: 560, y: 164, label: "D01", color: "#1a7dc4" },
+    { x: 786, y: 258, label: "N01", color: "#e8a733" }
   ];
 
   points.forEach((point) => {
@@ -190,8 +281,8 @@ function drawMap() {
     ctx.beginPath();
     ctx.arc(point.x, point.y, 13, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#ffffff";
-    ctx.font = "700 11px sans-serif";
+    ctx.fillStyle = "#fff";
+    ctx.font = "900 11px Avenir, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
     ctx.fillText(point.label, point.x, point.y);
@@ -199,9 +290,9 @@ function drawMap() {
 
   ctx.textAlign = "start";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = "#31463d";
-  ctx.font = "600 16px sans-serif";
-  ctx.fillText("Camadas: observacoes, evidencias, contexto espacial", 28, 42);
+  ctx.fillStyle = "#536a80";
+  ctx.font = "900 13px Avenir, sans-serif";
+  ctx.fillText("Camadas: observacoes, evidencias, infraestrutura e contexto espacial", 24, 34);
 }
 
 function showToast(message) {
@@ -218,18 +309,18 @@ function validateSample() {
   });
 
   if (invalid.length === 0) {
-    showToast("Amostra valida: sistemas possuem contrato, dominio e proveniencia declarada.");
+    showToast("Amostra valida: contrato, dominio, proveniencia e politica declarados.");
   } else {
     showToast(`Amostra com pendencias: ${invalid.map((system) => system.name).join(", ")}`);
   }
 }
 
 function bindNavigation() {
-  qsa(".nav-tab").forEach((button) => {
+  qsa(".nav-link").forEach((button) => {
     button.addEventListener("click", () => {
-      qsa(".nav-tab").forEach((item) => item.classList.remove("active"));
+      qsa(".nav-link").forEach((item) => item.classList.remove("selected"));
       qsa(".view").forEach((item) => item.classList.remove("active"));
-      button.classList.add("active");
+      button.classList.add("selected");
       qs(`#view-${button.dataset.view}`).classList.add("active");
     });
   });
@@ -238,6 +329,8 @@ function bindNavigation() {
 function init() {
   setCounts();
   renderSystems();
+  renderIntegrationBars();
+  renderDiagnostics();
   renderContracts();
   renderEvidence();
   drawMap();

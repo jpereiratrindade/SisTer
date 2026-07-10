@@ -39,13 +39,45 @@ ctest --test-dir build --output-on-failure
 
 ## Interface
 
-A primeira interface nao depende de servidor. Abra:
+A primeira interface e estatica e pode ser aberta diretamente:
 
 ```text
 web/index.html
 ```
 
+Ou servida localmente:
+
+```bash
+python3 -m http.server 8000 -d web
+```
+
+Depois acesse:
+
+```text
+http://localhost:8000
+```
+
 Ela apresenta uma visao operacional dos sistemas federados, contratos de integracao, evidencias, proveniencia e um mapa territorial sintetico para validar o conceito de convergencia.
+
+A identidade visual inicial segue a linha do `Radar-Sister Resiliencia`: topo horizontal institucional, azul como cor estrutural, acentos teal, cards brancos, metricas compactas, dashboard de resultados e rodape com referencias explicitas a governanca, LGPD e seguranca.
+
+### Funcionalidades de produto
+
+1. `Integracao e transformacao de conhecimento`
+   Responsavel por ingerir contratos, validar pacotes, transformar dados federados em objetos territoriais e registrar conhecimento produzido pela integracao.
+
+2. `Sintese tecnica e diagnostico dos servicos`
+   Responsavel por dar transparencia ao estado dos servicos que sustentam as entregas do SisTer, incluindo prontidao, conformidade, riscos operacionais e sinais de governanca.
+
+Essa separacao evita misturar a funcao epistemica do SisTer, que transforma conhecimento territorial, com a funcao operacional de gestao e transparencia da plataforma.
+
+## Documentacao
+
+- `docs/architecture/DDD.md`: modelo de dominio e contextos delimitados.
+- `docs/architecture/INTERFACE.md`: interface, navegacao, identidade visual e proximos incrementos.
+- `docs/adr/`: decisoes arquiteturais aceitas.
+- `docs/dai/DAI.md`: decisoes, acoes e impedimentos.
+- `docs/governance/README.md`: base de governanca operacional.
 
 ## Qualidade e governanca
 

@@ -51,9 +51,25 @@ Responsavel por expor leitura comum de sistemas, contratos, evidencias, mapa e p
 - Entidade de leitura: `ConvergenceView`
 - Regra: a interface nao substitui os sistemas federados; ela apresenta contratos reconhecidos e objetos interpretaveis pelo SisTer.
 
+### 7. Integracao e Transformacao de Conhecimento
+
+Responsavel por transformar dados federados em conhecimento territorial comum.
+
+- Entidade: `IntegrationRun`
+- Entidade: `KnowledgeArtifact`
+- Regra: toda transformacao precisa preservar contrato de origem, evidencias usadas, criterio de validade e resultado produzido.
+
+### 8. Sintese Tecnica e Diagnostico dos Servicos
+
+Responsavel por sintetizar o estado tecnico dos servicos que sustentam as entregas do SisTer.
+
+- Entidade: `ServiceDiagnostic`
+- Entidade: `OperationalStatus`
+- Regra: diagnosticos devem distinguir saude tecnica, conformidade contratual, riscos de seguranca, sinais LGPD e governanca operacional.
+
 ## Ontologia Minima
 
-- O que existe: sistemas federados, contratos, pacotes, evidencias, objetos territoriais, visoes de convergencia.
+- O que existe: sistemas federados, contratos, pacotes, evidencias, objetos territoriais, visoes de convergencia, execucoes de integracao, artefatos de conhecimento e diagnosticos de servico.
 - Como se relacionam: sistemas produzem pacotes; pacotes seguem contratos; evidencias sustentam objetos; proveniencia conecta origem e validade.
 - O que e valido: contratos versionados, schema aprovado, checksum verificavel, proveniencia minima.
 - Como identificar: ids canonicos por sistema, contrato, pacote, evidencia e objeto territorial.
