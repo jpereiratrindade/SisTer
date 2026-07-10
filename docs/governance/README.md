@@ -22,3 +22,7 @@ Diretrizes iniciais:
 - manter checksums de pacotes e evidencias quando aplicavel;
 - separar transparencia operacional de exposicao indevida de dados sensiveis;
 - exigir revisao proporcional ao risco para alteracoes em contratos, ingestao, catalogo, permissoes e auditoria.
+
+A politica detalhada de exposicao esta em:
+
+- [PUBLIC_PRIVATE_SCOPE.md](./PUBLIC_PRIVATE_SCOPE.md)

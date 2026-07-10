@@ -67,9 +67,26 @@ Responsavel por sintetizar o estado tecnico dos servicos que sustentam as entreg
 - Entidade: `OperationalStatus`
 - Regra: diagnosticos devem distinguir saude tecnica, conformidade contratual, riscos de seguranca, sinais LGPD e governanca operacional.
 
+### 9. Persistencia Territorial e Vetorial
+
+Responsavel por persistir dados operacionais, geoespaciais e vetoriais.
+
+- Entidade: `SpatialLayer`
+- Entidade: `VectorEmbedding`
+- Entidade: `PersistencePolicy`
+- Regra: geometrias, embeddings e artefatos derivados precisam carregar proveniencia, finalidade e escopo de exposicao.
+
+### 10. Escopo Publico e Privado
+
+Responsavel por classificar o que pode ser publicado, compartilhado internamente ou protegido.
+
+- Value Object: `PublicScope`
+- Valores: `public`, `restricted`, `private`
+- Regra: quando houver duvida, classificar como `private` ate revisao humana.
+
 ## Ontologia Minima
 
-- O que existe: sistemas federados, contratos, pacotes, evidencias, objetos territoriais, visoes de convergencia, execucoes de integracao, artefatos de conhecimento e diagnosticos de servico.
+- O que existe: sistemas federados, contratos, pacotes, evidencias, objetos territoriais, visoes de convergencia, execucoes de integracao, artefatos de conhecimento, diagnosticos de servico, geometrias, embeddings e politicas de exposicao.
 - Como se relacionam: sistemas produzem pacotes; pacotes seguem contratos; evidencias sustentam objetos; proveniencia conecta origem e validade.
-- O que e valido: contratos versionados, schema aprovado, checksum verificavel, proveniencia minima.
+- O que e valido: contratos versionados, schema aprovado, checksum verificavel, proveniencia minima, finalidade declarada e escopo de exposicao definido.
 - Como identificar: ids canonicos por sistema, contrato, pacote, evidencia e objeto territorial.

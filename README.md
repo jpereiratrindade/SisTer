@@ -18,6 +18,9 @@ O centro do projeto e `contracts/`, nao `apps/`. Sistemas como MorfoCampo, Drone
 - `sister_core` como biblioteca de dominio.
 - `sisterctl` como CLI minima para validar manifestos.
 - `web/` como primeira interface estatica de convergencia e inspecao.
+- PostgreSQL como banco operacional planejado.
+- PostGIS para dados e consultas geoespaciais.
+- pgvector para analises vetoriais, similaridade semantica e recuperacao de conhecimento.
 - Contratos JSON Schema em `contracts/`.
 - Governanca inspirada na estrutura usada em `LabGestao/docs`.
 
@@ -75,6 +78,8 @@ Essa separacao evita misturar a funcao epistemica do SisTer, que transforma conh
 
 - `docs/architecture/DDD.md`: modelo de dominio e contextos delimitados.
 - `docs/architecture/INTERFACE.md`: interface, navegacao, identidade visual e proximos incrementos.
+- `docs/architecture/DATABASE.md`: arquitetura PostgreSQL, PostGIS e pgvector.
+- `docs/governance/PUBLIC_PRIVATE_SCOPE.md`: escopo publico, restrito e privado.
 - `docs/adr/`: decisoes arquiteturais aceitas.
 - `docs/dai/DAI.md`: decisoes, acoes e impedimentos.
 - `docs/governance/README.md`: base de governanca operacional.

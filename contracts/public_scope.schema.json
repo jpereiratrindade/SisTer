@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/public_scope.schema.json",
+  "title": "SisTer Public Scope",
+  "type": "object",
+  "required": ["scope", "classification_reason", "review_required"],
+  "properties": {
+    "scope": {
+      "enum": ["public", "restricted", "private"]
+    },
+    "classification_reason": {
+      "type": "string",
+      "minLength": 1
+    },
+    "review_required": {
+      "type": "boolean"
+    },
+    "contains_personal_data": {
+      "type": "boolean"
+    },
+    "contains_sensitive_data": {
+      "type": "boolean"
+    },
+    "can_publish_aggregated": {
+      "type": "boolean"
+    },
+    "retention_policy": {
+      "type": "string"
+    }
+  }
+}

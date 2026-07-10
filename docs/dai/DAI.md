@@ -18,3 +18,10 @@
 - Decision: separar `Integracao e transformacao de conhecimento` de `Sintese tecnica e diagnostico dos servicos`.
 - Action: atualizar a interface para home com cards classicos de sistemas, barras de resultado de integracao, painel de integracao/conhecimento e painel de diagnostico tecnico.
 - Impediment: os indicadores ainda sao demonstrativos; o proximo passo e alimentar a UI a partir de arquivos JSON exportados pelo core ou por uma API local.
+
+## 2026-07-10 - PostgreSQL, PostGIS, pgvector e exposicao
+
+- Decision: planejar PostgreSQL como banco operacional do SisTer, com PostGIS para dados territoriais e pgvector para analises vetoriais.
+- Decision: definir escopo `public`, `restricted` e `private` como parte do modelo, da API e das consultas de dashboard.
+- Action: documentar arquitetura de banco, ADR e politica publico/privado.
+- Impediment: ainda falta migracao SQL executavel e implementacao C++ de persistencia.

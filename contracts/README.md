@@ -7,5 +7,6 @@ Contratos iniciais:
 - `system_manifest.schema.json`: declaracao de um sistema federado.
 - `camposync_package.schema.json`: pacote offline de sincronizacao.
 - `evidence.schema.json`: evidencia vinculada a objeto, sistema e proveniencia.
+- `public_scope.schema.json`: classificacao publico, restrito e privado para dados, evidencias, embeddings e diagnosticos.
 
 Versoes estabilizadas devem ser copiadas para `contracts/versions/vX.Y.Z/`.
