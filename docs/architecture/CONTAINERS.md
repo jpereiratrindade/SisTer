@@ -64,12 +64,24 @@ Dados persistentes previstos:
 
 ## Proximo incremento tecnico
 
-Criar:
+Artefatos iniciais criados:
 
 ```text
 compose.yml
+docker/db/Dockerfile
 storage/migrations/001_init.sql
 scripts/dev/run_postgres.sh
 ```
 
-O `compose.yml` deve subir PostgreSQL com PostGIS e pgvector, usando volume nomeado.
+O `compose.yml` sobe uma imagem local baseada em `postgis/postgis:16-3.4` com o pacote `postgresql-16-pgvector`, usando volume nomeado.
+
+Enquanto o servidor SisTer ainda nao possui acesso real ao banco, use:
+
+```bash
+./scripts/dev/run_postgres.sh
+cmake -S . -B build
+cmake --build build
+./build/apps/sisterctl/sisterctl db-check
+./build/apps/sisterctl/sisterctl db-migrate
+./build/apps/sisterd/sisterd 8000 web
+```

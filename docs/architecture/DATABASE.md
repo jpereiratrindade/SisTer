@@ -164,13 +164,33 @@ Direcao planejada:
 - `storage/postgres`: implementacao PostgreSQL/PostGIS/pgvector;
 - `apps`: CLI, servidor ou ferramentas que conectam as portas a implementacoes.
 
+## Artefatos iniciais
+
+Foram criados:
+
+- `compose.yml`;
+- `docker/db/Dockerfile`;
+- `storage/migrations/001_init.sql`;
+- `scripts/dev/run_postgres.sh`.
+- `scripts/dev/db_check.sh`;
+- `scripts/dev/db_migrate.sh`.
+
+Comandos:
+
+```bash
+./scripts/dev/run_postgres.sh
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
+./build/apps/sisterctl/sisterctl db-check
+./build/apps/sisterctl/sisterctl db-migrate
+```
+
+Os comandos `db-check` e `db-migrate` usam `psql` local quando disponivel. Se `psql` nao estiver instalado, usam `docker exec sister-db psql` quando o container `sister-db` estiver em execucao.
+
 ## Proximos passos
 
-1. Criar migracoes SQL versionadas.
-2. Definir `SISTER_DATABASE_URL` e script local de desenvolvimento.
-3. Criar porta C++ para persistencia de sistemas, contratos, evidencias e diagnosticos.
-4. Adicionar implementacao PostgreSQL separada do dominio.
-5. Alimentar a interface a partir de agregados publicos/restritos permitidos.
+1. Criar porta C++ para persistencia de sistemas, contratos, evidencias e diagnosticos.
+2. Adicionar implementacao PostgreSQL separada do dominio.
+3. Alimentar a interface a partir de agregados publicos/restritos permitidos.
 
 Ver tambem:
 

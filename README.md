@@ -34,6 +34,64 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
+## Servidor/API
+
+O servidor inicial `sisterd` entrega a interface web e endpoints JSON basicos:
+
+```bash
+./build/apps/sisterd/sisterd 8000 web
+```
+
+Acesse:
+
+```text
+http://localhost:8000
+http://localhost:8000/api/health
+http://localhost:8000/api/systems
+http://localhost:8000/api/contracts
+http://localhost:8000/api/evidence
+http://localhost:8000/api/diagnostics
+```
+
+Esta API ainda usa dados demonstrativos em memoria. A ligacao com PostgreSQL sera o proximo incremento.
+
+Enquanto nao houver autenticacao, use o `sisterd` como servidor local/de desenvolvimento.
+
+## Banco de dados
+
+Subir PostgreSQL com PostGIS e pgvector:
+
+```bash
+./scripts/dev/run_postgres.sh
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
+```
+
+O banco usa volume persistente `sister_pgdata` definido em `compose.yml`.
+
+Parar o banco sem remover dados:
+
+```bash
+docker-compose -f compose.yml down
+```
+
+Remover tambem o volume persistente de desenvolvimento:
+
+```bash
+docker-compose -f compose.yml down -v
+```
+
+Verificar conexão e extensões:
+
+```bash
+./build/apps/sisterctl/sisterctl db-check
+```
+
+Aplicar ou reaplicar a migration inicial:
+
+```bash
+./build/apps/sisterctl/sisterctl db-migrate
+```
+
 ## Validar um manifesto
 
 ```bash

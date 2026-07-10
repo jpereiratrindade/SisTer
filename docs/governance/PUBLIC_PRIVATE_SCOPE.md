@@ -128,3 +128,16 @@ Valores planejados:
 - `private`.
 
 Consultas de dashboard devem filtrar explicitamente o escopo permitido.
+
+## API
+
+Endpoints publicos ou semi-publicos devem retornar apenas:
+
+- dados `public`;
+- agregados que nao permitam reidentificacao;
+- diagnosticos que nao exponham falhas exploraveis;
+- links de acesso autorizados pelos manifestos dos sistemas.
+
+Endpoints internos ou autenticados poderao acessar dados `restricted` quando houver finalidade operacional clara. Dados `private` exigem controle de acesso, auditoria e justificativa.
+
+Enquanto nao houver autenticacao implementada, o `sisterd` deve ser considerado servidor local/de desenvolvimento.

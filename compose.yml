@@ -1,0 +1,24 @@
+services:
+  sister-db:
+    build:
+      context: .
+      dockerfile: docker/db/Dockerfile
+    image: sister-postgis-pgvector:16
+    container_name: sister-db
+    environment:
+      POSTGRES_DB: sister
+      POSTGRES_USER: sister
+      POSTGRES_PASSWORD: sister
+    ports:
+      - "5432:5432"
+    volumes:
+      - sister_pgdata:/var/lib/postgresql/data
+      - ./storage/migrations:/docker-entrypoint-initdb.d:ro,Z
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sister -d sister"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sister_pgdata:

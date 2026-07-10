@@ -13,6 +13,7 @@ option(SISTER_BUILD_TESTS "Build SisTer tests" ON)
 
 add_subdirectory(core)
 add_subdirectory(apps/sisterctl)
+add_subdirectory(apps/sisterd)
 
 if(SISTER_BUILD_TESTS)
     enable_testing()

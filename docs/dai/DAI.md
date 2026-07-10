@@ -57,3 +57,17 @@
 - Decision: exibir metricas de monitoramento de infraestrutura nos cards dos sistemas federados.
 - Action: adicionar disponibilidade, resposta/sincronizacao, armazenamento e ultima verificacao na interface.
 - Impediment: as metricas ainda sao demonstrativas; falta coletor real conectado a diagnostico, banco ou API dos sistemas.
+
+## 2026-07-10 - Servidor API e banco inicial
+
+- Decision: criar `sisterd` como servidor C++ inicial para interface estatica e endpoints JSON basicos.
+- Decision: criar `compose.yml` para PostgreSQL/PostGIS/pgvector com volume persistente.
+- Action: adicionar migration inicial e script `scripts/dev/run_postgres.sh`.
+- Impediment: a API ainda usa dados em memoria; falta porta de persistencia e integracao real com PostgreSQL.
+
+## 2026-07-10 - Finalizacao operacional do banco
+
+- Decision: expor comandos `sisterctl db-check` e `sisterctl db-migrate`.
+- Action: adicionar scripts que usam `psql` local ou `docker exec sister-db psql`.
+- Action: registrar migration aplicada em `sister_schema_migrations`.
+- Impediment: ainda nao ha repositorio C++ persistindo entidades no PostgreSQL.
