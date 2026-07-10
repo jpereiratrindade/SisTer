@@ -19,7 +19,6 @@ O centro do projeto e `contracts/`, nao `apps/`. Sistemas como MorfoCampo, Drone
 - `sisterctl` como CLI minima para validar manifestos.
 - `web/` como primeira interface estatica de convergencia e inspecao.
 - PostgreSQL como banco operacional planejado.
-- PostGIS para dados e consultas geoespaciais.
 - pgvector para analises vetoriais, similaridade semantica e recuperacao de conhecimento.
 - Contratos JSON Schema em `contracts/`.
 - Governanca inspirada na estrutura usada em `LabGestao/docs`.
@@ -59,38 +58,50 @@ Enquanto nao houver autenticacao, use o `sisterd` como servidor local/de desenvo
 
 ## Banco de dados
 
-Subir PostgreSQL com PostGIS e pgvector:
+Subir PostgreSQL com pgvector no ambiente de desenvolvimento:
 
 ```bash
-./scripts/dev/run_postgres.sh
+./scripts/db/up.sh dev
 export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
 ```
 
-O banco usa volume persistente `sister_pgdata` definido em `compose.yml`.
+O banco de desenvolvimento usa o container `sister-dev-db`, porta `5432` e volume
+persistente `sister_dev_pgdata`.
 
 Parar o banco sem remover dados:
 
 ```bash
-docker-compose -f compose.yml down
+./scripts/db/down.sh dev
 ```
 
-Remover tambem o volume persistente de desenvolvimento:
+Remover container e volume do ambiente de teste:
 
 ```bash
-docker-compose -f compose.yml down -v
+./scripts/db/destroy.sh test
 ```
 
 Verificar conexão e extensões:
 
 ```bash
-./build/apps/sisterctl/sisterctl db-check
+./scripts/db/check.sh dev
 ```
 
 Aplicar ou reaplicar a migration inicial:
 
 ```bash
-./build/apps/sisterctl/sisterctl db-migrate
+./scripts/db/migrate.sh dev
 ```
+
+Para criar um espaco separado de teste:
+
+```bash
+./scripts/test/create_worktree.sh
+cd ../SisTer-test
+./scripts/db/up.sh test
+./scripts/db/migrate.sh test
+```
+
+Detalhes: `docs/architecture/ENVIRONMENTS.md`.
 
 ## Validar um manifesto
 
@@ -136,9 +147,11 @@ Cada sistema federado tambem declara no seu contrato o que compartilha com o Sis
 
 ## Documentacao
 
+- `docs/CONCEPTUAL_BASE.md`: conexao viva com a construcao conceitual e ontologica mantida em `docs/conceptual`.
+- `docs/architecture/ENVIRONMENTS.md`: separacao entre desenvolvimento, teste, containers e worktree.
 - `docs/architecture/DDD.md`: modelo de dominio e contextos delimitados.
 - `docs/architecture/INTERFACE.md`: interface, navegacao, identidade visual e proximos incrementos.
-- `docs/architecture/DATABASE.md`: arquitetura PostgreSQL, PostGIS e pgvector.
+- `docs/architecture/DATABASE.md`: arquitetura PostgreSQL e pgvector.
 - `docs/architecture/CONTAINERS.md`: estrategia de containers e persistencia do banco.
 - `docs/governance/PUBLIC_PRIVATE_SCOPE.md`: escopo publico, restrito e privado.
 - `docs/adr/`: decisoes arquiteturais aceitas.

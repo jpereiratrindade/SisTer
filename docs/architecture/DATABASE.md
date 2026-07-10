@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Definir a arquitetura planejada de persistencia do SisTer com PostgreSQL, PostGIS e pgvector.
+Definir a arquitetura planejada de persistencia do SisTer com PostgreSQL e pgvector.
 
 O banco deve sustentar:
 
@@ -11,7 +11,7 @@ O banco deve sustentar:
 - pacotes CampoSync;
 - evidencias e proveniencia;
 - objetos territoriais;
-- camadas e contexto espacial;
+- contexto espacial representado inicialmente sem extensao geoespacial;
 - artefatos de conhecimento;
 - embeddings e analises vetoriais;
 - diagnostico tecnico dos servicos;
@@ -22,14 +22,6 @@ O banco deve sustentar:
 ### PostgreSQL
 
 Banco relacional principal para dados operacionais, historico, auditoria e consultas consistentes.
-
-### PostGIS
-
-Extensao geoespacial para:
-
-- geometrias de areas, pontos, trajetos e camadas;
-- consultas por intersecao, proximidade e cobertura;
-- associacao entre observacoes, missoes, evidencias e territorios.
 
 ### pgvector
 
@@ -45,17 +37,19 @@ Extensao vetorial para:
 Configuracao esperada:
 
 ```sql
-CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
 ## Variavel de ambiente
 
-Nome planejado:
+Nomes planejados:
 
 ```bash
 export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5433/sister'
 ```
+
+`5432` e usado pelo ambiente `dev`; `5433` e usado pelo ambiente `test`.
 
 Se `SISTER_DATABASE_URL` nao estiver definido, ferramentas locais podem operar em modo arquivo/demonstracao quando isso for suficiente.
 
@@ -107,7 +101,7 @@ CREATE TABLE sister_territorial_objects (
   object_id text PRIMARY KEY,
   source_system_id text NOT NULL REFERENCES sister_systems(system_id),
   object_type text NOT NULL,
-  geom geometry,
+  spatial_context jsonb,
   confidence numeric,
   public_scope text NOT NULL DEFAULT 'restricted',
   created_at timestamptz NOT NULL DEFAULT now()
@@ -145,10 +139,6 @@ Toda tabela operacional relevante deve possuir `public_scope` com valores planej
 ## Indices planejados
 
 ```sql
-CREATE INDEX sister_territorial_objects_geom_idx
-  ON sister_territorial_objects
-  USING gist (geom);
-
 CREATE INDEX sister_knowledge_artifacts_embedding_idx
   ON sister_knowledge_artifacts
   USING ivfflat (embedding vector_cosine_ops);
@@ -161,7 +151,7 @@ O dominio nao deve depender diretamente de PostgreSQL.
 Direcao planejada:
 
 - `core`: entidades, contratos, validacao e portas;
-- `storage/postgres`: implementacao PostgreSQL/PostGIS/pgvector;
+- `storage/postgres`: implementacao PostgreSQL/pgvector;
 - `apps`: CLI, servidor ou ferramentas que conectam as portas a implementacoes.
 
 ## Artefatos iniciais
@@ -171,20 +161,37 @@ Foram criados:
 - `compose.yml`;
 - `docker/db/Dockerfile`;
 - `storage/migrations/001_init.sql`;
+- `scripts/db/up.sh`;
+- `scripts/db/down.sh`;
+- `scripts/db/destroy.sh`;
+- `scripts/db/check.sh`;
+- `scripts/db/migrate.sh`;
+- `scripts/test/create_worktree.sh`;
 - `scripts/dev/run_postgres.sh`.
 - `scripts/dev/db_check.sh`;
 - `scripts/dev/db_migrate.sh`.
 
-Comandos:
+Comandos de desenvolvimento:
 
 ```bash
-./scripts/dev/run_postgres.sh
+./scripts/db/up.sh dev
 export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
-./build/apps/sisterctl/sisterctl db-check
-./build/apps/sisterctl/sisterctl db-migrate
+./scripts/db/check.sh dev
+./scripts/db/migrate.sh dev
 ```
 
-Os comandos `db-check` e `db-migrate` usam `psql` local quando disponivel. Se `psql` nao estiver instalado, usam `docker exec sister-db psql` quando o container `sister-db` estiver em execucao.
+Comandos de teste:
+
+```bash
+./scripts/test/create_worktree.sh
+cd ../SisTer-test
+./scripts/db/up.sh test
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5433/sister'
+./scripts/db/check.sh test
+./scripts/db/migrate.sh test
+```
+
+Os comandos de banco usam `psql` local quando disponivel. Se `psql` nao estiver instalado, usam `docker exec` no container do ambiente selecionado.
 
 ## Proximos passos
 
@@ -195,3 +202,4 @@ Os comandos `db-check` e `db-migrate` usam `psql` local quando disponivel. Se `p
 Ver tambem:
 
 - [CONTAINERS.md](./CONTAINERS.md)
+- [ENVIRONMENTS.md](./ENVIRONMENTS.md)

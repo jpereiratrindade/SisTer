@@ -7,6 +7,7 @@ O SisTer segue uma base inspirada no modelo do LabGestao:
 - DAI para decisoes, acoes e impedimentos.
 - Politicas para fronteira de contexto, evidencia e aprovacao.
 - Contratos de ferramenta para intervencoes assistidas por IA.
+- Base conceitual viva conectada em `docs/conceptual`, descrita em `docs/CONCEPTUAL_BASE.md`.
 
 Mudancas em contratos, ingestao, proveniencia e catalogo territorial devem registrar evidencia proporcional ao risco.
 
@@ -19,22 +20,22 @@ O estado atual do SisTer inclui componentes que devem ser tratados como superfic
 - `apps/sisterctl`: CLI de validacao, banco e operacao local.
 - `apps/sisterd`: servidor/API inicial e entrega da interface.
 - `web/`: interface de convergencia e diagnostico.
-- `compose.yml`: orquestracao local do banco.
-- `docker/db/Dockerfile`: imagem PostgreSQL/PostGIS/pgvector.
+- `compose.yml`: orquestracao local do banco por ambiente.
+- `docker/db/Dockerfile`: imagem PostgreSQL/pgvector.
 - `storage/migrations/`: migrations SQL.
 - `docs/governance/PUBLIC_PRIVATE_SCOPE.md`: politica de exposicao.
 
 ## Banco de dados e migrations
 
-O banco operacional planejado e PostgreSQL com PostGIS e pgvector.
+O banco operacional planejado neste incremento e PostgreSQL com pgvector.
 
 Comandos operacionais:
 
 ```bash
-./scripts/dev/run_postgres.sh
+./scripts/db/up.sh dev
 export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
-./build/apps/sisterctl/sisterctl db-check
-./build/apps/sisterctl/sisterctl db-migrate
+./scripts/db/check.sh dev
+./scripts/db/migrate.sh dev
 ```
 
 Regras de governanca:

@@ -3,14 +3,14 @@ services:
     build:
       context: .
       dockerfile: docker/db/Dockerfile
-    image: sister-postgis-pgvector:16
-    container_name: sister-db
+    image: sister-pgvector:17
+    container_name: ${SISTER_DB_CONTAINER:-sister-dev-db}
     environment:
       POSTGRES_DB: sister
       POSTGRES_USER: sister
       POSTGRES_PASSWORD: sister
     ports:
-      - "5432:5432"
+      - "127.0.0.1:${SISTER_DB_PORT:-5432}:5432"
     volumes:
       - sister_pgdata:/var/lib/postgresql/data
       - ./storage/migrations:/docker-entrypoint-initdb.d:ro,Z
@@ -22,3 +22,4 @@ services:
 
 volumes:
   sister_pgdata:
+    name: ${SISTER_DB_VOLUME:-sister_dev_pgdata}

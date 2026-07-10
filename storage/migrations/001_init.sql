@@ -1,4 +1,3 @@
-CREATE EXTENSION IF NOT EXISTS postgis;
 CREATE EXTENSION IF NOT EXISTS vector;
 
 CREATE TABLE IF NOT EXISTS sister_schema_migrations (
@@ -49,7 +48,7 @@ CREATE TABLE IF NOT EXISTS sister_territorial_objects (
   object_id text PRIMARY KEY,
   source_system_id text NOT NULL REFERENCES sister_systems(system_id),
   object_type text NOT NULL,
-  geom geometry,
+  spatial_context jsonb,
   confidence numeric,
   public_scope text NOT NULL DEFAULT 'restricted',
   created_at timestamptz NOT NULL DEFAULT now()
@@ -74,10 +73,6 @@ CREATE TABLE IF NOT EXISTS sister_service_diagnostics (
   public_scope text NOT NULL DEFAULT 'public',
   observed_at timestamptz NOT NULL DEFAULT now()
 );
-
-CREATE INDEX IF NOT EXISTS sister_territorial_objects_geom_idx
-  ON sister_territorial_objects
-  USING gist (geom);
 
 CREATE INDEX IF NOT EXISTS sister_knowledge_artifacts_embedding_idx
   ON sister_knowledge_artifacts
