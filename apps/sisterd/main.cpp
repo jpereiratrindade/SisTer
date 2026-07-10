@@ -200,7 +200,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "sisterd listening on http://127.0.0.1:" << port
+    std::cout << "sisterd listening on http://0.0.0.0:" << port
               << " serving " << webRoot << '\n';
 
     while (keepRunning) {

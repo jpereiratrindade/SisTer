@@ -6,7 +6,7 @@ sister_podman_image() {
 
 sister_podman_up() {
   sister_podman_image
-  podman volume create "$SISTER_DB_VOLUME" >/dev/null
+  podman volume exists "$SISTER_DB_VOLUME" || podman volume create "$SISTER_DB_VOLUME" >/dev/null
   podman run -d \
     --name "$SISTER_DB_CONTAINER" \
     --replace \

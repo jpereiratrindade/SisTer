@@ -41,6 +41,13 @@ O servidor inicial `sisterd` entrega a interface web e endpoints JSON basicos:
 ./build/apps/sisterd/sisterd 8000 web
 ```
 
+Para subir banco, aplicar migration, validar, iniciar a interface e testar os
+endpoints de uma vez:
+
+```bash
+./scripts/run_all.sh dev 8000
+```
+
 Acesse:
 
 ```text

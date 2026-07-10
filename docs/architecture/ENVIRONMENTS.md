@@ -75,6 +75,12 @@ No worktree principal:
 ./scripts/run_quality.sh
 ```
 
+Para executar o fluxo completo, incluindo servidor e teste dos endpoints:
+
+```bash
+./scripts/run_all.sh dev 8000
+```
+
 URL esperada:
 
 ```bash
@@ -90,6 +96,12 @@ No worktree de teste:
 ./scripts/db/migrate.sh test
 ./scripts/db/check.sh test
 ./scripts/run_quality.sh
+```
+
+Fluxo completo no worktree de teste:
+
+```bash
+./scripts/run_all.sh test 8000
 ```
 
 URL esperada:
