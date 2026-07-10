@@ -1,0 +1,35 @@
+{
+  "system_id": "camponode",
+  "system_name": "CampoNode",
+  "system_version": "0.1.0",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "field_infrastructure_system",
+  "domain": ["rede_local", "armazenamento", "sincronizacao", "operacao_offline"],
+  "operational_mode": ["offline", "local_network", "edge"],
+  "exports": ["sync_log", "node_health", "package_cache", "storage_status"],
+  "integration_modes": ["local_api", "camposync_package", "file_import"],
+  "responsible_repository": "camponode",
+  "access": {
+    "platform_url": "https://camponode.local",
+    "access_label": "Abrir CampoNode",
+    "access_mode": "local_network"
+  },
+  "sharing_policy": {
+    "shareable_with_sister": ["sync_log_summary", "node_health", "package_cache_metadata", "storage_status"],
+    "native_to_system": ["local_network_configuration", "device_management", "storage_mounts", "offline_operations"],
+    "public_outputs": ["aggregated_node_status", "availability_indicators"],
+    "restricted_outputs": ["node_health", "sync_log_summary", "package_cache_metadata"],
+    "private_outputs": ["network_credentials", "device_secrets", "raw_operational_logs"],
+    "sensitive_topics": ["local_network_security", "storage_paths", "device_identity", "access_credentials"],
+    "dikw_role": {
+      "offers_as_information": ["node_health", "sync_status", "cache_metadata"],
+      "received_by_sister_as": "data",
+      "sister_transforms_into": ["information", "knowledge"]
+    }
+  },
+  "data_policy": {
+    "requires_provenance": true,
+    "allows_offline_sync": true,
+    "requires_schema_validation": true
+  }
+}

@@ -71,6 +71,31 @@ Quando houver duvida, classificar como `private` ate revisao humana.
 | Diagnostico de servico | Publico ou restrito | Publico para status agregado; restrito para falhas exploraveis. |
 | Auditoria | Privado | Exposicao apenas para responsaveis autorizados. |
 
+## Fronteira por sistema
+
+Cada manifesto de sistema deve declarar:
+
+- o que pode ser compartilhado com o SisTer;
+- o que deve permanecer nativo e ser explorado na propria plataforma;
+- quais resultados podem ser publicos;
+- quais resultados sao restritos;
+- quais artefatos sao privados;
+- quais temas devem ser tratados como sensiveis;
+- qual link de acesso direto pode ser exibido pela interface.
+
+O SisTer pode apontar para a plataforma original, mas nao deve copiar ou expor funcionalidades que pertencem ao sistema federado quando isso quebrar autonomia, seguranca, LGPD ou responsabilidade tecnica.
+
+## Cadeia dado, informacao, conhecimento e sabedoria
+
+O SisTer adota a relacao DIKW como linguagem de integracao:
+
+- `Dado`: aquilo que o SisTer recebe por contrato, mesmo que o sistema produtor ja trate como informacao.
+- `Informacao`: dado validado, contextualizado e relacionado pelo SisTer.
+- `Conhecimento`: interpretacao territorial resultante de cruzamento, recorrencia, historico, evidencia e contexto.
+- `Sabedoria`: apoio decisorio governado, com limites, responsabilidade, transparencia e criterio de uso.
+
+Essa cadeia nao autoriza exposicao automatica. Cada passagem precisa respeitar proveniencia, finalidade, escopo publico/restrito/privado e classificacao de temas sensiveis.
+
 ## LGPD
 
 Diretrizes iniciais:

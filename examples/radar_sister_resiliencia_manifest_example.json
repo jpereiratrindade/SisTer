@@ -1,0 +1,36 @@
+{
+  "system_id": "radar_sister_resiliencia",
+  "system_name": "Radar-Sister Resiliencia",
+  "system_version": "0.1.0",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "analytical_triage_system",
+  "domain": ["resiliencia", "inteligencia_territorial", "adaptacao_climatica", "agroecossistemas", "governanca_de_dados"],
+  "operational_mode": ["local_gui", "local_cli", "postgresql_pgvector", "file_workspace"],
+  "exports": ["normalized_metadata", "scores_jsonl", "shortlist_markdown", "audit_log", "vector_chunks", "source_links"],
+  "integration_modes": ["file_import", "local_api", "camposync_package"],
+  "responsible_repository": "radar_sister_resiliencia",
+  "access": {
+    "platform_url": "http://127.0.0.1:8765",
+    "access_label": "Abrir Radar-Sister Resiliencia",
+    "access_mode": "local_network"
+  },
+  "sharing_policy": {
+    "shareable_with_sister": ["normalized_metadata", "scores_jsonl", "shortlist_markdown", "audit_summary", "source_links", "vector_chunk_metadata"],
+    "native_to_system": ["openalex_collection", "manual_scoring", "llm_complementary_review", "query_suggestion", "raw_workspace_session"],
+    "public_outputs": ["public_source_links", "aggregated_scores", "reviewed_shortlists"],
+    "restricted_outputs": ["scores_jsonl", "audit_summary", "vector_chunk_metadata", "workspace_project_events"],
+    "private_outputs": ["api_keys", "user_sessions", "raw_llm_review_notes", "database_connection_url"],
+    "sensitive_topics": ["external_api_credentials", "reviewer_identity", "strategic_research_priority", "private_session_workspace"],
+    "dikw_role": {
+      "offers_as_information": ["normalized_metadata", "triage_scores", "shortlists", "audit_traces"],
+      "received_by_sister_as": "data",
+      "sister_transforms_into": ["information", "knowledge", "wisdom"]
+    }
+  },
+  "data_policy": {
+    "requires_provenance": true,
+    "allows_offline_sync": true,
+    "requires_schema_validation": true,
+    "requires_operator": true
+  }
+}

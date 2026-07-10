@@ -35,7 +35,7 @@
         <div class="page-heading">
           <div>
             <span class="eyebrow">Convergencia territorial</span>
-            <h2>Sistemas federados e resultados de integracao</h2>
+            <h2>Sistemas integrantes</h2>
           </div>
           <button class="primary-action" type="button" id="validate-button">Validar amostra</button>
         </div>
@@ -46,39 +46,29 @@
             <span>Sistemas federados</span>
           </article>
           <article class="metric">
-            <strong id="contract-count">0</strong>
-            <span>Contratos ativos</span>
+            <strong id="signed-contract-count">0</strong>
+            <span>Contratos firmados</span>
           </article>
           <article class="metric">
             <strong id="evidence-count">0</strong>
             <span>Evidencias registradas</span>
           </article>
           <article class="metric">
-            <strong>96%</strong>
-            <span>Conformidade de integracao</span>
+            <strong id="integration-compliance">N/D</strong>
+            <span>Conformidade automatizada</span>
           </article>
         </div>
 
-        <div class="home-grid">
-          <section class="panel systems-panel">
-            <div class="panel-header">
-              <h3>Sistemas</h3>
-              <label class="search-field">
-                <span>Filtrar</span>
-                <input id="system-filter" type="search" placeholder="sistema, dominio ou modo">
-              </label>
-            </div>
-            <div class="system-grid" id="systems-grid"></div>
-          </section>
-
-          <section class="panel integration-summary">
-            <div class="panel-header">
-              <h3>Resultado de integracao</h3>
-              <span class="status-pill">Dashboard</span>
-            </div>
-            <div class="result-stack" id="integration-bars"></div>
-          </section>
-        </div>
+        <section class="panel systems-panel">
+          <div class="panel-header">
+            <h3>Sistemas</h3>
+            <label class="search-field">
+              <span>Filtrar</span>
+              <input id="system-filter" type="search" placeholder="sistema, dominio ou modo">
+            </label>
+          </div>
+          <div class="system-grid" id="systems-grid"></div>
+        </section>
 
         <section class="panel map-panel">
           <div class="panel-header">
@@ -86,6 +76,14 @@
             <span class="status-pill">3 camadas</span>
           </div>
           <canvas id="territory-map" width="1100" height="360" aria-label="Mapa territorial sintetico"></canvas>
+        </section>
+
+        <section class="panel integration-summary">
+          <div class="panel-header">
+            <h3>Resultados de integracao</h3>
+            <span class="status-pill">Demonstrativo</span>
+          </div>
+          <div class="result-stack" id="integration-bars"></div>
         </section>
       </section>
 
@@ -109,10 +107,12 @@
           <section class="panel">
             <h3>Conhecimento produzido</h3>
             <dl class="definition-list">
+              <div><dt>Dado</dt><dd>A informacao ofertada por cada sistema chega ao SisTer como dado contratado.</dd></div>
+              <div><dt>Informacao</dt><dd>O SisTer valida, contextualiza e relaciona os dados recebidos.</dd></div>
+              <div><dt>Conhecimento</dt><dd>A integracao produz artefatos comparaveis, recorrencias e interpretacoes territoriais.</dd></div>
+              <div><dt>Sabedoria</dt><dd>Quando governado, o conhecimento apoia decisao, prioridade, cuidado e transparencia.</dd></div>
               <div><dt>Ontologia operacional</dt><dd>Entidades, relacoes, validade e identidade.</dd></div>
               <div><dt>Proveniencia consolidada</dt><dd>Fonte, contrato, evidencia, tempo e confiabilidade.</dd></div>
-              <div><dt>Leitura territorial</dt><dd>Objetos comparaveis entre MorfoCampo, DroneOps e futuros modulos.</dd></div>
-              <div><dt>Memoria de integracao</dt><dd>Historico auditavel do que foi aceito, rejeitado ou transformado.</dd></div>
             </dl>
           </section>
         </div>

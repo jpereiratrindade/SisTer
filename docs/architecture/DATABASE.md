@@ -171,3 +171,7 @@ Direcao planejada:
 3. Criar porta C++ para persistencia de sistemas, contratos, evidencias e diagnosticos.
 4. Adicionar implementacao PostgreSQL separada do dominio.
 5. Alimentar a interface a partir de agregados publicos/restritos permitidos.
+
+Ver tambem:
+
+- [CONTAINERS.md](./CONTAINERS.md)

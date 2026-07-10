@@ -9,7 +9,7 @@ SisTer integra sistemas porque reconhece contratos comuns.
 
 ## Hipotese
 
-O centro do projeto e `contracts/`, nao `apps/`. Sistemas como MorfoCampo, DroneOps, CampoNode e Radar podem manter autonomia operacional, interface propria e sincronizacao offline, desde que entreguem contratos comuns, evidencias e proveniencia verificavel.
+O centro do projeto e `contracts/`, nao `apps/`. Sistemas como MorfoCampo, DroneOps, CampoNode e Radar-Sister Resiliencia podem manter autonomia operacional, interface propria e sincronizacao offline, desde que entreguem contratos comuns, evidencias e proveniencia verificavel.
 
 ## Base tecnica
 
@@ -74,11 +74,14 @@ A identidade visual inicial segue a linha do `Radar-Sister Resiliencia`: topo ho
 
 Essa separacao evita misturar a funcao epistemica do SisTer, que transforma conhecimento territorial, com a funcao operacional de gestao e transparencia da plataforma.
 
+Cada sistema federado tambem declara no seu contrato o que compartilha com o SisTer, o que permanece nativo de sua propria plataforma, o link de acesso direto e a classificacao publico/restrito/privado/sensivel. A integracao segue a cadeia dado, informacao, conhecimento e sabedoria: a informacao ofertada pelo sistema produtor chega ao SisTer como dado contratado; depois de validada e contextualizada, pode virar informacao integrada, conhecimento territorial e apoio decisorio governado.
+
 ## Documentacao
 
 - `docs/architecture/DDD.md`: modelo de dominio e contextos delimitados.
 - `docs/architecture/INTERFACE.md`: interface, navegacao, identidade visual e proximos incrementos.
 - `docs/architecture/DATABASE.md`: arquitetura PostgreSQL, PostGIS e pgvector.
+- `docs/architecture/CONTAINERS.md`: estrategia de containers e persistencia do banco.
 - `docs/governance/PUBLIC_PRIVATE_SCOPE.md`: escopo publico, restrito e privado.
 - `docs/adr/`: decisoes arquiteturais aceitas.
 - `docs/dai/DAI.md`: decisoes, acoes e impedimentos.

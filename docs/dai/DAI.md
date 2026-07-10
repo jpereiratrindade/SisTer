@@ -25,3 +25,35 @@
 - Decision: definir escopo `public`, `restricted` e `private` como parte do modelo, da API e das consultas de dashboard.
 - Action: documentar arquitetura de banco, ADR e politica publico/privado.
 - Impediment: ainda falta migracao SQL executavel e implementacao C++ de persistencia.
+
+## 2026-07-10 - Fronteira federada e DIKW
+
+- Decision: cada contrato de sistema deve declarar acesso direto, politica de compartilhamento, itens nativos da plataforma de origem, escopos publico/restrito/privado e temas sensiveis.
+- Decision: adotar a cadeia dado, informacao, conhecimento e sabedoria como linguagem de transformacao da integracao.
+- Action: atualizar manifesto, exemplos, interface, DDD e politica publico/privado.
+- Impediment: o validador C++ ainda nao verifica os novos campos; por enquanto eles estao formalizados no JSON Schema.
+
+## 2026-07-10 - Radar-Sister Resiliencia como integrante
+
+- Decision: listar `radar_sister_resiliencia` como sistema integrante do SisTer.
+- Action: criar manifesto de exemplo e incluir o Radar na interface e na documentacao DDD.
+- Impediment: o link local padrao `http://127.0.0.1:8765` depende da GUI do Radar estar em execucao.
+
+## 2026-07-10 - Contratos firmados por sistema
+
+- Decision: diferenciar contratos-base de integracao de contratos firmados por sistema integrante.
+- Action: ajustar a home para contar contratos firmados por sistema e criar manifesto de exemplo do CampoNode.
+- Impediment: ainda falta persistencia para registrar aceite formal, responsavel e data de assinatura de cada contrato.
+
+## 2026-07-10 - Containers e indicadores demonstrativos
+
+- Decision: recomendar container persistente para PostgreSQL/PostGIS/pgvector e manter a aplicacao local ate existir servidor/API.
+- Decision: remover percentual fixo de conformidade da home enquanto a avaliacao automatizada nao existir.
+- Action: documentar estrategia de containers e marcar resultados de integracao como demonstrativos.
+- Impediment: ainda falta motor real de avaliacao de conformidade e diagnostico.
+
+## 2026-07-10 - Metricas de infraestrutura nos cards
+
+- Decision: exibir metricas de monitoramento de infraestrutura nos cards dos sistemas federados.
+- Action: adicionar disponibilidade, resposta/sincronizacao, armazenamento e ultima verificacao na interface.
+- Impediment: as metricas ainda sao demonstrativas; falta coletor real conectado a diagnostico, banco ou API dos sistemas.

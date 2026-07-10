@@ -9,6 +9,24 @@
   "exports": ["observations", "evidence", "audio", "photos", "field_notes", "spatial_context"],
   "integration_modes": ["camposync_package", "local_api"],
   "responsible_repository": "morfocampo",
+  "access": {
+    "platform_url": "https://morfocampo.local",
+    "access_label": "Abrir MorfoCampo",
+    "access_mode": "restricted_link"
+  },
+  "sharing_policy": {
+    "shareable_with_sister": ["observations", "spatial_context", "field_notes_summary", "evidence_metadata"],
+    "native_to_system": ["audio_review", "raw_photos", "field_form_editing", "local_collection_workflow"],
+    "public_outputs": ["aggregated_indicators", "generalized_spatial_layers"],
+    "restricted_outputs": ["observations", "spatial_context", "evidence_metadata"],
+    "private_outputs": ["raw_audio", "raw_photos", "operator_notes"],
+    "sensitive_topics": ["private_property_location", "person_identification", "raw_media"],
+    "dikw_role": {
+      "offers_as_information": ["field_observations", "contextual_notes", "evidence_metadata"],
+      "received_by_sister_as": "data",
+      "sister_transforms_into": ["information", "knowledge"]
+    }
+  },
   "data_policy": {
     "requires_provenance": true,
     "allows_offline_sync": true,

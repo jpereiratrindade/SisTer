@@ -9,6 +9,24 @@
   "exports": ["mission_plan", "checklist", "flight_log", "images", "orthomosaic_metadata", "spatial_layers", "evidence_package"],
   "integration_modes": ["camposync_package", "local_api", "file_import"],
   "responsible_repository": "droneops",
+  "access": {
+    "platform_url": "https://droneops.local",
+    "access_label": "Abrir DroneOps",
+    "access_mode": "restricted_link"
+  },
+  "sharing_policy": {
+    "shareable_with_sister": ["mission_metadata", "flight_log_summary", "orthomosaic_metadata", "spatial_layers", "evidence_package"],
+    "native_to_system": ["mission_planning", "operator_checklist", "raw_image_review", "flight_execution"],
+    "public_outputs": ["aggregated_mission_indicators", "generalized_coverage_layers"],
+    "restricted_outputs": ["spatial_layers", "flight_log_summary", "orthomosaic_metadata"],
+    "private_outputs": ["raw_images", "operator_identity", "flight_risk_notes"],
+    "sensitive_topics": ["flight_security", "private_property_imagery", "operator_identification"],
+    "dikw_role": {
+      "offers_as_information": ["mission_metadata", "spatial_layers", "evidence_package"],
+      "received_by_sister_as": "data",
+      "sister_transforms_into": ["information", "knowledge", "wisdom"]
+    }
+  },
   "data_policy": {
     "requires_provenance": true,
     "requires_schema_validation": true,

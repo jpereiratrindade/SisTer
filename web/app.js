@@ -8,10 +8,22 @@ const state = {
       type: "Campo",
       status: "Operacional",
       contract: "sister-contracts/0.1.0",
+      accessUrl: "https://morfocampo.local",
+      accessMode: "Restrito",
+      publicScope: "Indicadores agregados",
+      restrictedScope: "Observacoes e metadados",
+      privateScope: "Midia bruta e notas",
       domains: ["campo_nativo", "silvipastoril", "observacao_campo"],
       modes: ["offline", "local_network", "camponode"],
       exports: ["observations", "evidence", "photos", "field_notes", "spatial_context"],
-      policy: ["proveniencia", "schema", "offline"]
+      policy: ["proveniencia", "schema", "offline"],
+      infra: {
+        availability: "98%",
+        response: "sync 12 min",
+        storage: "41%",
+        lastCheck: "09:20",
+        signal: "ok"
+      }
     },
     {
       id: "droneops",
@@ -21,10 +33,22 @@ const state = {
       type: "Missao",
       status: "Em validacao",
       contract: "sister-contracts/0.1.0",
+      accessUrl: "https://droneops.local",
+      accessMode: "Restrito",
+      publicScope: "Cobertura generalizada",
+      restrictedScope: "Camadas e logs resumidos",
+      privateScope: "Imagens brutas e operador",
       domains: ["drone", "imageamento", "missao_campo", "evidencia_geoespacial"],
       modes: ["offline", "local_network", "pwa"],
       exports: ["mission_plan", "flight_log", "images", "spatial_layers", "evidence_package"],
-      policy: ["proveniencia", "schema", "operador", "referencia_espacial"]
+      policy: ["proveniencia", "schema", "operador", "referencia_espacial"],
+      infra: {
+        availability: "91%",
+        response: "sync 28 min",
+        storage: "63%",
+        lastCheck: "09:12",
+        signal: "warn"
+      }
     },
     {
       id: "camponode",
@@ -34,10 +58,47 @@ const state = {
       type: "Infraestrutura",
       status: "Planejado",
       contract: "sister-contracts/0.1.0",
+      accessUrl: "https://camponode.local",
+      accessMode: "Rede local",
+      publicScope: "Status agregado",
+      restrictedScope: "Saude do no e cache",
+      privateScope: "Logs operacionais",
       domains: ["rede_local", "armazenamento", "sincronizacao"],
       modes: ["offline", "local_network", "edge"],
       exports: ["sync_log", "node_health", "package_cache"],
-      policy: ["proveniencia", "schema", "auditoria"]
+      policy: ["proveniencia", "schema", "auditoria"],
+      infra: {
+        availability: "N/D",
+        response: "planejado",
+        storage: "N/D",
+        lastCheck: "sem coleta",
+        signal: "planned"
+      }
+    },
+    {
+      id: "radar_sister_resiliencia",
+      name: "Radar-Sister Resiliencia",
+      version: "0.1.0",
+      owner: "Equipe Resiliencia",
+      type: "Analitico",
+      status: "Operacional",
+      contract: "sister-contracts/0.1.0",
+      accessUrl: "http://127.0.0.1:8765",
+      accessMode: "Local",
+      publicScope: "Links publicos e scores agregados",
+      restrictedScope: "Shortlists, scores e trilhas",
+      privateScope: "Sessoes, chaves e revisoes brutas",
+      domains: ["resiliencia", "inteligencia_territorial", "adaptacao_climatica"],
+      modes: ["local_gui", "local_cli", "postgresql_pgvector"],
+      exports: ["normalized_metadata", "scores_jsonl", "shortlist_markdown", "audit_log", "vector_chunks"],
+      policy: ["proveniencia", "schema", "operador", "vetorial"],
+      infra: {
+        availability: "96%",
+        response: "127 ms",
+        storage: "52%",
+        lastCheck: "09:15",
+        signal: "ok"
+      }
     }
   ],
   contracts: [
@@ -84,6 +145,14 @@ const state = {
       kind: "log",
       ref: "audit/validation_report.json",
       status: "schema validado"
+    },
+    {
+      time: "2026-07-10 09:15",
+      source: "Radar-Sister Resiliencia",
+      object: "shortlist-resiliencia-001",
+      kind: "document",
+      ref: "data/exports/*_shortlist.md",
+      status: "triagem auditavel"
     }
   ],
   integrationResults: [
@@ -136,9 +205,10 @@ const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 function setCounts() {
-  qs("#contract-count").textContent = state.contracts.length;
+  qs("#signed-contract-count").textContent = state.systems.length;
   qs("#system-count").textContent = state.systems.length;
   qs("#evidence-count").textContent = state.evidence.length;
+  qs("#integration-compliance").textContent = "N/D";
 }
 
 function renderSystems(filter = "") {
@@ -169,7 +239,25 @@ function renderSystems(filter = "") {
         <div><span>Owner</span><strong>${system.owner}</strong></div>
         <div><span>Contrato</span><strong>${system.contract}</strong></div>
         <div><span>Modo</span><strong>${system.modes.slice(0, 2).join(", ")}</strong></div>
+        <div><span>Acesso</span><strong>${system.accessMode}</strong></div>
       </div>
+      <div class="scope-list">
+        <span><strong>Publico:</strong> ${system.publicScope}</span>
+        <span><strong>Restrito:</strong> ${system.restrictedScope}</span>
+        <span><strong>Privado:</strong> ${system.privateScope}</span>
+      </div>
+      <div class="infra-monitor">
+        <div class="infra-title">
+          <strong>Monitoramento</strong>
+          <span class="status-dot ${system.infra.signal}">${system.infra.lastCheck}</span>
+        </div>
+        <div class="infra-grid">
+          <span><strong>${system.infra.availability}</strong> disponibilidade</span>
+          <span><strong>${system.infra.response}</strong> resposta/sync</span>
+          <span><strong>${system.infra.storage}</strong> armazenamento</span>
+        </div>
+      </div>
+      <a class="system-link" href="${system.accessUrl}" target="_blank" rel="noreferrer">Acessar plataforma</a>
     </article>
   `).join("");
 }
@@ -180,7 +268,9 @@ function renderIntegrationBars() {
       <div class="result-row"><span>${item.label}</span><strong>${item.value}%</strong></div>
       <div class="bar-track"><div class="bar-fill" style="width: ${item.value}%"></div></div>
     </article>
-  `).join("");
+  `).join("") + `
+    <p class="panel-note">Valores demonstrativos. A avaliacao automatizada deve vir do validador de manifestos, ingestao CampoSync, proveniencia, schema, LGPD e diagnostico de servicos.</p>
+  `;
 }
 
 function renderDiagnostics() {

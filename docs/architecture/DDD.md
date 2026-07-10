@@ -19,7 +19,10 @@ Responsavel por schemas, manifestos, versoes e compatibilidade.
 Responsavel por catalogar sistemas autonomos que conversam com o SisTer.
 
 - Entidade: `FederatedSystem`
+- Value Object: `SystemAccess`
+- Value Object: `SharingPolicy`
 - Regra: o SisTer conhece o contrato entregue, nao a implementacao interna do sistema.
+- Regra: cada sistema deve declarar o que compartilha com o SisTer, o que permanece nativo da propria plataforma e qual link de acesso deve ser exibido quando aplicavel.
 
 ### 3. Ingestao CampoSync
 
@@ -57,7 +60,9 @@ Responsavel por transformar dados federados em conhecimento territorial comum.
 
 - Entidade: `IntegrationRun`
 - Entidade: `KnowledgeArtifact`
+- Value Object: `DikwRole`
 - Regra: toda transformacao precisa preservar contrato de origem, evidencias usadas, criterio de validade e resultado produzido.
+- Regra: a informacao ofertada pelo sistema federado e recebida pelo SisTer como dado; o SisTer pode transforma-la em informacao integrada, conhecimento territorial e apoio a sabedoria decisoria.
 
 ### 8. Sintese Tecnica e Diagnostico dos Servicos
 
@@ -65,7 +70,9 @@ Responsavel por sintetizar o estado tecnico dos servicos que sustentam as entreg
 
 - Entidade: `ServiceDiagnostic`
 - Entidade: `OperationalStatus`
+- Value Object: `InfrastructureMetric`
 - Regra: diagnosticos devem distinguir saude tecnica, conformidade contratual, riscos de seguranca, sinais LGPD e governanca operacional.
+- Regra: cards de sistemas podem exibir metricas de infraestrutura como disponibilidade, resposta/sincronizacao, uso de armazenamento e ultima verificacao, desde que a origem da metrica seja rastreavel.
 
 ### 9. Persistencia Territorial e Vetorial
 
@@ -83,10 +90,18 @@ Responsavel por classificar o que pode ser publicado, compartilhado internamente
 - Value Object: `PublicScope`
 - Valores: `public`, `restricted`, `private`
 - Regra: quando houver duvida, classificar como `private` ate revisao humana.
+- Regra: temas sensiveis devem ser declarados no manifesto do sistema e nao devem ser inferidos apenas pela interface.
 
 ## Ontologia Minima
 
-- O que existe: sistemas federados, contratos, pacotes, evidencias, objetos territoriais, visoes de convergencia, execucoes de integracao, artefatos de conhecimento, diagnosticos de servico, geometrias, embeddings e politicas de exposicao.
-- Como se relacionam: sistemas produzem pacotes; pacotes seguem contratos; evidencias sustentam objetos; proveniencia conecta origem e validade.
+- O que existe: sistemas federados, acessos diretos, politicas de compartilhamento, contratos, pacotes, evidencias, objetos territoriais, visoes de convergencia, execucoes de integracao, artefatos de conhecimento, diagnosticos de servico, geometrias, embeddings e politicas de exposicao.
+- Como se relacionam: sistemas produzem pacotes; pacotes seguem contratos; evidencias sustentam objetos; proveniencia conecta origem e validade; informacoes ofertadas por sistemas chegam ao SisTer como dados e podem ser transformadas em informacao, conhecimento e sabedoria.
 - O que e valido: contratos versionados, schema aprovado, checksum verificavel, proveniencia minima, finalidade declarada e escopo de exposicao definido.
 - Como identificar: ids canonicos por sistema, contrato, pacote, evidencia e objeto territorial.
+
+## Sistemas integrantes iniciais
+
+- `morfocampo`: sistema autonomo de campo.
+- `droneops`: sistema autonomo de missao e evidencia geoespacial.
+- `camponode`: infraestrutura local de operacao.
+- `radar_sister_resiliencia`: sistema analitico de triagem, resiliencia, inteligencia territorial e governanca de dados.

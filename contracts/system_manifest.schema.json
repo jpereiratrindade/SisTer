@@ -13,6 +13,8 @@
     "operational_mode",
     "exports",
     "integration_modes",
+    "access",
+    "sharing_policy",
     "data_policy"
   ],
   "properties": {
@@ -26,6 +28,67 @@
     "exports": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
     "integration_modes": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
     "responsible_repository": { "type": "string" },
+    "access": {
+      "type": "object",
+      "required": ["platform_url", "access_mode"],
+      "properties": {
+        "platform_url": { "type": "string", "minLength": 1 },
+        "access_label": { "type": "string" },
+        "access_mode": {
+          "enum": ["public_link", "restricted_link", "local_network", "offline_reference", "not_available"]
+        }
+      }
+    },
+    "sharing_policy": {
+      "type": "object",
+      "required": ["shareable_with_sister", "native_to_system", "public_outputs", "restricted_outputs", "private_outputs", "sensitive_topics", "dikw_role"],
+      "properties": {
+        "shareable_with_sister": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "native_to_system": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "public_outputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "restricted_outputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "private_outputs": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "sensitive_topics": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "dikw_role": {
+          "type": "object",
+          "required": ["offers_as_information", "received_by_sister_as", "sister_transforms_into"],
+          "properties": {
+            "offers_as_information": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "received_by_sister_as": {
+              "enum": ["data"]
+            },
+            "sister_transforms_into": {
+              "type": "array",
+              "items": {
+                "enum": ["information", "knowledge", "wisdom"]
+              },
+              "minItems": 1
+            }
+          }
+        }
+      }
+    },
     "data_policy": {
       "type": "object",
       "required": ["requires_provenance", "requires_schema_validation"],
