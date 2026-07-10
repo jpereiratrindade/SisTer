@@ -1,0 +1,9 @@
+{
+  "evidence_id": "ev-obs-001-photo-001",
+  "source_system_id": "morfocampo",
+  "object_id": "obs-001",
+  "kind": "photo",
+  "uri": "evidence/photos/obs-001.jpg",
+  "captured_at": "2026-07-09T21:30:00-03:00",
+  "checksum": "sha256:example"
+}

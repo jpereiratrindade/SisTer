@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/camposync_package.schema.json",
+  "title": "CampoSync Package",
+  "type": "object",
+  "required": ["package_id", "source_system_id", "contract_version", "created_at", "contents", "checksum"],
+  "properties": {
+    "package_id": { "type": "string", "minLength": 1 },
+    "source_system_id": { "type": "string", "minLength": 1 },
+    "contract_version": { "type": "string", "minLength": 1 },
+    "created_at": { "type": "string", "minLength": 1 },
+    "contents": {
+      "type": "object",
+      "properties": {
+        "observations": { "type": "string" },
+        "events": { "type": "string" },
+        "spatial": { "type": "string" },
+        "indicators": { "type": "string" },
+        "evidence": { "type": "array", "items": { "type": "string" } }
+      }
+    },
+    "checksum": { "type": "string", "minLength": 1 }
+  }
+}

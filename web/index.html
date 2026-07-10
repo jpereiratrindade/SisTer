@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SisTer</title>
+    <link rel="stylesheet" href="./styles.css">
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Navegacao principal">
+        <div class="brand">
+          <span class="brand-mark" aria-hidden="true">ST</span>
+          <div>
+            <strong>SisTer</strong>
+            <span>Convergencia territorial</span>
+          </div>
+        </div>
+
+        <nav class="nav-tabs" aria-label="Secoes">
+          <button class="nav-tab active" type="button" data-view="overview">Visao</button>
+          <button class="nav-tab" type="button" data-view="systems">Sistemas</button>
+          <button class="nav-tab" type="button" data-view="contracts">Contratos</button>
+          <button class="nav-tab" type="button" data-view="evidence">Evidencias</button>
+        </nav>
+
+        <section class="panel compact">
+          <h2>Saude</h2>
+          <div class="health-list">
+            <div><span>Contratos</span><strong id="contract-count">0</strong></div>
+            <div><span>Sistemas</span><strong id="system-count">0</strong></div>
+            <div><span>Evidencias</span><strong id="evidence-count">0</strong></div>
+          </div>
+        </section>
+      </aside>
+
+      <main class="main">
+        <header class="topbar">
+          <div>
+            <h1>Plataforma federativa orientada por contratos</h1>
+            <p>Leitura integrada de sistemas autonomos, pacotes CampoSync, evidencias e proveniencia.</p>
+          </div>
+          <button class="primary-action" type="button" id="validate-button">Validar amostra</button>
+        </header>
+
+        <section class="view active" id="view-overview" aria-label="Visao geral">
+          <div class="dashboard-grid">
+            <section class="panel map-panel">
+              <div class="panel-header">
+                <h2>Mapa territorial</h2>
+                <span id="map-status">3 camadas</span>
+              </div>
+              <canvas id="territory-map" width="900" height="520" aria-label="Mapa territorial sintetico"></canvas>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Fluxo CampoSync</h2>
+                <span>v0.1.0</span>
+              </div>
+              <div class="flow">
+                <div>
+                  <strong>Sistemas</strong>
+                  <span>MorfoCampo, DroneOps</span>
+                </div>
+                <div>
+                  <strong>Contratos</strong>
+                  <span>Manifesto, CampoSync, Evidencia</span>
+                </div>
+                <div>
+                  <strong>SisTer Core</strong>
+                  <span>Validacao, catalogo, proveniencia</span>
+                </div>
+              </div>
+            </section>
+
+            <section class="panel">
+              <div class="panel-header">
+                <h2>Ontologia minima</h2>
+                <span>operacional</span>
+              </div>
+              <dl class="ontology-list">
+                <div><dt>Existe</dt><dd>Sistemas, contratos, pacotes, evidencias, objetos territoriais.</dd></div>
+                <div><dt>Relaciona</dt><dd>Sistemas produzem pacotes; evidencias sustentam objetos.</dd></div>
+                <div><dt>Valida</dt><dd>Schema, checksum, contrato versionado e proveniencia minima.</dd></div>
+                <div><dt>Identifica</dt><dd>Ids canonicos por sistema, contrato, pacote, evidencia e objeto.</dd></div>
+              </dl>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="view-systems" aria-label="Sistemas federados">
+          <div class="section-header">
+            <h2>Sistemas federados</h2>
+            <label class="search-field">
+              <span>Filtrar</span>
+              <input id="system-filter" type="search" placeholder="dominio, modo ou sistema">
+            </label>
+          </div>
+          <div class="card-grid" id="systems-grid"></div>
+        </section>
+
+        <section class="view" id="view-contracts" aria-label="Contratos">
+          <div class="section-header">
+            <h2>Contratos de integracao</h2>
+            <span class="status-pill">Fonte de verdade</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Contrato</th>
+                  <th>Versao</th>
+                  <th>Obrigatorio</th>
+                  <th>Regra central</th>
+                </tr>
+              </thead>
+              <tbody id="contracts-table"></tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="view" id="view-evidence" aria-label="Evidencias">
+          <div class="section-header">
+            <h2>Evidencias e proveniencia</h2>
+            <span class="status-pill">Auditavel</span>
+          </div>
+          <div class="timeline" id="evidence-list"></div>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    <script src="./app.js"></script>
+  </body>
+</html>

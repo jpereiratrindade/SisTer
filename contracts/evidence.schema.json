@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/evidence.schema.json",
+  "title": "SisTer Evidence",
+  "type": "object",
+  "required": ["evidence_id", "source_system_id", "object_id", "kind", "uri", "captured_at"],
+  "properties": {
+    "evidence_id": { "type": "string", "minLength": 1 },
+    "source_system_id": { "type": "string", "minLength": 1 },
+    "object_id": { "type": "string", "minLength": 1 },
+    "kind": { "enum": ["photo", "audio", "document", "log", "spatial_layer", "other"] },
+    "uri": { "type": "string", "minLength": 1 },
+    "captured_at": { "type": "string", "minLength": 1 },
+    "checksum": { "type": "string" }
+  }
+}

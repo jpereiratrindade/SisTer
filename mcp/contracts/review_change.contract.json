@@ -1,0 +1,8 @@
+{
+  "name": "review_change",
+  "allowed_modes": ["review"],
+  "risk_level": "medium",
+  "preconditions": ["inspect relevant files", "prioritize behavioral regressions"],
+  "required_evidence": ["file and line references for findings"],
+  "forbidden_actions": ["unrequested code edits"]
+}

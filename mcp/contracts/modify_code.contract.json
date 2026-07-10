@@ -1,0 +1,8 @@
+{
+  "name": "modify_code",
+  "allowed_modes": ["default"],
+  "risk_level": "medium",
+  "preconditions": ["understand affected bounded context", "preserve user changes"],
+  "required_evidence": ["diff", "build or test result when feasible"],
+  "forbidden_actions": ["destructive git reset", "schema-breaking change without documentation"]
+}

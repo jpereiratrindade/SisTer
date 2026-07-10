@@ -1,0 +1,17 @@
+{
+  "system_id": "morfocampo",
+  "system_name": "MorfoCampo",
+  "system_version": "0.2.1",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "field_system",
+  "domain": ["campo_nativo", "silvipastoril", "observacao_campo"],
+  "operational_mode": ["offline", "local_network", "camponode"],
+  "exports": ["observations", "evidence", "audio", "photos", "field_notes", "spatial_context"],
+  "integration_modes": ["camposync_package", "local_api"],
+  "responsible_repository": "morfocampo",
+  "data_policy": {
+    "requires_provenance": true,
+    "allows_offline_sync": true,
+    "requires_schema_validation": true
+  }
+}

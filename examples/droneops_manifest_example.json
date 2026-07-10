@@ -1,0 +1,18 @@
+{
+  "system_id": "droneops",
+  "system_name": "DroneOps",
+  "system_version": "0.1.0",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "mission_system",
+  "domain": ["drone", "imageamento", "missao_campo", "evidencia_geoespacial"],
+  "operational_mode": ["offline", "local_network", "pwa", "embedded_server"],
+  "exports": ["mission_plan", "checklist", "flight_log", "images", "orthomosaic_metadata", "spatial_layers", "evidence_package"],
+  "integration_modes": ["camposync_package", "local_api", "file_import"],
+  "responsible_repository": "droneops",
+  "data_policy": {
+    "requires_provenance": true,
+    "requires_schema_validation": true,
+    "requires_operator": true,
+    "requires_spatial_reference": true
+  }
+}

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/system_manifest.schema.json",
+  "title": "SisTer System Manifest",
+  "type": "object",
+  "required": [
+    "system_id",
+    "system_name",
+    "system_version",
+    "contract_version",
+    "type",
+    "domain",
+    "operational_mode",
+    "exports",
+    "integration_modes",
+    "data_policy"
+  ],
+  "properties": {
+    "system_id": { "type": "string", "minLength": 1 },
+    "system_name": { "type": "string", "minLength": 1 },
+    "system_version": { "type": "string", "minLength": 1 },
+    "contract_version": { "type": "string", "minLength": 1 },
+    "type": { "type": "string", "minLength": 1 },
+    "domain": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "operational_mode": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "exports": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "integration_modes": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
+    "responsible_repository": { "type": "string" },
+    "data_policy": {
+      "type": "object",
+      "required": ["requires_provenance", "requires_schema_validation"],
+      "properties": {
+        "requires_provenance": { "const": true },
+        "allows_offline_sync": { "type": "boolean" },
+        "requires_schema_validation": { "const": true },
+        "requires_operator": { "type": "boolean" },
+        "requires_spatial_reference": { "type": "boolean" }
+      }
+    }
+  }
+}

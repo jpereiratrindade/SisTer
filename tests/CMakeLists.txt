@@ -1,0 +1,5 @@
+add_executable(sister_core_tests core_tests.cpp)
+target_link_libraries(sister_core_tests PRIVATE sister_core)
+target_compile_features(sister_core_tests PRIVATE cxx_std_20)
+
+add_test(NAME sister_core_tests COMMAND sister_core_tests)
