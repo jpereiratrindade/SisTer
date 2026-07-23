@@ -6,7 +6,7 @@ PORT="${1:-8000}"
 curl -fsS "http://127.0.0.1:${PORT}/" | grep -q "Atualizar conexão"
 curl -fsS "http://127.0.0.1:${PORT}/login" >/dev/null
 curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null
-curl -fsS "http://127.0.0.1:${PORT}/api/systems" >/dev/null
+curl -fsS "http://127.0.0.1:${PORT}/api/systems" | grep -q '"id":"sister_clima"'
 
 for protected_path in contracts evidence diagnostics integrations/sister-studio; do
   status="$(

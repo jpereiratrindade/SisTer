@@ -46,6 +46,14 @@
       ]
     },
     {
+      "id": "sister_clima",
+      "repository": "python/Sister-Clima",
+      "integrates_with_sister": true,
+      "resources": [
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8501}
+      ]
+    },
+    {
       "id": "sister_studio",
       "repository": "Sister-Studio",
       "integrates_with_sister": true,

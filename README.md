@@ -9,7 +9,10 @@ SisTer integra sistemas porque reconhece contratos comuns.
 
 ## Hipotese
 
-O centro do projeto e `contracts/`, nao `apps/`. Sistemas como MorfoCampo, DroneOps, CampoNode e Radar-Sister Resiliencia podem manter autonomia operacional, interface propria e sincronizacao offline, desde que entreguem contratos comuns, evidencias e proveniencia verificavel.
+O centro do projeto e `contracts/`, nao `apps/`. Sistemas como MorfoCampo,
+DroneOps, CampoNode, Radar-Sister Resiliencia e Sister-Clima podem manter
+autonomia operacional e interface propria, desde que entreguem contratos
+comuns, evidencias e proveniencia verificavel.
 
 ## Base tecnica
 
@@ -81,6 +84,11 @@ O adaptador Sister-Studio usa TLS verificado e segredo de execução. A
 configuração e a fronteira de dados estão em
 `adapters/sister_studio/README.md`; conteúdo de usuários não é compartilhado
 na fase inicial.
+
+O Sister-Clima e reconhecido pelo manifesto
+`examples/sister_clima_manifest_example.json` e aparece no catalogo com acesso
+direto a sua aplicacao local. A fronteira de compartilhamento e as limitacoes
+da importacao por arquivo estao em `adapters/sister_clima/README.md`.
 
 No primeiro acesso a `/login`, o SisTer permite criar a conta administradora
 inicial. Depois do login, a barra lateral libera as visoes internas e a opcao
@@ -156,6 +164,7 @@ Detalhes: `docs/architecture/ENVIRONMENTS.md`.
 
 ```bash
 ./build/apps/sisterctl/sisterctl validate-manifest examples/morfocampo_manifest_example.json
+./build/apps/sisterctl/sisterctl validate-manifest examples/sister_clima_manifest_example.json
 ```
 
 ## Interface

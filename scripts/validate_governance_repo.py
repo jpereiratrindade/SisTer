@@ -22,6 +22,8 @@ REQUIRED = [
     "docs/governance/SISTER_STUDIO_DATA.md",
     "adapters/sister_studio/README.md",
     "examples/sister_studio_manifest_example.json",
+    "adapters/sister_clima/README.md",
+    "examples/sister_clima_manifest_example.json",
 ]
 
 missing = [path for path in REQUIRED if not (ROOT / path).exists()]

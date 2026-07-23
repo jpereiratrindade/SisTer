@@ -1,5 +1,16 @@
 # DAI - SisTer
 
+## 2026-07-23 - Integracao do Sister-Clima
+
+- Decision: reconhecer `sister_clima` como sistema climatico federado, mantendo
+  a experiencia analitica e as consultas interativas na plataforma de origem.
+- Action: reservar a porta local 8501, publicar o sistema no catalogo e em
+  `/api/systems`, reconhecer seu manifesto e documentar a fronteira do
+  adaptador.
+- Impediment: a ingestao automatica de arquivos climaticos ainda nao foi
+  implementada; nesta fase, `file_import` descreve importacao controlada por
+  contrato.
+
 ## 2026-07-09
 
 - Decision: iniciar o SisTer como plataforma federativa de convergencia territorial orientada por contratos.

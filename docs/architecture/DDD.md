@@ -107,4 +107,5 @@ Responsavel por classificar o que pode ser publicado, compartilhado internamente
 - `droneops`: sistema autonomo de missao e evidencia geoespacial.
 - `camponode`: infraestrutura local de operacao.
 - `radar_sister_resiliencia`: sistema analitico de triagem, resiliencia, inteligencia territorial e governanca de dados.
+- `sister_clima`: sistema de monitoramento pluviometrico, indicadores climaticos e camadas espaciais com proveniencia.
 - `sister_studio`: sistema criativo de composicao, voz e video, integrado inicialmente por capacidades e saude sanitizada.

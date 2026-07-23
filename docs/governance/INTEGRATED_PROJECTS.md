@@ -54,6 +54,7 @@ funcionando quando os repositorios forem clonados separadamente.
 | Sister-Studio PostgreSQL | PostgreSQL | 55433 | - |
 | Radar-Sister | HTTP | 8765 | - |
 | Radar-Sister | PostgreSQL | 55432 | - |
+| Sister-Clima | HTTP | 8501 | - |
 
 O registro tambem inclui projetos locais nao integrados que reservam recursos,
 pois eles podem colidir no mesmo host.

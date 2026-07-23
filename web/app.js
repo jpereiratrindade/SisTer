@@ -105,6 +105,32 @@ const state = {
       }
     },
     {
+      id: "sister_clima",
+      name: "Sister-Clima",
+      version: "2.3.0",
+      owner: "Projeto Resiliência - Embrapa",
+      type: "Climático",
+      status: "Integrado",
+      description: "Monitoramento pluviométrico, indicadores climáticos e camadas espaciais com proveniência das fontes.",
+      contract: "sister-contracts/0.1.0",
+      accessUrl: "http://127.0.0.1:8501",
+      accessMode: "Local",
+      publicScope: "Documentação, fontes e metadados de proveniência",
+      restrictedScope: "Dados derivados, indicadores não revisados e camadas geradas",
+      privateScope: "Sessões, configuração de rede e logs",
+      domains: ["clima", "precipitacao", "resiliencia", "inteligencia_territorial"],
+      modes: ["local_web", "public_web", "scheduled_collection", "offline_dataset"],
+      exports: ["daily_precipitation_csv", "climate_indicators", "spatial_precipitation_layer", "provenance_metadata"],
+      policy: ["proveniencia", "schema", "operador", "referencia_espacial"],
+      infra: {
+        availability: "sob demanda",
+        response: "HTTP",
+        storage: "CSV local",
+        lastCheck: "sem coleta",
+        signal: "ok"
+      }
+    },
+    {
       id: "sister_studio",
       name: "Sister-Studio",
       version: "0.2.1",
