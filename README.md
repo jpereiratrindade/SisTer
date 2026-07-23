@@ -71,10 +71,16 @@ http://localhost:8000/api/systems
 http://localhost:8000/api/contracts
 http://localhost:8000/api/evidence
 http://localhost:8000/api/diagnostics
+http://localhost:8000/api/integrations/sister-studio
 ```
 
 `health` e `systems` sao publicos. `contracts`, `evidence` e `diagnostics`
-exigem sessao com papel `admin`.
+e a integração com o Sister-Studio exigem sessão com papel `admin`.
+
+O adaptador Sister-Studio usa TLS verificado e segredo de execução. A
+configuração e a fronteira de dados estão em
+`adapters/sister_studio/README.md`; conteúdo de usuários não é compartilhado
+na fase inicial.
 
 No primeiro acesso a `/login`, o SisTer permite criar a conta administradora
 inicial. Depois do login, a barra lateral libera as visoes internas e a opcao

@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/sister_studio_capabilities.schema.json",
+  "title": "Sister-Studio Capabilities",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "system",
+    "capabilities",
+    "sharing"
+  ],
+  "properties": {
+    "contract_id": {
+      "const": "sister-studio.integration"
+    },
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "system": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "version"],
+      "properties": {
+        "id": {"const": "sister_studio"},
+        "name": {"const": "Sister-Studio"},
+        "version": {"type": "string", "minLength": 1}
+      }
+    },
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "name", "inputs", "outputs", "operation_data_class"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "name": {"type": "string", "minLength": 1},
+          "inputs": {
+            "type": "array",
+            "items": {"type": "string"},
+            "uniqueItems": true
+          },
+          "outputs": {
+            "type": "array",
+            "items": {"type": "string"},
+            "uniqueItems": true
+          },
+          "operation_data_class": {
+            "enum": [
+              "non_personal_by_design",
+              "may_contain_personal_data",
+              "high_risk_personal_data"
+            ]
+          }
+        }
+      }
+    },
+    "sharing": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "scope",
+        "contains_personal_data",
+        "contains_sensitive_data",
+        "content_included"
+      ],
+      "properties": {
+        "scope": {"const": "restricted"},
+        "contains_personal_data": {"const": false},
+        "contains_sensitive_data": {"const": false},
+        "content_included": {"const": false}
+      }
+    }
+  }
+}

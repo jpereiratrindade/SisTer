@@ -1,4 +1,5 @@
 #include "auth.hpp"
+#include "studio_client.hpp"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -210,7 +211,7 @@ std::optional<HttpRequest> readRequest(int client) {
 }
 
 std::string jsonHealth() {
-    return R"({"status":"ok","service":"sisterd","version":"0.1.0","database":"not_connected"})";
+    return R"({"status":"ok","service":"sisterd","version":"0.2.0","database":"not_connected"})";
 }
 
 std::string jsonContracts() {
@@ -218,7 +219,8 @@ std::string jsonContracts() {
   {"name":"System Manifest","version":"0.1.0","required":"Sim"},
   {"name":"CampoSync Package","version":"0.1.0","required":"Para ingestao offline"},
   {"name":"Evidence","version":"0.1.0","required":"Para dado promovido"},
-  {"name":"Public Scope","version":"0.1.0","required":"Para classificacao de exposicao"}
+  {"name":"Public Scope","version":"0.1.0","required":"Para classificacao de exposicao"},
+  {"name":"Sister-Studio Integration","version":"1.0.0","required":"Para capacidades e saude sanitizada"}
 ])";
 }
 
@@ -228,7 +230,7 @@ std::string jsonSystems() {
   {"id":"droneops","name":"DroneOps","type":"Missao","status":"Em validacao","contract":"sister-contracts/0.1.0","access_url":"https://127.0.0.1:8012"},
   {"id":"camponode","name":"CampoNode","type":"Infraestrutura","status":"Planejado","contract":"sister-contracts/0.1.0","access_url":"https://camponode.local"},
   {"id":"radar_sister_resiliencia","name":"Radar-Sister Resiliencia","type":"Analitico","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"http://127.0.0.1:8765"},
-  {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Experimental","contract":"sister-contracts/0.1.0","access_url":"https://127.0.0.1:8443"}
+  {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_url":"https://127.0.0.1:8443"}
 ])";
 }
 
@@ -257,6 +259,9 @@ std::string routeApi(const std::string& path) {
     if (path == "/api/contracts") return jsonContracts();
     if (path == "/api/evidence") return jsonEvidence();
     if (path == "/api/diagnostics") return jsonDiagnostics();
+    if (path == "/api/integrations/sister-studio") {
+        return sisterd::sisterStudioIntegrationJson();
+    }
     return {};
 }
 

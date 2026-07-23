@@ -23,6 +23,7 @@ Responsavel por catalogar sistemas autonomos que conversam com o SisTer.
 - Value Object: `SharingPolicy`
 - Regra: o SisTer conhece o contrato entregue, nao a implementacao interna do sistema.
 - Regra: cada sistema deve declarar o que compartilha com o SisTer, o que permanece nativo da propria plataforma e qual link de acesso deve ser exibido quando aplicavel.
+- Regra: capacidades externas sao descritas por contrato e nao concedem acesso a conteudo ou operacoes.
 
 ### 3. Ingestao CampoSync
 
@@ -73,6 +74,7 @@ Responsavel por sintetizar o estado tecnico dos servicos que sustentam as entreg
 - Value Object: `InfrastructureMetric`
 - Regra: diagnosticos devem distinguir saude tecnica, conformidade contratual, riscos de seguranca, sinais LGPD e governanca operacional.
 - Regra: cards de sistemas podem exibir metricas de infraestrutura como disponibilidade, resposta/sincronizacao, uso de armazenamento e ultima verificacao, desde que a origem da metrica seja rastreavel.
+- Regra: diagnosticos federados devem ser sanitizados no produtor e novamente limitados na exposicao do SisTer.
 
 ### 9. Persistencia Territorial e Vetorial
 
@@ -105,3 +107,4 @@ Responsavel por classificar o que pode ser publicado, compartilhado internamente
 - `droneops`: sistema autonomo de missao e evidencia geoespacial.
 - `camponode`: infraestrutura local de operacao.
 - `radar_sister_resiliencia`: sistema analitico de triagem, resiliencia, inteligencia territorial e governanca de dados.
+- `sister_studio`: sistema criativo de composicao, voz e video, integrado inicialmente por capacidades e saude sanitizada.

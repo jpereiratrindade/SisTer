@@ -70,6 +70,9 @@ Quando houver duvida, classificar como `private` ate revisao humana.
 | Embedding | Restrito ou privado | Depende da origem do conteudo vetorizado. |
 | Diagnostico de servico | Publico ou restrito | Publico para status agregado; restrito para falhas exploraveis. |
 | Auditoria | Privado | Exposicao apenas para responsaveis autorizados. |
+| Capacidades do Sister-Studio | Restrito | Catalogo tecnico sem conteudo ou identidade. |
+| Saude do Sister-Studio | Restrito | Somente estado por modulo e horario; sem host, processo ou log. |
+| Voz, texto ou midia do Sister-Studio | Privado | Nao compartilhado por padrao. |
 
 ## Fronteira por sistema
 

@@ -1,0 +1,69 @@
+{
+  "system_id": "sister_studio",
+  "system_name": "Sister-Studio",
+  "system_version": "0.2.0",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "audiovisual_production_studio",
+  "domain": ["audio", "voice", "video"],
+  "operational_mode": ["local_web", "local_network"],
+  "exports": ["capability_catalog", "sanitized_service_health"],
+  "integration_modes": ["authenticated_local_api"],
+  "responsible_repository": "jpereiratrindade/sister-studio",
+  "access": {
+    "platform_url": "https://127.0.0.1:8443",
+    "access_label": "Abrir Sister-Studio",
+    "access_mode": "local_network"
+  },
+  "sharing_policy": {
+    "shareable_with_sister": [
+      "capability_catalog",
+      "supported_format_matrix",
+      "contract_versions",
+      "sanitized_service_health"
+    ],
+    "native_to_system": [
+      "user_identity",
+      "voice_samples",
+      "voice_profiles",
+      "input_text",
+      "generated_media",
+      "projects",
+      "audit_events"
+    ],
+    "public_outputs": ["system_identity", "system_version", "contract_version"],
+    "restricted_outputs": [
+      "capability_catalog",
+      "supported_format_matrix",
+      "sanitized_service_health"
+    ],
+    "private_outputs": [
+      "user_identity",
+      "voice_samples",
+      "voice_profiles",
+      "input_text",
+      "generated_media",
+      "projects",
+      "audit_events"
+    ],
+    "sensitive_topics": [
+      "voice_biometrics",
+      "personal_data",
+      "user_authored_content",
+      "copyrighted_media"
+    ],
+    "dikw_role": {
+      "offers_as_information": [
+        "creative_capabilities",
+        "interoperability_formats",
+        "sanitized_operational_health"
+      ],
+      "received_by_sister_as": "data",
+      "sister_transforms_into": ["information", "knowledge"]
+    }
+  },
+  "data_policy": {
+    "allows_offline_sync": false,
+    "requires_provenance": true,
+    "requires_schema_validation": true
+  }
+}

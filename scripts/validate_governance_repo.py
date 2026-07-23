@@ -16,6 +16,12 @@ REQUIRED = [
     "prompts/task_template.md",
     "prompts/governance_task_packet.md",
     "contracts/README.md",
+    "contracts/sister_studio_capabilities.schema.json",
+    "contracts/sister_studio_health.schema.json",
+    "docs/adr/ADR-0004-sister-studio-service-integration.md",
+    "docs/governance/SISTER_STUDIO_DATA.md",
+    "adapters/sister_studio/README.md",
+    "examples/sister_studio_manifest_example.json",
 ]
 
 missing = [path for path in REQUIRED if not (ROOT / path).exists()]

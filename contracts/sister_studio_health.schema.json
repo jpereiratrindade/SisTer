@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/sister_studio_health.schema.json",
+  "title": "Sister-Studio Sanitized Health",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_id",
+    "contract_version",
+    "status",
+    "checked_at",
+    "modules"
+  ],
+  "properties": {
+    "contract_id": {
+      "const": "sister-studio.integration"
+    },
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "status": {
+      "enum": ["ok", "degraded", "unavailable"]
+    },
+    "checked_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "modules": {
+      "type": "array",
+      "minItems": 3,
+      "maxItems": 3,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "status"],
+        "properties": {
+          "id": {
+            "enum": ["composition", "voice", "video"]
+          },
+          "status": {
+            "enum": ["available", "offline"]
+          }
+        }
+      }
+    }
+  }
+}

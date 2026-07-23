@@ -56,6 +56,7 @@ O `sisterd` serve a interface e endpoints JSON iniciais:
 - `/api/contracts`
 - `/api/evidence`
 - `/api/diagnostics`
+- `/api/integrations/sister-studio` (administrador, contrato externo)
 
 Enquanto a API usar dados em memoria, a interface deve deixar claro quando indicadores forem demonstrativos. Quando a API passar a ler PostgreSQL, consultas de dashboard devem filtrar escopo de exposicao antes de retornar dados.
 
@@ -86,3 +87,4 @@ Diretrizes iniciais:
 A politica detalhada de exposicao esta em:
 
 - [PUBLIC_PRIVATE_SCOPE.md](./PUBLIC_PRIVATE_SCOPE.md)
+- [SISTER_STUDIO_DATA.md](./SISTER_STUDIO_DATA.md)
