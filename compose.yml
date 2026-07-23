@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: sister
       POSTGRES_PASSWORD: sister
     ports:
-      - "127.0.0.1:${SISTER_DB_PORT:-5432}:5432"
+      - "127.0.0.1:${SISTER_DB_PORT:-55434}:5432"
     volumes:
       - sister_pgdata:/var/lib/postgresql/data
       - ./storage/migrations:/docker-entrypoint-initdb.d:ro,Z

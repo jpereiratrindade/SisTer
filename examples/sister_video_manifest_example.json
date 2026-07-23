@@ -1,0 +1,23 @@
+{
+  "system_id": "sister_video",
+  "system_name": "Sister-Video",
+  "system_version": "0.2.0",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "audiovisual_composition_system",
+  "domain": ["video", "narrativas", "legendas", "audio"],
+  "operational_mode": ["local_web", "local_cli", "offline"],
+  "imports": ["wav_file", "ogg_file", "flac_file", "mp3_file", "m4a_file", "images", "srt_file"],
+  "exports": ["mp4_file", "project_configuration", "render_log"],
+  "integration_modes": ["file_import", "local_api"],
+  "responsible_repository": "Sister-Video",
+  "access": {
+    "platform_url": "http://127.0.0.1:8014",
+    "access_label": "Abrir Sister-Video",
+    "access_mode": "local"
+  },
+  "data_policy": {
+    "requires_provenance": true,
+    "allows_offline_sync": true,
+    "requires_schema_validation": true
+  }
+}

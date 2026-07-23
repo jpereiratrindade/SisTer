@@ -7,22 +7,19 @@
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
+    <div class="system-layout">
     <header class="topbar">
       <div class="mini-brand">
         <span class="brand-symbol" aria-hidden="true">ST</span>
         <div class="brand-text">
-          <span class="brand-super">PLATAFORMA FEDERATIVA</span>
+          <span class="brand-super">SISTER</span>
           <h1>SisTer</h1>
         </div>
       </div>
 
-      <nav class="top-nav" aria-label="Navegacao principal">
-        <button class="nav-link selected" type="button" data-view="home">Home</button>
-        <button class="nav-link" type="button" data-view="integration">Integracao</button>
-        <button class="nav-link" type="button" data-view="diagnostics">Diagnostico</button>
-        <button class="nav-link" type="button" data-view="contracts">Contratos</button>
-        <button class="nav-link" type="button" data-view="evidence">Evidencias</button>
-      </nav>
+      <div class="top-center-label">
+        <span>Plataforma SisTer de convergencia territorial</span>
+      </div>
 
       <div class="top-context">
         <span class="context-pill">sister-contracts/0.1.0</span>
@@ -30,12 +27,41 @@
       </div>
     </header>
 
+    <aside class="sidebar">
+      <nav aria-label="Navegacao principal do SisTer">
+        <button class="nav-link selected" type="button" data-view="home">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8Z"/></svg>
+          Inicio
+        </button>
+        <button class="nav-link" type="button" data-view="integration">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a3 3 0 1 0 0.01 0M18 8a3 3 0 1 0 0.01 0M12 18a3 3 0 1 0 0.01 0M8.7 9.5l6.6 0M7.7 10.5l3 5M16.3 10.5l-3 5"/></svg>
+          Integracao
+        </button>
+        <button class="nav-link" type="button" data-view="diagnostics">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>
+          Diagnostico
+        </button>
+        <button class="nav-link" type="button" data-view="contracts">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3ZM14 3v4h4M9 11h6M9 15h6"/></svg>
+          Contratos
+        </button>
+        <button class="nav-link" type="button" data-view="evidence">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 7.7 8 9 4.6-1.3 8-4 8-9V6l-8-3ZM9 12l2 2 4-5"/></svg>
+          Evidencias
+        </button>
+      </nav>
+      <div class="sidebar-footer">
+        <span>Base conceitual viva</span>
+        <strong>docs/conceptual</strong>
+      </div>
+    </aside>
+
     <main class="workspace">
       <section class="view active" id="view-home" aria-label="Home">
         <div class="page-heading">
           <div>
             <span class="eyebrow">Convergencia territorial</span>
-            <h2>Sistemas integrantes</h2>
+            <h2>Sistemas conectados</h2>
           </div>
           <button class="primary-action" type="button" id="validate-button">Validar amostra</button>
         </div>
@@ -43,7 +69,7 @@
         <div class="dashboard">
           <article class="metric">
             <strong id="system-count">0</strong>
-            <span>Sistemas federados</span>
+            <span>Sistemas participantes</span>
           </article>
           <article class="metric">
             <strong id="signed-contract-count">0</strong>
@@ -168,6 +194,7 @@
     </footer>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </div>
     <script src="./app.js"></script>
   </body>
 </html>

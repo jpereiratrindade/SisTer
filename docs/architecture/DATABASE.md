@@ -45,11 +45,11 @@ CREATE EXTENSION IF NOT EXISTS vector;
 Nomes planejados:
 
 ```bash
-export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
-export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5433/sister'
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55434/sister'
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55435/sister'
 ```
 
-`5432` e usado pelo ambiente `dev`; `5433` e usado pelo ambiente `test`.
+`55434` e usado pelo ambiente `dev`; `55435` e usado pelo ambiente `test`.
 
 Se `SISTER_DATABASE_URL` nao estiver definido, ferramentas locais podem operar em modo arquivo/demonstracao quando isso for suficiente.
 
@@ -175,7 +175,7 @@ Comandos de desenvolvimento:
 
 ```bash
 ./scripts/db/up.sh dev
-export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55434/sister'
 ./scripts/db/check.sh dev
 ./scripts/db/migrate.sh dev
 ```
@@ -186,7 +186,7 @@ Comandos de teste:
 ./scripts/test/create_worktree.sh
 cd ../SisTer-test
 ./scripts/db/up.sh test
-export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5433/sister'
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55435/sister'
 ./scripts/db/check.sh test
 ./scripts/db/migrate.sh test
 ```

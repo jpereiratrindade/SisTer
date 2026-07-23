@@ -32,11 +32,11 @@ CREATE EXTENSION IF NOT EXISTS vector;
 Variaveis esperadas pelo SisTer:
 
 ```bash
-SISTER_DATABASE_URL=postgresql://sister:sister@localhost:5432/sister
-SISTER_DATABASE_URL=postgresql://sister:sister@localhost:5433/sister
+SISTER_DATABASE_URL=postgresql://sister:sister@localhost:55434/sister
+SISTER_DATABASE_URL=postgresql://sister:sister@localhost:55435/sister
 ```
 
-`5432` e reservado para desenvolvimento; `5433` e reservado para teste.
+`55434` e reservado para desenvolvimento; `55435` e reservado para teste.
 
 ## Aplicacao
 

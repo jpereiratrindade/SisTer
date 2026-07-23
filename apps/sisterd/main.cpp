@@ -76,7 +76,8 @@ std::string jsonSystems() {
   {"id":"morfocampo","name":"MorfoCampo","type":"Campo","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"https://morfocampo.local"},
   {"id":"droneops","name":"DroneOps","type":"Missao","status":"Em validacao","contract":"sister-contracts/0.1.0","access_url":"https://droneops.local"},
   {"id":"camponode","name":"CampoNode","type":"Infraestrutura","status":"Planejado","contract":"sister-contracts/0.1.0","access_url":"https://camponode.local"},
-  {"id":"radar_sister_resiliencia","name":"Radar-Sister Resiliencia","type":"Analitico","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"http://127.0.0.1:8765"}
+  {"id":"radar_sister_resiliencia","name":"Radar-Sister Resiliencia","type":"Analitico","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"http://127.0.0.1:8765"},
+  {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Experimental","contract":"sister-contracts/0.1.0","access_url":"https://127.0.0.1:8443"}
 ])";
 }
 

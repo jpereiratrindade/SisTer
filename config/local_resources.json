@@ -1,0 +1,121 @@
+{
+  "version": "1.0.0",
+  "scope": "local-development",
+  "projects": [
+    {
+      "id": "sister",
+      "repository": "cpp/SisTer",
+      "integrates_with_sister": true,
+      "resources": [
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8000},
+        {"kind": "http", "environment": "test", "host": "127.0.0.1", "port": 8001},
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55434, "container": "sister-dev-db", "volume": "sister_dev_pgdata"},
+        {"kind": "postgresql", "environment": "test", "host": "127.0.0.1", "port": 55435, "container": "sister-test-db", "volume": "sister_test_pgdata"}
+      ]
+    },
+    {
+      "id": "morfocampo",
+      "repository": "cpp/morfocampo",
+      "integrates_with_sister": true,
+      "resources": [
+        {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8011}
+      ]
+    },
+    {
+      "id": "droneops",
+      "repository": "cpp/droneops",
+      "integrates_with_sister": true,
+      "resources": [
+        {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8012}
+      ]
+    },
+    {
+      "id": "camponode",
+      "repository": null,
+      "integrates_with_sister": true,
+      "status": "planned",
+      "resources": []
+    },
+    {
+      "id": "radar_sister_resiliencia",
+      "repository": "cpp/radar_sister_resiliencia",
+      "integrates_with_sister": true,
+      "resources": [
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8765},
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55432, "container": "radar-sister-pgvector-pg17", "volume": "radar_sister_pgvector_pg17_data"}
+      ]
+    },
+    {
+      "id": "sister_studio",
+      "repository": "Sister-Studio",
+      "integrates_with_sister": true,
+      "components": ["audio", "voice", "video"],
+      "resources": [
+        {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8443, "container": "sister-studio-dev", "volume": "sister_studio_generated"},
+        {"kind": "http", "environment": "dev", "host": "0.0.0.0", "port": 8088},
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 18013, "exposure": "internal"},
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 18043, "exposure": "internal"},
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 18014, "exposure": "internal"},
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55433, "container": "pocket_tts_postgres", "volume": "pocket_tts_postgres_data"}
+      ]
+    },
+    {
+      "id": "sister_video",
+      "repository": "python/Sister-Video",
+      "integrates_with_sister": false,
+      "status": "superseded-by-sister-studio",
+      "resources": []
+    },
+    {
+      "id": "macma",
+      "repository": "cpp/macma",
+      "integrates_with_sister": false,
+      "resources": [
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 5432, "container": "macma_db_1", "volume": "macma_postgres_data"}
+      ]
+    },
+    {
+      "id": "vgaf",
+      "repository": "cpp/VGAF-Test",
+      "integrates_with_sister": false,
+      "resources": [
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 5434, "container": "vgaf-dev-db", "volume": "vgaf_dev_pgdata"},
+        {"kind": "postgresql", "environment": "test", "host": "127.0.0.1", "port": 5435, "container": "vgaf-test-db", "volume": "vgaf_test_pgdata"}
+      ]
+    },
+    {
+      "id": "pocket_tts",
+      "repository": "python/pocket-tts-web/pocket-tts-web",
+      "integrates_with_sister": false,
+      "status": "superseded-by-sister-studio",
+      "resources": []
+    },
+    {
+      "id": "labgp_web",
+      "repository": "Django/LabGP-Web",
+      "integrates_with_sister": false,
+      "status": "migration-required",
+      "resources": [
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55436, "container": "labgp-web-postgres"}
+      ]
+    },
+    {
+      "id": "governanca",
+      "repository": null,
+      "integrates_with_sister": false,
+      "status": "migration-required",
+      "resources": [
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55437, "container": "governanca_db", "volume": "governanca_pgdata"}
+      ]
+    },
+    {
+      "id": "inmet_000",
+      "repository": "python/inmet_000",
+      "integrates_with_sister": false,
+      "depends_on": [
+        {"project": "vgaf", "kind": "postgresql", "environment": "dev", "port": 5434}
+      ],
+      "resources": []
+    }
+  ]
+}

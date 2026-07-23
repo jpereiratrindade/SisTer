@@ -7,6 +7,7 @@ const state = {
       owner: "Equipe Campo",
       type: "Campo",
       status: "Operacional",
+      description: "Sistema de campo para observacoes, evidencias locais e sincronizacao offline por contrato.",
       contract: "sister-contracts/0.1.0",
       accessUrl: "https://morfocampo.local",
       accessMode: "Restrito",
@@ -32,6 +33,7 @@ const state = {
       owner: "Equipe Geoespacial",
       type: "Missao",
       status: "Em validacao",
+      description: "Organiza missoes, registros de voo e evidencias georreferenciadas para leitura territorial.",
       contract: "sister-contracts/0.1.0",
       accessUrl: "https://droneops.local",
       accessMode: "Restrito",
@@ -57,6 +59,7 @@ const state = {
       owner: "Infraestrutura",
       type: "Infraestrutura",
       status: "Planejado",
+      description: "No local para cache, sincronizacao e continuidade operacional quando a conectividade oscila.",
       contract: "sister-contracts/0.1.0",
       accessUrl: "https://camponode.local",
       accessMode: "Rede local",
@@ -82,6 +85,7 @@ const state = {
       owner: "Equipe Resiliencia",
       type: "Analitico",
       status: "Operacional",
+      description: "Modulo analitico para triagem, scores, shortlists e inteligencia territorial auditavel.",
       contract: "sister-contracts/0.1.0",
       accessUrl: "http://127.0.0.1:8765",
       accessMode: "Local",
@@ -98,6 +102,32 @@ const state = {
         storage: "52%",
         lastCheck: "09:15",
         signal: "ok"
+      }
+    },
+    {
+      id: "sister_studio",
+      name: "Sister-Studio",
+      version: "0.1.0",
+      owner: "Laboratorio SisTer",
+      type: "Criativo",
+      status: "Experimental",
+      description: "Estudio C++20 integrado para composicao procedural, identidade vocal, MIDI, WAV, OGG e legendas.",
+      contract: "sister-contracts/0.1.0",
+      accessUrl: "https://127.0.0.1:8443",
+      accessMode: "Local",
+      publicScope: "Presets e versao do algoritmo",
+      restrictedScope: "Parametros e metadados musicais",
+      privateScope: "Arquivos temporarios e historico local",
+      domains: ["audio", "musica_procedural", "voz", "tts", "midi", "wav", "ogg"],
+      modes: ["local_web", "local_cli", "offline", "isolated_inference"],
+      exports: ["midi_file", "wav_file", "ogg_file", "srt_file", "voice_profile"],
+      policy: ["proveniencia", "schema", "seed", "determinismo", "privacidade"],
+      infra: {
+        availability: "MVP",
+        response: "local",
+        storage: "temporario",
+        lastCheck: "sob demanda",
+        signal: "warn"
       }
     }
   ],
@@ -230,34 +260,19 @@ function renderSystems(filter = "") {
 
   qs("#systems-grid").innerHTML = systems.map((system) => `
     <article class="system-card">
-      <h4>${system.name}</h4>
-      <p class="system-meta">${system.type} · ${system.version} · ${system.status}</p>
+      <div class="system-card-head">
+        <h4>${system.name}</h4>
+        <span class="status-pill">${system.status}</span>
+      </div>
+      <p class="system-meta">${system.type} · ${system.version} · ${system.accessMode}</p>
+      <p class="system-description">${system.description}</p>
       <div class="tag-row">
-        ${system.domains.slice(0, 3).map((item) => `<span class="tag">${item}</span>`).join("")}
+        ${system.domains.slice(0, 2).map((item) => `<span class="tag">${item}</span>`).join("")}
       </div>
-      <div class="mini-table">
-        <div><span>Owner</span><strong>${system.owner}</strong></div>
-        <div><span>Contrato</span><strong>${system.contract}</strong></div>
-        <div><span>Modo</span><strong>${system.modes.slice(0, 2).join(", ")}</strong></div>
-        <div><span>Acesso</span><strong>${system.accessMode}</strong></div>
+      <div class="system-actions">
+        <button class="text-link" type="button" data-system-id="${system.id}">Ver mais</button>
+        <a class="system-link" href="${system.accessUrl}" target="_blank" rel="noreferrer">Acessar</a>
       </div>
-      <div class="scope-list">
-        <span><strong>Publico:</strong> ${system.publicScope}</span>
-        <span><strong>Restrito:</strong> ${system.restrictedScope}</span>
-        <span><strong>Privado:</strong> ${system.privateScope}</span>
-      </div>
-      <div class="infra-monitor">
-        <div class="infra-title">
-          <strong>Monitoramento</strong>
-          <span class="status-dot ${system.infra.signal}">${system.infra.lastCheck}</span>
-        </div>
-        <div class="infra-grid">
-          <span><strong>${system.infra.availability}</strong> disponibilidade</span>
-          <span><strong>${system.infra.response}</strong> resposta/sync</span>
-          <span><strong>${system.infra.storage}</strong> armazenamento</span>
-        </div>
-      </div>
-      <a class="system-link" href="${system.accessUrl}" target="_blank" rel="noreferrer">Acessar plataforma</a>
     </article>
   `).join("");
 }
@@ -405,6 +420,12 @@ function validateSample() {
   }
 }
 
+function showSystemDetails(systemId) {
+  const system = state.systems.find((item) => item.id === systemId);
+  if (!system) return;
+  showToast(`${system.name}: ${system.contract}; ${system.owner}; compartilha ${system.publicScope.toLowerCase()}.`);
+}
+
 function bindNavigation() {
   qsa(".nav-link").forEach((button) => {
     button.addEventListener("click", () => {
@@ -428,6 +449,10 @@ function init() {
 
   qs("#system-filter").addEventListener("input", (event) => renderSystems(event.target.value));
   qs("#validate-button").addEventListener("click", validateSample);
+  qs("#systems-grid").addEventListener("click", (event) => {
+    const trigger = event.target.closest("[data-system-id]");
+    if (trigger) showSystemDetails(trigger.dataset.systemId);
+  });
 }
 
 init();

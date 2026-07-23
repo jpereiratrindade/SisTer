@@ -48,6 +48,19 @@ endpoints de uma vez:
 ./scripts/run_all.sh dev 8000
 ```
 
+O fluxo `dev` deve ser executado no worktree principal. Para preparar e executar
+um teste reproduzivel a partir do mesmo local:
+
+```bash
+./scripts/test/run.sh head
+./scripts/test/run.sh release
+```
+
+`head` exige que as alteracoes estejam commitadas e testa o `HEAD` atual.
+`release` atualiza as tags a partir de `origin` e testa a tag `v*` mais recente.
+O comando sincroniza o worktree `../SisTer-test` e executa nele o fluxo `test`,
+usando a porta HTTP `8001` por padrao.
+
 Acesse:
 
 ```text
@@ -69,11 +82,18 @@ Subir PostgreSQL com pgvector no ambiente de desenvolvimento:
 
 ```bash
 ./scripts/db/up.sh dev
-export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55434/sister'
 ```
 
-O banco de desenvolvimento usa o container `sister-dev-db`, porta `5432` e volume
+O banco de desenvolvimento usa o container `sister-dev-db`, porta `55434` e volume
 persistente `sister_dev_pgdata`.
+
+Se a porta padrao estiver ocupada, configure uma alternativa sem editar os
+scripts:
+
+```bash
+SISTER_DEV_DB_PORT=55440 ./scripts/run_all.sh dev
+```
 
 Parar o banco sem remover dados:
 
@@ -103,9 +123,7 @@ Para criar um espaco separado de teste:
 
 ```bash
 ./scripts/test/create_worktree.sh
-cd ../SisTer-test
-./scripts/db/up.sh test
-./scripts/db/migrate.sh test
+./scripts/test/run.sh head
 ```
 
 Detalhes: `docs/architecture/ENVIRONMENTS.md`.
@@ -164,6 +182,10 @@ Cada sistema federado tambem declara no seu contrato o que compartilha com o Sis
 - `docs/adr/`: decisoes arquiteturais aceitas.
 - `docs/dai/DAI.md`: decisoes, acoes e impedimentos.
 - `docs/governance/README.md`: base de governanca operacional.
+- `docs/governance/INTEGRATED_PROJECTS.md`: coordenacao de portas, containers,
+  volumes e outros recursos entre repositorios.
+- `config/local_resources.json`: registro central, legivel por maquina, dos
+  recursos reservados no ambiente local.
 
 ## Qualidade e governanca
 

@@ -2,9 +2,14 @@
 set -euo pipefail
 
 ENV_NAME="${1:-dev}"
-PORT="${2:-8000}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT_DIR"
+
+source scripts/lib/sister_env.sh
+source scripts/lib/worktree.sh
+sister_load_env "$ENV_NAME"
+sister_assert_environment_worktree "$ENV_NAME" "$ROOT_DIR"
+PORT="${2:-$SISTER_APP_PORT}"
 
 ./scripts/db/up.sh "$ENV_NAME"
 ./scripts/db/migrate.sh "$ENV_NAME"

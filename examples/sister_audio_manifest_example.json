@@ -1,0 +1,35 @@
+{
+  "system_id": "sister_audio",
+  "system_name": "Sister-Audio",
+  "system_version": "0.2.0",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "procedural_music_system",
+  "domain": ["audio", "musica_procedural", "midi", "wav", "ogg", "trilhas"],
+  "operational_mode": ["local_web", "local_cli", "offline"],
+  "exports": ["midi_file", "wav_file", "ogg_file", "generation_parameters", "musical_event_metadata"],
+  "integration_modes": ["local_api", "file_import"],
+  "responsible_repository": "sister_audio",
+  "access": {
+    "platform_url": "http://127.0.0.1:8013",
+    "access_label": "Abrir Sister-Audio",
+    "access_mode": "local"
+  },
+  "sharing_policy": {
+    "shareable_with_sister": ["generation_parameters", "midi_metadata", "provenance_summary"],
+    "native_to_system": ["browser_preview", "temporary_midi_files", "local_generation_history"],
+    "public_outputs": ["preset_catalog", "algorithm_version"],
+    "restricted_outputs": ["generation_parameters", "midi_metadata"],
+    "private_outputs": ["temporary_midi_files", "local_history"],
+    "sensitive_topics": ["copyrighted_reference_material", "user_authored_compositions"],
+    "dikw_role": {
+      "offers_as_information": ["generation_parameters", "musical_structure", "midi_metadata"],
+      "received_by_sister_as": "data",
+      "sister_transforms_into": ["information", "knowledge"]
+    }
+  },
+  "data_policy": {
+    "requires_provenance": true,
+    "allows_offline_sync": true,
+    "requires_schema_validation": true
+  }
+}

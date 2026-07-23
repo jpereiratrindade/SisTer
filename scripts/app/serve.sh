@@ -2,12 +2,12 @@
 set -euo pipefail
 
 ENV_NAME="${1:-dev}"
-PORT="${2:-8000}"
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 source scripts/lib/sister_env.sh
 sister_load_env "$ENV_NAME"
+PORT="${2:-$SISTER_APP_PORT}"
 
 cmake -S . -B build
 cmake --build build --target sisterd

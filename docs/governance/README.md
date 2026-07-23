@@ -33,7 +33,7 @@ Comandos operacionais:
 
 ```bash
 ./scripts/db/up.sh dev
-export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:5432/sister'
+export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55434/sister'
 ./scripts/db/check.sh dev
 ./scripts/db/migrate.sh dev
 ```
