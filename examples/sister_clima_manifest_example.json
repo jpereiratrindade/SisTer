@@ -12,7 +12,7 @@
   "access": {
     "platform_url": "http://127.0.0.1:8501",
     "access_label": "Abrir Sister-Clima",
-    "access_mode": "local_network"
+    "access_mode": "restricted_link"
   },
   "sharing_policy": {
     "shareable_with_sister": ["reviewed_climate_indicators", "exported_spatial_layers", "source_provenance", "dataset_temporal_coverage"],

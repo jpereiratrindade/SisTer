@@ -230,7 +230,7 @@ std::string jsonSystems() {
   {"id":"droneops","name":"DroneOps","type":"Missao","status":"Em validacao","contract":"sister-contracts/0.1.0","access_url":"https://127.0.0.1:8012"},
   {"id":"camponode","name":"CampoNode","type":"Infraestrutura","status":"Planejado","contract":"sister-contracts/0.1.0","access_url":"https://camponode.local"},
   {"id":"radar_sister_resiliencia","name":"Radar-Sister Resiliencia","type":"Analitico","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"http://127.0.0.1:8765"},
-  {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_url":"http://127.0.0.1:8501"},
+  {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted"},
   {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_url":"https://127.0.0.1:8443"}
 ])";
 }
@@ -260,6 +260,9 @@ std::string routeApi(const std::string& path) {
     if (path == "/api/contracts") return jsonContracts();
     if (path == "/api/evidence") return jsonEvidence();
     if (path == "/api/diagnostics") return jsonDiagnostics();
+    if (path == "/api/integrations/sister-clima") {
+        return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted"})";
+    }
     if (path == "/api/integrations/sister-studio") {
         return sisterd::sisterStudioIntegrationJson();
     }
@@ -468,11 +471,13 @@ void handleClient(
         }
         const bool publicApi =
             request->path == "/api/health" || request->path == "/api/systems";
+        const bool authenticatedApi =
+            request->path == "/api/integrations/sister-clima";
         if (!publicApi && !actor) {
             sendJsonError(client, 401, "Unauthorized", "Autenticação necessária.");
             return;
         }
-        if (!publicApi && actor->role != "admin") {
+        if (!publicApi && !authenticatedApi && actor->role != "admin") {
             sendJsonError(client, 403, "Forbidden", "Acesso restrito à equipe administrativa.");
             return;
         }

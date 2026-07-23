@@ -113,8 +113,9 @@ const state = {
       status: "Integrado",
       description: "Monitoramento pluviométrico, indicadores climáticos e camadas espaciais com proveniência das fontes.",
       contract: "sister-contracts/0.1.0",
-      accessUrl: "http://127.0.0.1:8501",
-      accessMode: "Local",
+      accessUrl: null,
+      accessMode: "Restrito",
+      accessRestricted: true,
       publicScope: "Documentação, fontes e metadados de proveniência",
       restrictedScope: "Dados derivados, indicadores não revisados e camadas geradas",
       privateScope: "Sessões, configuração de rede e logs",
@@ -553,7 +554,15 @@ function validateSample() {
 function showSystemDetails(systemId) {
   const system = state.systems.find((item) => item.id === systemId);
   if (!system) return;
-  const accessUrl = resolveAccessUrl(system.accessUrl);
+  const accessUrl = system.accessUrl ? resolveAccessUrl(system.accessUrl) : null;
+  let accessAction = `<a class="dialog-action" href="${accessUrl}" target="_blank" rel="noreferrer">Acessar subsistema</a>`;
+  if (system.status === "Planejado") {
+    accessAction = `<span class="dialog-action dialog-action--disabled">Acesso ainda não disponível</span>`;
+  } else if (system.accessRestricted && !accessUrl) {
+    accessAction = state.currentUser
+      ? `<span class="dialog-action dialog-action--disabled">Acesso restrito indisponível</span>`
+      : `<a class="dialog-action" href="/login">Entrar para acessar</a>`;
+  }
 
   qs("#system-dialog-mark").textContent = systemInitials(system.name);
   qs("#system-dialog-type").textContent = `${system.type} · ${system.status}`;
@@ -581,9 +590,7 @@ function showSystemDetails(systemId) {
         <div><span>Restrito</span><strong>${system.restrictedScope}</strong></div>
       </div>
     </div>
-    ${system.status === "Planejado"
-      ? `<span class="dialog-action dialog-action--disabled">Acesso ainda não disponível</span>`
-      : `<a class="dialog-action" href="${accessUrl}" target="_blank" rel="noreferrer">Acessar subsistema</a>`}
+    ${accessAction}
   `;
   qs("#system-dialog").showModal();
 }
@@ -601,6 +608,7 @@ function bindNavigation() {
 }
 
 function showPublicIdentity() {
+  state.currentUser = null;
   qs("#auth-login").hidden = false;
   qs("#auth-identity").hidden = true;
   qs("#auth-avatar").hidden = true;
@@ -610,16 +618,31 @@ function showPublicIdentity() {
 }
 
 function showAuthenticatedIdentity(user) {
+  state.currentUser = user;
   qs("#auth-login").hidden = true;
   qs("#auth-identity").hidden = false;
   qs("#auth-avatar").hidden = false;
   qs("#auth-name").textContent = user.name;
   qs("#auth-avatar").textContent = systemInitials(user.name);
+  loadSisterClimaAccess();
   if (user.role === "admin") {
     qsa("[data-admin-only]").forEach((item) => {
       item.hidden = false;
     });
     loadSisterStudioIntegration();
+  }
+}
+
+async function loadSisterClimaAccess() {
+  const system = state.systems.find((item) => item.id === "sister_clima");
+  if (!system) return;
+  try {
+    const response = await fetch("/api/integrations/sister-clima", {cache: "no-store"});
+    if (!response.ok) return;
+    const payload = await response.json();
+    system.accessUrl = payload.access_url;
+  } catch {
+    system.accessUrl = null;
   }
 }
 

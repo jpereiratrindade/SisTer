@@ -1,5 +1,15 @@
 # DAI - SisTer
 
+## 2026-07-23 - Acesso restrito ao Sister-Clima
+
+- Decision: manter a descoberta do Sister-Clima no catalogo publico, sem expor
+  sua URL de acesso.
+- Action: classificar o link como restrito e entrega-lo por endpoint que exige
+  uma sessao autenticada no SisTer.
+- Impediment: a autenticacao protege a entrega do link pelo SisTer; a aplicacao
+  de origem ainda precisa de controle proprio caso seja exposta fora do host
+  local.
+
 ## 2026-07-23 - Integracao do Sister-Clima
 
 - Decision: reconhecer `sister_clima` como sistema climatico federado, mantendo
