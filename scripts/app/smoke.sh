@@ -3,7 +3,7 @@ set -euo pipefail
 
 PORT="${1:-8000}"
 
-curl -fsS "http://127.0.0.1:${PORT}/" >/dev/null
+curl -fsS "http://127.0.0.1:${PORT}/" | grep -q "Atualizar conexão"
 curl -fsS "http://127.0.0.1:${PORT}/login" >/dev/null
 curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null
 curl -fsS "http://127.0.0.1:${PORT}/api/systems" >/dev/null

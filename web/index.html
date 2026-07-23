@@ -50,6 +50,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>
           Diagnóstico
         </button>
+        <button class="nav-link" type="button" data-view="studio" data-admin-only hidden>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="m9 11 6-4M9 13l6 4"/></svg>
+          Sister-Studio
+        </button>
         <button class="nav-link" type="button" data-view="contracts" data-admin-only hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3ZM14 3v4h4M9 11h6M9 15h6"/></svg>
           Contratos
@@ -181,6 +185,64 @@
           </div>
         </div>
         <div class="diagnostic-grid" id="diagnostic-grid"></div>
+      </section>
+
+      <section class="view" id="view-studio" aria-label="Integração com Sister-Studio">
+        <div class="page-heading">
+          <div>
+            <span class="eyebrow">Sistema criativo federado</span>
+            <h2>Sister-Studio</h2>
+            <p>Capacidades e disponibilidade consultadas diretamente do produtor, sem copiar conteúdo de usuários.</p>
+          </div>
+          <button class="primary-action" id="studio-refresh" type="button">
+            Atualizar conexão
+          </button>
+        </div>
+
+        <section class="studio-connection panel">
+          <div class="connection-heading">
+            <span class="connection-signal" id="studio-signal"></span>
+            <div>
+              <span class="section-kicker">Estado da conexão</span>
+              <h3 id="studio-connection-title">Aguardando consulta</h3>
+              <p id="studio-connection-detail">O SisTer ainda não consultou o contrato remoto.</p>
+            </div>
+            <span class="status-pill" id="studio-contract-version">integration/1.0.0</span>
+          </div>
+          <div class="connection-facts">
+            <article><span>Sistema</span><strong id="studio-system-version">—</strong></article>
+            <article><span>Última verificação</span><strong id="studio-checked-at">—</strong></article>
+            <article><span>Conteúdo recebido</span><strong>Não</strong></article>
+            <article><span>Escopo</span><strong>Restrito · admin</strong></article>
+          </div>
+        </section>
+
+        <div class="studio-integration-grid">
+          <section class="panel">
+            <div class="panel-header">
+              <div><span class="section-kicker">Operação</span><h3>Módulos</h3></div>
+            </div>
+            <div class="module-status-list" id="studio-modules">
+              <p class="panel-note">Atualize a conexão para consultar os módulos.</p>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="panel-header">
+              <div><span class="section-kicker">Interoperabilidade</span><h3>Capacidades e formatos</h3></div>
+            </div>
+            <div class="capability-contract-list" id="studio-capabilities">
+              <p class="panel-note">Nenhum catálogo carregado.</p>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel studio-privacy">
+          <div>
+            <span class="section-kicker">LGPD · minimização</span>
+            <h3>Fronteira preservada</h3>
+          </div>
+          <p>O SisTer não recebe usuários, sessões, textos, voz, mídia, projetos, caminhos ou logs do Studio. Operações futuras dependerão de finalidade, base autorizativa e concessão explícita.</p>
+        </section>
       </section>
 
       <section class="view" id="view-contracts" aria-label="Contratos">

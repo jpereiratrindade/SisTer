@@ -1,7 +1,7 @@
 {
   "system_id": "sister_studio",
   "system_name": "Sister-Studio",
-  "system_version": "0.2.0",
+  "system_version": "0.2.1",
   "contract_version": "sister-contracts/0.1.0",
   "type": "audiovisual_production_studio",
   "domain": ["audio", "voice", "video"],

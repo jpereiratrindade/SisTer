@@ -16,13 +16,17 @@ source scripts/lib/db_wait.sh
 
 sister_load_env "$ENV_NAME"
 if sister_compose_available; then
-  if command -v podman-compose >/dev/null 2>&1 \
-    && command -v podman >/dev/null 2>&1 \
-    && podman container exists "$SISTER_DB_CONTAINER" \
-    && [[ "$(podman inspect --format '{{.State.Running}}' "$SISTER_DB_CONTAINER")" != "true" ]]; then
-    podman rm "$SISTER_DB_CONTAINER" >/dev/null
+  if command -v podman-compose >/dev/null 2>&1 && command -v podman >/dev/null 2>&1 \
+    && podman container exists "$SISTER_DB_CONTAINER"; then
+    if [[ "$(podman inspect --format '{{.State.Running}}' "$SISTER_DB_CONTAINER")" == "true" ]]; then
+      echo "Reusing running database container ${SISTER_DB_CONTAINER}."
+    else
+      podman rm "$SISTER_DB_CONTAINER" >/dev/null
+      sister_compose up -d sister-db
+    fi
+  else
+    sister_compose up -d sister-db
   fi
-  sister_compose up -d sister-db
 elif command -v podman >/dev/null 2>&1; then
   sister_podman_up
 else

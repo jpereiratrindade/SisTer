@@ -107,27 +107,27 @@ const state = {
     {
       id: "sister_studio",
       name: "Sister-Studio",
-      version: "0.1.0",
+      version: "0.2.1",
       owner: "Laboratorio SisTer",
       type: "Criativo",
-      status: "Experimental",
-      description: "Estudio C++20 integrado para composicao procedural, identidade vocal, MIDI, WAV, OGG e legendas.",
-      contract: "sister-contracts/0.1.0",
+      status: "Integrado",
+      description: "Estudio audiovisual conectado por contrato para composicao, voz e video, com dados privados preservados no produtor.",
+      contract: "sister-studio.integration/1.0.0",
       accessUrl: "https://127.0.0.1:8443",
       accessMode: "Local",
-      publicScope: "Presets e versao do algoritmo",
-      restrictedScope: "Parametros e metadados musicais",
-      privateScope: "Arquivos temporarios e historico local",
-      domains: ["audio", "musica_procedural", "voz", "tts", "midi", "wav", "ogg"],
-      modes: ["local_web", "local_cli", "offline", "isolated_inference"],
-      exports: ["midi_file", "wav_file", "ogg_file", "srt_file", "voice_profile"],
-      policy: ["proveniencia", "schema", "seed", "determinismo", "privacidade"],
+      publicScope: "Identidade e versao do sistema",
+      restrictedScope: "Capacidades, formatos e saude sanitizada",
+      privateScope: "Identidade, voz, texto, midia, projetos e auditoria",
+      domains: ["audio", "musica_procedural", "voz", "tts", "video", "midi", "wav", "ogg", "srt", "mp4"],
+      modes: ["local_web", "local_network", "authenticated_api", "isolated_inference"],
+      exports: ["capability_catalog", "supported_format_matrix", "sanitized_service_health"],
+      policy: ["proveniencia", "schema", "minimizacao", "tls", "privacidade"],
       infra: {
-        availability: "MVP",
-        response: "local",
-        storage: "temporario",
+        availability: "consultando",
+        response: "HTTPS",
+        storage: "não compartilhado",
         lastCheck: "sob demanda",
-        signal: "warn"
+        signal: "ok"
       }
     }
   ],
@@ -143,6 +143,12 @@ const state = {
       version: "0.1.0",
       required: "Para ingestao offline",
       rule: "Pacote precisa conter origem, contrato, conteudo declarado, data de criacao e checksum."
+    },
+    {
+      name: "Sister-Studio Integration",
+      version: "1.0.0",
+      required: "Para capacidades criativas",
+      rule: "Somente capacidades e saude sanitizada; conteudo e identidade permanecem no Studio."
     },
     {
       name: "Evidence",
@@ -259,6 +265,12 @@ function statusSlug(status) {
     .replace(/\s+/g, "-");
 }
 
+function escapeHtml(value) {
+  const element = document.createElement("div");
+  element.textContent = String(value);
+  return element.innerHTML;
+}
+
 function resolveAccessUrl(accessUrl) {
   const url = new URL(accessUrl, window.location.href);
   const localNames = new Set(["127.0.0.1", "localhost", "0.0.0.0"]);
@@ -355,6 +367,70 @@ function renderEvidence() {
       <span class="status-pill">${item.status}</span>
     </article>
   `).join("");
+}
+
+function integrationErrorDetail(code) {
+  const messages = {
+    integration_configuration_unavailable: "Credencial ou certificado do Studio ainda não foram provisionados.",
+    studio_unavailable: "O gateway do Sister-Studio não respondeu.",
+    studio_identity_not_verified: "A identidade TLS do Sister-Studio não foi validada.",
+    studio_contract_request_failed: "O Studio recusou ou não concluiu a consulta contratual.",
+    studio_contract_invalid: "A resposta não corresponde ao contrato reconhecido.",
+    trust_configuration_failed: "A autoridade certificadora configurada não pôde ser carregada.",
+    tls_initialization_failed: "O cliente TLS do SisTer não pôde ser inicializado."
+  };
+  return messages[code] || "A integração está indisponível sem expor detalhes internos.";
+}
+
+async function loadSisterStudioIntegration() {
+  const title = qs("#studio-connection-title");
+  const detail = qs("#studio-connection-detail");
+  const signal = qs("#studio-signal");
+  title.textContent = "Consultando Sister-Studio…";
+  detail.textContent = "Validando TLS, credencial e versão do contrato.";
+  signal.className = "connection-signal loading";
+  try {
+    const response = await fetch("/api/integrations/sister-studio", {cache: "no-store"});
+    if (!response.ok) throw new Error("request_failed");
+    const payload = await response.json();
+    if (payload.status !== "connected") {
+      title.textContent = payload.status === "not_configured" ? "Integração não configurada" : "Sister-Studio indisponível";
+      detail.textContent = integrationErrorDetail(payload.error_code);
+      signal.className = "connection-signal error";
+      return;
+    }
+
+    const {capabilities, health} = payload;
+    title.textContent = health.status === "ok" ? "Conectado e operacional" : "Conectado com módulos indisponíveis";
+    detail.textContent = "Contrato remoto autenticado e conteúdo pessoal ausente na resposta.";
+    signal.className = `connection-signal ${health.status === "ok" ? "online" : "warning"}`;
+    qs("#studio-contract-version").textContent = `integration/${capabilities.contract_version}`;
+    qs("#studio-system-version").textContent = `${capabilities.system.name} ${capabilities.system.version}`;
+    qs("#studio-checked-at").textContent = new Date(health.checked_at).toLocaleString("pt-BR");
+    qs("#studio-modules").innerHTML = health.modules.map((module) => `
+      <article>
+        <span class="connection-signal ${module.status === "available" ? "online" : "error"}"></span>
+        <div><strong>${escapeHtml(module.id)}</strong><small>${module.status === "available" ? "Disponível" : "Offline"}</small></div>
+      </article>
+    `).join("");
+    qs("#studio-capabilities").innerHTML = capabilities.capabilities.map((capability) => `
+      <article>
+        <div><strong>${escapeHtml(capability.name)}</strong><small>${escapeHtml(capability.id)}</small></div>
+        <span>${capability.outputs.map(escapeHtml).join(" · ")}</span>
+      </article>
+    `).join("");
+
+    const studio = state.systems.find((system) => system.id === "sister_studio");
+    studio.version = capabilities.system.version;
+    studio.status = health.status === "ok" ? "Integrado" : "Degradado";
+    studio.infra.availability = health.status;
+    studio.infra.lastCheck = new Date(health.checked_at).toLocaleTimeString("pt-BR");
+    renderSystems(qs("#system-filter").value);
+  } catch {
+    title.textContent = "Não foi possível consultar a integração";
+    detail.textContent = "Entre novamente como administrador e tente atualizar.";
+    signal.className = "connection-signal error";
+  }
 }
 
 function drawMap() {
@@ -487,12 +563,13 @@ function showSystemDetails(systemId) {
 }
 
 function bindNavigation() {
-  qsa(".nav-link").forEach((button) => {
+  qsa(".nav-link[data-view]").forEach((button) => {
     button.addEventListener("click", () => {
       qsa(".nav-link").forEach((item) => item.classList.remove("selected"));
       qsa(".view").forEach((item) => item.classList.remove("active"));
       button.classList.add("selected");
       qs(`#view-${button.dataset.view}`).classList.add("active");
+      if (button.dataset.view === "studio") loadSisterStudioIntegration();
     });
   });
 }
@@ -516,6 +593,7 @@ function showAuthenticatedIdentity(user) {
     qsa("[data-admin-only]").forEach((item) => {
       item.hidden = false;
     });
+    loadSisterStudioIntegration();
   }
 }
 
@@ -559,6 +637,7 @@ function init() {
     if (event.target === qs("#system-dialog")) qs("#system-dialog").close();
   });
   qs("#auth-logout").addEventListener("click", logout);
+  qs("#studio-refresh").addEventListener("click", loadSisterStudioIntegration);
   initializeIdentity();
 }
 

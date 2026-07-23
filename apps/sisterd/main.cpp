@@ -211,7 +211,7 @@ std::optional<HttpRequest> readRequest(int client) {
 }
 
 std::string jsonHealth() {
-    return R"({"status":"ok","service":"sisterd","version":"0.2.0","database":"not_connected"})";
+    return R"({"status":"ok","service":"sisterd","version":"0.2.1","database":"not_connected"})";
 }
 
 std::string jsonContracts() {
