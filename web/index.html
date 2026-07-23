@@ -3,6 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071e38">
     <title>SisTer</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
@@ -10,20 +11,23 @@
     <div class="system-layout">
     <header class="topbar">
       <div class="mini-brand">
-        <span class="brand-symbol" aria-hidden="true">ST</span>
+        <svg class="brand-symbol" viewBox="0 0 64 64" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2.8"><path d="M32 5 55 18v28L32 59 9 46V18z"/><path d="M32 5v54M9 18l46 28M55 18 9 46"/></g>
+          <g fill="currentColor"><circle cx="32" cy="5" r="4"/><circle cx="55" cy="18" r="4"/><circle cx="55" cy="46" r="4"/><circle cx="32" cy="59" r="4"/><circle cx="9" cy="46" r="4"/><circle cx="9" cy="18" r="4"/><circle cx="32" cy="32" r="5"/></g>
+        </svg>
         <div class="brand-text">
-          <span class="brand-super">SISTER</span>
+          <span class="brand-super">Ecossistema SISTER</span>
           <h1>SisTer</h1>
         </div>
       </div>
 
       <div class="top-center-label">
-        <span>Plataforma SisTer de convergencia territorial</span>
+        <span>Orquestração e convergência territorial</span>
       </div>
 
       <div class="top-context">
-        <span class="context-pill">sister-contracts/0.1.0</span>
-        <span class="user-avatar">GT</span>
+        <span class="context-pill">Núcleo federador</span>
+        <span class="user-avatar">ST</span>
       </div>
     </header>
 
@@ -31,15 +35,15 @@
       <nav aria-label="Navegacao principal do SisTer">
         <button class="nav-link selected" type="button" data-view="home">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8Z"/></svg>
-          Inicio
+          Início
         </button>
         <button class="nav-link" type="button" data-view="integration">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 8a3 3 0 1 0 0.01 0M18 8a3 3 0 1 0 0.01 0M12 18a3 3 0 1 0 0.01 0M8.7 9.5l6.6 0M7.7 10.5l3 5M16.3 10.5l-3 5"/></svg>
-          Integracao
+          Integração
         </button>
         <button class="nav-link" type="button" data-view="diagnostics">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>
-          Diagnostico
+          Diagnóstico
         </button>
         <button class="nav-link" type="button" data-view="contracts">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3ZM14 3v4h4M9 11h6M9 15h6"/></svg>
@@ -47,12 +51,12 @@
         </button>
         <button class="nav-link" type="button" data-view="evidence">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 4 6v6c0 5 3.4 7.7 8 9 4.6-1.3 8-4 8-9V6l-8-3ZM9 12l2 2 4-5"/></svg>
-          Evidencias
+          Evidências
         </button>
       </nav>
       <div class="sidebar-footer">
-        <span>Base conceitual viva</span>
-        <strong>docs/conceptual</strong>
+        <span>Infraestrutura comum</span>
+        <strong>sister-contracts/0.1.0</strong>
       </div>
     </aside>
 
@@ -60,57 +64,73 @@
       <section class="view active" id="view-home" aria-label="Home">
         <div class="page-heading">
           <div>
-            <span class="eyebrow">Convergencia territorial</span>
-            <h2>Sistemas conectados</h2>
+            <span class="eyebrow">Visão do ecossistema</span>
+            <h2>Sistemas que convergem no território</h2>
+            <p>Uma leitura objetiva dos subsistemas, seus vínculos e sua prontidão operacional.</p>
           </div>
-          <button class="primary-action" type="button" id="validate-button">Validar amostra</button>
+          <button class="primary-action" type="button" id="validate-button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
+            Validar ecossistema
+          </button>
         </div>
 
         <div class="dashboard">
           <article class="metric">
             <strong id="system-count">0</strong>
-            <span>Sistemas participantes</span>
+            <span>Subsistemas conectados</span>
           </article>
           <article class="metric">
             <strong id="signed-contract-count">0</strong>
-            <span>Contratos firmados</span>
+            <span>Contratos ativos</span>
           </article>
           <article class="metric">
             <strong id="evidence-count">0</strong>
-            <span>Evidencias registradas</span>
+            <span>Evidências recentes</span>
           </article>
           <article class="metric">
             <strong id="integration-compliance">N/D</strong>
-            <span>Conformidade automatizada</span>
+            <span>Conformidade</span>
           </article>
         </div>
 
         <section class="panel systems-panel">
           <div class="panel-header">
-            <h3>Sistemas</h3>
+            <div>
+              <span class="section-kicker">Rede federada</span>
+              <h3>Subsistemas</h3>
+            </div>
             <label class="search-field">
-              <span>Filtrar</span>
-              <input id="system-filter" type="search" placeholder="sistema, dominio ou modo">
+              <span class="sr-only">Filtrar subsistemas</span>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
+              <input id="system-filter" type="search" placeholder="Buscar subsistema">
             </label>
           </div>
           <div class="system-grid" id="systems-grid"></div>
         </section>
 
-        <section class="panel map-panel">
-          <div class="panel-header">
-            <h3>Leitura territorial comum</h3>
-            <span class="status-pill">3 camadas</span>
-          </div>
-          <canvas id="territory-map" width="1100" height="360" aria-label="Mapa territorial sintetico"></canvas>
-        </section>
+        <div class="overview-grid">
+          <section class="panel map-panel">
+            <div class="panel-header">
+              <div>
+                <span class="section-kicker">Contexto compartilhado</span>
+                <h3>Leitura territorial</h3>
+              </div>
+              <span class="status-pill">3 camadas</span>
+            </div>
+            <canvas id="territory-map" width="1100" height="360" aria-label="Mapa territorial sintético"></canvas>
+          </section>
 
-        <section class="panel integration-summary">
-          <div class="panel-header">
-            <h3>Resultados de integracao</h3>
-            <span class="status-pill">Demonstrativo</span>
-          </div>
-          <div class="result-stack" id="integration-bars"></div>
-        </section>
+          <section class="panel integration-summary">
+            <div class="panel-header">
+              <div>
+                <span class="section-kicker">Qualidade da rede</span>
+                <h3>Integração</h3>
+              </div>
+              <span class="status-pill">Amostra</span>
+            </div>
+            <div class="result-stack" id="integration-bars"></div>
+          </section>
+        </div>
       </section>
 
       <section class="view" id="view-integration" aria-label="Integracao e conhecimento">
@@ -188,10 +208,23 @@
     </main>
 
     <footer class="footer">
-      <span>Governanca: ADR, DDD, DAI, politicas e evidencias.</span>
-      <span>LGPD: minimizacao, finalidade, rastreabilidade e controle de acesso.</span>
-      <span>Seguranca: proveniencia, checksum, auditoria, permissao e revisao proporcional ao risco.</span>
+      <span>SisTer · infraestrutura federada para inteligência territorial</span>
+      <span>Governança, proveniência e interoperabilidade por contrato.</span>
     </footer>
+
+    <dialog class="system-dialog" id="system-dialog" aria-labelledby="system-dialog-title">
+      <div class="dialog-head">
+        <div class="dialog-identity">
+          <span class="system-mark" id="system-dialog-mark"></span>
+          <div>
+            <span class="section-kicker" id="system-dialog-type"></span>
+            <h2 id="system-dialog-title"></h2>
+          </div>
+        </div>
+        <button class="dialog-close" type="button" id="system-dialog-close" aria-label="Fechar detalhes">×</button>
+      </div>
+      <div id="system-dialog-content"></div>
+    </dialog>
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>

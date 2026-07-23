@@ -9,7 +9,7 @@ const state = {
       status: "Operacional",
       description: "Sistema de campo para observacoes, evidencias locais e sincronizacao offline por contrato.",
       contract: "sister-contracts/0.1.0",
-      accessUrl: "https://morfocampo.local",
+      accessUrl: "https://127.0.0.1:8011",
       accessMode: "Restrito",
       publicScope: "Indicadores agregados",
       restrictedScope: "Observacoes e metadados",
@@ -35,7 +35,7 @@ const state = {
       status: "Em validacao",
       description: "Organiza missoes, registros de voo e evidencias georreferenciadas para leitura territorial.",
       contract: "sister-contracts/0.1.0",
-      accessUrl: "https://droneops.local",
+      accessUrl: "https://127.0.0.1:8012",
       accessMode: "Restrito",
       publicScope: "Cobertura generalizada",
       restrictedScope: "Camadas e logs resumidos",
@@ -241,6 +241,35 @@ function setCounts() {
   qs("#integration-compliance").textContent = "N/D";
 }
 
+function systemInitials(name) {
+  return name
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0])
+    .join("")
+    .toUpperCase();
+}
+
+function statusSlug(status) {
+  return status
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/\s+/g, "-");
+}
+
+function resolveAccessUrl(accessUrl) {
+  const url = new URL(accessUrl, window.location.href);
+  const localNames = new Set(["127.0.0.1", "localhost", "0.0.0.0"]);
+
+  if (localNames.has(url.hostname) || url.hostname.endsWith(".local")) {
+    url.hostname = window.location.hostname;
+  }
+
+  return url.href.replace(/\/$/, "");
+}
+
 function renderSystems(filter = "") {
   const normalized = filter.trim().toLowerCase();
   const systems = state.systems.filter((system) => {
@@ -260,21 +289,20 @@ function renderSystems(filter = "") {
 
   qs("#systems-grid").innerHTML = systems.map((system) => `
     <article class="system-card">
-      <div class="system-card-head">
+      <span class="system-mark" aria-hidden="true">${systemInitials(system.name)}</span>
+      <div class="system-identity">
         <h4>${system.name}</h4>
-        <span class="status-pill">${system.status}</span>
+        <p class="system-meta">${system.type} · ${system.owner}</p>
       </div>
-      <p class="system-meta">${system.type} · ${system.version} · ${system.accessMode}</p>
+      <span class="status-pill" data-status="${statusSlug(system.status)}">${system.status}</span>
       <p class="system-description">${system.description}</p>
-      <div class="tag-row">
-        ${system.domains.slice(0, 2).map((item) => `<span class="tag">${item}</span>`).join("")}
-      </div>
       <div class="system-actions">
-        <button class="text-link" type="button" data-system-id="${system.id}">Ver mais</button>
-        <a class="system-link" href="${system.accessUrl}" target="_blank" rel="noreferrer">Acessar</a>
+        <button class="text-link" type="button" data-system-id="${system.id}">Conhecer sistema →</button>
       </div>
     </article>
-  `).join("");
+  `).join("") || `
+    <p class="panel-note">Nenhum subsistema corresponde à busca.</p>
+  `;
 }
 
 function renderIntegrationBars() {
@@ -284,7 +312,7 @@ function renderIntegrationBars() {
       <div class="bar-track"><div class="bar-fill" style="width: ${item.value}%"></div></div>
     </article>
   `).join("") + `
-    <p class="panel-note">Valores demonstrativos. A avaliacao automatizada deve vir do validador de manifestos, ingestao CampoSync, proveniencia, schema, LGPD e diagnostico de servicos.</p>
+    <p class="panel-note">Indicadores demonstrativos. A aferição automatizada será produzida pelos validadores do ecossistema.</p>
   `;
 }
 
@@ -423,7 +451,39 @@ function validateSample() {
 function showSystemDetails(systemId) {
   const system = state.systems.find((item) => item.id === systemId);
   if (!system) return;
-  showToast(`${system.name}: ${system.contract}; ${system.owner}; compartilha ${system.publicScope.toLowerCase()}.`);
+  const accessUrl = resolveAccessUrl(system.accessUrl);
+
+  qs("#system-dialog-mark").textContent = systemInitials(system.name);
+  qs("#system-dialog-type").textContent = `${system.type} · ${system.status}`;
+  qs("#system-dialog-title").textContent = system.name;
+  qs("#system-dialog-content").innerHTML = `
+    <p class="dialog-summary">${system.description}</p>
+    <div class="detail-grid">
+      <div><span>Versão</span><strong>${system.version}</strong></div>
+      <div><span>Responsável</span><strong>${system.owner}</strong></div>
+      <div><span>Acesso</span><strong>${system.accessMode}</strong></div>
+      <div><span>Contrato</span><strong>${system.contract}</strong></div>
+    </div>
+    <div class="detail-section">
+      <span>Domínios</span>
+      <div class="tag-row">${system.domains.map((item) => `<span class="tag">${item}</span>`).join("")}</div>
+    </div>
+    <div class="detail-section">
+      <span>Entregas para o SisTer</span>
+      <div class="tag-row">${system.exports.map((item) => `<span class="tag">${item}</span>`).join("")}</div>
+    </div>
+    <div class="detail-section">
+      <span>Compartilhamento</span>
+      <div class="detail-grid">
+        <div><span>Público</span><strong>${system.publicScope}</strong></div>
+        <div><span>Restrito</span><strong>${system.restrictedScope}</strong></div>
+      </div>
+    </div>
+    ${system.status === "Planejado"
+      ? `<span class="dialog-action dialog-action--disabled">Acesso ainda não disponível</span>`
+      : `<a class="dialog-action" href="${accessUrl}" target="_blank" rel="noreferrer">Acessar subsistema</a>`}
+  `;
+  qs("#system-dialog").showModal();
 }
 
 function bindNavigation() {
@@ -452,6 +512,10 @@ function init() {
   qs("#systems-grid").addEventListener("click", (event) => {
     const trigger = event.target.closest("[data-system-id]");
     if (trigger) showSystemDetails(trigger.dataset.systemId);
+  });
+  qs("#system-dialog-close").addEventListener("click", () => qs("#system-dialog").close());
+  qs("#system-dialog").addEventListener("click", (event) => {
+    if (event.target === qs("#system-dialog")) qs("#system-dialog").close();
   });
 }
 
