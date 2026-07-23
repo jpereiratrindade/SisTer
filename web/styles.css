@@ -20,6 +20,10 @@
   box-sizing: border-box;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 html {
   scroll-behavior: smooth;
 }
@@ -148,6 +152,37 @@ h1 {
   color: rgba(218, 234, 248, .84);
   font-size: .7rem;
   font-weight: 800;
+}
+
+.auth-link,
+.auth-identity {
+  color: rgba(218, 234, 248, .86);
+  font-size: .7rem;
+  font-weight: 850;
+}
+
+.auth-link {
+  padding: 5px 11px;
+  border: 1px solid rgba(66, 191, 176, .34);
+  border-radius: 999px;
+  background: rgba(66, 191, 176, .1);
+  text-decoration: none;
+}
+
+.auth-identity {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.auth-identity button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #f0a9af;
+  font-size: .68rem;
+  font-weight: 850;
+  cursor: pointer;
 }
 
 .user-avatar {

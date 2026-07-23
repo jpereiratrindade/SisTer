@@ -65,6 +65,7 @@ Acesse:
 
 ```text
 http://localhost:8000
+http://localhost:8000/login
 http://localhost:8000/api/health
 http://localhost:8000/api/systems
 http://localhost:8000/api/contracts
@@ -72,9 +73,26 @@ http://localhost:8000/api/evidence
 http://localhost:8000/api/diagnostics
 ```
 
-Esta API ainda usa dados demonstrativos em memoria. A ligacao com PostgreSQL sera o proximo incremento.
+`health` e `systems` sao publicos. `contracts`, `evidence` e `diagnostics`
+exigem sessao com papel `admin`.
 
-Enquanto nao houver autenticacao, use o `sisterd` como servidor local/de desenvolvimento.
+No primeiro acesso a `/login`, o SisTer permite criar a conta administradora
+inicial. Depois do login, a barra lateral libera as visoes internas e a opcao
+**Equipe**, em `/admin/users`, permite cadastrar outras contas como `user` ou
+`admin`.
+
+As senhas sao derivadas com PBKDF2-HMAC-SHA256 e sal aleatorio. As identidades
+persistem em `.run/auth-users.tsv`, com permissao exclusiva do usuario do
+processo; os tokens de sessao ficam somente em memoria e expiram em oito horas.
+Para usar outro caminho:
+
+```bash
+SISTER_AUTH_FILE=/caminho/protegido/auth-users.tsv \
+  ./build/apps/sisterd/sisterd 8000 web
+```
+
+Os dados territoriais e diagnosticos da API ainda sao demonstrativos em
+memoria. A ligacao desses dados com PostgreSQL sera o proximo incremento.
 
 ## Banco de dados
 

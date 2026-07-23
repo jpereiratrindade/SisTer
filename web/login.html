@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#071e38">
+    <title>Acesso · SisTer</title>
+    <link rel="stylesheet" href="./styles.css">
+    <link rel="stylesheet" href="./auth.css">
+  </head>
+  <body class="auth-page">
+    <main class="auth-shell">
+      <section class="auth-brand">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <g fill="none" stroke="currentColor" stroke-width="2.8"><path d="M32 5 55 18v28L32 59 9 46V18z"/><path d="M32 5v54M9 18l46 28M55 18 9 46"/></g>
+          <g fill="currentColor"><circle cx="32" cy="5" r="4"/><circle cx="55" cy="18" r="4"/><circle cx="55" cy="46" r="4"/><circle cx="32" cy="59" r="4"/><circle cx="9" cy="46" r="4"/><circle cx="9" cy="18" r="4"/><circle cx="32" cy="32" r="5"/></g>
+        </svg>
+        <span>CONVERGÊNCIA TERRITORIAL</span>
+        <h1>SisTer</h1>
+        <p>O núcleo federador dos subsistemas, contratos, evidências e leituras territoriais.</p>
+        <ul>
+          <li>Visões operacionais para a equipe</li>
+          <li>Contratos e proveniência governados</li>
+          <li>Sessão administrativa protegida</li>
+        </ul>
+      </section>
+
+      <section class="auth-card">
+        <span class="eyebrow">ACESSO À PLATAFORMA</span>
+        <h2 id="form-title">Entre em sua conta</h2>
+        <p id="form-lead">Use as credenciais da equipe administrativa.</p>
+        <form id="auth-form">
+          <label id="name-field" hidden>
+            Nome completo
+            <input name="name" autocomplete="name">
+          </label>
+          <label>
+            E-mail
+            <input name="email" type="email" autocomplete="email" required>
+          </label>
+          <label>
+            Senha
+            <input name="password" type="password" autocomplete="current-password" required>
+          </label>
+          <button class="primary-action" type="submit">
+            <strong id="submit-label">Entrar</strong>
+          </button>
+          <p class="auth-error" id="auth-error" role="alert"></p>
+        </form>
+        <small>A sessão utiliza cookie protegido e a senha não é armazenada em texto.</small>
+        <a class="auth-back" href="/">← Voltar à visão pública</a>
+      </section>
+    </main>
+    <script src="./login.js"></script>
+  </body>
+</html>

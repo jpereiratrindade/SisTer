@@ -1,5 +1,7 @@
-add_executable(sisterd main.cpp)
-target_link_libraries(sisterd PRIVATE sister_core)
+find_package(OpenSSL REQUIRED)
+
+add_executable(sisterd main.cpp auth.cpp)
+target_link_libraries(sisterd PRIVATE sister_core OpenSSL::Crypto)
 target_compile_features(sisterd PRIVATE cxx_std_20)
 
 if(MSVC)

@@ -497,6 +497,47 @@ function bindNavigation() {
   });
 }
 
+function showPublicIdentity() {
+  qs("#auth-login").hidden = false;
+  qs("#auth-identity").hidden = true;
+  qs("#auth-avatar").hidden = true;
+  qsa("[data-admin-only]").forEach((item) => {
+    item.hidden = true;
+  });
+}
+
+function showAuthenticatedIdentity(user) {
+  qs("#auth-login").hidden = true;
+  qs("#auth-identity").hidden = false;
+  qs("#auth-avatar").hidden = false;
+  qs("#auth-name").textContent = user.name;
+  qs("#auth-avatar").textContent = systemInitials(user.name);
+  if (user.role === "admin") {
+    qsa("[data-admin-only]").forEach((item) => {
+      item.hidden = false;
+    });
+  }
+}
+
+async function initializeIdentity() {
+  try {
+    const response = await fetch("/api/me", {cache: "no-store"});
+    if (response.status === 401) {
+      showPublicIdentity();
+      return;
+    }
+    if (!response.ok) throw new Error();
+    showAuthenticatedIdentity(await response.json());
+  } catch {
+    showPublicIdentity();
+  }
+}
+
+async function logout() {
+  await fetch("/api/auth/logout", {method: "POST"}).catch(() => {});
+  window.location.href = "/";
+}
+
 function init() {
   setCounts();
   renderSystems();
@@ -517,6 +558,8 @@ function init() {
   qs("#system-dialog").addEventListener("click", (event) => {
     if (event.target === qs("#system-dialog")) qs("#system-dialog").close();
   });
+  qs("#auth-logout").addEventListener("click", logout);
+  initializeIdentity();
 }
 
 init();
