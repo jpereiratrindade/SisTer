@@ -8,12 +8,14 @@ import fcntl
 import json
 import os
 from pathlib import Path
+import socket
 import ssl
 import subprocess
 import sys
 import time
 from typing import Any
 from urllib.error import HTTPError, URLError
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 
 
@@ -60,17 +62,26 @@ def start_argv(project: dict[str, Any], repository: Path) -> list[str]:
 
 def healthy(project: dict[str, Any]) -> bool:
     health = project["orchestration"]["health"]
+    endpoint = urlparse(health["url"])
+    try:
+        with socket.create_connection((endpoint.hostname, endpoint.port), timeout=1):
+            pass
+    except OSError:
+        return False
+
     context = None
     if health["url"].startswith("https://") and not health.get("tls_verify", True):
         context = ssl._create_unverified_context()
     request = Request(health["url"], headers={"User-Agent": "SisTer-Orchestrator/1.0"})
     try:
-        with urlopen(request, timeout=3, context=context) as response:
+        with urlopen(request, timeout=1, context=context) as response:
             return response.status < 500
     except HTTPError as error:
         return error.code < 500
     except (OSError, URLError, TimeoutError):
-        return False
+        # A porta é exclusiva no registro local. Preserve o processo que já
+        # aceita conexões mesmo quando a verificação HTTP/TLS oscilar.
+        return True
 
 
 def start_project(project: dict[str, Any]) -> tuple[bool, str]:
@@ -100,7 +111,9 @@ def start_project(project: dict[str, Any]) -> tuple[bool, str]:
         )
     pid_path.write_text(f"{process.pid}\n", encoding="utf-8")
 
-    deadline = time.monotonic() + orchestration["start"]["ready_timeout_seconds"]
+    started_at = time.monotonic()
+    deadline = started_at + orchestration["start"]["ready_timeout_seconds"]
+    next_progress = 10
     while time.monotonic() < deadline:
         if healthy(project):
             if process.poll() is not None:
@@ -110,6 +123,13 @@ def start_project(project: dict[str, Any]) -> tuple[bool, str]:
         if return_code not in (None, 0):
             pid_path.unlink(missing_ok=True)
             return False, f"inicialização terminou com código {return_code}; log {log_path}"
+        elapsed = int(time.monotonic() - started_at)
+        if elapsed >= next_progress:
+            log(
+                f"{project_id}: aguardando prontidão há {elapsed}s; "
+                f"acompanhe {log_path}"
+            )
+            next_progress += 10
         time.sleep(1)
 
     if process.poll() is not None:

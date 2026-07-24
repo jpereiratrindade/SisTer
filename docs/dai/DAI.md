@@ -22,6 +22,9 @@
   executa comandos fora dessa lista.
 - Action: preservar serviços saudáveis, iniciar os indisponíveis com processo
   destacado, aguardar prontidão e manter logs em `.run/subsystems/`.
+- Decision: a sonda HTTP continua preferencial, mas uma porta local exclusiva
+  já aceitando conexões impede reinício duplicado quando HTTP/TLS oscila; a
+  espera informa progresso a cada dez segundos.
 - Decision: o ambiente de teste não inicia dependências; degradações opcionais
   são informadas e o modo estrito permanece disponível para operação assistida.
 
