@@ -58,6 +58,25 @@ Referência normativa:
 
 - <https://www.earthdata.nasa.gov/engage/open-data-services-software/data-use-policy>
 
+### IPWhois
+
+- usado somente após ação explícita no card e apenas quando o acesso HTTP não
+  permite a geolocalização protegida do navegador;
+- fornece uma aproximação por IP, que pode apontar para a rede ou provedor em
+  vez da posição real da pessoa;
+- latitude e longitude são reduzidas antes da consulta climática;
+- o SisTer não persiste IP, coordenadas ou resposta de localização;
+- o serviço externo recebe a requisição e aplica seus próprios termos e
+  política de privacidade;
+- seu uso deve ser revisto pela instância institucional de privacidade antes de
+  uma implantação de produção.
+
+Referências normativas:
+
+- <https://ipwhois.io/documentation>
+- <https://ipwhois.io/terms>
+- <https://ipwhois.io/privacy>
+
 ## Resultados que podem chegar ao SisTer
 
 Somente após revisão:
@@ -77,6 +96,23 @@ Cada resultado deve conter, no mínimo:
 
 Respostas brutas de APIs, indicadores não revisados, parâmetros de sessão,
 configuração de rede, dados de autenticação e logs não são promovidos.
+
+### Prévia local transitória
+
+O card autenticado pode apresentar uma prévia não promovida do acumulado
+modelado de precipitação:
+
+- somente após ação explícita da pessoa usuária;
+- por geolocalização autorizada do navegador em HTTPS ou localização aproximada
+  por IP, claramente informada, quando o acesso HTTP bloquear o recurso;
+- com latitude e longitude reduzidas a duas casas decimais antes da consulta;
+- por chamada direta e transitória à API Open-Meteo;
+- sem persistência das coordenadas ou da resposta no SisTer;
+- com fonte, período e natureza estimada identificados na interface.
+
+A prévia permanece classificada como resultado restrito e não revisado. Ela não
+integra o catálogo territorial, o repositório de evidências nem deve fundamentar
+sozinha alertas ou decisões operacionais.
 
 ## Software
 

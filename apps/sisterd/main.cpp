@@ -262,7 +262,7 @@ std::string routeApi(const std::string& path) {
     if (path == "/api/evidence") return jsonEvidence();
     if (path == "/api/diagnostics") return jsonDiagnostics();
     if (path == "/api/integrations/sister-clima") {
-        return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":[{"id":"open_meteo","url":"https://open-meteo.com/en/docs"},{"id":"nasa_power","url":"https://power.larc.nasa.gov/"}]})";
+        return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":[{"id":"open_meteo","url":"https://open-meteo.com/en/docs"},{"id":"nasa_power","url":"https://power.larc.nasa.gov/"}],"location_service":{"id":"ipwhois","mode":"explicit_action_http_fallback","persistence":"none","url":"https://ipwhois.io/documentation"}})";
     }
     if (path == "/api/integrations/sister-studio") {
         return sisterd::sisterStudioIntegrationJson();

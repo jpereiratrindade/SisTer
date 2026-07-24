@@ -58,6 +58,17 @@
       "attribution_required": true,
       "modification_notice_required": false,
       "terms_url": "https://www.earthdata.nasa.gov/engage/open-data-services-software/data-use-policy"
+    },
+    {
+      "source_id": "ipwhois",
+      "service_terms": "free_api_internal_use",
+      "data_license": "IPWHOIS-API-TERMS",
+      "attribution_required": true,
+      "modification_notice_required": false,
+      "terms_url": "https://ipwhois.io/terms",
+      "usage_limits": {
+        "calls_per_day": 1000
+      }
     }
   ],
   "output_policy": {
@@ -70,7 +81,8 @@
     "restricted": [
       "open_meteo_derived_datasets",
       "unreviewed_climate_indicators",
-      "generated_spatial_layers"
+      "generated_spatial_layers",
+      "local_precipitation_preview"
     ],
     "private": [
       "session_parameters",

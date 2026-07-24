@@ -1,5 +1,21 @@
 # DAI - SisTer
 
+## 2026-07-24 - Fronteira híbrida e resumo climático local
+
+- Decision: manter o Sister-Clima em Streamlit como produtor analítico enquanto
+  autenticação, governança, catálogo e resumos permanecem no SisTer C++.
+- Decision: migrar capacidades para C++ por contrato e somente quando coleta,
+  transformações e formatos estiverem estáveis, sem reescrita integral imediata.
+- Decision: localização não será inferida silenciosamente; a consulta começa
+  somente após ação do usuário, usa geolocalização do navegador em contexto
+  seguro ou localização aproximada por IP em HTTP, reduz coordenadas a duas
+  casas decimais e não as armazena no SisTer.
+- Action: ampliar a área útil do painel e oferecer no card climático uma
+  consulta transitória do acumulado modelado dos seis dias anteriores e de
+  hoje, com atribuição ao Open-Meteo.
+- Impediment: a consulta direta depende de serviços externos; o fallback por IP
+  é impreciso e exige revisão institucional de privacidade antes da produção.
+
 ## 2026-07-24 - Continuidade de sessão e referência climática
 
 - Decision: o acesso ao Sister-Clima deve transportar a origem exata da

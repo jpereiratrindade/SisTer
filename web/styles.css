@@ -623,8 +623,7 @@ h1 {
 
 .view {
   display: none;
-  max-width: 1500px;
-  margin: 0 auto;
+  width: 100%;
 }
 
 .view.active {
@@ -804,6 +803,7 @@ h1 {
     "mark identity status"
     "mark description description"
     ". data-reference data-reference"
+    ". climate-snapshot climate-snapshot"
     ". actions actions";
   gap: 7px 12px;
   min-height: 150px;
@@ -890,6 +890,104 @@ h1 {
 .system-data-reference a:focus-visible {
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.climate-snapshot {
+  display: grid;
+  grid-area: climate-snapshot;
+  gap: 5px;
+  min-height: 62px;
+  padding: 8px 10px;
+  border: 1px solid #d8e8ee;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #f2f8fb, #eef8f7);
+  color: #60758a;
+}
+
+.climate-snapshot-label {
+  color: var(--navy);
+  font-size: .65rem;
+  font-weight: 850;
+}
+
+.climate-snapshot button {
+  justify-self: start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--teal);
+  font-size: .67rem;
+  font-weight: 850;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.climate-snapshot small {
+  color: #718399;
+  font-size: .59rem;
+  line-height: 1.35;
+}
+
+.climate-snapshot small a {
+  color: #527b94;
+  font-weight: 800;
+}
+
+.climate-snapshot-heading,
+.climate-snapshot-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.climate-snapshot-heading strong {
+  color: var(--blue);
+  font-size: .8rem;
+}
+
+.climate-snapshot svg {
+  width: 100%;
+  height: 38px;
+  overflow: visible;
+}
+
+.climate-snapshot svg line {
+  stroke: #cadbe4;
+  stroke-width: 1;
+}
+
+.climate-snapshot svg rect {
+  fill: var(--blue);
+  opacity: .82;
+}
+
+.climate-snapshot--error {
+  border-color: #ecd9c5;
+  background: #fff9f1;
+}
+
+.climate-loading-bar {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #dce8ee;
+}
+
+.climate-loading-bar::after {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--blue), var(--teal-light));
+  content: "";
+  animation: climate-loading 1.1s ease-in-out infinite alternate;
+}
+
+@keyframes climate-loading {
+  from { transform: translateX(-10%); }
+  to { transform: translateX(150%); }
 }
 
 .system-actions {
@@ -1556,6 +1654,8 @@ tr:last-child td {
       "mark identity"
       "mark status"
       "description description"
+      "data-reference data-reference"
+      "climate-snapshot climate-snapshot"
       "actions actions";
   }
 
