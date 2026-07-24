@@ -328,7 +328,7 @@ function resolveAccessUrl(accessUrl) {
 function resolveSystemAccessUrl(system) {
   if (!system.accessUrl) return null;
   const url = new URL(resolveAccessUrl(system.accessUrl));
-  if (system.id === "sister_clima") {
+  if (system.id === "sister_clima" || system.id === "sister_studio") {
     url.searchParams.set("sister_url", window.location.origin);
   }
   return url.href.replace(/\/$/, "");

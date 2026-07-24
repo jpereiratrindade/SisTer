@@ -299,7 +299,7 @@ void sendAll(int client, const std::string& response) {
 std::vector<std::pair<std::string, std::string>> sessionHeaders(const std::string& token) {
     return {
         {"Set-Cookie", std::string(sessionCookie) + "=" + token +
-            "; HttpOnly; SameSite=Strict; Path=/; Max-Age=28800"},
+            "; HttpOnly; SameSite=Lax; Path=/; Max-Age=28800"},
         {"Cache-Control", "no-store"}
     };
 }
@@ -381,7 +381,7 @@ bool handleAuthApi(
             204, "No Content", "", "application/json; charset=utf-8",
             {
                 {"Set-Cookie", std::string(sessionCookie) +
-                    "=; HttpOnly; SameSite=Strict; Path=/; Max-Age=0"},
+                    "=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0"},
                 {"Cache-Control", "no-store"}
             }));
         return true;

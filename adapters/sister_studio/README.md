@@ -31,3 +31,8 @@ da biblioteca TLS não são expostos.
 
 Schemas: `contracts/sister_studio_capabilities.schema.json` e
 `contracts/sister_studio_health.schema.json`.
+
+O acesso humano pelo catálogo é uma fronteira separada dessa API de serviço.
+O link inclui `sister_url` apenas para retorno à instância correta. O gateway
+Studio valida o cookie `sister_session` diretamente em `/api/me` nas portas
+locais autorizadas; senha e conteúdo audiovisual não atravessam a integração.

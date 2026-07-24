@@ -1,5 +1,23 @@
 # DAI - SisTer
 
+## 2026-07-24 - Sessão federada do Sister-Studio
+
+- Decision: o acesso humano ao Sister-Studio reutiliza a sessão já validada no
+  SisTer, sem solicitar novamente e-mail ou senha.
+- Decision: manter `8443` como fronteira HTTPS do Studio; a mudança de porta
+  representa a entrada do subsistema, não uma troca de identidade.
+- Action: transportar `sister_url` no link, validar `sister_session` em
+  `/api/me` somente nas portas locais autorizadas e encaminhar internamente
+  apenas UUID, papel e autoridade.
+- Decision: usar `SameSite=Lax` no cookie de sessão para permitir que ele
+  acompanhe a navegação GET de nível superior de `http://SisTer` para
+  `https://Sister-Studio`; requisições mutáveis continuam protegidas contra
+  envio entre sites. Em produção, o SisTer também deve operar em HTTPS e emitir
+  o cookie com `Secure`.
+- Impediment: certificados de desenvolvimento continuam exigindo confiança
+  local; publicação externa requer certificado institucional e ratificação do
+  registro de tratamento da identidade federada.
+
 ## 2026-07-24 - Fronteira híbrida e resumo climático local
 
 - Decision: manter o Sister-Clima em Streamlit como produtor analítico enquanto
