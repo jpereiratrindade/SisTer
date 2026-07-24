@@ -51,6 +51,13 @@ endpoints de uma vez:
 ./scripts/run_all.sh dev 8000
 ```
 
+No fluxo `dev`, o SisTer também verifica os subsistemas contratados declarados
+com `ensure-running` em `config/local_resources.json`. Serviços saudáveis são
+preservados; os indisponíveis são iniciados pelo comando governado e seus logs
+ficam em `.run/subsystems/`. Use `SISTER_ENSURE_SUBSYSTEMS=0` para uma subida
+isolada ou `SISTER_SUBSYSTEMS_STRICT=1` para falhar diante de qualquer
+degradação.
+
 O fluxo `dev` deve ser executado no worktree principal. Para preparar e executar
 um teste reproduzivel a partir do mesmo local:
 

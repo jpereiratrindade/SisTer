@@ -17,6 +17,13 @@
       "id": "morfocampo",
       "repository": "cpp/morfocampo",
       "integrates_with_sister": true,
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": false,
+        "health": {"url": "https://127.0.0.1:8011/", "tls_verify": false},
+        "start": {"argv": ["./run.sh"], "ready_timeout_seconds": 180}
+      },
       "resources": [
         {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8011}
       ]
@@ -25,6 +32,13 @@
       "id": "droneops",
       "repository": "cpp/droneops",
       "integrates_with_sister": true,
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": false,
+        "health": {"url": "https://127.0.0.1:8012/", "tls_verify": false},
+        "start": {"argv": ["./deploy/run_dev.sh"], "ready_timeout_seconds": 180}
+      },
       "resources": [
         {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8012}
       ]
@@ -40,6 +54,17 @@
       "id": "radar_sister_resiliencia",
       "repository": "cpp/radar_sister_resiliencia",
       "integrates_with_sister": true,
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": false,
+        "health": {"url": "http://127.0.0.1:8765/"},
+        "start": {
+          "argv": ["./scripts/dev/run_gui_with_pgvector.sh"],
+          "environment": {"RADAR_GUI_HOST": "0.0.0.0"},
+          "ready_timeout_seconds": 240
+        }
+      },
       "resources": [
         {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8765},
         {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55432, "container": "radar-sister-pgvector-pg17", "volume": "radar_sister_pgvector_pg17_data"}
@@ -49,6 +74,16 @@
       "id": "sister_clima",
       "repository": "python/Sister-Clima",
       "integrates_with_sister": true,
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": false,
+        "health": {"url": "http://127.0.0.1:8501/_stcore/health"},
+        "start": {
+          "argv": ["./venv/bin/streamlit", "run", "app.py"],
+          "ready_timeout_seconds": 90
+        }
+      },
       "resources": [
         {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8501}
       ]
@@ -58,6 +93,13 @@
       "repository": "Sister-Studio",
       "integrates_with_sister": true,
       "components": ["audio", "voice", "video"],
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": false,
+        "health": {"url": "https://127.0.0.1:8443/api/health", "tls_verify": false},
+        "start": {"argv": ["./scripts/run_all.sh"], "ready_timeout_seconds": 240}
+      },
       "resources": [
         {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8443, "container": "sister-studio-dev", "volume": "sister_studio_generated"},
         {"kind": "http", "environment": "dev", "host": "0.0.0.0", "port": 8088},

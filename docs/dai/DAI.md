@@ -1,5 +1,17 @@
 # DAI - SisTer
 
+## 2026-07-24 - Inicialização governada dos subsistemas
+
+- Decision: o SisTer verifica, ao subir em desenvolvimento, os subsistemas
+  integrados cuja política local seja `ensure-running`.
+- Decision: saúde, repositório, comando, ambiente, prazo e criticidade são
+  declarados em `config/local_resources.json`; o orquestrador não infere nem
+  executa comandos fora dessa lista.
+- Action: preservar serviços saudáveis, iniciar os indisponíveis com processo
+  destacado, aguardar prontidão e manter logs em `.run/subsystems/`.
+- Decision: o ambiente de teste não inicia dependências; degradações opcionais
+  são informadas e o modo estrito permanece disponível para operação assistida.
+
 ## 2026-07-24 - Sessão federada do Sister-Studio
 
 - Decision: o acesso humano ao Sister-Studio reutiliza a sessão já validada no

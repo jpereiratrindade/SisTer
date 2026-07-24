@@ -17,5 +17,8 @@ PORT="${2:-$SISTER_APP_PORT}"
 ./scripts/run_quality.sh
 ./scripts/app/serve.sh "$ENV_NAME" "$PORT"
 ./scripts/app/smoke.sh "$PORT"
+if [[ "$ENV_NAME" == "dev" && "${SISTER_ENSURE_SUBSYSTEMS:-1}" != "0" ]]; then
+  ./scripts/subsystems/ensure.sh "$ENV_NAME"
+fi
 
 echo "All checks passed for ${ENV_NAME}."

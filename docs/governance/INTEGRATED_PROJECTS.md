@@ -73,6 +73,26 @@ Antes de adicionar ou mudar um recurso:
 O PostgreSQL sempre escuta em `5432` dentro do container; o registro coordena a
 porta publicada no host.
 
+## Inicializacao governada
+
+Projetos integrados podem declarar `orchestration` no registro central. A
+declaracao contém a URL local de saúde, o comando de inicialização sem shell, o
+prazo de prontidão e se a indisponibilidade impede a subida do SisTer.
+
+No ambiente `dev`, `scripts/run_all.sh` executa
+`scripts/subsystems/ensure.sh` depois de validar e iniciar o núcleo:
+
+1. consulta a saúde de cada projeto com política `ensure-running`;
+2. preserva processos que já estejam saudáveis;
+3. inicia somente comandos e repositórios explicitamente registrados;
+4. aguarda a saúde e grava logs em `.run/subsystems/`;
+5. informa degradações opcionais sem ocultá-las.
+
+O ambiente `test` não inicia subsistemas. Em desenvolvimento, a automação pode
+ser desativada pontualmente com `SISTER_ENSURE_SUBSYSTEMS=0`; para transformar
+qualquer degradação em erro, use `SISTER_SUBSYSTEMS_STRICT=1`. Nenhum segredo
+pode ser registrado no bloco de ambiente da orquestração.
+
 ## Pendencias encontradas na auditoria
 
 - o container antigo do LabGP declara 5432, mas sua reserva passa a ser 55436;

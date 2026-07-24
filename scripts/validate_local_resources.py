@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 import json
 import pathlib
+import re
 import sys
+from urllib.parse import urlparse
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
@@ -44,6 +46,55 @@ def main() -> None:
                 if repository_path.is_dir() and not link.is_file():
                     fail(f"integrated project {project_id} lacks {link}")
 
+        orchestration = project.get("orchestration")
+        if orchestration is not None:
+            if not project.get("integrates_with_sister"):
+                fail(f"orchestrated project {project_id} is not integrated")
+            if repository is None:
+                fail(f"orchestrated project {project_id} has no repository")
+            if orchestration.get("policy") != "ensure-running":
+                fail(f"invalid orchestration policy in {project_id}")
+            if orchestration.get("environment") != "dev":
+                fail(f"orchestration is only allowed for dev in {project_id}")
+            if not isinstance(orchestration.get("required"), bool):
+                fail(f"orchestration required flag must be boolean in {project_id}")
+
+            health = orchestration.get("health")
+            if not isinstance(health, dict):
+                fail(f"orchestration health is missing in {project_id}")
+            parsed_health = urlparse(health.get("url", ""))
+            if (
+                parsed_health.scheme not in {"http", "https"}
+                or parsed_health.hostname not in {"127.0.0.1", "localhost"}
+                or parsed_health.port is None
+            ):
+                fail(f"orchestration health must be a local HTTP URL in {project_id}")
+            if parsed_health.scheme == "http" and health.get("tls_verify") is False:
+                fail(f"tls_verify is invalid for HTTP in {project_id}")
+
+            start = orchestration.get("start")
+            argv = start.get("argv") if isinstance(start, dict) else None
+            if not isinstance(argv, list) or not argv or not all(
+                isinstance(item, str) and item for item in argv
+            ):
+                fail(f"orchestration argv is invalid in {project_id}")
+            entrypoint = pathlib.PurePosixPath(argv[0])
+            if not argv[0].startswith("./") or ".." in entrypoint.parts:
+                fail(f"orchestration entrypoint is not governed in {project_id}")
+            timeout = start.get("ready_timeout_seconds")
+            if not isinstance(timeout, int) or not 5 <= timeout <= 600:
+                fail(f"orchestration timeout is invalid in {project_id}")
+            environment = start.get("environment", {})
+            if not isinstance(environment, dict):
+                fail(f"orchestration environment is invalid in {project_id}")
+            for name, value in environment.items():
+                if (
+                    not re.fullmatch(r"[A-Z][A-Z0-9_]*", name)
+                    or not isinstance(value, str)
+                    or any(term in name for term in ("PASSWORD", "SECRET", "TOKEN", "KEY"))
+                ):
+                    fail(f"unsafe orchestration environment field in {project_id}")
+
         for resource in project.get("resources", []):
             host = resource.get("host")
             port = resource.get("port")
@@ -73,6 +124,17 @@ def main() -> None:
                     if owner is not None:
                         fail(f"{field} {value} is shared by {owner} and {project_id}")
                     index[value] = project_id
+
+        if orchestration is not None:
+            health_port = urlparse(orchestration["health"]["url"]).port
+            declared_ports = {
+                resource["port"]
+                for resource in project.get("resources", [])
+                if resource.get("environment") == orchestration["environment"]
+                and resource.get("kind") in {"http", "https"}
+            }
+            if health_port not in declared_ports:
+                fail(f"orchestration health port is not reserved by {project_id}")
 
     for project in projects:
         for dependency in project.get("depends_on", []):
