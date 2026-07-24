@@ -1,5 +1,18 @@
 # DAI - SisTer
 
+## 2026-07-24 - Continuidade de sessão e referência climática
+
+- Decision: o acesso ao Sister-Clima deve transportar a origem exata da
+  instância autenticada do SisTer, permitindo retorno à mesma porta e ao mesmo
+  armazenamento de sessões.
+- Decision: o card do Sister-Clima deve identificar os produtos climáticos e
+  suas fontes, sem incorporar respostas brutas ou parâmetros privados.
+- Action: adicionar `sister_url` ao link restrito, validá-lo no produtor pelo
+  mesmo host e apresentar precipitação diária, Open-Meteo e NASA POWER no card
+  e no detalhe do sistema.
+- Impediment: as sessões ainda residem em memória por processo; continuidade
+  entre instâncias diferentes exigirá armazenamento de sessão compartilhado.
+
 ## 2026-07-24 - Contexto da Plataforma Colaborativa Sul
 
 - Decision: apresentar o SisTer discretamente como atividade sobre as bases de

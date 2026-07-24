@@ -803,6 +803,7 @@ h1 {
   grid-template-areas:
     "mark identity status"
     "mark description description"
+    ". data-reference data-reference"
     ". actions actions";
   gap: 7px 12px;
   min-height: 150px;
@@ -864,6 +865,31 @@ h1 {
   line-height: 1.45;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.system-data-reference {
+  grid-area: data-reference;
+  margin: 0;
+  color: #64778c;
+  font-size: .67rem;
+  line-height: 1.4;
+}
+
+.system-data-reference span {
+  color: var(--navy);
+  font-weight: 850;
+}
+
+.system-data-reference a {
+  color: var(--teal);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.system-data-reference a:hover,
+.system-data-reference a:focus-visible {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .system-actions {
@@ -1313,6 +1339,25 @@ tr:last-child td {
 
 .detail-section {
   margin-top: 15px;
+}
+
+.dialog-data-summary {
+  margin: 5px 0 8px;
+  color: #435c75;
+  font-size: .78rem;
+}
+
+.tag--link {
+  color: var(--teal);
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.tag--link:hover,
+.tag--link:focus-visible {
+  border-color: rgba(28, 155, 152, .45);
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .dialog-action {

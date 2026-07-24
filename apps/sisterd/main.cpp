@@ -231,7 +231,7 @@ std::string jsonSystems() {
   {"id":"droneops","name":"DroneOps","type":"Missao","status":"Em validacao","contract":"sister-contracts/0.1.0","access_url":"https://127.0.0.1:8012"},
   {"id":"camponode","name":"CampoNode","type":"Infraestrutura","status":"Planejado","contract":"sister-contracts/0.1.0","access_url":"https://camponode.local"},
   {"id":"radar_sister_resiliencia","name":"Radar-Sister Resiliencia","type":"Analitico","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"http://127.0.0.1:8765"},
-  {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted"},
+  {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":["open_meteo","nasa_power"]},
   {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_url":"https://127.0.0.1:8443"}
 ])";
 }
@@ -262,7 +262,7 @@ std::string routeApi(const std::string& path) {
     if (path == "/api/evidence") return jsonEvidence();
     if (path == "/api/diagnostics") return jsonDiagnostics();
     if (path == "/api/integrations/sister-clima") {
-        return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0"})";
+        return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":[{"id":"open_meteo","url":"https://open-meteo.com/en/docs"},{"id":"nasa_power","url":"https://power.larc.nasa.gov/"}]})";
     }
     if (path == "/api/integrations/sister-studio") {
         return sisterd::sisterStudioIntegrationJson();

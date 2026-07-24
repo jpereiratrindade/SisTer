@@ -117,6 +117,11 @@ const state = {
       accessUrl: null,
       accessMode: "Identificado · não comercial",
       accessRestricted: true,
+      dataSummary: "Precipitação diária e indicadores pluviométricos",
+      dataReferences: [
+        {label: "Open-Meteo", url: "https://open-meteo.com/en/docs"},
+        {label: "NASA POWER", url: "https://power.larc.nasa.gov/"}
+      ],
       publicScope: "Documentação, fontes e metadados de proveniência",
       restrictedScope: "Resultados revisados e dados derivados para pesquisa pública não comercial",
       privateScope: "Sessões, autenticação, configuração de rede e logs",
@@ -316,6 +321,15 @@ function resolveAccessUrl(accessUrl) {
   return url.href.replace(/\/$/, "");
 }
 
+function resolveSystemAccessUrl(system) {
+  if (!system.accessUrl) return null;
+  const url = new URL(resolveAccessUrl(system.accessUrl));
+  if (system.id === "sister_clima") {
+    url.searchParams.set("sister_url", window.location.origin);
+  }
+  return url.href.replace(/\/$/, "");
+}
+
 function renderSystems(filter = "") {
   const normalized = filter.trim().toLowerCase();
   const systems = state.systems.filter((system) => {
@@ -333,7 +347,18 @@ function renderSystems(filter = "") {
     return haystack.includes(normalized);
   });
 
-  qs("#systems-grid").innerHTML = systems.map((system) => `
+  qs("#systems-grid").innerHTML = systems.map((system) => {
+    const dataReference = system.dataReferences?.length
+      ? `
+        <p class="system-data-reference">
+          <span>Dados:</span> ${escapeHtml(system.dataSummary)} ·
+          ${system.dataReferences.map((source) => `
+            <a href="${source.url}" target="_blank" rel="noopener noreferrer">${escapeHtml(source.label)}</a>
+          `).join(" · ")}
+        </p>
+      `
+      : "";
+    return `
     <article class="system-card">
       <span class="system-mark" aria-hidden="true">${systemInitials(system.name)}</span>
       <div class="system-identity">
@@ -342,11 +367,13 @@ function renderSystems(filter = "") {
       </div>
       <span class="status-pill" data-status="${statusSlug(system.status)}">${system.status}</span>
       <p class="system-description">${system.description}</p>
+      ${dataReference}
       <div class="system-actions">
         <button class="text-link" type="button" data-system-id="${system.id}">Conhecer sistema →</button>
       </div>
     </article>
-  `).join("") || `
+  `;
+  }).join("") || `
     <p class="panel-note">Nenhum subsistema corresponde à busca.</p>
   `;
 }
@@ -561,9 +588,24 @@ function validateSample() {
 function showSystemDetails(systemId) {
   const system = state.systems.find((item) => item.id === systemId);
   if (!system) return;
-  const accessUrl = system.accessUrl ? resolveAccessUrl(system.accessUrl) : null;
+  const accessUrl = resolveSystemAccessUrl(system);
   const governanceDetail = system.governanceContract
     ? `<div><span>Governança</span><strong>${system.governanceContract}</strong></div>`
+    : "";
+  const dataReferences = system.dataReferences?.length
+    ? `
+      <div class="detail-section">
+        <span>Dados e fontes</span>
+        <p class="dialog-data-summary">${escapeHtml(system.dataSummary)}</p>
+        <div class="tag-row">
+          ${system.dataReferences.map((source) => `
+            <a class="tag tag--link" href="${source.url}" target="_blank" rel="noopener noreferrer">
+              ${escapeHtml(source.label)} ↗
+            </a>
+          `).join("")}
+        </div>
+      </div>
+    `
     : "";
   let accessAction = `<a class="dialog-action" href="${accessUrl}" target="_blank" rel="noreferrer">Acessar subsistema</a>`;
   if (system.status === "Planejado") {
@@ -594,6 +636,7 @@ function showSystemDetails(systemId) {
       <span>Entregas para o SisTer</span>
       <div class="tag-row">${system.exports.map((item) => `<span class="tag">${item}</span>`).join("")}</div>
     </div>
+    ${dataReferences}
     <div class="detail-section">
       <span>Compartilhamento</span>
       <div class="detail-grid">
