@@ -88,6 +88,13 @@
       ]
     },
     {
+      "id": "sister_confia",
+      "repository": "cpp/sister_confia",
+      "integrates_with_sister": false,
+      "status": "candidate",
+      "resources": []
+    },
+    {
       "id": "sister_video",
       "repository": "python/Sister-Video",
       "integrates_with_sister": false,
