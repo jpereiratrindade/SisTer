@@ -1,5 +1,17 @@
 # DAI - SisTer
 
+## 2026-07-24 - Contexto da Plataforma Colaborativa Sul
+
+- Decision: apresentar o SisTer discretamente como atividade sobre as bases de
+  sistemas inteligentes de governança no âmbito do Projeto Plataforma
+  Colaborativa Sul da Embrapa.
+- Evidence: a Carta Anual de Políticas Públicas e Governança Corporativa 2025
+  da Embrapa, página 13, relaciona a transformação de dados isolados a sistemas
+  inteligentes de governança e apresenta a Plataforma Colaborativa Sul na mesma
+  seção de expansão de tecnologias validadas.
+- Action: inserir nota institucional na home pública com link direto à fonte,
+  sem atribuir à publicação menção nominal ao SisTer.
+
 ## 2026-07-24 - Referência institucional à Embrapa
 
 - Decision: apresentar a relação institucional como `Projeto Resiliência ·

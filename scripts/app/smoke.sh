@@ -5,7 +5,10 @@ PORT="${1:-8000}"
 
 home_html="$(curl -fsS "http://127.0.0.1:${PORT}/")"
 grep -q "Transformar sinais dispersos em compreensão compartilhada" <<<"$home_html"
+grep -q "sistemas inteligentes de" <<<"$home_html"
+grep -q "Projeto Plataforma Colaborativa Sul da Embrapa" <<<"$home_html"
 grep -q 'href="https://www.embrapa.br/"' <<<"$home_html"
+grep -q 'Carta-anual-2024-2025.pdf#page=13' <<<"$home_html"
 grep -q 'rel="noopener noreferrer"' <<<"$home_html"
 if grep -Eq \
   "MorfoCampo|DroneOps|CampoNode|Sister-Clima|Sister-Studio|Radar-Sister" \

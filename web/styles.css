@@ -593,6 +593,34 @@ h1 {
   line-height: 1.8;
 }
 
+.public-institutional-note {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 5px 9px;
+  padding: 14px 24px;
+  border-top: 1px solid rgba(9, 37, 75, .06);
+  background: #f4f7fa;
+  color: #738296;
+  font-size: .65rem;
+  font-style: normal;
+  font-weight: 700;
+  text-align: center;
+}
+
+.public-institutional-note a {
+  color: #52708a;
+  text-decoration: underline;
+  text-decoration-color: rgba(82, 112, 138, .35);
+  text-underline-offset: 3px;
+}
+
+.public-institutional-note a:hover,
+.public-institutional-note a:focus-visible {
+  color: var(--navy);
+  text-decoration-color: currentColor;
+}
+
 .view {
   display: none;
   max-width: 1500px;
