@@ -7,4 +7,6 @@ build/
 *.exe
 .cache/
 .run/
+__pycache__/
+*.py[cod]
 .DS_Store
