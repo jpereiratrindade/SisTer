@@ -16,6 +16,8 @@ Mudancas em contratos, ingestao, proveniencia e catalogo territorial devem regis
 O estado atual do SisTer inclui componentes que devem ser tratados como superficie governada:
 
 - `contracts/`: contratos JSON Schema e versoes de integracao.
+- `SISTER_CLIMA_DATA.md`: acesso identificado, finalidade não comercial,
+  licenças, atribuição e promoção de resultados climáticos.
 - `examples/*_manifest_example.json`: contratos firmados ou exemplos de contrato por sistema integrante.
 - `apps/sisterctl`: CLI de validacao, banco e operacao local.
 - `apps/sisterd`: servidor/API inicial e entrega da interface.
@@ -52,13 +54,17 @@ Regras de governanca:
 O `sisterd` serve a interface e endpoints JSON iniciais:
 
 - `/api/health`
-- `/api/systems`
+- `/api/systems` (usuário autenticado)
 - `/api/contracts`
 - `/api/evidence`
 - `/api/diagnostics`
 - `/api/integrations/sister-studio` (administrador, contrato externo)
 
 Enquanto a API usar dados em memoria, a interface deve deixar claro quando indicadores forem demonstrativos. Quando a API passar a ler PostgreSQL, consultas de dashboard devem filtrar escopo de exposicao antes de retornar dados.
+
+A home sem sessão apresenta somente o propósito do SisTer. Inventário,
+quantidades, estados, vínculos e detalhes federados são classificados como
+restritos e não podem ser incluídos no HTML, JavaScript ou APIs públicos.
 
 ## Evidencias minimas por mudanca
 

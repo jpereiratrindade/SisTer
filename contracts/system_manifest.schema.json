@@ -22,6 +22,7 @@
     "system_name": { "type": "string", "minLength": 1 },
     "system_version": { "type": "string", "minLength": 1 },
     "contract_version": { "type": "string", "minLength": 1 },
+    "governance_contract": { "type": "string", "minLength": 1 },
     "type": { "type": "string", "minLength": 1 },
     "domain": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
     "operational_mode": { "type": "array", "items": { "type": "string" }, "minItems": 1 },
@@ -97,7 +98,10 @@
         "allows_offline_sync": { "type": "boolean" },
         "requires_schema_validation": { "const": true },
         "requires_operator": { "type": "boolean" },
-        "requires_spatial_reference": { "type": "boolean" }
+        "requires_spatial_reference": { "type": "boolean" },
+        "requires_authenticated_access": { "type": "boolean" },
+        "requires_attribution": { "type": "boolean" },
+        "commercial_use_allowed": { "type": "boolean" }
       }
     }
   }

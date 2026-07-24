@@ -113,16 +113,17 @@ const state = {
       status: "Integrado",
       description: "Monitoramento pluviométrico, indicadores climáticos e camadas espaciais com proveniência das fontes.",
       contract: "sister-contracts/0.1.0",
+      governanceContract: "sister-clima.governance/1.0.0",
       accessUrl: null,
-      accessMode: "Restrito",
+      accessMode: "Identificado · não comercial",
       accessRestricted: true,
       publicScope: "Documentação, fontes e metadados de proveniência",
-      restrictedScope: "Dados derivados, indicadores não revisados e camadas geradas",
-      privateScope: "Sessões, configuração de rede e logs",
+      restrictedScope: "Resultados revisados e dados derivados para pesquisa pública não comercial",
+      privateScope: "Sessões, autenticação, configuração de rede e logs",
       domains: ["clima", "precipitacao", "resiliencia", "inteligencia_territorial"],
-      modes: ["local_web", "public_web", "scheduled_collection", "offline_dataset"],
+      modes: ["local_web", "restricted_web", "scheduled_collection", "offline_dataset"],
       exports: ["daily_precipitation_csv", "climate_indicators", "spatial_precipitation_layer", "provenance_metadata"],
-      policy: ["proveniencia", "schema", "operador", "referencia_espacial"],
+      policy: ["usuario_identificado", "uso_nao_comercial", "atribuicao", "proveniencia", "schema", "operador", "referencia_espacial"],
       infra: {
         availability: "sob demanda",
         response: "HTTP",
@@ -170,6 +171,12 @@ const state = {
       version: "0.1.0",
       required: "Para ingestao offline",
       rule: "Pacote precisa conter origem, contrato, conteudo declarado, data de criacao e checksum."
+    },
+    {
+      name: "Sister-Clima Governance",
+      version: "1.0.0",
+      required: "Para resultados climáticos",
+      rule: "Usuários identificados, pesquisa pública não comercial, atribuição, proveniência e revisão de mudanças."
     },
     {
       name: "Sister-Studio Integration",
@@ -555,6 +562,9 @@ function showSystemDetails(systemId) {
   const system = state.systems.find((item) => item.id === systemId);
   if (!system) return;
   const accessUrl = system.accessUrl ? resolveAccessUrl(system.accessUrl) : null;
+  const governanceDetail = system.governanceContract
+    ? `<div><span>Governança</span><strong>${system.governanceContract}</strong></div>`
+    : "";
   let accessAction = `<a class="dialog-action" href="${accessUrl}" target="_blank" rel="noreferrer">Acessar subsistema</a>`;
   if (system.status === "Planejado") {
     accessAction = `<span class="dialog-action dialog-action--disabled">Acesso ainda não disponível</span>`;
@@ -574,6 +584,7 @@ function showSystemDetails(systemId) {
       <div><span>Responsável</span><strong>${system.owner}</strong></div>
       <div><span>Acesso</span><strong>${system.accessMode}</strong></div>
       <div><span>Contrato</span><strong>${system.contract}</strong></div>
+      ${governanceDetail}
     </div>
     <div class="detail-section">
       <span>Domínios</span>
@@ -588,6 +599,7 @@ function showSystemDetails(systemId) {
       <div class="detail-grid">
         <div><span>Público</span><strong>${system.publicScope}</strong></div>
         <div><span>Restrito</span><strong>${system.restrictedScope}</strong></div>
+        <div><span>Privado</span><strong>${system.privateScope}</strong></div>
       </div>
     </div>
     ${accessAction}
@@ -609,6 +621,11 @@ function bindNavigation() {
 
 function showPublicIdentity() {
   state.currentUser = null;
+  document.body.classList.remove("auth-pending", "authenticated-mode");
+  document.body.classList.add("public-mode");
+  qs("#public-home").hidden = false;
+  qs("#authenticated-workspace").hidden = true;
+  qs("#app-sidebar").hidden = true;
   qs("#auth-login").hidden = false;
   qs("#auth-identity").hidden = true;
   qs("#auth-avatar").hidden = true;
@@ -619,6 +636,11 @@ function showPublicIdentity() {
 
 function showAuthenticatedIdentity(user) {
   state.currentUser = user;
+  document.body.classList.remove("auth-pending", "public-mode");
+  document.body.classList.add("authenticated-mode");
+  qs("#public-home").hidden = true;
+  qs("#authenticated-workspace").hidden = false;
+  qs("#app-sidebar").hidden = false;
   qs("#auth-login").hidden = true;
   qs("#auth-identity").hidden = false;
   qs("#auth-avatar").hidden = false;

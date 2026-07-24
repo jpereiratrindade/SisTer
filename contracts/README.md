@@ -10,6 +10,8 @@ Contratos iniciais:
 - `public_scope.schema.json`: classificacao publico, restrito e privado para dados, evidencias, embeddings e diagnosticos.
 - `sister_studio_capabilities.schema.json`: descoberta restrita de capacidades e formatos do Sister-Studio.
 - `sister_studio_health.schema.json`: disponibilidade sanitizada dos modulos do Sister-Studio.
+- `sister_clima_governance.schema.json`: finalidade não comercial, acesso
+  identificado, licenças, atribuição e promoção de resultados do Sister-Clima.
 
 Versoes estabilizadas devem ser copiadas para `contracts/versions/vX.Y.Z/`.
 

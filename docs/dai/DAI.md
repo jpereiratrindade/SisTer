@@ -1,9 +1,44 @@
 # DAI - SisTer
 
+## 2026-07-24 - Referência institucional à Embrapa
+
+- Decision: apresentar a relação institucional como `Projeto Resiliência ·
+  Embrapa`, sem caracterizá-la como patrocínio, endosso comercial ou
+  titularidade do SisTer.
+- Decision: usar chamada textual e link para o portal oficial; a marca gráfica
+  dependerá de ativo oficial e da validação de uso aplicável.
+- Action: incluir acesso a `https://www.embrapa.br/` na barra superior e no
+  rodapé, abrindo em nova aba com proteção de contexto.
+
+## 2026-07-24 - Home pública sem inventário federado
+
+- Decision: apresentar a pessoas não autenticadas somente a ideia central do
+  SisTer como sistema de inteligência territorial governada, sem nomes,
+  quantidades, estados, vínculos ou detalhes dos sistemas federados.
+- Action: tornar `/api/systems` e o JavaScript do painel recursos autenticados,
+  eliminar o carregamento inicial do catálogo e adotar uma home pública
+  institucional sem métricas operacionais.
+- Action: esta decisão substitui a divulgação pública de existência prevista
+  nas decisões de acesso e integração do Sister-Clima de 2026-07-23.
+- Impediment: a página HTML contém a estrutura vazia do painel para hidratação
+  após o login; dados e inventário permanecem ausentes dos recursos públicos.
+
+## 2026-07-24 - Governança não comercial do Sister-Clima
+
+- Decision: autorizar a promoção de resultados revisados do Sister-Clima para
+  usuários identificados, exclusivamente em pesquisa pública e apoio
+  institucional sem finalidade lucrativa ou comercial.
+- Action: adotar `sister-clima.governance/1.0.0`, explicitar atribuição,
+  proveniência, cotas, GPL, fontes, resultados permitidos e gatilhos de revisão.
+- Impediment: a origem Streamlit não possui autenticação própria; deve
+  permanecer em loopback até existir proxy reverso autenticado ou controle
+  equivalente.
+
 ## 2026-07-23 - Acesso restrito ao Sister-Clima
 
 - Decision: manter a descoberta do Sister-Clima no catalogo publico, sem expor
-  sua URL de acesso.
+  sua URL de acesso. **Substituída em 2026-07-24 pela home pública sem
+  inventário federado.**
 - Action: classificar o link como restrito e entrega-lo por endpoint que exige
   uma sessao autenticada no SisTer.
 - Impediment: a autenticacao protege a entrega do link pelo SisTer; a aplicacao

@@ -1,0 +1,98 @@
+# Governança de dados e uso do Sister-Clima
+
+## Finalidade autorizada
+
+O Sister-Clima integra o SisTer para pesquisa pública, resiliência climática,
+educação e apoio decisório institucional sem finalidade lucrativa ou
+comercial. O contrato aplicável é `sister-clima.governance/1.0.0`, formalizado
+por:
+
+- `contracts/sister_clima_governance.schema.json`;
+- `examples/sister_clima_governance_example.json`;
+- `python/Sister-Clima/contracts/noncommercial_use_policy.json`.
+
+A existência de instrumento de cooperação ou contrato institucional não muda,
+por si só, essa classificação. Qualquer remuneração, vantagem econômica,
+revenda, assinatura, publicidade, integração em produto comercial ou pesquisa
+comercial não divulgada aciona revisão prévia da governança e das licenças.
+
+## Identidade e acesso
+
+- somente usuários identificados e autenticados no SisTer recebem o link;
+- a URL direta não é publicada no catálogo público;
+- a aplicação de origem permanece em `127.0.0.1` enquanto não houver proteção
+  própria ou proxy reverso autenticado;
+- expor a porta do Sister-Clima em rede sem esse controle é proibido;
+- parâmetros de sessão, autenticação, rede e logs não são compartilhados.
+
+A autenticação do SisTer protege a entrega do link, não a porta de origem. Uma
+implantação em rede deve impedir que o endereço do Streamlit contorne o controle
+de identidade.
+
+## Fontes e obrigações
+
+### Open-Meteo
+
+- a API gratuita é usada somente no contexto não comercial admitido pelos
+  termos, inclusive pesquisa pública em instituição pública;
+- devem ser respeitados os limites vigentes do serviço;
+- os dados permanecem sob CC BY 4.0;
+- toda apresentação ou exportação deve atribuir Open-Meteo, incluir link para a
+  licença e indicar processamento ou modificação;
+- não há garantia de disponibilidade, completude ou adequação decisória.
+
+Referências normativas:
+
+- <https://open-meteo.com/en/terms>
+- <https://open-meteo.com/en/license>
+
+### NASA POWER
+
+- os dados NASA são tratados conforme a política NASA Earthdata e eventuais
+  marcações específicas do produto;
+- NASA POWER deve ser citada como fonte;
+- a apresentação não pode sugerir endosso da NASA;
+- conteúdo de terceiros eventualmente identificado preserva sua licença.
+
+Referência normativa:
+
+- <https://www.earthdata.nasa.gov/engage/open-data-services-software/data-use-policy>
+
+## Resultados que podem chegar ao SisTer
+
+Somente após revisão:
+
+- indicadores climáticos;
+- camadas espaciais explicitamente exportadas;
+- cobertura temporal;
+- proveniência das fontes.
+
+Cada resultado deve conter, no mínimo:
+
+- fonte, URL, licença e atribuição;
+- indicação das transformações;
+- instante de coleta e cobertura temporal;
+- referência espacial e método de processamento;
+- operador responsável e versão do schema.
+
+Respostas brutas de APIs, indicadores não revisados, parâmetros de sessão,
+configuração de rede, dados de autenticação e logs não são promovidos.
+
+## Software
+
+O Sister-Clima permanece GPL-3.0-or-later. Prestação remunerada de
+desenvolvimento ou suporte é permitida, mas a distribuição do programa deve
+preservar o copyleft e entregar o código-fonte correspondente nas condições da
+GPL. A licença do programa não substitui as licenças e os termos das fontes de
+dados.
+
+## Revisão obrigatória
+
+O responsável pela integração deve suspender a promoção de novos resultados e
+solicitar revisão quando ocorrer:
+
+- alteração dos termos de uma fonte;
+- inclusão de nova fonte;
+- mudança da exposição em rede ou da autenticação;
+- ultrapassagem das cotas da API;
+- proposta de remuneração, vantagem econômica, revenda ou uso comercial.

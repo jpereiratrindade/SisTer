@@ -4,3 +4,4 @@
 - [ADR-0002 - Interface de convergencia e diagnostico](./ADR-0002-convergence-interface-and-diagnostics.md)
 - [ADR-0003 - PostgreSQL, PostGIS e pgvector](./ADR-0003-postgresql-postgis-pgvector.md)
 - [ADR-0004 - Integração de serviço com o Sister-Studio](./ADR-0004-sister-studio-service-integration.md)
+- [ADR-0005 - Governança não comercial do Sister-Clima](./ADR-0005-sister-clima-noncommercial-governance.md)

@@ -220,6 +220,7 @@ std::string jsonContracts() {
   {"name":"CampoSync Package","version":"0.1.0","required":"Para ingestao offline"},
   {"name":"Evidence","version":"0.1.0","required":"Para dado promovido"},
   {"name":"Public Scope","version":"0.1.0","required":"Para classificacao de exposicao"},
+  {"name":"Sister-Clima Governance","version":"1.0.0","required":"Para resultados climaticos nao comerciais"},
   {"name":"Sister-Studio Integration","version":"1.0.0","required":"Para capacidades e saude sanitizada"}
 ])";
 }
@@ -261,7 +262,7 @@ std::string routeApi(const std::string& path) {
     if (path == "/api/evidence") return jsonEvidence();
     if (path == "/api/diagnostics") return jsonDiagnostics();
     if (path == "/api/integrations/sister-clima") {
-        return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted"})";
+        return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0"})";
     }
     if (path == "/api/integrations/sister-studio") {
         return sisterd::sisterStudioIntegrationJson();
@@ -469,9 +470,9 @@ void handleClient(
             sendJsonError(client, 405, "Method Not Allowed", "Método não permitido.");
             return;
         }
-        const bool publicApi =
-            request->path == "/api/health" || request->path == "/api/systems";
+        const bool publicApi = request->path == "/api/health";
         const bool authenticatedApi =
+            request->path == "/api/systems" ||
             request->path == "/api/integrations/sister-clima";
         if (!publicApi && !actor) {
             sendJsonError(client, 401, "Unauthorized", "Autenticação necessária.");
@@ -521,14 +522,21 @@ void handleClient(
         }
     }
 
+    if (request->path.ends_with("/app.js") && !actor) {
+        sendJsonError(client, 401, "Unauthorized", "Autenticação necessária.");
+        return;
+    }
+
     const auto safePath = sanitizePath(request->path);
     const auto filePath = webRoot / safePath.substr(1);
     try {
         const auto body = readFile(filePath);
         sendAll(client, httpResponse(
             200, "OK", body, contentType(filePath),
-            safePath == "/index.html" || safePath == "/login.html"
-                ? std::vector<std::pair<std::string, std::string>>{{"Cache-Control", "no-cache"}}
+            safePath == "/app.js"
+                ? std::vector<std::pair<std::string, std::string>>{{"Cache-Control", "no-store"}}
+                : safePath == "/index.html" || safePath == "/login.html"
+                    ? std::vector<std::pair<std::string, std::string>>{{"Cache-Control", "no-cache"}}
                 : std::vector<std::pair<std::string, std::string>>{}));
     } catch (const std::exception&) {
         sendAll(client, httpResponse(

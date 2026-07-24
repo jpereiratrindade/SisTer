@@ -7,7 +7,7 @@
     <title>SisTer</title>
     <link rel="stylesheet" href="./styles.css">
   </head>
-  <body>
+  <body class="public-mode">
     <div class="system-layout">
     <header class="topbar">
       <div class="mini-brand">
@@ -26,6 +26,13 @@
       </div>
 
       <div class="top-context">
+        <a
+          class="institutional-link"
+          href="https://www.embrapa.br/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Acessar o portal da Embrapa (abre em nova aba)"
+        >Embrapa ↗</a>
         <span class="context-pill">Núcleo federador</span>
         <a class="auth-link" id="auth-login" href="/login">Entrar</a>
         <span class="auth-identity" id="auth-identity" hidden>
@@ -36,7 +43,7 @@
       </div>
     </header>
 
-    <aside class="sidebar">
+    <aside class="sidebar" id="app-sidebar" hidden>
       <nav aria-label="Navegacao principal do SisTer">
         <button class="nav-link selected" type="button" data-view="home">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8Z"/></svg>
@@ -52,7 +59,7 @@
         </button>
         <button class="nav-link" type="button" data-view="studio" data-admin-only hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="m9 11 6-4M9 13l6 4"/></svg>
-          Sister-Studio
+          Integração criativa
         </button>
         <button class="nav-link" type="button" data-view="contracts" data-admin-only hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3ZM14 3v4h4M9 11h6M9 15h6"/></svg>
@@ -74,6 +81,76 @@
     </aside>
 
     <main class="workspace">
+      <section class="public-home" id="public-home" aria-label="Apresentação do SisTer">
+        <div class="public-hero">
+          <div class="public-hero-copy">
+            <span class="eyebrow">Inteligência territorial governada</span>
+            <h2>Transformar sinais dispersos em compreensão compartilhada.</h2>
+            <p>
+              O SisTer é uma infraestrutura de inteligência que organiza contexto,
+              proveniência e relações para apoiar decisões responsáveis no território.
+            </p>
+            <div class="public-actions">
+              <a class="public-primary-action" href="/login">Entrar no ambiente</a>
+              <a class="public-secondary-action" href="#public-principles">Conhecer a ideia</a>
+            </div>
+            <div class="public-trust-row" aria-label="Princípios do SisTer">
+              <span>Contexto preservado</span>
+              <span>Proveniência verificável</span>
+              <span>Governança por contrato</span>
+            </div>
+          </div>
+
+          <div class="intelligence-orbit" aria-label="Da evidência à decisão">
+            <div class="orbit-ring orbit-ring--outer"></div>
+            <div class="orbit-ring orbit-ring--middle"></div>
+            <div class="orbit-core">
+              <svg viewBox="0 0 64 64" aria-hidden="true">
+                <g fill="none" stroke="currentColor" stroke-width="2.8"><path d="M32 5 55 18v28L32 59 9 46V18z"/><path d="M32 5v54M9 18l46 28M55 18 9 46"/></g>
+                <g fill="currentColor"><circle cx="32" cy="5" r="4"/><circle cx="55" cy="18" r="4"/><circle cx="55" cy="46" r="4"/><circle cx="32" cy="59" r="4"/><circle cx="9" cy="46" r="4"/><circle cx="9" cy="18" r="4"/><circle cx="32" cy="32" r="5"/></g>
+              </svg>
+              <strong>SisTer</strong>
+              <span>inteligência com contexto</span>
+            </div>
+            <span class="orbit-node orbit-node--data">Dado</span>
+            <span class="orbit-node orbit-node--information">Informação</span>
+            <span class="orbit-node orbit-node--knowledge">Conhecimento</span>
+            <span class="orbit-node orbit-node--wisdom">Decisão</span>
+          </div>
+        </div>
+
+        <section class="public-principles" id="public-principles">
+          <article>
+            <span class="public-card-index">01</span>
+            <h3>Convergir sem apagar a origem</h3>
+            <p>Relacionar evidências e contextos preservando autoria, autonomia, tempo e território.</p>
+          </article>
+          <article>
+            <span class="public-card-index">02</span>
+            <h3>Produzir conhecimento confiável</h3>
+            <p>Transformar dados em leitura compartilhada com critérios explícitos e rastreáveis.</p>
+          </article>
+          <article>
+            <span class="public-card-index">03</span>
+            <h3>Apoiar decisões responsáveis</h3>
+            <p>Oferecer inteligência governada, proporcional ao risco e orientada ao interesse público.</p>
+          </article>
+        </section>
+
+        <section class="public-manifesto">
+          <div>
+            <span class="section-kicker">Ideia central</span>
+            <h3>Inteligência não é acumular dados. É construir relações compreensíveis.</h3>
+          </div>
+          <p>
+            O SisTer nasce para reunir diferentes perspectivas em uma leitura coerente,
+            auditável e humana. Cada informação mantém sua história; cada interpretação
+            declara seus critérios; cada acesso respeita sua finalidade.
+          </p>
+        </section>
+      </section>
+
+      <div id="authenticated-workspace" hidden>
       <section class="view active" id="view-home" aria-label="Home">
         <div class="page-heading">
           <div>
@@ -187,11 +264,11 @@
         <div class="diagnostic-grid" id="diagnostic-grid"></div>
       </section>
 
-      <section class="view" id="view-studio" aria-label="Integração com Sister-Studio">
+      <section class="view" id="view-studio" aria-label="Integração criativa protegida">
         <div class="page-heading">
           <div>
             <span class="eyebrow">Sistema criativo federado</span>
-            <h2>Sister-Studio</h2>
+            <h2>Integração criativa</h2>
             <p>Capacidades e disponibilidade consultadas diretamente do produtor, sem copiar conteúdo de usuários.</p>
           </div>
           <button class="primary-action" id="studio-refresh" type="button">
@@ -276,10 +353,20 @@
         </div>
         <div class="timeline" id="evidence-list"></div>
       </section>
+      </div>
     </main>
 
     <footer class="footer">
       <span>SisTer · infraestrutura federada para inteligência territorial</span>
+      <span class="footer-institutional">
+        Projeto Resiliência ·
+        <a
+          href="https://www.embrapa.br/"
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Conheça a Embrapa (abre em nova aba)"
+        >Conheça a Embrapa ↗</a>
+      </span>
       <span>Governança, proveniência e interoperabilidade por contrato.</span>
     </footer>
 
@@ -299,6 +386,6 @@
 
     <div class="toast" id="toast" role="status" aria-live="polite"></div>
     </div>
-    <script src="./app.js"></script>
+    <script src="./public.js"></script>
   </body>
 </html>

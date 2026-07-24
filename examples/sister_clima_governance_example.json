@@ -1,0 +1,115 @@
+{
+  "contract_id": "sister-clima.governance",
+  "contract_version": "1.0.0",
+  "system_id": "sister_clima",
+  "effective_date": "2026-07-24",
+  "purpose": {
+    "classification": "non_commercial_public_research",
+    "description": "Apoio a pesquisa publica, resiliencia climatica e inteligencia territorial, sem finalidade lucrativa ou comercial.",
+    "permitted_contexts": [
+      "authenticated_institutional_research",
+      "public_research_at_public_institutions",
+      "non_profit_decision_support",
+      "educational_use"
+    ],
+    "prohibited_contexts": [
+      "subscriptions",
+      "advertising",
+      "commercial_product_integration",
+      "promotional_activity",
+      "undisclosed_commercial_research",
+      "resale_of_outputs"
+    ]
+  },
+  "access": {
+    "audience": "identified_users",
+    "entry_authentication": "required",
+    "direct_url_publication": "prohibited",
+    "origin_protection": "required_before_network_exposure",
+    "current_exposure": "loopback_only"
+  },
+  "commercial_use": {
+    "allowed": false,
+    "subscriptions": false,
+    "advertising": false,
+    "commercial_products": false,
+    "economic_advantage": false
+  },
+  "data_sources": [
+    {
+      "source_id": "open_meteo",
+      "service_terms": "free_api_non_commercial",
+      "data_license": "CC-BY-4.0",
+      "attribution_required": true,
+      "modification_notice_required": true,
+      "terms_url": "https://open-meteo.com/en/terms",
+      "license_url": "https://open-meteo.com/en/license",
+      "usage_limits": {
+        "calls_per_minute": 600,
+        "calls_per_hour": 5000,
+        "calls_per_day": 10000,
+        "calls_per_month": 300000
+      }
+    },
+    {
+      "source_id": "nasa_power",
+      "service_terms": "nasa_open_data",
+      "data_license": "NASA-OPEN-DATA-CC0-WHEN-UNMARKED",
+      "attribution_required": true,
+      "modification_notice_required": false,
+      "terms_url": "https://www.earthdata.nasa.gov/engage/open-data-services-software/data-use-policy"
+    }
+  ],
+  "output_policy": {
+    "shareable_when_reviewed": [
+      "reviewed_climate_indicators",
+      "exported_spatial_layers",
+      "source_provenance",
+      "dataset_temporal_coverage"
+    ],
+    "restricted": [
+      "open_meteo_derived_datasets",
+      "unreviewed_climate_indicators",
+      "generated_spatial_layers"
+    ],
+    "private": [
+      "session_parameters",
+      "network_configuration",
+      "runtime_logs",
+      "authentication_data"
+    ],
+    "required_metadata": [
+      "source",
+      "source_url",
+      "data_license",
+      "attribution",
+      "modification_notice",
+      "collection_time",
+      "temporal_coverage",
+      "spatial_reference",
+      "processing_method",
+      "responsible_operator",
+      "schema_version"
+    ]
+  },
+  "software_distribution": {
+    "license": "GPL-3.0-or-later",
+    "paid_contract_allowed": true,
+    "copyleft_preserved": true,
+    "corresponding_source_required_when_distributed": true
+  },
+  "audit": {
+    "requires_operator": true,
+    "requires_provenance": true,
+    "requires_terms_review": true,
+    "review_triggers": [
+      "source_terms_change",
+      "new_data_source",
+      "network_exposure_change",
+      "authentication_model_change",
+      "api_quota_exceeded",
+      "commercial_or_paid_use_proposed",
+      "output_resale_proposed"
+    ]
+  }
+}

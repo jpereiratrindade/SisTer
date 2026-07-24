@@ -3,9 +3,10 @@
   "system_name": "Sister-Clima",
   "system_version": "2.3.0",
   "contract_version": "sister-contracts/0.1.0",
+  "governance_contract": "sister-clima.governance/1.0.0",
   "type": "climate_monitoring_system",
   "domain": ["clima", "precipitacao", "resiliencia", "inteligencia_territorial"],
-  "operational_mode": ["local_web", "public_web", "scheduled_collection", "offline_dataset"],
+  "operational_mode": ["local_web", "restricted_web", "scheduled_collection", "offline_dataset"],
   "exports": ["daily_precipitation_csv", "climate_indicators", "spatial_precipitation_layer", "provenance_metadata"],
   "integration_modes": ["platform_link", "file_import"],
   "responsible_repository": "Sister-Clima",
@@ -19,8 +20,8 @@
     "native_to_system": ["interactive_climate_explorer", "intra_municipal_surface_generation", "source_selection", "raw_api_responses"],
     "public_outputs": ["application_documentation", "source_links", "provenance_metadata"],
     "restricted_outputs": ["open_meteo_derived_datasets", "unreviewed_climate_indicators", "generated_spatial_layers"],
-    "private_outputs": ["session_parameters", "network_configuration", "runtime_logs"],
-    "sensitive_topics": ["extreme_weather_decision_support", "source_license_restrictions"],
+    "private_outputs": ["session_parameters", "network_configuration", "runtime_logs", "authentication_data"],
+    "sensitive_topics": ["extreme_weather_decision_support", "source_license_restrictions", "source_terms_review"],
     "dikw_role": {
       "offers_as_information": ["precipitation_time_series", "rainfall_indicators", "spatial_precipitation_estimates"],
       "received_by_sister_as": "data",
@@ -32,6 +33,9 @@
     "allows_offline_sync": true,
     "requires_schema_validation": true,
     "requires_operator": true,
-    "requires_spatial_reference": true
+    "requires_spatial_reference": true,
+    "requires_authenticated_access": true,
+    "requires_attribution": true,
+    "commercial_use_allowed": false
   }
 }

@@ -77,8 +77,10 @@ http://localhost:8000/api/diagnostics
 http://localhost:8000/api/integrations/sister-studio
 ```
 
-`health` e `systems` sao publicos. `contracts`, `evidence` e `diagnostics`
-e a integração com o Sister-Studio exigem sessão com papel `admin`.
+Somente `health` e a home institucional sao publicos. `systems` e o JavaScript
+do painel exigem uma sessao identificada. `contracts`, `evidence`,
+`diagnostics` e a integração com o Sister-Studio exigem sessao com papel
+`admin`.
 
 O adaptador Sister-Studio usa TLS verificado e segredo de execução. A
 configuração e a fronteira de dados estão em
@@ -86,9 +88,13 @@ configuração e a fronteira de dados estão em
 na fase inicial.
 
 O Sister-Clima e reconhecido pelo manifesto
-`examples/sister_clima_manifest_example.json` e aparece no catalogo com acesso
-direto a sua aplicacao local. A fronteira de compartilhamento e as limitacoes
-da importacao por arquivo estao em `adapters/sister_clima/README.md`.
+`examples/sister_clima_manifest_example.json` e aparece somente no catalogo
+autenticado, com acesso controlado a sua aplicacao local. A fronteira de
+compartilhamento e as limitacoes da importacao por arquivo estao em
+`adapters/sister_clima/README.md`.
+O uso por pessoas identificadas em pesquisa publica sem finalidade comercial e
+regido por `sister-clima.governance/1.0.0`; detalhes, atribuicoes e gatilhos de
+revisao estao em `docs/governance/SISTER_CLIMA_DATA.md`.
 
 No primeiro acesso a `/login`, o SisTer permite criar a conta administradora
 inicial. Depois do login, a barra lateral libera as visoes internas e a opcao
