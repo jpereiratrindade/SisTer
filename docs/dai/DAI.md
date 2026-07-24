@@ -1,5 +1,18 @@
 # DAI - SisTer
 
+## 2026-07-24 - Primeiro ciclo somente com Clima e Studio
+
+- Decision: o primeiro ciclo integrado e automatizado contém somente
+  Sister-Clima e Sister-Studio.
+- Decision: MorfoCampo, DroneOps, Radar-Sister e CampoNode deixam
+  temporariamente o catálogo, as evidências demonstrativas e a inicialização
+  automática do SisTer.
+- Decision: as reservas locais `8011`, `8012` e `8765` permanecem no registro
+  para impedir colisões; CampoNode continua apenas como projeto planejado.
+- Decision: os repositórios e processos autônomos não são apagados nem
+  encerrados por este descadastro; uma futura reintegração exige decisão e
+  contrato explícitos.
+
 ## 2026-07-24 - Inicialização governada dos subsistemas
 
 - Decision: o SisTer verifica, ao subir em desenvolvimento, os subsistemas

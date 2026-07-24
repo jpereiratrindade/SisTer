@@ -44,15 +44,15 @@ funcionando quando os repositorios forem clonados separadamente.
 | --- | --- | --- | --- |
 | SisTer | HTTP | 8000 | 8001 |
 | SisTer | PostgreSQL | 55434 | 55435 |
-| MorfoCampo | HTTPS | 8011 | - |
-| DroneOps | HTTPS | 8012 | - |
+| MorfoCampo (não cadastrado) | HTTPS reservada | 8011 | - |
+| DroneOps (não cadastrado) | HTTPS reservada | 8012 | - |
 | Sister-Studio | HTTPS público | 8443 | - |
 | Sister-Studio Audio | HTTP interno | 18013 | - |
 | Sister-Studio Voz | HTTP interno | 18043 | - |
 | Sister-Studio Vídeo | HTTP interno | 18014 | - |
 | Sister-Studio Certificado | HTTP | 8088 | - |
 | Sister-Studio PostgreSQL | PostgreSQL | 55433 | - |
-| Radar-Sister | HTTP | 8765 | - |
+| Radar-Sister (não cadastrado) | HTTP reservado | 8765 | - |
 | Radar-Sister | PostgreSQL | 55432 | - |
 | Sister-Clima | HTTP | 8501 | - |
 

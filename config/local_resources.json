@@ -16,14 +16,8 @@
     {
       "id": "morfocampo",
       "repository": "cpp/morfocampo",
-      "integrates_with_sister": true,
-      "orchestration": {
-        "policy": "ensure-running",
-        "environment": "dev",
-        "required": false,
-        "health": {"url": "https://127.0.0.1:8011/", "tls_verify": false},
-        "start": {"argv": ["./run.sh"], "ready_timeout_seconds": 180}
-      },
+      "integrates_with_sister": false,
+      "status": "temporarily-unregistered",
       "resources": [
         {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8011}
       ]
@@ -31,14 +25,8 @@
     {
       "id": "droneops",
       "repository": "cpp/droneops",
-      "integrates_with_sister": true,
-      "orchestration": {
-        "policy": "ensure-running",
-        "environment": "dev",
-        "required": false,
-        "health": {"url": "https://127.0.0.1:8012/", "tls_verify": false},
-        "start": {"argv": ["./deploy/run_dev.sh"], "ready_timeout_seconds": 180}
-      },
+      "integrates_with_sister": false,
+      "status": "temporarily-unregistered",
       "resources": [
         {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8012}
       ]
@@ -46,25 +34,15 @@
     {
       "id": "camponode",
       "repository": null,
-      "integrates_with_sister": true,
+      "integrates_with_sister": false,
       "status": "planned",
       "resources": []
     },
     {
       "id": "radar_sister_resiliencia",
       "repository": "cpp/radar_sister_resiliencia",
-      "integrates_with_sister": true,
-      "orchestration": {
-        "policy": "ensure-running",
-        "environment": "dev",
-        "required": false,
-        "health": {"url": "http://127.0.0.1:8765/"},
-        "start": {
-          "argv": ["./scripts/dev/run_gui_with_pgvector.sh"],
-          "environment": {"RADAR_GUI_HOST": "0.0.0.0"},
-          "ready_timeout_seconds": 240
-        }
-      },
+      "integrates_with_sister": false,
+      "status": "temporarily-unregistered",
       "resources": [
         {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8765},
         {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55432, "container": "radar-sister-pgvector-pg17", "volume": "radar_sister_pgvector_pg17_data"}

@@ -227,21 +227,13 @@ std::string jsonContracts() {
 
 std::string jsonSystems() {
     return R"([
-  {"id":"morfocampo","name":"MorfoCampo","type":"Campo","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"https://127.0.0.1:8011"},
-  {"id":"droneops","name":"DroneOps","type":"Missao","status":"Em validacao","contract":"sister-contracts/0.1.0","access_url":"https://127.0.0.1:8012"},
-  {"id":"camponode","name":"CampoNode","type":"Infraestrutura","status":"Planejado","contract":"sister-contracts/0.1.0","access_url":"https://camponode.local"},
-  {"id":"radar_sister_resiliencia","name":"Radar-Sister Resiliencia","type":"Analitico","status":"Operacional","contract":"sister-contracts/0.1.0","access_url":"http://127.0.0.1:8765"},
   {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":["open_meteo","nasa_power"]},
   {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_url":"https://127.0.0.1:8443"}
 ])";
 }
 
 std::string jsonEvidence() {
-    return R"([
-  {"source":"MorfoCampo","object":"obs-001","kind":"photo","status":"proveniencia minima"},
-  {"source":"DroneOps","object":"mission-terrace-01","kind":"spatial_layer","status":"referencia espacial"},
-  {"source":"Radar-Sister Resiliencia","object":"shortlist-resiliencia-001","kind":"document","status":"triagem auditavel"}
-])";
+    return "[]";
 }
 
 std::string jsonDiagnostics() {

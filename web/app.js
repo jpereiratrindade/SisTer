@@ -1,110 +1,6 @@
 const state = {
   systems: [
     {
-      id: "morfocampo",
-      name: "MorfoCampo",
-      version: "0.2.1",
-      owner: "Equipe Campo",
-      type: "Campo",
-      status: "Operacional",
-      description: "Sistema de campo para observacoes, evidencias locais e sincronizacao offline por contrato.",
-      contract: "sister-contracts/0.1.0",
-      accessUrl: "https://127.0.0.1:8011",
-      accessMode: "Restrito",
-      publicScope: "Indicadores agregados",
-      restrictedScope: "Observacoes e metadados",
-      privateScope: "Midia bruta e notas",
-      domains: ["campo_nativo", "silvipastoril", "observacao_campo"],
-      modes: ["offline", "local_network", "camponode"],
-      exports: ["observations", "evidence", "photos", "field_notes", "spatial_context"],
-      policy: ["proveniencia", "schema", "offline"],
-      infra: {
-        availability: "98%",
-        response: "sync 12 min",
-        storage: "41%",
-        lastCheck: "09:20",
-        signal: "ok"
-      }
-    },
-    {
-      id: "droneops",
-      name: "DroneOps",
-      version: "0.1.0",
-      owner: "Equipe Geoespacial",
-      type: "Missao",
-      status: "Em validacao",
-      description: "Organiza missoes, registros de voo e evidencias georreferenciadas para leitura territorial.",
-      contract: "sister-contracts/0.1.0",
-      accessUrl: "https://127.0.0.1:8012",
-      accessMode: "Restrito",
-      publicScope: "Cobertura generalizada",
-      restrictedScope: "Camadas e logs resumidos",
-      privateScope: "Imagens brutas e operador",
-      domains: ["drone", "imageamento", "missao_campo", "evidencia_geoespacial"],
-      modes: ["offline", "local_network", "pwa"],
-      exports: ["mission_plan", "flight_log", "images", "spatial_layers", "evidence_package"],
-      policy: ["proveniencia", "schema", "operador", "referencia_espacial"],
-      infra: {
-        availability: "91%",
-        response: "sync 28 min",
-        storage: "63%",
-        lastCheck: "09:12",
-        signal: "warn"
-      }
-    },
-    {
-      id: "camponode",
-      name: "CampoNode",
-      version: "0.1.0",
-      owner: "Infraestrutura",
-      type: "Infraestrutura",
-      status: "Planejado",
-      description: "No local para cache, sincronizacao e continuidade operacional quando a conectividade oscila.",
-      contract: "sister-contracts/0.1.0",
-      accessUrl: "https://camponode.local",
-      accessMode: "Rede local",
-      publicScope: "Status agregado",
-      restrictedScope: "Saude do no e cache",
-      privateScope: "Logs operacionais",
-      domains: ["rede_local", "armazenamento", "sincronizacao"],
-      modes: ["offline", "local_network", "edge"],
-      exports: ["sync_log", "node_health", "package_cache"],
-      policy: ["proveniencia", "schema", "auditoria"],
-      infra: {
-        availability: "N/D",
-        response: "planejado",
-        storage: "N/D",
-        lastCheck: "sem coleta",
-        signal: "planned"
-      }
-    },
-    {
-      id: "radar_sister_resiliencia",
-      name: "Radar-Sister Resiliencia",
-      version: "0.1.0",
-      owner: "Equipe Resiliencia",
-      type: "Analitico",
-      status: "Operacional",
-      description: "Modulo analitico para triagem, scores, shortlists e inteligencia territorial auditavel.",
-      contract: "sister-contracts/0.1.0",
-      accessUrl: "http://127.0.0.1:8765",
-      accessMode: "Local",
-      publicScope: "Links publicos e scores agregados",
-      restrictedScope: "Shortlists, scores e trilhas",
-      privateScope: "Sessoes, chaves e revisoes brutas",
-      domains: ["resiliencia", "inteligencia_territorial", "adaptacao_climatica"],
-      modes: ["local_gui", "local_cli", "postgresql_pgvector"],
-      exports: ["normalized_metadata", "scores_jsonl", "shortlist_markdown", "audit_log", "vector_chunks"],
-      policy: ["proveniencia", "schema", "operador", "vetorial"],
-      infra: {
-        availability: "96%",
-        response: "127 ms",
-        storage: "52%",
-        lastCheck: "09:15",
-        signal: "ok"
-      }
-    },
-    {
       id: "sister_clima",
       name: "Sister-Clima",
       version: "2.3.0",
@@ -198,36 +94,12 @@ const state = {
   ],
   evidence: [
     {
-      time: "2026-07-09 21:30",
-      source: "MorfoCampo",
-      object: "obs-001",
-      kind: "photo",
-      ref: "evidence/photos/obs-001.jpg",
-      status: "proveniencia minima"
-    },
-    {
-      time: "2026-07-09 21:42",
-      source: "DroneOps",
-      object: "mission-terrace-01",
-      kind: "spatial_layer",
-      ref: "evidence/layers/orthomosaic.geojson",
-      status: "referencia espacial"
-    },
-    {
       time: "2026-07-09 22:05",
       source: "SisTer Core",
       object: "pkg-camposync-001",
       kind: "log",
       ref: "audit/validation_report.json",
       status: "schema validado"
-    },
-    {
-      time: "2026-07-10 09:15",
-      source: "Radar-Sister Resiliencia",
-      object: "shortlist-resiliencia-001",
-      kind: "document",
-      ref: "data/exports/*_shortlist.md",
-      status: "triagem auditavel"
     }
   ],
   integrationResults: [
@@ -692,9 +564,8 @@ function drawMap() {
   ctx.stroke();
 
   const plots = [
-    { x: 230, y: 168, w: 155, h: 82, color: "#b9dfd8", label: "MorfoCampo" },
-    { x: 480, y: 120, w: 180, h: 86, color: "#d5e8f4", label: "DroneOps" },
-    { x: 705, y: 220, w: 170, h: 74, color: "#e9d199", label: "CampoNode" }
+    { x: 330, y: 145, w: 190, h: 86, color: "#d5e8f4", label: "Sister-Clima" },
+    { x: 620, y: 145, w: 190, h: 86, color: "#d8d2ef", label: "Sister-Studio" }
   ];
 
   plots.forEach((plot) => {
@@ -711,9 +582,8 @@ function drawMap() {
   });
 
   const points = [
-    { x: 292, y: 210, label: "M01", color: "#1c9b98" },
-    { x: 560, y: 164, label: "D01", color: "#1a7dc4" },
-    { x: 786, y: 258, label: "N01", color: "#e8a733" }
+    { x: 425, y: 188, label: "SC", color: "#1a7dc4" },
+    { x: 715, y: 188, label: "SS", color: "#7367b7" }
   ];
 
   points.forEach((point) => {
