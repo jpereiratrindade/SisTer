@@ -1,0 +1,39 @@
+{
+  "system_id": "sister_campo",
+  "system_name": "SisTer-Campo",
+  "system_version": "0.4.0-dev",
+  "contract_version": "sister-contracts/0.1.0",
+  "type": "field_integration_system",
+  "domain": ["integracao_de_campo", "curadoria", "proveniencia"],
+  "operational_mode": ["local_api", "offline_package", "workstation"],
+  "exports": ["validated_packages", "curation_reports", "provenance_records"],
+  "integration_modes": ["service_api", "camposync_package", "file_import"],
+  "responsible_repository": "SisTer-Campo",
+  "access": {
+    "platform_url": "http://127.0.0.1:8013",
+    "access_label": "API SisTer-Campo",
+    "access_mode": "not_available"
+  },
+  "sharing_policy": {
+    "shareable_with_sister": ["validated_observations", "curation_reports", "provenance_metadata"],
+    "native_to_system": ["raw_package_storage", "curation_workflow", "import_audit"],
+    "public_outputs": ["contract_versions", "sanitized_service_health"],
+    "restricted_outputs": ["validated_observations", "curation_reports", "evidence_metadata"],
+    "private_outputs": ["raw_packages", "raw_audio", "raw_photos", "operator_identity", "audit_logs"],
+    "sensitive_topics": ["precise_location", "private_property", "person_identification", "raw_media"],
+    "dikw_role": {
+      "offers_as_information": ["validated_field_observations", "curation_results", "provenance_metadata"],
+      "received_by_sister_as": "data",
+      "sister_transforms_into": ["information", "knowledge"]
+    }
+  },
+  "data_policy": {
+    "requires_provenance": true,
+    "allows_offline_sync": true,
+    "requires_schema_validation": true,
+    "requires_operator": true,
+    "requires_spatial_reference": false,
+    "requires_authenticated_access": true,
+    "requires_attribution": true
+  }
+}

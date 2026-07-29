@@ -39,6 +39,12 @@ public:
         const std::string& email,
         const std::string& password,
         const std::string& role);
+    std::optional<AuthUser> importUser(
+        const std::string& id,
+        const std::string& name,
+        const std::string& email,
+        const std::string& password,
+        const std::string& role);
     void logout(const std::string& token);
 
 private:

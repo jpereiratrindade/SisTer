@@ -20,9 +20,11 @@ comercial não divulgada aciona revisão prévia da governança e das licenças.
 
 - somente usuários identificados e autenticados no SisTer recebem o link;
 - a URL direta não é publicada no catálogo público;
-- a aplicação de origem permanece em `127.0.0.1` enquanto não houver proteção
-  própria ou proxy reverso autenticado;
-- expor a porta do Sister-Clima em rede sem esse controle é proibido;
+- em desenvolvimento, a aplicação pode escutar em `0.0.0.0:8501` somente na
+  LAN controlada, com validação obrigatória da sessão do SisTer antes dos dados;
+- firewall ou política de rede deve impedir exposição direta à internet;
+- em publicação externa, o backend retorna ao loopback e fica atrás de proxy
+  reverso autenticado;
 - parâmetros de sessão, autenticação, rede e logs não são compartilhados.
 
 A autenticação do SisTer protege a entrega do link, não a porta de origem. Uma

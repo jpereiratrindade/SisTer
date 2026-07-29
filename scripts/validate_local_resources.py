@@ -71,6 +71,24 @@ def main() -> None:
                 fail(f"orchestration health must be a local HTTP URL in {project_id}")
             if parsed_health.scheme == "http" and health.get("tls_verify") is False:
                 fail(f"tls_verify is invalid for HTTP in {project_id}")
+            expected_status = health.get("expected_status", 200)
+            if not isinstance(expected_status, int) or not 200 <= expected_status < 300:
+                fail(f"orchestration health status is invalid in {project_id}")
+            expected_json = health.get("expected_json")
+            expected_text = health.get("expected_text")
+            if (expected_json is None) == (expected_text is None):
+                fail(
+                    f"orchestration health must declare exactly one expected "
+                    f"response in {project_id}"
+                )
+            if expected_json is not None and (
+                not isinstance(expected_json, dict) or not expected_json
+            ):
+                fail(f"orchestration expected_json is invalid in {project_id}")
+            if expected_text is not None and (
+                not isinstance(expected_text, str) or not expected_text
+            ):
+                fail(f"orchestration expected_text is invalid in {project_id}")
 
             start = orchestration.get("start")
             argv = start.get("argv") if isinstance(start, dict) else None
@@ -94,6 +112,28 @@ def main() -> None:
                     or any(term in name for term in ("PASSWORD", "SECRET", "TOKEN", "KEY"))
                 ):
                     fail(f"unsafe orchestration environment field in {project_id}")
+
+            refresh = orchestration.get("refresh")
+            if refresh is not None:
+                if refresh.get("policy") != "on-source-change":
+                    fail(f"orchestration refresh policy is invalid in {project_id}")
+                refresh_paths = refresh.get("paths")
+                if (
+                    not isinstance(refresh_paths, list)
+                    or not refresh_paths
+                    or not all(isinstance(path, str) and path for path in refresh_paths)
+                ):
+                    fail(f"orchestration refresh paths are invalid in {project_id}")
+                for path in refresh_paths:
+                    source = pathlib.PurePosixPath(path)
+                    if source.is_absolute() or ".." in source.parts:
+                        fail(f"orchestration refresh path is unsafe in {project_id}")
+                    repository_path = DEV_ROOT / repository
+                    if repository_path.is_dir() and not (repository_path / path).exists():
+                        fail(
+                            f"orchestration refresh path does not exist in {project_id}: "
+                            f"{path}"
+                        )
 
         for resource in project.get("resources", []):
             host = resource.get("host")

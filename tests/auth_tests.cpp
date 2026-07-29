@@ -4,6 +4,7 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+#include <regex>
 #include <string>
 
 namespace {
@@ -32,6 +33,13 @@ int main() {
         expect(registered.has_value(), "first administrator should be created");
         expect(registered->user.role == "admin", "bootstrap user should be administrator");
         expect(
+            std::regex_match(
+                registered->user.id,
+                std::regex(
+                    "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-"
+                    "[89ab][0-9a-f]{3}-[0-9a-f]{12}$")),
+            "new administrator should use a federable UUID");
+        expect(
             registered->user.email == "admin@sister.local",
             "email should be normalized");
         expect(!auth.bootstrapOpen(), "bootstrap should close after first user");
@@ -47,6 +55,24 @@ int main() {
             !auth.createUser(
                 "Duplicada", "pessoa@sister.local", "senha-de-equipe-456", "admin"),
             "duplicate email should fail");
+        const auto imported = auth.importUser(
+            "2ad0c643-3129-4cf7-82c1-5d2afeeb8445",
+            "Pessoa Migrada",
+            "migrada@sister.local",
+            "senha-migrada-123",
+            "admin");
+        expect(imported.has_value(), "explicit federated UUID should be imported");
+        expect(
+            imported->id == "2ad0c643-3129-4cf7-82c1-5d2afeeb8445",
+            "imported UUID should be preserved");
+        expect(
+            !auth.importUser(
+                "2ad0c643-3129-4cf7-82c1-5d2afeeb8445",
+                "Outra",
+                "outra@sister.local",
+                "senha-migrada-456",
+                "admin"),
+            "duplicate imported UUID should fail");
         expect(
             !auth.login("admin@sister.local", "senha-incorreta"),
             "wrong password should fail");

@@ -12,6 +12,7 @@ sister_load_env() {
       export SISTER_DB_VOLUME="sister_dev_pgdata"
       export SISTER_DATABASE_URL="${SISTER_DEV_DATABASE_URL:-postgresql://sister:sister@localhost:${SISTER_DB_PORT}/sister}"
       export SISTER_APP_PORT="${SISTER_DEV_APP_PORT:-8000}"
+      export SISTER_BIND_HOST="${SISTER_DEV_BIND_HOST:-0.0.0.0}"
       ;;
     test)
       export SISTER_ENV="test"
@@ -21,6 +22,7 @@ sister_load_env() {
       export SISTER_DB_VOLUME="sister_test_pgdata"
       export SISTER_DATABASE_URL="${SISTER_TEST_DATABASE_URL:-postgresql://sister:sister@localhost:${SISTER_DB_PORT}/sister}"
       export SISTER_APP_PORT="${SISTER_TEST_APP_PORT:-8001}"
+      export SISTER_BIND_HOST="${SISTER_TEST_BIND_HOST:-127.0.0.1}"
       ;;
     *)
       echo "Unknown SisTer environment: $env_name" >&2
@@ -39,5 +41,6 @@ SisTer environment: ${SISTER_ENV}
   SISTER_DB_VOLUME=${SISTER_DB_VOLUME}
   SISTER_DATABASE_URL=${SISTER_DATABASE_URL}
   SISTER_APP_PORT=${SISTER_APP_PORT}
+  SISTER_BIND_HOST=${SISTER_BIND_HOST}
 MSG
 }

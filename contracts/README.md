@@ -5,10 +5,13 @@ Esta pasta e a fonte de verdade dos contratos de integracao do SisTer.
 Contratos iniciais:
 
 - `system_manifest.schema.json`: declaracao de um sistema federado.
-- `camposync_package.schema.json`: pacote offline de sincronizacao.
+- `camposync_package.schema.json`: pacote `camposync.package/1.0.0`,
+  transportado por API local ou por meio offline sem alterar sua semantica.
 - `evidence.schema.json`: evidencia vinculada a objeto, sistema e proveniencia.
 - `public_scope.schema.json`: classificacao publico, restrito e privado para dados, evidencias, embeddings e diagnosticos.
 - `sister_studio_capabilities.schema.json`: descoberta restrita de capacidades e formatos do Sister-Studio.
+- `sister_nexo_integration.schema.json`: descoberta e acesso restrito ao
+  subsistema de governança científica SisTer Nexo.
 - `sister_studio_health.schema.json`: disponibilidade sanitizada dos modulos do Sister-Studio.
 - `sister_clima_governance.schema.json`: finalidade não comercial, acesso
   identificado, licenças, atribuição e promoção de resultados do Sister-Clima.

@@ -1,5 +1,58 @@
 # DAI - SisTer
 
+## 2026-07-29 - Nexo como gestão de projetos e Compras como contexto autônomo
+
+- Decision: o Nexo é a autoridade para projetos, ações, atividades, estrutura
+  de pesquisa, evidências e produtos científicos.
+- Decision: compras permanece um contexto autônomo, ligado a projetos e
+  atividades por identificadores e contratos, sem banco compartilhado.
+- Decision: `Nexo-Compras` é nome candidato; a documentação atual não executa
+  renomeação de repositório, sistema, banco ou contrato.
+- Action: documentar a fronteira, os identificadores e a sequência de
+  integração antes de alterar recursos locais.
+- Impediment: o PostgreSQL atual do `sister_compras` usa `55435`, porta já
+  pertencente ao banco de teste do SisTer.
+- Impediment: o contrato do Compras aceita `0.1.0/0.2.0`, enquanto a aplicação
+  declara versão `0.4.0`.
+- Impediment: identidade federada, saúde sanitizada, política de dados e
+  migração de nome ainda precisam de implementação e teste.
+
+## 2026-07-28 - SisTer-Campo federado e canais CampoSync
+
+- Decision: registrar o SisTer-Campo como sistema federado com identidade, API
+  e PostgreSQL proprios, sem banco compartilhado com o SisTer.
+- Decision: API local e pacote offline transportam o mesmo contrato
+  `camposync.package/1.0.0`; conectividade nao altera a semantica dos dados.
+- Decision: o MorfoCampo permanece produtor autonomo, enquanto o SisTer-Campo
+  valida, registra, cura e preserva proveniencia antes da promocao ao SisTer.
+- Decision: pacotes CampoSync sao restritos; audio, fotos, identidade de
+  operador e auditoria permanecem privados por padrao.
+- Action: reservar `127.0.0.1:8013` para a API e `55438` para o PostgreSQL do
+  SisTer-Campo.
+- Impediment: a promocao de dados curados para o catalogo territorial do SisTer
+  ainda requer endpoint e teste de aceitacao especificos.
+
+## 2026-07-28 - Ponto de entrada e bind por ambiente
+
+- Decision: o SisTer é o ponto de entrada do ecossistema integrado; projetos
+  federados continuam autônomos, mas não iniciam a plataforma superior.
+- Decision: o Sister-Studio permanece o orquestrador exclusivo de composição,
+  voz e vídeo quando executado isoladamente.
+- Action: documentar `SisTer/scripts/run_all.sh dev 8000` como fluxo canônico
+  para catálogo, autenticação federada e subsistemas.
+- Action: tornar o bind do `sisterd` explícito por ambiente, usando
+  `0.0.0.0:8000` em desenvolvimento e `127.0.0.1:8001` em teste.
+- Decision: o bind de desenvolvimento permite acesso somente na rede local
+  governada e não autoriza exposição direta à internet.
+- Decision: o SisTer é a autoridade de credenciais; subsistemas reutilizam sua
+  sessão e não definem uma segunda senha federada.
+- Action: permitir a migração explícita de uma identidade ativa do
+  Sister-Studio, preservando seu UUID e solicitando uma nova senha somente no
+  terminal local.
+- Decision: o Sister-Clima usa `0.0.0.0:8501` apenas no desenvolvimento em LAN
+  controlada para preservar a sessão entre portas; publicação externa exige
+  proxy autenticado e backend em loopback.
+
 ## 2026-07-24 - Primeiro ciclo somente com Clima e Studio
 
 - Decision: o primeiro ciclo integrado e automatizado contém somente
@@ -22,9 +75,13 @@
   executa comandos fora dessa lista.
 - Action: preservar serviços saudáveis, iniciar os indisponíveis com processo
   destacado, aguardar prontidão e manter logs em `.run/subsystems/`.
-- Decision: a sonda HTTP continua preferencial, mas uma porta local exclusiva
-  já aceitando conexões impede reinício duplicado quando HTTP/TLS oscila; a
-  espera informa progresso a cada dez segundos.
+- Decision: a sonda HTTP confirma status e identidade do serviço; uma porta
+  ocupada com resposta inválida impede reinício duplicado, mas é reportada como
+  degradação em vez de ser considerada saudável. A espera informa progresso a
+  cada dez segundos.
+- Decision: subsistemas conteinerizados podem declarar fontes monitoradas; uma
+  mudança reconcilia a aplicação pelo comando governado e registra o conteúdo
+  aplicado, preservando volumes de dados.
 - Decision: o ambiente de teste não inicia dependências; degradações opcionais
   são informadas e o modo estrito permanece disponível para operação assistida.
 

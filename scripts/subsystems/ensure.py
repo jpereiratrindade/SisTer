@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+from dataclasses import dataclass
 import fcntl
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -23,6 +25,12 @@ ROOT = Path(__file__).resolve().parents[2]
 DEV_ROOT = ROOT.parents[1]
 REGISTRY = ROOT / "config" / "local_resources.json"
 RUN_DIR = ROOT / ".run" / "subsystems"
+
+
+@dataclass(frozen=True)
+class HealthResult:
+    state: str
+    detail: str
 
 
 def log(message: str) -> None:
@@ -60,14 +68,52 @@ def start_argv(project: dict[str, Any], repository: Path) -> list[str]:
     return argv
 
 
-def healthy(project: dict[str, Any]) -> bool:
+def source_digest(project: dict[str, Any], repository: Path) -> str | None:
+    refresh = project["orchestration"].get("refresh")
+    if refresh is None:
+        return None
+    digest = hashlib.sha256()
+    for configured_path in refresh["paths"]:
+        source = (repository / configured_path).resolve()
+        source.relative_to(repository)
+        if not source.exists():
+            raise RuntimeError(f"fonte monitorada ausente: {source}")
+        files = [source] if source.is_file() else sorted(
+            path for path in source.rglob("*") if path.is_file()
+        )
+        for path in files:
+            relative = path.relative_to(repository).as_posix().encode()
+            digest.update(len(relative).to_bytes(4, "big"))
+            digest.update(relative)
+            with path.open("rb") as stream:
+                for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+                    digest.update(chunk)
+    return digest.hexdigest()
+
+
+def recorded_digest(project_id: str) -> str | None:
+    path = RUN_DIR / f"{project_id}.source.sha256"
+    try:
+        return path.read_text(encoding="utf-8").strip() or None
+    except FileNotFoundError:
+        return None
+
+
+def record_digest(project_id: str, digest: str | None) -> None:
+    if digest is not None:
+        (RUN_DIR / f"{project_id}.source.sha256").write_text(
+            f"{digest}\n", encoding="utf-8"
+        )
+
+
+def health_result(project: dict[str, Any]) -> HealthResult:
     health = project["orchestration"]["health"]
     endpoint = urlparse(health["url"])
     try:
         with socket.create_connection((endpoint.hostname, endpoint.port), timeout=1):
             pass
-    except OSError:
-        return False
+    except OSError as error:
+        return HealthResult("unavailable", str(error))
 
     context = None
     if health["url"].startswith("https://") and not health.get("tls_verify", True):
@@ -75,16 +121,40 @@ def healthy(project: dict[str, Any]) -> bool:
     request = Request(health["url"], headers={"User-Agent": "SisTer-Orchestrator/1.0"})
     try:
         with urlopen(request, timeout=1, context=context) as response:
-            return response.status < 500
+            body = response.read(65537)
+            if response.status != health.get("expected_status", 200):
+                return HealthResult("occupied", f"HTTP {response.status}")
+            if len(body) > 65536:
+                return HealthResult("occupied", "resposta de saúde excede 64 KiB")
+            if "expected_json" in health:
+                try:
+                    payload = json.loads(body)
+                except (UnicodeDecodeError, json.JSONDecodeError):
+                    return HealthResult("occupied", "resposta de saúde não é JSON válido")
+                if not isinstance(payload, dict) or any(
+                    payload.get(name) != value
+                    for name, value in health["expected_json"].items()
+                ):
+                    return HealthResult("occupied", "identidade da resposta de saúde diverge")
+            if "expected_text" in health:
+                try:
+                    actual = body.decode("utf-8").strip()
+                except UnicodeDecodeError:
+                    return HealthResult("occupied", "resposta de saúde não é UTF-8")
+                if actual != health["expected_text"]:
+                    return HealthResult("occupied", "conteúdo da resposta de saúde diverge")
+            return HealthResult("healthy", f"HTTP {response.status}")
     except HTTPError as error:
-        return error.code < 500
-    except (OSError, URLError, TimeoutError):
-        # A porta é exclusiva no registro local. Preserve o processo que já
-        # aceita conexões mesmo quando a verificação HTTP/TLS oscilar.
-        return True
+        return HealthResult("occupied", f"HTTP {error.code}")
+    except (OSError, URLError, TimeoutError) as error:
+        # Não inicie outro processo sobre uma porta já ocupada. Uma sonda
+        # inválida é degradação, não evidência suficiente de saúde.
+        return HealthResult("occupied", str(error))
 
 
-def start_project(project: dict[str, Any]) -> tuple[bool, str]:
+def start_project(
+    project: dict[str, Any], *, wait_for_command: bool = False
+) -> tuple[bool, str]:
     project_id = project["id"]
     orchestration = project["orchestration"]
     repository = repository_path(project)
@@ -115,14 +185,20 @@ def start_project(project: dict[str, Any]) -> tuple[bool, str]:
     deadline = started_at + orchestration["start"]["ready_timeout_seconds"]
     next_progress = 10
     while time.monotonic() < deadline:
-        if healthy(project):
-            if process.poll() is not None:
-                pid_path.unlink(missing_ok=True)
-            return True, f"iniciado; log {log_path}"
         return_code = process.poll()
         if return_code not in (None, 0):
             pid_path.unlink(missing_ok=True)
             return False, f"inicialização terminou com código {return_code}; log {log_path}"
+        if wait_for_command:
+            if return_code == 0:
+                pid_path.unlink(missing_ok=True)
+                if health_result(project).state == "healthy":
+                    return True, f"atualizado pelo SisTer; log {log_path}"
+                return False, f"comando terminou, mas a saúde não foi confirmada; log {log_path}"
+        elif health_result(project).state == "healthy":
+            if return_code is not None:
+                pid_path.unlink(missing_ok=True)
+            return True, f"iniciado pelo SisTer; log {log_path}"
         elapsed = int(time.monotonic() - started_at)
         if elapsed >= next_progress:
             log(
@@ -149,10 +225,37 @@ def ensure(environment: str, selected: set[str], strict: bool) -> int:
         return 0
 
     failures: list[tuple[str, bool]] = []
+    healthy_count = 0
     for project in projects:
         project_id = project["id"]
-        if healthy(project):
-            log(f"{project_id}: saudável")
+        repository = repository_path(project)
+        digest = source_digest(project, repository)
+        health = health_result(project)
+        if health.state == "healthy":
+            if digest is not None and digest != recorded_digest(project_id):
+                log(f"{project_id}: saudável, mas as fontes mudaram; atualizando")
+                try:
+                    success, detail = start_project(project, wait_for_command=True)
+                except (OSError, RuntimeError, ValueError) as error:
+                    success, detail = False, str(error)
+                log(f"{project_id}: {'saudável' if success else 'falhou'} — {detail}")
+                if success:
+                    record_digest(project_id, digest)
+                    healthy_count += 1
+                else:
+                    failures.append(
+                        (project_id, project["orchestration"]["required"])
+                    )
+                continue
+            healthy_count += 1
+            log(f"{project_id}: saudável — já estava em execução")
+            continue
+        if health.state == "occupied":
+            log(
+                f"{project_id}: falhou — porta ocupada, mas a sonda de saúde "
+                f"não confirmou o serviço ({health.detail})"
+            )
+            failures.append((project_id, project["orchestration"]["required"]))
             continue
         log(f"{project_id}: indisponível; iniciando pelo contrato local")
         try:
@@ -162,10 +265,15 @@ def ensure(environment: str, selected: set[str], strict: bool) -> int:
         log(f"{project_id}: {'saudável' if success else 'falhou'} — {detail}")
         if not success:
             failures.append((project_id, project["orchestration"]["required"]))
+        else:
+            record_digest(project_id, digest)
+            healthy_count += 1
 
     required_failures = [project_id for project_id, required in failures if required]
     if failures:
         log("degradação: " + ", ".join(project_id for project_id, _ in failures))
+    else:
+        log(f"{healthy_count} subsistema(s) governado(s) saudável(is)")
     if strict and failures:
         return 1
     return 1 if required_failures else 0

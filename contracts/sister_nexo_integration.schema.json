@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/sister_nexo_integration.schema.json",
+  "title": "SisTer Nexo Integration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "system_id",
+    "access_url",
+    "access_mode",
+    "database_ownership",
+    "capabilities"
+  ],
+  "properties": {
+    "contract_version": {"const": "1.0.0"},
+    "system_id": {"const": "sister_nexo"},
+    "access_url": {"const": "/integrations/nexo/"},
+    "access_mode": {"const": "authenticated_reverse_proxy"},
+    "database_ownership": {"const": "exclusive"},
+    "capabilities": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "governance",
+          "activities",
+          "evidence",
+          "research",
+          "publications",
+          "audit"
+        ]
+      }
+    }
+  }
+}

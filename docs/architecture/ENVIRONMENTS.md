@@ -44,12 +44,12 @@ O fallback direto por Podman usa a imagem do proprio SisTer, baseada em
 | `dev` | `sister-dev-db` | `55434` | `sister_dev_pgdata` |
 | `test` | `sister-test-db` | `55435` | `sister_test_pgdata` |
 
-Os servidores HTTP tambem usam portas diferentes por padrao:
+Os servidores HTTP também usam binds e portas diferentes por padrão:
 
-| Ambiente | Porta HTTP |
-| --- | --- |
-| `dev` | `8000` |
-| `test` | `8001` |
+| Ambiente | Bind | Porta HTTP |
+| --- | --- | --- |
+| `dev` | `0.0.0.0` | `8000` |
+| `test` | `127.0.0.1` | `8001` |
 
 As portas podem ser adaptadas ao host por `SISTER_DEV_DB_PORT`,
 `SISTER_TEST_DB_PORT`, `SISTER_DEV_APP_PORT` e `SISTER_TEST_APP_PORT`. Por
@@ -58,6 +58,10 @@ exemplo:
 ```bash
 SISTER_DEV_DB_PORT=55440 ./scripts/run_all.sh dev
 ```
+
+Os binds podem ser ajustados explicitamente por `SISTER_DEV_BIND_HOST` e
+`SISTER_TEST_BIND_HOST`. A exposição de desenvolvimento em `0.0.0.0` permite
+acesso pela rede local; ela não autoriza publicação direta na internet.
 
 ## Criar o worktree de teste
 
@@ -102,6 +106,10 @@ Para executar o fluxo completo, incluindo servidor e teste dos endpoints:
 ```bash
 ./scripts/run_all.sh dev 8000
 ```
+
+Esse é o ponto de entrada canônico do ecossistema integrado. O comando também
+garante os subsistemas governados; executar `run_all.sh` dentro de um subsistema
+inicia somente esse produto.
 
 O comando rejeita `dev` quando executado fora do worktree principal.
 

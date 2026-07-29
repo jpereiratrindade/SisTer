@@ -58,6 +58,33 @@ const state = {
         lastCheck: "sob demanda",
         signal: "ok"
       }
+    },
+    {
+      id: "sister_nexo",
+      name: "SisTer Nexo",
+      version: "0.1.0",
+      owner: "Projeto Resiliência SAIT",
+      type: "Governança científica",
+      status: "Integrado",
+      description: "Gestão científica, atividades, evidências, publicações e rastreabilidade em um subsistema C++20 autônomo.",
+      contract: "sister-nexo.integration/1.0.0",
+      accessUrl: "/integrations/nexo/",
+      accessMode: "Proxy autenticado pelo SisTer",
+      accessRestricted: true,
+      publicScope: "Identidade do sistema e saúde sanitizada",
+      restrictedScope: "Painel de governança, pesquisa, atividades, evidências e fluxo editorial",
+      privateScope: "Conversas, anexos, embeddings, credenciais e auditoria bruta",
+      domains: ["governanca", "gestao_cientifica", "resiliencia", "rastreabilidade"],
+      modes: ["local_web", "restricted_web", "contract_api"],
+      exports: ["governance_summary", "activity_status", "evidence_references", "publication_status"],
+      policy: ["usuario_identificado", "proveniencia", "schema", "banco_exclusivo", "auditoria"],
+      infra: {
+        availability: "sob demanda",
+        response: "HTTP",
+        storage: "PostgreSQL/pgvector independente",
+        lastCheck: "sob demanda",
+        signal: "ok"
+      }
     }
   ],
   contracts: [
@@ -84,6 +111,12 @@ const state = {
       version: "1.0.0",
       required: "Para capacidades criativas",
       rule: "Somente capacidades e saude sanitizada; conteudo e identidade permanecem no Studio."
+    },
+    {
+      name: "SisTer Nexo Integration",
+      version: "1.0.0",
+      required: "Para governança científica",
+      rule: "Acesso restrito por contrato; banco, anexos, conversas e auditoria bruta permanecem no Nexo."
     },
     {
       name: "Evidence",
@@ -200,6 +233,9 @@ function resolveAccessUrl(accessUrl) {
 function resolveSystemAccessUrl(system) {
   if (!system.accessUrl) return null;
   const url = new URL(resolveAccessUrl(system.accessUrl));
+  if (system.id === "sister_nexo") {
+    return `${url.href.replace(/\/$/, "")}/`;
+  }
   if (system.id === "sister_clima" || system.id === "sister_studio") {
     url.searchParams.set("sister_url", window.location.origin);
   }

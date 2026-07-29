@@ -81,7 +81,7 @@ CREATE INDEX IF NOT EXISTS sister_knowledge_artifacts_embedding_idx
 INSERT INTO sister_contracts (contract_id, contract_version, schema_uri, status)
 VALUES
   ('system_manifest', '0.1.0', 'contracts/system_manifest.schema.json', 'active'),
-  ('camposync_package', '0.1.0', 'contracts/camposync_package.schema.json', 'active'),
+  ('camposync_package', '1.0.0', 'contracts/camposync_package.schema.json', 'active'),
   ('evidence', '0.1.0', 'contracts/evidence.schema.json', 'active'),
   ('public_scope', '0.1.0', 'contracts/public_scope.schema.json', 'active')
 ON CONFLICT (contract_id) DO NOTHING;

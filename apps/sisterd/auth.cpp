@@ -10,6 +10,7 @@
 #include <cctype>
 #include <fstream>
 #include <iomanip>
+#include <regex>
 #include <sstream>
 #include <stdexcept>
 
@@ -48,6 +49,18 @@ std::string randomHex(std::size_t byteCount) {
         throw std::runtime_error("secure random generation failed");
     }
     return hexEncode(bytes.data(), bytes.size());
+}
+
+std::string randomUuid() {
+    std::array<unsigned char, 16> bytes{};
+    if (RAND_bytes(bytes.data(), static_cast<int>(bytes.size())) != 1) {
+        throw std::runtime_error("secure random generation failed");
+    }
+    bytes[6] = static_cast<unsigned char>((bytes[6] & 0x0fU) | 0x40U);
+    bytes[8] = static_cast<unsigned char>((bytes[8] & 0x3fU) | 0x80U);
+    const auto hex = hexEncode(bytes.data(), bytes.size());
+    return hex.substr(0, 8) + '-' + hex.substr(8, 4) + '-' +
+        hex.substr(12, 4) + '-' + hex.substr(16, 4) + '-' + hex.substr(20);
 }
 
 std::string sha256(const std::string& value) {
@@ -89,6 +102,13 @@ bool validField(const std::string& value) {
         value.find('\t') == std::string::npos &&
         value.find('\n') == std::string::npos &&
         value.find('\r') == std::string::npos;
+}
+
+bool validUuid(const std::string& value) {
+    static const std::regex pattern(
+        "^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-"
+        "[89ab][0-9a-f]{3}-[0-9a-f]{12}$");
+    return std::regex_match(value, pattern);
 }
 
 } // namespace
@@ -163,7 +183,7 @@ std::optional<AuthResult> AuthStore::registerAdmin(
     }
 
     StoredUser user;
-    user.publicUser = {randomHex(16), name, email, "admin"};
+    user.publicUser = {randomUuid(), name, email, "admin"};
     user.salt = randomHex(16);
     user.passwordHash = passwordHash(password, user.salt);
     users_.push_back(user);
@@ -214,7 +234,33 @@ std::optional<AuthUser> AuthStore::createUser(
     }
 
     StoredUser user;
-    user.publicUser = {randomHex(16), name, email, role};
+    user.publicUser = {randomUuid(), name, email, role};
+    user.salt = randomHex(16);
+    user.passwordHash = passwordHash(password, user.salt);
+    users_.push_back(user);
+    save();
+    return users_.back().publicUser;
+}
+
+std::optional<AuthUser> AuthStore::importUser(
+    const std::string& id,
+    const std::string& name,
+    const std::string& rawEmail,
+    const std::string& password,
+    const std::string& role) {
+    std::lock_guard lock(mutex_);
+    const auto email = normalizeEmail(rawEmail);
+    const bool duplicate = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
+        return user.publicUser.id == id || user.publicUser.email == email;
+    });
+    if (duplicate || !validUuid(id) || name.size() < 2 || password.size() < 12 ||
+        email.find('@') == std::string::npos || (role != "admin" && role != "user") ||
+        !validField(name) || !validField(email)) {
+        return std::nullopt;
+    }
+
+    StoredUser user;
+    user.publicUser = {id, name, email, role};
     user.salt = randomHex(16);
     user.passwordHash = passwordHash(password, user.salt);
     users_.push_back(user);

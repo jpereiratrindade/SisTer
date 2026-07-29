@@ -36,19 +36,27 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 
-## Servidor/API
+## Ponto de entrada do ecossistema
 
-O servidor inicial `sisterd` entrega a interface web e endpoints JSON basicos:
-
-```bash
-./build/apps/sisterd/sisterd 8000 web
-```
-
-Para subir banco, aplicar migration, validar, iniciar a interface e testar os
-endpoints de uma vez:
+O SisTer é o orquestrador raiz do ambiente integrado. Para desenvolver catálogo,
+autenticação federada e navegação entre sistemas, inicie sempre neste
+repositório:
 
 ```bash
 ./scripts/run_all.sh dev 8000
+```
+
+O comando sobe o núcleo do SisTer e garante os subsistemas declarados com
+`ensure-running`. Cada subsistema continua podendo ser executado isoladamente
+em seu próprio repositório, mas nenhum deles inicia o SisTer.
+
+## Servidor/API
+
+O servidor `sisterd` pode ser iniciado diretamente para diagnóstico de baixo
+nível:
+
+```bash
+./build/apps/sisterd/sisterd 8000 web
 ```
 
 No fluxo `dev`, o SisTer também verifica os subsistemas contratados declarados
@@ -57,6 +65,11 @@ preservados; os indisponíveis são iniciados pelo comando governado e seus logs
 ficam em `.run/subsystems/`. Use `SISTER_ENSURE_SUBSYSTEMS=0` para uma subida
 isolada ou `SISTER_SUBSYSTEMS_STRICT=1` para falhar diante de qualquer
 degradação.
+
+Subsistemas conteinerizados podem declarar `refresh.on-source-change`. Nesse
+caso, o fluxo compara o conteúdo das fontes com a última execução bem-sucedida
+e reconstrói somente a aplicação quando necessário. Bancos e outros dados
+persistentes permanecem nos volumes exclusivos declarados pelo subsistema.
 
 O fluxo `dev` deve ser executado no worktree principal. Para preparar e executar
 um teste reproduzivel a partir do mesmo local:
@@ -75,6 +88,7 @@ Acesse:
 
 ```text
 http://localhost:8000
+http://<ip-da-maquina>:8000
 http://localhost:8000/login
 http://localhost:8000/api/health
 http://localhost:8000/api/systems
@@ -107,6 +121,20 @@ No primeiro acesso a `/login`, o SisTer permite criar a conta administradora
 inicial. Depois do login, a barra lateral libera as visoes internas e a opcao
 **Equipe**, em `/admin/users`, permite cadastrar outras contas como `user` ou
 `admin`.
+
+Durante a migração de desenvolvimento, uma conta ativa do Sister-Studio pode
+se tornar a identidade inicial do SisTer sem perder seu UUID, autoria ou
+arquivos. A senha anterior não é copiada: uma nova senha é solicitada com
+entrada oculta diretamente no terminal.
+
+```bash
+./scripts/auth/import_studio_user.sh --reset usuario@example.org
+```
+
+O modo `--reset` preserva o cadastro anterior do SisTer em um backup local
+recuperável, importa somente a identidade selecionada e reinicia o `sisterd`.
+Depois disso, o SisTer passa a ser a autoridade de login e o Studio reutiliza
+essa sessão.
 
 As senhas sao derivadas com PBKDF2-HMAC-SHA256 e sal aleatorio. As identidades
 persistem em `.run/auth-users.tsv`, com permissao exclusiva do usuario do

@@ -7,4 +7,5 @@ ctest --test-dir build --output-on-failure
 python3 scripts/validate_tool_contracts.py
 python3 scripts/validate_governance_repo.py
 python3 scripts/validate_local_resources.py
+python3 -m unittest scripts/subsystems/test_ensure.py
 ./scripts/validate_shell_scripts.sh

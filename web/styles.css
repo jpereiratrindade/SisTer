@@ -451,12 +451,14 @@ h1 {
   box-shadow:
     0 0 0 34px rgba(26, 125, 196, .025),
     0 0 80px rgba(28, 155, 152, .1);
+  animation: orbit-spin 40s linear infinite;
 }
 
 .orbit-ring--middle {
   inset: 21%;
   border-style: dashed;
   border-color: rgba(28, 155, 152, .34);
+  animation: orbit-spin-reverse 25s linear infinite;
 }
 
 .orbit-core {
@@ -471,6 +473,7 @@ h1 {
   box-shadow: 0 24px 55px rgba(7, 30, 56, .24);
   color: #fff;
   transform: rotate(45deg);
+  animation: core-glow 5s ease-in-out infinite alternate;
 }
 
 .orbit-core > * {
@@ -509,6 +512,8 @@ h1 {
   color: var(--navy);
   font-size: .7rem;
   font-weight: 900;
+  grid-auto-flow: column;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
 }
 
 .orbit-node::before {
@@ -520,14 +525,35 @@ h1 {
   content: "";
 }
 
-.orbit-node {
-  grid-auto-flow: column;
+.orbit-node--data { top: 8%; left: 15%; animation: node-float-1 4s ease-in-out infinite alternate; }
+.orbit-node--information { top: 22%; right: -2%; animation: node-float-2 5s ease-in-out infinite alternate; }
+.orbit-node--knowledge { right: 2%; bottom: 16%; animation: node-float-1 4.5s ease-in-out infinite alternate; }
+.orbit-node--wisdom { bottom: 7%; left: 8%; animation: node-float-2 3.8s ease-in-out infinite alternate; }
+
+@keyframes orbit-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
-.orbit-node--data { top: 8%; left: 15%; }
-.orbit-node--information { top: 22%; right: -2%; }
-.orbit-node--knowledge { right: 2%; bottom: 16%; }
-.orbit-node--wisdom { bottom: 7%; left: 8%; }
+@keyframes orbit-spin-reverse {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(-360deg); }
+}
+
+@keyframes core-glow {
+  0% { box-shadow: 0 24px 55px rgba(7, 30, 56, .24), 0 0 0 rgba(66, 191, 176, 0); }
+  100% { box-shadow: 0 24px 55px rgba(7, 30, 56, .35), 0 0 25px rgba(66, 191, 176, .4); }
+}
+
+@keyframes node-float-1 {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(-7px); }
+}
+
+@keyframes node-float-2 {
+  0% { transform: translateY(0px); }
+  100% { transform: translateY(6px); }
+}
 
 .public-principles {
   display: grid;

@@ -41,7 +41,7 @@ fi
 
 echo "sisterd ${ENV_NAME} running with PID ${PID}."
 echo "Local:   http://127.0.0.1:${PORT}"
-if command -v hostname >/dev/null 2>&1; then
+if [[ "$SISTER_BIND_HOST" == "0.0.0.0" ]] && command -v hostname >/dev/null 2>&1; then
   IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
   if [[ -n "${IP:-}" ]]; then
     echo "Network: http://${IP}:${PORT}"

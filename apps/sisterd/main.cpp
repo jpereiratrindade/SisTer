@@ -1,5 +1,6 @@
 #include "auth.hpp"
 #include "studio_client.hpp"
+#include "sister_campo_client.hpp"
 
 #include <arpa/inet.h>
 #include <netinet/in.h>
@@ -27,7 +28,7 @@
 
 namespace {
 
-constexpr std::size_t maxRequestSize = 65536;
+constexpr std::size_t maxRequestSize = 16 * 1024 * 1024;
 constexpr std::string_view sessionCookie = "sister_session";
 volatile std::sig_atomic_t keepRunning = 1;
 
@@ -217,16 +218,19 @@ std::string jsonHealth() {
 std::string jsonContracts() {
     return R"([
   {"name":"System Manifest","version":"0.1.0","required":"Sim"},
-  {"name":"CampoSync Package","version":"0.1.0","required":"Para ingestao offline"},
+  {"name":"CampoSync Package","version":"1.0.0","required":"Para ingestao por API ou pacote offline"},
   {"name":"Evidence","version":"0.1.0","required":"Para dado promovido"},
   {"name":"Public Scope","version":"0.1.0","required":"Para classificacao de exposicao"},
   {"name":"Sister-Clima Governance","version":"1.0.0","required":"Para resultados climaticos nao comerciais"},
-  {"name":"Sister-Studio Integration","version":"1.0.0","required":"Para capacidades e saude sanitizada"}
+  {"name":"Sister-Studio Integration","version":"1.0.0","required":"Para capacidades e saude sanitizada"},
+  {"name":"SisTer Nexo Integration","version":"1.0.0","required":"Para governanca e gestao cientifica"}
 ])";
 }
 
 std::string jsonSystems() {
     return R"([
+  {"id":"sister_campo","name":"SisTer-Campo","type":"Integracao de campo","status":"Integrado","contract":"camposync.package/1.0.0","access_mode":"service_api","access_url":"http://127.0.0.1:8013"},
+  {"id":"sister_nexo","name":"SisTer Nexo","type":"Governanca cientifica","status":"Integrado","contract":"sister-nexo.integration/1.0.0","access_mode":"authenticated_reverse_proxy","access_url":"/integrations/nexo/"},
   {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":["open_meteo","nasa_power"]},
   {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_url":"https://127.0.0.1:8443"}
 ])";
@@ -259,6 +263,12 @@ std::string routeApi(const std::string& path) {
     if (path == "/api/integrations/sister-studio") {
         return sisterd::sisterStudioIntegrationJson();
     }
+    if (path == "/api/integrations/sister-campo") {
+        return sisterd::sisterCampoIntegrationJson();
+    }
+    if (path == "/api/integrations/sister-nexo") {
+        return R"({"contract_version":"1.0.0","system_id":"sister_nexo","access_url":"/integrations/nexo/","access_mode":"authenticated_reverse_proxy","database_ownership":"exclusive","capabilities":["governance","activities","evidence","research","publications","audit"]})";
+    }
     return {};
 }
 
@@ -286,6 +296,67 @@ void sendAll(int client, const std::string& response) {
         data += sent;
         remaining -= static_cast<std::size_t>(sent);
     }
+}
+
+std::string proxyToNexo(
+    const HttpRequest& request,
+    const sisterd::AuthUser& actor) {
+    constexpr std::string_view prefix = "/integrations/nexo";
+    std::string upstreamPath = request.path.substr(prefix.size());
+    if (upstreamPath.empty()) upstreamPath = "/";
+
+    const int upstream = socket(AF_INET, SOCK_STREAM, 0);
+    if (upstream < 0) throw std::runtime_error("cannot create Nexo proxy socket");
+    sockaddr_in address{};
+    address.sin_family = AF_INET;
+    address.sin_port = htons(8015);
+    inet_pton(AF_INET, "127.0.0.1", &address.sin_addr);
+    if (connect(upstream, reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0) {
+        close(upstream);
+        throw std::runtime_error("SisTer Nexo is unavailable");
+    }
+
+    std::ostringstream forwarded;
+    forwarded << request.method << ' ' << upstreamPath << " HTTP/1.1\r\n"
+              << "Host: 127.0.0.1:8015\r\n"
+              << "X-Sister-Subject: " << actor.id << "\r\n"
+              << "X-Sister-Name: " << actor.name << "\r\n"
+              << "X-Sister-Email: " << actor.email << "\r\n"
+              << "X-Sister-Role: " << actor.role << "\r\n"
+              << "Connection: close\r\n";
+    const auto contentTypeHeader = request.headers.find("content-type");
+    if (contentTypeHeader != request.headers.end()) {
+        forwarded << "Content-Type: " << contentTypeHeader->second << "\r\n";
+    }
+    if (!request.body.empty()) {
+        forwarded << "Content-Length: " << request.body.size() << "\r\n";
+    }
+    forwarded << "\r\n" << request.body;
+    const auto outbound = forwarded.str();
+    std::size_t sent = 0;
+    while (sent < outbound.size()) {
+        const auto count = send(upstream, outbound.data() + sent, outbound.size() - sent, 0);
+        if (count <= 0) {
+            close(upstream);
+            throw std::runtime_error("cannot send request to SisTer Nexo");
+        }
+        sent += static_cast<std::size_t>(count);
+    }
+
+    std::string response;
+    char buffer[16384];
+    while (response.size() < 4 * 1024 * 1024) {
+        const auto count = recv(upstream, buffer, sizeof(buffer), 0);
+        if (count == 0) break;
+        if (count < 0) {
+            close(upstream);
+            throw std::runtime_error("cannot read response from SisTer Nexo");
+        }
+        response.append(buffer, static_cast<std::size_t>(count));
+    }
+    close(upstream);
+    if (response.empty()) throw std::runtime_error("empty response from SisTer Nexo");
+    return response;
 }
 
 std::vector<std::pair<std::string, std::string>> sessionHeaders(const std::string& token) {
@@ -394,6 +465,34 @@ void handleClient(
     if (handleAuthApi(client, *request, auth)) return;
 
     const auto actor = auth.userForToken(cookieValue(*request, sessionCookie));
+    if (request->path == "/integrations/nexo") {
+        if (!actor) {
+            sendAll(client, httpResponse(
+                303, "See Other", "", "text/plain; charset=utf-8",
+                {{"Location", "/login"}, {"Cache-Control", "no-store"}}));
+            return;
+        }
+        sendAll(client, httpResponse(
+            308, "Permanent Redirect", "", "text/plain; charset=utf-8",
+            {{"Location", "/integrations/nexo/"}, {"Cache-Control", "no-store"}}));
+        return;
+    }
+    if (request->path.rfind("/integrations/nexo", 0) == 0) {
+        if (!actor) {
+            sendAll(client, httpResponse(
+                303, "See Other", "", "text/plain; charset=utf-8",
+                {{"Location", "/login"}, {"Cache-Control", "no-store"}}));
+            return;
+        }
+        try {
+            sendAll(client, proxyToNexo(*request, *actor));
+        } catch (const std::exception&) {
+            sendJsonError(
+                client, 502, "Bad Gateway",
+                "O SisTer Nexo está temporariamente indisponível.");
+        }
+        return;
+    }
     if (request->path == "/api/me") {
         if (!actor) {
             sendJsonError(client, 401, "Unauthorized", "Autenticação necessária.");
@@ -465,7 +564,8 @@ void handleClient(
         const bool publicApi = request->path == "/api/health";
         const bool authenticatedApi =
             request->path == "/api/systems" ||
-            request->path == "/api/integrations/sister-clima";
+            request->path == "/api/integrations/sister-clima" ||
+            request->path == "/api/integrations/sister-nexo";
         if (!publicApi && !actor) {
             sendJsonError(client, 401, "Unauthorized", "Autenticação necessária.");
             return;
@@ -546,6 +646,8 @@ int parsePort(const char* value) {
 int main(int argc, char** argv) {
     const int port = argc >= 2 ? std::stoi(argv[1]) : parsePort(std::getenv("SISTER_PORT"));
     const std::filesystem::path webRoot = argc >= 3 ? argv[2] : "web";
+    const char* bindHostEnv = std::getenv("SISTER_BIND_HOST");
+    const std::string bindHost = bindHostEnv != nullptr ? bindHostEnv : "0.0.0.0";
     const char* authFileEnv = std::getenv("SISTER_AUTH_FILE");
     const std::filesystem::path authFile =
         authFileEnv != nullptr ? authFileEnv : ".run/auth-users.tsv";
@@ -565,7 +667,11 @@ int main(int argc, char** argv) {
 
     sockaddr_in address {};
     address.sin_family = AF_INET;
-    address.sin_addr.s_addr = INADDR_ANY;
+    if (inet_pton(AF_INET, bindHost.c_str(), &address.sin_addr) != 1) {
+        std::cerr << "invalid IPv4 bind host: " << bindHost << '\n';
+        close(server);
+        return 1;
+    }
     address.sin_port = htons(static_cast<uint16_t>(port));
 
     if (bind(server, reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0) {
@@ -580,7 +686,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    std::cout << "sisterd listening on http://0.0.0.0:" << port
+    std::cout << "sisterd listening on http://" << bindHost << ':' << port
               << " serving " << webRoot << '\n';
 
     while (keepRunning) {

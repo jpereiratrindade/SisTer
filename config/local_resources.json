@@ -7,10 +7,64 @@
       "repository": "cpp/SisTer",
       "integrates_with_sister": true,
       "resources": [
-        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8000},
+        {"kind": "http", "environment": "dev", "host": "0.0.0.0", "port": 8000},
         {"kind": "http", "environment": "test", "host": "127.0.0.1", "port": 8001},
         {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55434, "container": "sister-dev-db", "volume": "sister_dev_pgdata"},
         {"kind": "postgresql", "environment": "test", "host": "127.0.0.1", "port": 55435, "container": "sister-test-db", "volume": "sister_test_pgdata"}
+      ]
+    },
+    {
+      "id": "sister_campo",
+      "repository": "cpp/SisTer-Campo",
+      "integrates_with_sister": true,
+      "resources": [
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8013},
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55438, "container": "sister-campo-dev-db", "volume": "sister_campo_dev_pgdata"}
+      ]
+    },
+    {
+      "id": "sister_nexo",
+      "repository": "cpp/sister-nexo",
+      "integrates_with_sister": true,
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": false,
+        "health": {
+          "url": "http://127.0.0.1:8015/api/health",
+          "expected_json": {
+            "status": "ok",
+            "service": "sister-nexo",
+            "database": "ok"
+          }
+        },
+        "start": {
+          "argv": ["./scripts/run.sh"],
+          "ready_timeout_seconds": 180
+        },
+        "refresh": {
+          "policy": "on-source-change",
+          "paths": [
+            "CMakeLists.txt",
+            "compose.yml",
+            "docker",
+            "include",
+            "scripts/import_legacy_django.sh",
+            "scripts/import_legacy_ledgers.py",
+            "scripts/migrate.sh",
+            "scripts/run.sh",
+            "scripts/smoke.sh",
+            "scripts/stop.sh",
+            "src",
+            "storage/migrations",
+            "vendor",
+            "web"
+          ]
+        }
+      },
+      "resources": [
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8015},
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55439, "container": "sister-nexo-dev-db", "volume": "sister_nexo_dev_pgdata"}
       ]
     },
     {
@@ -56,14 +110,17 @@
         "policy": "ensure-running",
         "environment": "dev",
         "required": false,
-        "health": {"url": "http://127.0.0.1:8501/_stcore/health"},
+        "health": {
+          "url": "http://127.0.0.1:8501/_stcore/health",
+          "expected_text": "ok"
+        },
         "start": {
           "argv": ["./venv/bin/streamlit", "run", "app.py"],
           "ready_timeout_seconds": 90
         }
       },
       "resources": [
-        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8501}
+        {"kind": "http", "environment": "dev", "host": "0.0.0.0", "port": 8501}
       ]
     },
     {
@@ -75,7 +132,11 @@
         "policy": "ensure-running",
         "environment": "dev",
         "required": false,
-        "health": {"url": "https://127.0.0.1:8443/api/health", "tls_verify": false},
+        "health": {
+          "url": "https://127.0.0.1:8443/api/health",
+          "tls_verify": false,
+          "expected_json": {"status": "ok", "service": "sister-studio"}
+        },
         "start": {"argv": ["./scripts/run_all.sh"], "ready_timeout_seconds": 240}
       },
       "resources": [
@@ -92,6 +153,14 @@
       "repository": "cpp/sister_confia",
       "integrates_with_sister": false,
       "status": "candidate",
+      "resources": []
+    },
+    {
+      "id": "sister_compras",
+      "repository": "cpp/sister_compras",
+      "integrates_with_sister": false,
+      "status": "candidate-for-nexo-integration",
+      "candidate_name": "nexo_compras",
       "resources": []
     },
     {

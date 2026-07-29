@@ -42,8 +42,12 @@ funcionando quando os repositorios forem clonados separadamente.
 
 | Projeto | Recurso | Desenvolvimento | Teste |
 | --- | --- | --- | --- |
-| SisTer | HTTP | 8000 | 8001 |
+| SisTer | HTTP | `0.0.0.0:8000` | `127.0.0.1:8001` |
 | SisTer | PostgreSQL | 55434 | 55435 |
+| SisTer-Campo | API HTTP local | `127.0.0.1:8013` | - |
+| SisTer-Campo | PostgreSQL | 55438 | - |
+| SisTer Nexo | HTTP local | `127.0.0.1:8015` | - |
+| SisTer Nexo | PostgreSQL | 55439 | - |
 | MorfoCampo (não cadastrado) | HTTPS reservada | 8011 | - |
 | DroneOps (não cadastrado) | HTTPS reservada | 8012 | - |
 | Sister-Studio | HTTPS público | 8443 | - |
@@ -58,6 +62,12 @@ funcionando quando os repositorios forem clonados separadamente.
 
 O registro tambem inclui projetos locais nao integrados que reservam recursos,
 pois eles podem colidir no mesmo host.
+
+O repositório `cpp/sister_compras` é candidato a integrar-se ao Nexo, mas ainda
+não pode ser registrado para execução simultânea: sua porta PostgreSQL atual,
+`55435`, colide com o banco de teste do SisTer. A identidade candidata
+`Nexo-Compras` não altera essa condição nem substitui a necessidade de contrato
+e migração explícitos.
 
 ## Regra operacional
 
@@ -82,11 +92,21 @@ prazo de prontidão e se a indisponibilidade impede a subida do SisTer.
 No ambiente `dev`, `scripts/run_all.sh` executa
 `scripts/subsystems/ensure.sh` depois de validar e iniciar o núcleo:
 
-1. consulta a saúde de cada projeto com política `ensure-running`;
+1. consulta a saúde e confirma a identidade esperada de cada projeto com
+   política `ensure-running`;
 2. preserva processos que já estejam saudáveis;
 3. inicia somente comandos e repositórios explicitamente registrados;
-4. aguarda a saúde e grava logs em `.run/subsystems/`;
-5. informa degradações opcionais sem ocultá-las.
+4. reconcilia serviços que declaram `refresh.on-source-change` quando suas
+   fontes mudam, sem substituir volumes persistentes;
+5. aguarda a saúde e grava logs em `.run/subsystems/`;
+6. distingue serviços já ativos daqueles iniciados ou atualizados pelo SisTer;
+7. trata porta ocupada com resposta inválida como degradação, sem iniciar um
+   processo duplicado;
+8. informa degradações opcionais sem ocultá-las.
+
+O SisTer é o orquestrador raiz desse fluxo. Comandos `run_all.sh` dos projetos
+integrados operam somente dentro da própria fronteira e nunca iniciam o SisTer.
+Essa direção única evita dependência invertida e ciclos de inicialização.
 
 O ambiente `test` não inicia subsistemas. Em desenvolvimento, a automação pode
 ser desativada pontualmente com `SISTER_ENSURE_SUBSYSTEMS=0`; para transformar

@@ -20,6 +20,7 @@ REQUIRED = [
     "contracts/sister_studio_capabilities.schema.json",
     "contracts/sister_studio_health.schema.json",
     "contracts/sister_clima_governance.schema.json",
+    "contracts/camposync_package.schema.json",
     "docs/adr/ADR-0004-sister-studio-service-integration.md",
     "docs/governance/SISTER_STUDIO_DATA.md",
     "adapters/sister_studio/README.md",
@@ -29,6 +30,12 @@ REQUIRED = [
     "examples/sister_clima_governance_example.json",
     "docs/adr/ADR-0005-sister-clima-noncommercial-governance.md",
     "docs/governance/SISTER_CLIMA_DATA.md",
+    "docs/adr/ADR-0006-sister-campo-federated-integration.md",
+    "docs/adr/ADR-0007-nexo-research-operations-and-procurement.md",
+    "adapters/sister_campo/README.md",
+    "examples/sister_campo_manifest_example.json",
+    "docs/governance/SISTER_NEXO.md",
+    "docs/governance/NEXO_COMPRAS.md",
 ]
 
 missing = [path for path in REQUIRED if not (ROOT / path).exists()]

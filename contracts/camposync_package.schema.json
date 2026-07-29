@@ -1,24 +1,111 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://sister.local/contracts/camposync_package.schema.json",
-  "title": "CampoSync Package",
+  "title": "CampoSync Package Manifest",
+  "description": "Contrato canonico de pacote entre sistemas de campo, SisTer-Campo e SisTer.",
   "type": "object",
-  "required": ["package_id", "source_system_id", "contract_version", "created_at", "contents", "checksum"],
+  "additionalProperties": false,
+  "required": [
+    "contract",
+    "contract_version",
+    "package_id",
+    "campaign_id",
+    "producer",
+    "created_at",
+    "public_scope",
+    "files",
+    "checksum"
+  ],
   "properties": {
-    "package_id": { "type": "string", "minLength": 1 },
-    "source_system_id": { "type": "string", "minLength": 1 },
-    "contract_version": { "type": "string", "minLength": 1 },
-    "created_at": { "type": "string", "minLength": 1 },
-    "contents": {
+    "contract": {
+      "const": "camposync.package"
+    },
+    "contract_version": {
+      "const": "1.0.0"
+    },
+    "package_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "campaign_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "project_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256
+    },
+    "producer": {
       "type": "object",
+      "additionalProperties": false,
+      "required": ["system_id", "system_version"],
       "properties": {
-        "observations": { "type": "string" },
-        "events": { "type": "string" },
-        "spatial": { "type": "string" },
-        "indicators": { "type": "string" },
-        "evidence": { "type": "array", "items": { "type": "string" } }
+        "system_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_-]{1,63}$"
+        },
+        "system_version": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        }
       }
     },
-    "checksum": { "type": "string", "minLength": 1 }
+    "created_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "public_scope": {
+      "enum": ["restricted", "private"]
+    },
+    "files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "path",
+          "role",
+          "media_type",
+          "size",
+          "sha256",
+          "public_scope"
+        ],
+        "properties": {
+          "path": {
+            "type": "string",
+            "pattern": "^(data|reports|attachments)/[A-Za-z0-9][A-Za-z0-9._/-]*$",
+            "maxLength": 512
+          },
+          "role": {
+            "enum": ["observations", "validation_report", "evidence", "attachment"]
+          },
+          "media_type": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 128
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "public_scope": {
+            "enum": ["restricted", "private"]
+          }
+        }
+      }
+    },
+    "checksum": {
+      "description": "SHA-256 da concatenacao ordenada path + NUL + sha256 + LF para cada arquivo declarado.",
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    }
   }
 }

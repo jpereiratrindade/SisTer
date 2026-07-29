@@ -1,6 +1,12 @@
 find_package(OpenSSL REQUIRED)
 
-add_executable(sisterd main.cpp auth.cpp studio_client.cpp)
+add_executable(
+    sisterd
+    main.cpp
+    auth.cpp
+    studio_client.cpp
+    sister_campo_client.cpp
+)
 target_link_libraries(sisterd PRIVATE sister_core OpenSSL::SSL OpenSSL::Crypto)
 target_compile_features(sisterd PRIVATE cxx_std_20)
 

@@ -5,3 +5,5 @@
 - [ADR-0003 - PostgreSQL, PostGIS e pgvector](./ADR-0003-postgresql-postgis-pgvector.md)
 - [ADR-0004 - Integração de serviço com o Sister-Studio](./ADR-0004-sister-studio-service-integration.md)
 - [ADR-0005 - Governança não comercial do Sister-Clima](./ADR-0005-sister-clima-noncommercial-governance.md)
+- [ADR-0006 - SisTer-Campo como sistema federado de integração](./ADR-0006-sister-campo-federated-integration.md)
+- [ADR-0007 - Nexo, operações de pesquisa e fronteira de compras](./ADR-0007-nexo-research-operations-and-procurement.md)
