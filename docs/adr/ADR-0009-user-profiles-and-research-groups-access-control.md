@@ -31,9 +31,23 @@ Apenas definir escopos sem perfis de usuário e associação a grupos de pesquis
 4. **Propagação de Identidade e Contratos**:
    O SisTer Core define o contrato `user_identity.schema.json` para compartilhamento seguro de metadados de identidade e pertinência a grupos entre os nós federados.
 
+5. **Autonomia de autorização dos subsistemas**:
+   Perfis e grupos do SisTer são atributos federados, não concessões irrestritas
+   dentro dos subsistemas. Cada subsistema pode manter papéis e vínculos locais
+   mais restritivos. No Nexo, por exemplo, dados privados do Nexo-Compras
+   exigem atribuição local no projeto correlacionado; o perfil global
+   `researcher` ou `admin`, isoladamente, não concede esse acesso.
+
+   Para o domínio de gestão científica, o Nexo é a fonte de verdade para
+   cadastrar projetos e suas atribuições locais. Os grupos do SisTer continuam
+   sendo contexto federado da plataforma, mas não substituem nem criam
+   automaticamente um projeto no Nexo.
+
 ## Consequências
 
 - Acesso a dados de pesquisa respeita a autonomia e privacidade dos projetos científicos.
 - Permite que um pesquisador atue como coordenador em um grupo e colaborador em outro.
 - Preserva a conformidade com a LGPD e políticas de dados sensíveis descritas em `PUBLIC_PRIVATE_SCOPE.md`.
 - Garante base consistente para evolução das APIs e interfaces estáticas (`web/login.js`, `sisterd`).
+- Evita que um perfil global seja interpretado como autorização automática
+  sobre todos os projetos de um subsistema.
