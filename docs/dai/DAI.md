@@ -1,21 +1,18 @@
 # DAI - SisTer
 
-## 2026-07-29 - Nexo como gestão de projetos e Compras como contexto autônomo
+## 2026-07-29 - Integração Nexo–Nexo-Compras concluída
 
 - Decision: o Nexo é a autoridade para projetos, ações, atividades, estrutura
   de pesquisa, evidências e produtos científicos.
 - Decision: compras permanece um contexto autônomo, ligado a projetos e
   atividades por identificadores e contratos, sem banco compartilhado.
-- Decision: `Nexo-Compras` é nome candidato; a documentação atual não executa
-  renomeação de repositório, sistema, banco ou contrato.
-- Action: documentar a fronteira, os identificadores e a sequência de
-  integração antes de alterar recursos locais.
-- Impediment: o PostgreSQL atual do `sister_compras` usa `55435`, porta já
-  pertencente ao banco de teste do SisTer.
-- Impediment: o contrato do Compras aceita `0.1.0/0.2.0`, enquanto a aplicação
-  declara versão `0.4.0`.
-- Impediment: identidade federada, saúde sanitizada, política de dados e
-  migração de nome ainda precisam de implementação e teste.
+- Decision: `Nexo-Compras` é o nome do produto; `sister_compras` permanece como
+  identificador técnico compatível.
+- Decision: a relação contratual é SisTer–Nexo–Nexo-Compras. O SisTer não
+  cataloga nem acessa o Compras como subsistema direto.
+- Action: reservar `8016` e `55440`, com banco, container e volume exclusivos.
+- Action: expor o Compras em `/integrations/nexo/compras/` pelo proxy do Nexo.
+- Action: preservar os dados migrados e o volume anterior para rollback.
 
 ## 2026-07-28 - SisTer-Campo federado e canais CampoSync
 

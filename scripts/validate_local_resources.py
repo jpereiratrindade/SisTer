@@ -36,7 +36,14 @@ def main() -> None:
         project_ids.add(project_id)
 
         repository = project.get("repository")
-        if project.get("integrates_with_sister") and project_id != "sister":
+        integration_owner = project.get("integrates_with")
+        if integration_owner is not None and (
+            not isinstance(integration_owner, str) or not integration_owner
+        ):
+            fail(f"invalid integration owner in {project_id}")
+        if (
+            project.get("integrates_with_sister") or integration_owner
+        ) and project_id != "sister":
             if repository is None:
                 if project.get("status") != "planned":
                     fail(f"integrated project {project_id} has no repository")
@@ -48,7 +55,7 @@ def main() -> None:
 
         orchestration = project.get("orchestration")
         if orchestration is not None:
-            if not project.get("integrates_with_sister"):
+            if not (project.get("integrates_with_sister") or integration_owner):
                 fail(f"orchestrated project {project_id} is not integrated")
             if repository is None:
                 fail(f"orchestrated project {project_id} has no repository")
@@ -177,6 +184,9 @@ def main() -> None:
                 fail(f"orchestration health port is not reserved by {project_id}")
 
     for project in projects:
+        integration_owner = project.get("integrates_with")
+        if integration_owner is not None and integration_owner not in project_ids:
+            fail(f"{project['id']} integrates with unknown project {integration_owner}")
         for dependency in project.get("depends_on", []):
             owner = dependency.get("project")
             if owner not in project_ids:

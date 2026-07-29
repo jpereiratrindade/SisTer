@@ -159,9 +159,45 @@
       "id": "sister_compras",
       "repository": "cpp/sister_compras",
       "integrates_with_sister": false,
-      "status": "candidate-for-nexo-integration",
-      "candidate_name": "nexo_compras",
-      "resources": []
+      "integrates_with": "sister_nexo",
+      "integration_contract": "nexo-compras.integration/1.0.0",
+      "product_name": "Nexo-Compras",
+      "status": "integrated-with-nexo",
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": false,
+        "health": {
+          "url": "http://127.0.0.1:8016/api/health",
+          "expected_json": {
+            "status": "ok",
+            "service": "nexo-compras",
+            "database": "ok"
+          }
+        },
+        "start": {
+          "argv": ["./scripts/run_all.sh", "dev", "8016"],
+          "ready_timeout_seconds": 180
+        },
+        "refresh": {
+          "policy": "on-source-change",
+          "paths": [
+            "CMakeLists.txt",
+            "compose.yml",
+            "contracts",
+            "db",
+            "include",
+            "scripts",
+            "src",
+            "tests",
+            "web"
+          ]
+        }
+      },
+      "resources": [
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8016},
+        {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55440, "container": "nexo-compras-dev-db", "volume": "nexo_compras_dev_pgdata"}
+      ]
     },
     {
       "id": "sister_video",

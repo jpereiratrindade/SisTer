@@ -3,9 +3,10 @@
 ## Estado
 
 - SisTer Nexo: integrado e governado;
-- `cpp/sister_compras`: candidato à integração;
-- `Nexo-Compras`: nome de produto em avaliação, ainda não adotado;
-- inicialização pelo SisTer: não habilitada.
+- `Nexo-Compras`: contexto autônomo integrado ao Nexo;
+- identificador técnico preservado: `sister_compras`;
+- inicialização pelo orquestrador raiz: habilitada como dependência do Nexo;
+- acesso: `/integrations/nexo/compras/`.
 
 ## Relação de domínio
 
@@ -40,21 +41,18 @@ Referências não autorizam acesso direto ao banco de origem. Exclusão ou
 arquivamento em um contexto deve produzir estado contratual, nunca cascata
 entre bancos.
 
-## Pendências antes da integração
+## Implementação da fronteira
 
-1. mover o PostgreSQL do Compras para uma porta livre: `55435` pertence ao
-   ambiente de teste do SisTer;
-2. eliminar credenciais padrão versionadas e adotar configuração local não
-   versionada;
-3. alinhar contrato e aplicação, atualmente em versões diferentes;
-4. definir saúde sanitizada e manifesto de sistema;
-5. reutilizar a identidade autenticada do SisTer;
-6. separar dados operacionais de exemplos versionados;
-7. testar migração e rollback antes de qualquer renomeação.
+1. o SisTer autentica e encaminha a requisição ao Nexo;
+2. o Nexo encaminha ao Compras somente pela rota interna `/compras/`;
+3. o Compras consulta projetos e atividades na API contratual do Nexo;
+4. o PostgreSQL do Compras usa porta `55440`, container e volume exclusivos;
+5. configuração secreta e dados operacionais não são versionados;
+6. a migração preservou os registros e manteve o volume anterior para rollback.
 
-## Critério para o nome Nexo-Compras
+## Identidade do produto
 
-O nome será adotado somente se a integração representar uma extensão clara do
-fluxo do Nexo sem reduzir a autonomia do contexto de compras. Repositório,
-identificador, contratos, banco e histórico Git não devem ser renomeados em uma
-única mudança irreversível.
+**Nexo-Compras** é o nome adotado para explicitar que compras é uma extensão
+contratual do fluxo do Nexo. Repositório, identificador técnico, banco e
+histórico Git permanecem estáveis. O Compras não aparece como subsistema direto
+do SisTer.

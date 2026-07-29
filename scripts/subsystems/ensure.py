@@ -42,7 +42,7 @@ def governed_projects(environment: str) -> list[dict[str, Any]]:
     return [
         project
         for project in data["projects"]
-        if project.get("integrates_with_sister")
+        if (project.get("integrates_with_sister") or project.get("integrates_with"))
         and project.get("orchestration", {}).get("policy") == "ensure-running"
         and project["orchestration"].get("environment") == environment
     ]

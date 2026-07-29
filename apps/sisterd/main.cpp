@@ -298,27 +298,29 @@ void sendAll(int client, const std::string& response) {
     }
 }
 
-std::string proxyToNexo(
+std::string proxyToSubsystem(
     const HttpRequest& request,
-    const sisterd::AuthUser& actor) {
-    constexpr std::string_view prefix = "/integrations/nexo";
+    const sisterd::AuthUser& actor,
+    std::string_view prefix,
+    uint16_t port,
+    std::string_view serviceName) {
     std::string upstreamPath = request.path.substr(prefix.size());
     if (upstreamPath.empty()) upstreamPath = "/";
 
     const int upstream = socket(AF_INET, SOCK_STREAM, 0);
-    if (upstream < 0) throw std::runtime_error("cannot create Nexo proxy socket");
+    if (upstream < 0) throw std::runtime_error("cannot create subsystem proxy socket");
     sockaddr_in address{};
     address.sin_family = AF_INET;
-    address.sin_port = htons(8015);
+    address.sin_port = htons(port);
     inet_pton(AF_INET, "127.0.0.1", &address.sin_addr);
     if (connect(upstream, reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0) {
         close(upstream);
-        throw std::runtime_error("SisTer Nexo is unavailable");
+        throw std::runtime_error(std::string(serviceName) + " is unavailable");
     }
 
     std::ostringstream forwarded;
     forwarded << request.method << ' ' << upstreamPath << " HTTP/1.1\r\n"
-              << "Host: 127.0.0.1:8015\r\n"
+              << "Host: 127.0.0.1:" << port << "\r\n"
               << "X-Sister-Subject: " << actor.id << "\r\n"
               << "X-Sister-Name: " << actor.name << "\r\n"
               << "X-Sister-Email: " << actor.email << "\r\n"
@@ -338,7 +340,7 @@ std::string proxyToNexo(
         const auto count = send(upstream, outbound.data() + sent, outbound.size() - sent, 0);
         if (count <= 0) {
             close(upstream);
-            throw std::runtime_error("cannot send request to SisTer Nexo");
+            throw std::runtime_error("cannot send request to subsystem");
         }
         sent += static_cast<std::size_t>(count);
     }
@@ -350,12 +352,12 @@ std::string proxyToNexo(
         if (count == 0) break;
         if (count < 0) {
             close(upstream);
-            throw std::runtime_error("cannot read response from SisTer Nexo");
+            throw std::runtime_error("cannot read response from subsystem");
         }
         response.append(buffer, static_cast<std::size_t>(count));
     }
     close(upstream);
-    if (response.empty()) throw std::runtime_error("empty response from SisTer Nexo");
+    if (response.empty()) throw std::runtime_error("empty response from subsystem");
     return response;
 }
 
@@ -477,7 +479,7 @@ void handleClient(
             {{"Location", "/integrations/nexo/"}, {"Cache-Control", "no-store"}}));
         return;
     }
-    if (request->path.rfind("/integrations/nexo", 0) == 0) {
+    if (request->path.rfind("/integrations/nexo/", 0) == 0) {
         if (!actor) {
             sendAll(client, httpResponse(
                 303, "See Other", "", "text/plain; charset=utf-8",
@@ -485,7 +487,8 @@ void handleClient(
             return;
         }
         try {
-            sendAll(client, proxyToNexo(*request, *actor));
+            sendAll(client, proxyToSubsystem(
+                *request, *actor, "/integrations/nexo", 8015, "SisTer Nexo"));
         } catch (const std::exception&) {
             sendJsonError(
                 client, 502, "Bad Gateway",

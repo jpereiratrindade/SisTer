@@ -1,6 +1,6 @@
 # ADR-0007 — Nexo, operações de pesquisa e fronteira de compras
 
-- Estado: aceito para a fronteira do Nexo; nome `Nexo-Compras` em avaliação
+- Estado: aceito e implementado
 - Data: 2026-07-29
 
 ## Contexto
@@ -32,25 +32,22 @@ imutáveis de projeto, ação ou atividade e é autoridade para:
 - pareceres e decisões humanas de aquisição;
 - atendimento, entrega e histórico do recurso adquirido.
 
-`Nexo-Compras` é o nome candidato para explicitar essa relação. A renomeação só
-ocorrerá com contrato versionado, plano de migração de identidade e aprovação
-específica; até lá, o identificador continua `sister_compras`.
+`Nexo-Compras` é o nome de produto adotado para explicitar essa relação. O
+identificador técnico continua `sister_compras` para preservar contratos,
+histórico e compatibilidade.
 
 Nenhum dos dois contextos compartilha tabelas, credenciais ou volumes. A
-integração usa APIs ou pacotes contratados, referências estáveis, proveniência
-e autorização do SisTer.
+integração usa APIs contratadas, referências estáveis, proveniência e a
+identidade originada no SisTer e encaminhada pelo Nexo.
 
-## Sequência de integração
+## Implementação
 
-1. consolidar e versionar a documentação e o estado atual dos repositórios;
-2. corrigir a colisão da porta PostgreSQL `55435` com o ambiente de teste do
-   SisTer;
-3. alinhar a versão do contrato do Compras com a aplicação `0.4.0`;
-4. definir referências de `project_id`, `research_activity_id`, `activity_id`
-   e `need_id`, além de regras para atualização e arquivamento;
-5. implementar saúde sanitizada, identidade federada e proxy autenticado;
-6. validar migração de dados e somente então habilitar `ensure-running`;
-7. decidir e executar, ou rejeitar, a mudança de nome para `Nexo-Compras`.
+1. contrato `nexo-compras.integration/1.0.0`;
+2. rota aninhada `/integrations/nexo/compras/`;
+3. proxy autenticado SisTer–Nexo e proxy contratual Nexo–Compras;
+4. referências `project_id`, `research_activity_id`, `activity_id` e `need_id`;
+5. PostgreSQL independente do Compras em `55440`;
+6. migração preservada com caminho de rollback.
 
 ## Consequências
 
@@ -61,5 +58,4 @@ e autorização do SisTer.
 - dados comerciais, cotações e pareceres permanecem restritos ao Compras;
 - indisponibilidade do Compras não pode corromper nem bloquear registros
   científicos do Nexo;
-- integração operacional não será ativada enquanto os impedimentos de porta,
-  contrato, identidade e migração permanecerem.
+- a indisponibilidade do Compras degrada somente seu contexto no Nexo.

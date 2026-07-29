@@ -48,6 +48,8 @@ funcionando quando os repositorios forem clonados separadamente.
 | SisTer-Campo | PostgreSQL | 55438 | - |
 | SisTer Nexo | HTTP local | `127.0.0.1:8015` | - |
 | SisTer Nexo | PostgreSQL | 55439 | - |
+| Nexo-Compras | HTTP interno do Nexo | `127.0.0.1:8016` | - |
+| Nexo-Compras | PostgreSQL | 55440 | - |
 | MorfoCampo (não cadastrado) | HTTPS reservada | 8011 | - |
 | DroneOps (não cadastrado) | HTTPS reservada | 8012 | - |
 | Sister-Studio | HTTPS público | 8443 | - |
@@ -63,11 +65,11 @@ funcionando quando os repositorios forem clonados separadamente.
 O registro tambem inclui projetos locais nao integrados que reservam recursos,
 pois eles podem colidir no mesmo host.
 
-O repositório `cpp/sister_compras` é candidato a integrar-se ao Nexo, mas ainda
-não pode ser registrado para execução simultânea: sua porta PostgreSQL atual,
-`55435`, colide com o banco de teste do SisTer. A identidade candidata
-`Nexo-Compras` não altera essa condição nem substitui a necessidade de contrato
-e migração explícitos.
+O repositório `cpp/sister_compras` está registrado como **Nexo-Compras**,
+dependência contratual do `sister_nexo`. Sua execução pode ser garantida pelo
+orquestrador raiz, mas ele não integra diretamente com o SisTer. A porta
+PostgreSQL `55440`, o container `nexo-compras-dev-db` e o volume
+`nexo_compras_dev_pgdata` são exclusivos.
 
 ## Regra operacional
 
