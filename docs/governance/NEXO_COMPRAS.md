@@ -75,6 +75,17 @@ ser confirmados, a informação gerada é precisamente a pendência de
 rastreabilidade. A projeção mantém proveniência do acordo e preserva o dado
 original sem receber fornecedores, preços ou documentos comerciais.
 
+A interface separa os conceitos:
+
+- **Integrações** governa acordo, capacidades e recibos;
+- **Informações Integradas** mantém a fila de interpretação e as afirmações
+  contextuais humanas;
+- **Dashboard** apresenta somente sinais genéricos e acionáveis.
+
+No sentido Nexo → Compras, `nexo.project-context/1.0.0` fornece metadados
+mínimos de projetos e atividades. Eles permitem uma correlação explícita, sem
+replicar tabelas nem deslocar a autoridade do Nexo.
+
 ## Identidade do produto
 
 **Nexo-Compras** é o nome adotado para explicitar que compras é uma extensão
