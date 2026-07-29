@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/integration_receipt.schema.json",
+  "title": "SisTer Integration Receipt",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "receipt_id",
+    "agreement_id",
+    "revision",
+    "digest",
+    "event",
+    "issued_by",
+    "issued_at",
+    "subject_id"
+  ],
+  "properties": {
+    "receipt_id": {"type": "string", "format": "uuid"},
+    "agreement_id": {"type": "string", "format": "uuid"},
+    "revision": {"type": "integer", "minimum": 1},
+    "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "event": {"enum": ["accepted", "activated", "suspended", "revoked"]},
+    "issued_by": {"type": "string", "minLength": 1},
+    "issued_at": {"type": "string", "format": "date-time"},
+    "subject_id": {"type": "string", "minLength": 1},
+    "previous_receipt_digest": {
+      "type": ["string", "null"],
+      "pattern": "^sha256:[a-f0-9]{64}$"
+    },
+    "signature": {"type": ["string", "null"]}
+  }
+}

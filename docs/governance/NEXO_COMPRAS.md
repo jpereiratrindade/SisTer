@@ -50,6 +50,19 @@ entre bancos.
 5. configuração secreta e dados operacionais não são versionados;
 6. a migração preservou os registros e manteve o volume anterior para rollback.
 
+## Acordo operacional
+
+Nexo e Compras mantêm cópias independentes do mesmo
+`IntegrationAgreement`. A interface de cada sistema permite propor, negociar
+capacidades, aceitar, ativar, suspender e revogar. Cada transição produz evento
+local e, quando aplicável, recibo correlacionado por `agreement_id`, revisão e
+digest SHA-256.
+
+O acordo segue `sister.integration-agreement/1.0.0`; a relação concreta segue
+`nexo-compras.profile/1.0.0`. As APIs e os schemas descrevem **como** comunicar;
+o Aggregate bilateral determina **se**, **em que estado** e **com quais
+capacidades** a comunicação é permitida.
+
 ## Identidade do produto
 
 **Nexo-Compras** é o nome adotado para explicitar que compras é uma extensão

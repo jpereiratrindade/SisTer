@@ -15,6 +15,10 @@ Contratos iniciais:
 - `sister_studio_health.schema.json`: disponibilidade sanitizada dos modulos do Sister-Studio.
 - `sister_clima_governance.schema.json`: finalidade não comercial, acesso
   identificado, licenças, atribuição e promoção de resultados do Sister-Clima.
+- `integration_agreement.schema.json`: proposta ou contraproposta bilateral,
+  versionada e negociável entre sistemas autônomos.
+- `integration_receipt.schema.json`: aceite, ativação e transições auditáveis
+  vinculadas ao digest exato de um acordo.
 
 Versoes estabilizadas devem ser copiadas para `contracts/versions/vX.Y.Z/`.
 
