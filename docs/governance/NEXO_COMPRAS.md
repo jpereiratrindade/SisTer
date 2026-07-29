@@ -63,6 +63,18 @@ O acordo segue `sister.integration-agreement/1.0.0`; a relação concreta segue
 o Aggregate bilateral determina **se**, **em que estado** e **com quais
 capacidades** a comunicação é permitida.
 
+## Do dado à informação
+
+Uma necessidade recebida do Compras continua sendo dado para o Nexo. Ela se
+torna informação quando o Nexo a relaciona ao projeto e às atividades que
+explicam sua finalidade, verifica a qualidade das referências, interpreta sua
+fase e explicita impacto, atenção e próxima ação.
+
+O Nexo não infere vínculos inexistentes. Quando projeto ou atividade não podem
+ser confirmados, a informação gerada é precisamente a pendência de
+rastreabilidade. A projeção mantém proveniência do acordo e preserva o dado
+original sem receber fornecedores, preços ou documentos comerciais.
+
 ## Identidade do produto
 
 **Nexo-Compras** é o nome adotado para explicitar que compras é uma extensão
