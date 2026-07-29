@@ -304,6 +304,27 @@
   color: #147a76;
 }
 
+.role-pill--project_lead {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.role-pill--researcher {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.role-pill--registered_user,
+.role-pill--user {
+  background: #e0f2fe;
+  color: #075985;
+}
+
+.role-pill--guest {
+  background: #f3f4f6;
+  color: #4b5563;
+}
+
 @media (max-width: 760px) {
   .admin-page {
     padding: 22px 14px;

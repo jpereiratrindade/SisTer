@@ -33,11 +33,19 @@ async function loadUsers() {
     return;
   }
   const users = await response.json();
+  const roleLabels = {
+    admin: "Administrador",
+    project_lead: "Coordenador de Pesquisa",
+    researcher: "Pesquisador",
+    registered_user: "Usuário Registrado",
+    user: "Usuário Registrado",
+    guest: "Visitante"
+  };
   tbody.innerHTML = users.map((user) => `
     <tr>
       <td><strong>${escapeHtml(user.name)}</strong></td>
       <td>${escapeHtml(user.email)}</td>
-      <td><span class="role-pill role-pill--${user.role}">${user.role === "admin" ? "Administrador" : "Usuário"}</span></td>
+      <td><span class="role-pill role-pill--${user.role}">${roleLabels[user.role] || escapeHtml(user.role)}</span></td>
     </tr>
   `).join("");
   document.querySelector("#user-count").textContent =

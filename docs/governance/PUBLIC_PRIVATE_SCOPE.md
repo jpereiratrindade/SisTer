@@ -110,6 +110,17 @@ Diretrizes iniciais:
 - trilha de auditoria para acesso e transformacao;
 - revisao antes de publicar geometrias, imagens, audios, documentos ou embeddings derivados de conteudo sensivel.
 
+## Perfis de Usuário e Grupos de Pesquisa (ADR-0009)
+
+Conforme estabelecido no [ADR-0009](../adr/ADR-0009-user-profiles-and-research-groups-access-control.md), a autorização é resolvida pela combinação de **Perfil Global (RBAC)** + **Papel no Grupo de Pesquisa (ReBAC)** + **Escopo (`public_scope`)**:
+
+- **Perfis Globais**: `guest`, `registered_user`, `researcher`, `project_lead`, `admin`.
+- **Grupos de Projetos**: Os recursos `private` são delimitados ao `project_group_id` vinculado.
+- **Acesso**:
+  - `public`: Acessível por todos (incluindo `guest`).
+  - `restricted`: Acessível por `registered_user`, `researcher`, `project_lead` e `admin`.
+  - `private`: Acessível exclusivamente por membros autenticados do projeto (`project_group_id`) ou `admin`.
+
 ## Interface e API
 
 Por padrao:
@@ -117,12 +128,12 @@ Por padrao:
 - home e dashboards devem usar dados `public` ou agregados;
 - diagnostico tecnico publico deve esconder detalhes exploraveis;
 - evidencias privadas nao devem ser exibidas diretamente;
-- API deve filtrar por escopo e perfil de acesso;
-- exports devem registrar classificacao de exposicao.
+- API deve filtrar por escopo, perfil global e pertencimento ao grupo do projeto;
+- exports devem registrar classificacao de exposicao e autor do acesso.
 
 ## Banco de dados
 
-Tabelas operacionais devem possuir `public_scope`.
+Tabelas operacionais devem possuir `public_scope`, e quando aplicável, referência ao grupo proprietário (`project_group_id`) e autor (`created_by_user_id`).
 
 Valores planejados:
 
@@ -130,7 +141,7 @@ Valores planejados:
 - `restricted`;
 - `private`.
 
-Consultas de dashboard devem filtrar explicitamente o escopo permitido.
+Consultas de dashboard devem filtrar explicitamente o escopo permitido de acordo com a sessão autenticada.
 
 ## API
 
@@ -141,6 +152,5 @@ Endpoints publicos ou semi-publicos devem retornar apenas:
 - diagnosticos que nao exponham falhas exploraveis;
 - links de acesso autorizados pelos manifestos dos sistemas.
 
-Endpoints internos ou autenticados poderao acessar dados `restricted` quando houver finalidade operacional clara. Dados `private` exigem controle de acesso, auditoria e justificativa.
+Endpoints internos ou autenticados poderao acessar dados `restricted` quando houver finalidade operacional clara. Dados `private` exigem autenticação do membro do grupo de pesquisa associado, auditoria e justificativa.
 
-Enquanto nao houver autenticacao implementada, o `sisterd` deve ser considerado servidor local/de desenvolvimento.

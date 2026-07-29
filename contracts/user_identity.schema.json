@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/user_identity.schema.json",
+  "title": "SisTer User Identity",
+  "type": "object",
+  "required": ["user_id", "email", "full_name", "global_role"],
+  "properties": {
+    "user_id": { "type": "string", "minLength": 1 },
+    "email": { "type": "string", "format": "email" },
+    "full_name": { "type": "string", "minLength": 1 },
+    "global_role": {
+      "enum": ["guest", "registered_user", "researcher", "project_lead", "admin"]
+    },
+    "project_memberships": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["group_id", "project_code", "role_in_group"],
+        "properties": {
+          "group_id": { "type": "string", "minLength": 1 },
+          "project_code": { "type": "string", "minLength": 1 },
+          "role_in_group": {
+            "enum": ["coordinator", "researcher", "collaborator", "observer"]
+          }
+        }
+      }
+    }
+  }
+}

@@ -227,8 +227,10 @@ std::optional<AuthUser> AuthStore::createUser(
     const bool duplicate = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
         return user.publicUser.email == email;
     });
+    const bool validRole = (role == "admin" || role == "user" || role == "registered_user" ||
+                            role == "researcher" || role == "project_lead" || role == "guest");
     if (duplicate || name.size() < 2 || password.size() < 12 ||
-        email.find('@') == std::string::npos || (role != "admin" && role != "user") ||
+        email.find('@') == std::string::npos || !validRole ||
         !validField(name) || !validField(email)) {
         return std::nullopt;
     }
@@ -253,8 +255,10 @@ std::optional<AuthUser> AuthStore::importUser(
     const bool duplicate = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
         return user.publicUser.id == id || user.publicUser.email == email;
     });
+    const bool validRole = (role == "admin" || role == "user" || role == "registered_user" ||
+                            role == "researcher" || role == "project_lead" || role == "guest");
     if (duplicate || !validUuid(id) || name.size() < 2 || password.size() < 12 ||
-        email.find('@') == std::string::npos || (role != "admin" && role != "user") ||
+        email.find('@') == std::string::npos || !validRole ||
         !validField(name) || !validField(email)) {
         return std::nullopt;
     }

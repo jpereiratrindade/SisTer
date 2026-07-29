@@ -50,7 +50,13 @@ int main() {
             "Pessoa Usuária", "pessoa@sister.local", "senha-de-equipe-123", "user");
         expect(member.has_value(), "administrator workflow should create team member");
         expect(member->role == "user", "managed role should be retained");
-        expect(auth.users().size() == 2, "user listing should include both accounts");
+        const auto researcher = auth.createUser(
+            "Pesquisador Teste", "pesquisador@sister.local", "senha-de-equipe-123", "researcher");
+        expect(researcher.has_value() && researcher->role == "researcher", "researcher role should be accepted");
+        const auto projectLead = auth.createUser(
+            "Coordenador Teste", "coordenador@sister.local", "senha-de-equipe-123", "project_lead");
+        expect(projectLead.has_value() && projectLead->role == "project_lead", "project_lead role should be accepted");
+        expect(auth.users().size() == 4, "user listing should include all created accounts");
         expect(
             !auth.createUser(
                 "Duplicada", "pessoa@sister.local", "senha-de-equipe-456", "admin"),

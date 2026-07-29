@@ -58,6 +58,30 @@ Se `SISTER_DATABASE_URL` nao estiver definido, ferramentas locais podem operar e
 Este esboco ainda nao e migracao canonica.
 
 ```sql
+CREATE TABLE sister_users (
+  user_id text PRIMARY KEY,
+  email text UNIQUE NOT NULL,
+  full_name text NOT NULL,
+  global_role text NOT NULL DEFAULT 'registered_user', -- guest, registered_user, researcher, project_lead, admin
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE sister_project_groups (
+  group_id text PRIMARY KEY,
+  project_code text NOT NULL UNIQUE,
+  name text NOT NULL,
+  description text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE sister_group_members (
+  group_id text NOT NULL REFERENCES sister_project_groups(group_id),
+  user_id text NOT NULL REFERENCES sister_users(user_id),
+  role_in_group text NOT NULL DEFAULT 'researcher', -- coordinator, researcher, collaborator, observer
+  joined_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (group_id, user_id)
+);
+
 CREATE TABLE sister_systems (
   system_id text PRIMARY KEY,
   system_name text NOT NULL,
@@ -83,7 +107,9 @@ CREATE TABLE sister_packages (
   checksum text NOT NULL,
   validation_status text NOT NULL,
   received_at timestamptz NOT NULL DEFAULT now(),
-  public_scope text NOT NULL DEFAULT 'restricted'
+  public_scope text NOT NULL DEFAULT 'restricted',
+  project_group_id text REFERENCES sister_project_groups(group_id),
+  created_by_user_id text REFERENCES sister_users(user_id)
 );
 
 CREATE TABLE sister_evidence (
@@ -94,7 +120,9 @@ CREATE TABLE sister_evidence (
   uri text NOT NULL,
   checksum text,
   captured_at timestamptz NOT NULL,
-  public_scope text NOT NULL DEFAULT 'private'
+  public_scope text NOT NULL DEFAULT 'private',
+  project_group_id text REFERENCES sister_project_groups(group_id),
+  created_by_user_id text REFERENCES sister_users(user_id)
 );
 
 CREATE TABLE sister_territorial_objects (
@@ -114,6 +142,8 @@ CREATE TABLE sister_knowledge_artifacts (
   content text NOT NULL,
   embedding vector(768),
   public_scope text NOT NULL DEFAULT 'restricted',
+  project_group_id text REFERENCES sister_project_groups(group_id),
+  created_by_user_id text REFERENCES sister_users(user_id),
   created_at timestamptz NOT NULL DEFAULT now()
 );
 
@@ -126,6 +156,7 @@ CREATE TABLE sister_service_diagnostics (
   public_scope text NOT NULL DEFAULT 'public',
   observed_at timestamptz NOT NULL DEFAULT now()
 );
+
 ```
 
 ## Politica de exposicao por coluna
