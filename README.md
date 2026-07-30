@@ -139,12 +139,23 @@ essa sessão.
 As senhas sao derivadas com PBKDF2-HMAC-SHA256 e sal aleatorio. As identidades
 persistem em `.run/auth-users.tsv`, com permissao exclusiva do usuario do
 processo; os tokens de sessao ficam somente em memoria e expiram em oito horas.
-Para usar outro caminho:
+Para usar outro caminho ou configurar o servidor:
 
 ```bash
 SISTER_AUTH_FILE=/caminho/protegido/auth-users.tsv \
+SISTER_ENV=production \
+SISTER_WORKERS=4 \
+SISTER_BIND_HOST=127.0.0.1 \
   ./build/apps/sisterd/sisterd 8000 web
 ```
+
+O `sisterd` suporta diversas variáveis de ambiente para configuração avançada:
+- `SISTER_ENV`: Define o ambiente (`development` ou `production`, padrão `production`).
+- `SISTER_WORKERS`: Número de threads (padrão baseado em hardware, máx 16).
+- `SISTER_QUEUE_LIMIT`: Limite da fila de conexões simultâneas (padrão `256`).
+- `SISTER_BIND_HOST`: Host de rede para o bind (padrão `127.0.0.1`).
+- `SISTER_NEXO_PORT`: Porta para o serviço de federação Nexo (padrão `8015`).
+- `SISTER_COOKIE_SECURE`, `SISTER_HSTS`, `SISTER_REQUIRE_SAME_ORIGIN`: Controles de segurança (ativos por padrão em `production`).
 
 Os dados territoriais (objetos geoespaciais) ainda são demonstrativos. Sistemas,
 contratos, evidências e diagnósticos são lidos do PostgreSQL quando
