@@ -439,7 +439,12 @@ function renderSystems(filter = "") {
     <article class="system-card">
       <span class="system-mark" aria-hidden="true">${systemInitials(system.name)}</span>
       <div class="system-identity">
-        <h4>${system.name}</h4>
+        <h4>
+          ${system.name}
+          ${system.healthStatus === 'online' ? '<span class="health-dot online" title="Online"></span>' : ''}
+          ${system.healthStatus === 'offline' ? '<span class="health-dot offline" title="Offline"></span>' : ''}
+          ${system.healthStatus === 'checking' || !system.healthStatus ? '<span class="health-dot checking" title="Verificando..."></span>' : ''}
+        </h4>
         <p class="system-meta">${system.type} · ${system.owner}</p>
       </div>
       <span class="status-pill" data-status="${statusSlug(system.status)}">${system.status}</span>
@@ -806,9 +811,33 @@ async function logout() {
   window.location.href = "/";
 }
 
+async function checkSystemHealth() {
+  for (const system of state.systems) {
+    if (!system.accessUrl) {
+      system.healthStatus = "offline";
+      continue;
+    }
+    try {
+      const url = resolveSystemAccessUrl(system);
+      if (!url) {
+        system.healthStatus = "offline";
+        continue;
+      }
+      
+      const response = await fetch(url, { method: "GET", cache: "no-store", headers: { "Accept": "application/json" } });
+      system.healthStatus = response.status < 500 ? "online" : "offline";
+    } catch {
+      system.healthStatus = "offline";
+    }
+  }
+  rerenderSystems();
+}
+
 function init() {
   setCounts();
+  for (const sys of state.systems) sys.healthStatus = "checking";
   renderSystems();
+  checkSystemHealth();
   renderIntegrationBars();
   renderDiagnostics();
   renderContracts();

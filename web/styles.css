@@ -872,6 +872,36 @@ h1 {
   font-weight: 850;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.health-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.health-dot.online {
+  background-color: var(--teal-9, #20c997);
+  box-shadow: 0 0 4px var(--teal-11, #20c997);
+}
+
+.health-dot.offline {
+  background-color: var(--red-9, #fa5252);
+}
+
+.health-dot.checking {
+  background-color: var(--muted, #868e96);
+  animation: pulse 1s infinite alternate;
+}
+
+@keyframes pulse {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; }
 }
 
 .system-meta {
