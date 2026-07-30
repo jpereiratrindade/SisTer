@@ -1,4 +1,5 @@
 #include "auth.hpp"
+#include "db.hpp"
 #include "studio_client.hpp"
 #include "sister_campo_client.hpp"
 
@@ -211,12 +212,13 @@ std::optional<HttpRequest> readRequest(int client) {
     return result;
 }
 
-std::string jsonHealth() {
-    return R"({"status":"ok","service":"sisterd","version":"0.2.1","database":"not_connected"})";
+std::string jsonHealth(sisterd::DbConn& db) {
+    const std::string dbStatus = db.connected() ? "connected" : "not_connected";
+    return "{\"status\":\"ok\",\"service\":\"sisterd\",\"version\":\"0.2.1\",\"database\":\"" + dbStatus + "\"}";
 }
 
-std::string jsonContracts() {
-    return R"([
+// Dados estáticos de fallback — usados quando o banco não está disponível
+constexpr std::string_view kFallbackContracts = R"([
   {"name":"System Manifest","version":"0.1.0","required":"Sim"},
   {"name":"CampoSync Package","version":"1.0.0","required":"Para ingestao por API ou pacote offline"},
   {"name":"Evidence","version":"0.1.0","required":"Para dado promovido"},
@@ -225,38 +227,49 @@ std::string jsonContracts() {
   {"name":"Sister-Studio Integration","version":"1.0.0","required":"Para capacidades e saude sanitizada"},
   {"name":"SisTer Nexo Integration","version":"1.0.0","required":"Para governanca e gestao cientifica"}
 ])";
-}
 
-std::string jsonSystems() {
-    return R"([
-  {"id":"sister_campo","name":"SisTer-Campo","type":"Integracao de campo","status":"Integrado","contract":"camposync.package/1.0.0","access_mode":"service_api","access_url":"http://127.0.0.1:8013"},
-  {"id":"sister_nexo","name":"SisTer Nexo","type":"Governanca cientifica","status":"Integrado","contract":"sister-nexo.integration/1.0.0","access_mode":"authenticated_reverse_proxy","access_url":"/integrations/nexo/"},
-  {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":["open_meteo","nasa_power"]},
-  {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_url":"https://127.0.0.1:8443"}
+constexpr std::string_view kFallbackSystems = R"([
+  {"id":"sister_campo","name":"SisTer-Campo","type":"Integracao de campo","status":"Integrado","contract":"camposync.package/1.0.0","access_mode":"service_api"},
+  {"id":"sister_nexo","name":"SisTer Nexo","type":"Governanca cientifica","status":"Integrado","contract":"sister-nexo.integration/1.0.0","access_mode":"authenticated_reverse_proxy"},
+  {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted"},
+  {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_mode":"authenticated_reverse_proxy"}
 ])";
-}
 
-std::string jsonEvidence() {
-    return "[]";
-}
-
-std::string jsonDiagnostics() {
-    return R"([
+constexpr std::string_view kFallbackDiagnostics = R"([
   {"service":"Contract Registry","status":"operacional","score":100},
   {"service":"Package Ingest","status":"em validacao","score":78},
   {"service":"Evidence Store","status":"operacional","score":92},
   {"service":"Territorial Catalog","status":"planejado","score":45},
   {"service":"API Server","status":"inicial","score":40},
-  {"service":"PostgreSQL/PostGIS/pgvector","status":"planejado","score":20}
+  {"service":"PostgreSQL/pgvector","status":"planejado","score":20}
 ])";
+
+std::string jsonContracts(sisterd::DbConn& db) {
+    if (auto result = db.queryContracts()) return *result;
+    return std::string(kFallbackContracts);
 }
 
-std::string routeApi(const std::string& path) {
-    if (path == "/api/health") return jsonHealth();
-    if (path == "/api/systems") return jsonSystems();
-    if (path == "/api/contracts") return jsonContracts();
-    if (path == "/api/evidence") return jsonEvidence();
-    if (path == "/api/diagnostics") return jsonDiagnostics();
+std::string jsonSystems(sisterd::DbConn& db) {
+    if (auto result = db.querySystems()) return *result;
+    return std::string(kFallbackSystems);
+}
+
+std::string jsonEvidence(sisterd::DbConn& db) {
+    if (auto result = db.queryEvidence()) return *result;
+    return "[]";
+}
+
+std::string jsonDiagnostics(sisterd::DbConn& db) {
+    if (auto result = db.queryDiagnostics()) return *result;
+    return std::string(kFallbackDiagnostics);
+}
+
+std::string routeApi(const std::string& path, sisterd::DbConn& db) {
+    if (path == "/api/health") return jsonHealth(db);
+    if (path == "/api/systems") return jsonSystems(db);
+    if (path == "/api/contracts") return jsonContracts(db);
+    if (path == "/api/evidence") return jsonEvidence(db);
+    if (path == "/api/diagnostics") return jsonDiagnostics(db);
     if (path == "/api/integrations/sister-clima") {
         return R"({"access_url":"http://127.0.0.1:8501","access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":[{"id":"open_meteo","url":"https://open-meteo.com/en/docs"},{"id":"nasa_power","url":"https://power.larc.nasa.gov/"}],"location_service":{"id":"ipwhois","mode":"explicit_action_http_fallback","persistence":"none","url":"https://ipwhois.io/documentation"}})";
     }
@@ -457,7 +470,8 @@ bool handleAuthApi(
 void handleClient(
     int client,
     const std::filesystem::path& webRoot,
-    sisterd::AuthStore& auth) {
+    sisterd::AuthStore& auth,
+    sisterd::DbConn& db) {
     const auto request = readRequest(client);
     if (!request) {
         sendJsonError(client, 400, "Bad Request", "Requisição inválida.");
@@ -638,7 +652,7 @@ void handleClient(
             sendJsonError(client, 403, "Forbidden", "Acesso restrito à equipe administrativa.");
             return;
         }
-        const auto body = routeApi(request->path);
+        const auto body = routeApi(request->path, db);
         if (body.empty()) {
             sendJsonError(client, 404, "Not Found", "Recurso não encontrado.");
             return;
@@ -717,6 +731,9 @@ int main(int argc, char** argv) {
         authFileEnv != nullptr ? authFileEnv : ".run/auth-users.tsv";
     sisterd::AuthStore auth(authFile);
 
+    const char* dbUrlEnv = std::getenv("SISTER_DATABASE_URL");
+    sisterd::DbConn db(dbUrlEnv != nullptr ? dbUrlEnv : "");
+
     std::signal(SIGINT, handleSignal);
     std::signal(SIGTERM, handleSignal);
 
@@ -777,7 +794,7 @@ int main(int argc, char** argv) {
             std::cerr << "accept failed: " << std::strerror(errno) << '\n';
             break;
         }
-        handleClient(client, webRoot, auth);
+        handleClient(client, webRoot, auth, db);
         close(client);
     }
 
