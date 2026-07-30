@@ -12,7 +12,7 @@ sister_podman_up() {
     --replace \
     -e POSTGRES_DB=sister \
     -e POSTGRES_USER=sister \
-    -e POSTGRES_PASSWORD=sister \
+    -e POSTGRES_PASSWORD="${SISTER_DB_PASSWORD}" \
     -p "127.0.0.1:${SISTER_DB_PORT}:5432" \
     -v "${SISTER_DB_VOLUME}:/var/lib/postgresql/data" \
     -v "${PWD}/storage/migrations:/docker-entrypoint-initdb.d:ro,Z" \

@@ -154,8 +154,10 @@ memoria. A ligacao desses dados com PostgreSQL sera o proximo incremento.
 Subir PostgreSQL com pgvector no ambiente de desenvolvimento:
 
 ```bash
+cp .env.example .env
+# edite SISTER_DB_PASSWORD no .env se necessário
 ./scripts/db/up.sh dev
-export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55434/sister'
+export SISTER_DATABASE_URL="postgresql://sister:${SISTER_DB_PASSWORD:-sister}@localhost:55434/sister"
 ```
 
 O banco de desenvolvimento usa o container `sister-dev-db`, porta `55434` e volume
