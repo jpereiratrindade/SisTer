@@ -695,6 +695,10 @@ function showSystemDetails(systemId) {
     accessAction = state.currentUser
       ? `<span class="dialog-action dialog-action--disabled">Acesso restrito indisponível</span>`
       : `<a class="dialog-action" href="/login">Entrar para acessar</a>`;
+  } else if (system.healthStatus === "offline") {
+    accessAction = `<span class="dialog-action dialog-action--disabled">Subsistema temporariamente indisponível</span>`;
+  } else if (system.healthStatus === "checking") {
+    accessAction = `<span class="dialog-action dialog-action--disabled">Verificando disponibilidade...</span>`;
   }
 
   qs("#system-dialog-mark").textContent = systemInitials(system.name);
