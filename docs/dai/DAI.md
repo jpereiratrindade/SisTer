@@ -1,5 +1,20 @@
 # DAI - SisTer
 
+## 2026-07-30 - Nexo ampliado para portfólio multiprojeto
+
+- Decision: `nexo_projects` é a fonte de verdade e Aggregate raiz dos projetos
+  científicos; o SisTer não mantém cadastro concorrente.
+- Decision: o Projeto Resiliência permanece como dado fundador migrado e deixa
+  de funcionar como contexto implícito no código e nas interfaces.
+- Decision: desafios e atividades exigem `project_id` explícito e uma atividade
+  somente pode referenciar desafio do mesmo projeto.
+- Decision: o Compras mantém visão autenticada do acervo completo; projeto é
+  referência atribuível e filtro opcional, não condição de existência.
+- Action: disponibilizar a seção **Projetos** no Nexo para cadastro, edição,
+  estado, período, instituição líder, equipe e indicadores.
+- Action: resolver autorizações e projeções Nexo–Compras pelo vínculo de projeto
+  contratado, sem identificador fixo.
+
 ## 2026-07-29 - Integração Nexo–Nexo-Compras concluída
 
 - Decision: o Nexo é a autoridade para projetos, ações, atividades, estrutura

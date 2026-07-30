@@ -31,6 +31,19 @@ O SisTer não acessa tabelas, credenciais, conversas, anexos, embeddings ou
 auditoria bruta. Produtos agregados só podem atravessar a fronteira quando
 previstos por contrato, com proveniência e classificação.
 
+## Portfólio multiprojeto
+
+O Nexo possui a seção própria **Projetos** e mantém `nexo_projects` como
+Aggregate raiz. O projeto Resiliência é o registro fundador migrado, não um
+contexto implícito da plataforma. Novos projetos podem registrar nome, sigla,
+instituição líder, descrição, período e estado.
+
+Desafios e atividades exigem `project_id` explícito, e atividades científicas
+só podem referenciar desafios do mesmo projeto. Equipe, autorização,
+informações de compras e vínculos externos são resolvidos pelo projeto
+correlacionado. O SisTer autentica e encaminha a identidade, mas não cria nem
+edita projetos do Nexo.
+
 ## Operação
 
 O orquestrador pode iniciar `./scripts/run.sh` no repositório do Nexo. A

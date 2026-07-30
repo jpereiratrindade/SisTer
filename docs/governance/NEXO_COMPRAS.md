@@ -86,6 +86,12 @@ No sentido Nexo → Compras, `nexo.project-context/1.0.0` fornece metadados
 mínimos de projetos e atividades. Eles permitem uma correlação explícita, sem
 replicar tabelas nem deslocar a autoridade do Nexo.
 
+O catálogo é multiprojeto. O Compras apresenta seu acervo operacional completo
+por padrão e informa a referência de projeto em cada necessidade. A
+visualização pode ser filtrada localmente, mas a indisponibilidade ou troca de
+filtro não apaga nem oculta estruturalmente os registros do banco. Novas
+necessidades e reatribuições selecionam um projeto autorizado recebido do Nexo.
+
 ## Identidade do produto
 
 **Nexo-Compras** é o nome adotado para explicitar que compras é uma extensão
