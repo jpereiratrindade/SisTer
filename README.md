@@ -157,17 +157,18 @@ Subir PostgreSQL com pgvector no ambiente de desenvolvimento:
 cp .env.example .env
 # edite SISTER_DB_PASSWORD no .env se necessário
 ./scripts/db/up.sh dev
-export SISTER_DATABASE_URL="postgresql://sister:${SISTER_DB_PASSWORD:-sister}@localhost:55434/sister"
+# As variáveis de conexão e porta são gerenciadas dinamicamente
+# pelo script, usando SISTER_DB_PORT.
 ```
 
-O banco de desenvolvimento usa o container `sister-dev-db`, porta `55434` e volume
-persistente `sister_dev_pgdata`.
+O banco de desenvolvimento usa o container `sister-dev-db` e volume
+persistente `sister_dev_pgdata`. As portas são configuráveis dinamicamente.
 
-Se a porta padrao estiver ocupada, configure uma alternativa sem editar os
+Se a porta padrão estiver ocupada, configure uma alternativa sem editar os
 scripts:
 
 ```bash
-SISTER_DEV_DB_PORT=55440 ./scripts/run_all.sh dev
+SISTER_DEV_DB_PORT=<sua_porta_alternativa> ./scripts/run_all.sh dev
 ```
 
 Parar o banco sem remover dados:
