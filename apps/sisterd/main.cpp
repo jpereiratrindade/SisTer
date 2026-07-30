@@ -507,7 +507,7 @@ void handleClient(
         return;
     }
 
-    if (request->path == "/api/admin/users") {
+    if (request->path == "/api/admin/users" || request->path.rfind("/api/admin/users/", 0) == 0) {
         if (!actor) {
             sendJsonError(client, 401, "Unauthorized", "Autenticação necessária.");
             return;
@@ -516,7 +516,11 @@ void handleClient(
             sendJsonError(client, 403, "Forbidden", "Acesso restrito à equipe administrativa.");
             return;
         }
-        if (request->method == "GET") {
+
+        const bool isBase = (request->path == "/api/admin/users");
+        const std::string targetId = isBase ? "" : request->path.substr(std::string("/api/admin/users/").size());
+
+        if (isBase && request->method == "GET") {
             const auto users = auth.users();
             std::string body = "[";
             for (std::size_t index = 0; index < users.size(); ++index) {
@@ -529,7 +533,8 @@ void handleClient(
                 {{"Cache-Control", "no-store"}}));
             return;
         }
-        if (request->method == "POST") {
+
+        if (isBase && request->method == "POST") {
             const auto name = jsonField(request->body, "name");
             const auto email = jsonField(request->body, "email");
             const auto password = jsonField(request->body, "password");
@@ -539,11 +544,13 @@ void handleClient(
                 return;
             }
             try {
-                const auto created = auth.createUser(*name, *email, *password, *role);
+                std::string errorDetail;
+                const auto created = auth.createUser(*name, *email, *password, *role, &errorDetail);
                 if (!created) {
+                    const int statusCode = (errorDetail == "E-mail já cadastrado.") ? 409 : 400;
                     sendJsonError(
-                        client, 409, "Conflict",
-                        "E-mail já cadastrado ou dados inválidos.");
+                        client, statusCode, statusCode == 409 ? "Conflict" : "Bad Request",
+                        errorDetail.empty() ? "Dados inválidos para cadastro." : errorDetail);
                     return;
                 }
                 sendAll(client, httpResponse(
@@ -555,6 +562,60 @@ void handleClient(
             }
             return;
         }
+
+        if (!isBase && !targetId.empty() && (request->method == "PUT" || request->method == "PATCH")) {
+            const auto name = jsonField(request->body, "name");
+            const auto email = jsonField(request->body, "email");
+            const auto role = jsonField(request->body, "role");
+            const auto password = jsonField(request->body, "password").value_or("");
+            if (!name || !email || !role) {
+                sendJsonError(client, 400, "Bad Request", "Preencha todos os campos obrigatórios.");
+                return;
+            }
+            try {
+                std::string errorDetail;
+                const auto updated = auth.updateUser(targetId, *name, *email, *role, password, &errorDetail);
+                if (!updated) {
+                    const int statusCode = (errorDetail == "Usuário não encontrado.") ? 404 :
+                                           (errorDetail.find("já cadastrado") != std::string::npos) ? 409 : 400;
+                    sendJsonError(
+                        client, statusCode,
+                        statusCode == 404 ? "Not Found" : statusCode == 409 ? "Conflict" : "Bad Request",
+                        errorDetail.empty() ? "Dados inválidos para atualização." : errorDetail);
+                    return;
+                }
+                sendAll(client, httpResponse(
+                    200, "OK", jsonUser(*updated),
+                    "application/json; charset=utf-8",
+                    {{"Cache-Control", "no-store"}}));
+            } catch (const std::exception&) {
+                sendJsonError(client, 500, "Internal Server Error", "Não foi possível atualizar a conta.");
+            }
+            return;
+        }
+
+        if (!isBase && !targetId.empty() && request->method == "DELETE") {
+            try {
+                std::string errorDetail;
+                const bool deleted = auth.deleteUser(targetId, actor->id, &errorDetail);
+                if (!deleted) {
+                    const int statusCode = (errorDetail == "Usuário não encontrado.") ? 404 : 400;
+                    sendJsonError(
+                        client, statusCode,
+                        statusCode == 404 ? "Not Found" : "Bad Request",
+                        errorDetail.empty() ? "Não foi possível excluir o usuário." : errorDetail);
+                    return;
+                }
+                sendAll(client, httpResponse(
+                    200, "OK", R"({"status":"deleted"})",
+                    "application/json; charset=utf-8",
+                    {{"Cache-Control", "no-store"}}));
+            } catch (const std::exception&) {
+                sendJsonError(client, 500, "Internal Server Error", "Não foi possível excluir a conta.");
+            }
+            return;
+        }
+
         sendJsonError(client, 405, "Method Not Allowed", "Método não permitido.");
         return;
     }

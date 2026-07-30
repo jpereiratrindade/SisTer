@@ -18,7 +18,7 @@ import time
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlparse
-from urllib.request import Request, urlopen
+from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener, urlopen
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -119,8 +119,12 @@ def health_result(project: dict[str, Any]) -> HealthResult:
     if health["url"].startswith("https://") and not health.get("tls_verify", True):
         context = ssl._create_unverified_context()
     request = Request(health["url"], headers={"User-Agent": "SisTer-Orchestrator/1.0"})
+    handlers: list[Any] = [ProxyHandler({})]
+    if context is not None:
+        handlers.append(HTTPSHandler(context=context))
+    opener = build_opener(*handlers)
     try:
-        with urlopen(request, timeout=1, context=context) as response:
+        with opener.open(request, timeout=1) as response:
             body = response.read(65537)
             if response.status != health.get("expected_status", 200):
                 return HealthResult("occupied", f"HTTP {response.status}")

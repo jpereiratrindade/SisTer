@@ -26,7 +26,7 @@
           <form id="user-form">
             <label>Nome<input name="name" required minlength="2" autocomplete="name"></label>
             <label>E-mail<input name="email" type="email" required autocomplete="email"></label>
-            <label>Senha temporária<input name="password" type="password" required minlength="12" autocomplete="new-password"></label>
+            <label>Senha temporária <small style="opacity:0.85;font-weight:normal">(mínimo 12 caracteres)</small><input name="password" type="password" required minlength="12" autocomplete="new-password"></label>
             <label>
               Papel
               <select name="role">
@@ -52,12 +52,57 @@
           </div>
           <div class="table-wrap admin-table-wrap">
             <table class="user-table">
-              <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th></tr></thead>
+              <thead><tr><th>Nome</th><th>E-mail</th><th>Papel</th><th class="th-actions">Ações</th></tr></thead>
               <tbody id="users"></tbody>
             </table>
           </div>
         </section>
       </div>
+
+      <!-- Modal para Editar Usuário -->
+      <dialog id="edit-dialog" class="admin-modal">
+        <form id="edit-user-form" class="admin-modal-content">
+          <div class="admin-modal-head">
+            <h2>Editar pessoa</h2>
+            <button type="button" class="btn-close" id="edit-close-btn" aria-label="Fechar">✕</button>
+          </div>
+          <input type="hidden" id="edit-user-id" name="id">
+          <label>Nome<input id="edit-name" name="name" required minlength="2" autocomplete="name"></label>
+          <label>E-mail<input id="edit-email" name="email" type="email" required autocomplete="email"></label>
+          <label>Nova senha temporária <small style="opacity:0.85;font-weight:normal">(deixe em branco para manter a atual)</small><input id="edit-password" name="password" type="password" minlength="12" autocomplete="new-password"></label>
+          <label>
+            Papel
+            <select id="edit-role" name="role">
+              <option value="researcher">Pesquisador</option>
+              <option value="registered_user">Usuário Registrado</option>
+              <option value="project_lead">Coordenador de Pesquisa</option>
+              <option value="admin">Administrador</option>
+              <option value="guest">Visitante</option>
+            </select>
+          </label>
+          <p class="admin-message" id="edit-message" role="status"></p>
+          <div class="admin-modal-actions">
+            <button type="button" class="btn-secondary" id="edit-cancel-btn">Cancelar</button>
+            <button type="submit" class="btn-primary">Salvar alterações</button>
+          </div>
+        </form>
+      </dialog>
+
+      <!-- Modal para Confirmar Exclusão -->
+      <dialog id="delete-dialog" class="admin-modal">
+        <div class="admin-modal-content">
+          <div class="admin-modal-head">
+            <h2>Excluir acesso</h2>
+            <button type="button" class="btn-close" id="delete-close-btn" aria-label="Fechar">✕</button>
+          </div>
+          <p>Tem certeza de que deseja remover o acesso de <strong id="delete-user-name"></strong> (<span id="delete-user-email"></span>)?</p>
+          <p class="admin-message" id="delete-message" role="status"></p>
+          <div class="admin-modal-actions">
+            <button type="button" class="btn-secondary" id="delete-cancel-btn">Cancelar</button>
+            <button type="button" class="btn-danger" id="delete-confirm-btn">Confirmar exclusão</button>
+          </div>
+        </div>
+      </dialog>
     </main>
     <script src="/admin.js"></script>
   </body>

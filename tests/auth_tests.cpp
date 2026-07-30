@@ -57,10 +57,18 @@ int main() {
             "Coordenador Teste", "coordenador@sister.local", "senha-de-equipe-123", "project_lead");
         expect(projectLead.has_value() && projectLead->role == "project_lead", "project_lead role should be accepted");
         expect(auth.users().size() == 4, "user listing should include all created accounts");
+        std::string dupErr;
         expect(
             !auth.createUser(
-                "Duplicada", "pessoa@sister.local", "senha-de-equipe-456", "admin"),
-            "duplicate email should fail");
+                "Duplicada", "pessoa@sister.local", "senha-de-equipe-456", "admin", &dupErr) &&
+                dupErr == "E-mail já cadastrado.",
+            "duplicate email should fail with specific error message");
+        std::string shortPassErr;
+        expect(
+            !auth.createUser(
+                "Senha Curta", "curta@sister.local", "12345", "user", &shortPassErr) &&
+                shortPassErr == "A senha temporária deve ter no mínimo 12 caracteres.",
+            "short password should fail with specific error message");
         const auto imported = auth.importUser(
             "2ad0c643-3129-4cf7-82c1-5d2afeeb8445",
             "Pessoa Migrada",
@@ -92,6 +100,53 @@ int main() {
         expect(
             !auth.userForToken(login->token),
             "revoked token should not identify a user");
+
+        // Test updateUser
+        std::string updateErr;
+        const auto updatedMember = auth.updateUser(
+            member->id, "Pessoa Atualizada", "pessoa.nova@sister.local", "project_lead", "", &updateErr);
+        expect(updatedMember.has_value() && updatedMember->name == "Pessoa Atualizada" &&
+               updatedMember->email == "pessoa.nova@sister.local" && updatedMember->role == "project_lead",
+               "updateUser should update name, email, and role");
+
+        expect(
+            !auth.updateUser(
+                member->id, "Outro", "admin@sister.local", "project_lead", "", &updateErr) &&
+                updateErr == "E-mail já cadastrado para outra pessoa.",
+            "updateUser should fail when email conflicts with another user");
+
+        // Demote imported user first so registered is the sole remaining admin
+        auth.updateUser(imported->id, imported->name, imported->email, "user", "");
+
+        expect(
+            !auth.updateUser(
+                registered->user.id, "Admin", "admin@sister.local", "user", "", &updateErr) &&
+                updateErr == "Não é possível alterar o papel do único administrador do sistema.",
+            "updateUser should prevent demoting the sole administrator when another admin is not available");
+
+        // Test password update
+        const auto passUpdated = auth.updateUser(
+            member->id, "Pessoa Atualizada", "pessoa.nova@sister.local", "project_lead", "nova-senha-12345");
+        expect(passUpdated.has_value(), "valid optional password should update credentials");
+        expect(auth.login("pessoa.nova@sister.local", "nova-senha-12345").has_value(),
+               "user should authenticate with new password");
+
+        // Test deleteUser
+        std::string deleteErr;
+        expect(
+            !auth.deleteUser(registered->user.id, registered->user.id, &deleteErr) &&
+                deleteErr == "Você não pode excluir a sua própria conta logada.",
+            "deleteUser should prevent self-deletion");
+
+        expect(
+            !auth.deleteUser(registered->user.id, member->id, &deleteErr) &&
+                deleteErr == "Não é possível excluir o único administrador do sistema.",
+            "deleteUser should prevent deleting sole administrator");
+
+        expect(auth.deleteUser(member->id, registered->user.id, &deleteErr),
+               "deleteUser should remove non-admin team member");
+        expect(!auth.login("pessoa.nova@sister.local", "nova-senha-12345").has_value(),
+               "deleted user credentials should no longer authenticate");
     }
 
     {

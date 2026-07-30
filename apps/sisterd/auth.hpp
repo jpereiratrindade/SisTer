@@ -38,7 +38,19 @@ public:
         const std::string& name,
         const std::string& email,
         const std::string& password,
-        const std::string& role);
+        const std::string& role,
+        std::string* errorOut = nullptr);
+    std::optional<AuthUser> updateUser(
+        const std::string& id,
+        const std::string& name,
+        const std::string& email,
+        const std::string& role,
+        const std::string& optionalPassword,
+        std::string* errorOut = nullptr);
+    bool deleteUser(
+        const std::string& id,
+        const std::string& currentActorId,
+        std::string* errorOut = nullptr);
     std::optional<AuthUser> importUser(
         const std::string& id,
         const std::string& name,

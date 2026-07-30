@@ -90,7 +90,15 @@ std::string passwordHash(const std::string& password, const std::string& saltHex
     return hexEncode(output.data(), output.size());
 }
 
+std::string trim(std::string value) {
+    const auto first = value.find_first_not_of(" \t\n\r");
+    if (first == std::string::npos) return "";
+    const auto last = value.find_last_not_of(" \t\n\r");
+    return value.substr(first, last - first + 1);
+}
+
 std::string normalizeEmail(std::string email) {
+    email = trim(email);
     std::transform(email.begin(), email.end(), email.begin(), [](unsigned char value) {
         return static_cast<char>(std::tolower(value));
     });
@@ -124,16 +132,35 @@ void AuthStore::load() {
     std::ifstream input(path_);
     std::string line;
     while (std::getline(input, line)) {
+        if (line.empty()) continue;
         std::istringstream row(line);
-        StoredUser user;
-        if (std::getline(row, user.publicUser.id, '\t') &&
-            std::getline(row, user.publicUser.name, '\t') &&
-            std::getline(row, user.publicUser.email, '\t') &&
-            std::getline(row, user.publicUser.role, '\t') &&
-            std::getline(row, user.salt, '\t') &&
-            std::getline(row, user.passwordHash) &&
-            !user.publicUser.id.empty()) {
-            users_.push_back(std::move(user));
+        std::vector<std::string> fields;
+        std::string field;
+        while (std::getline(row, field, '\t')) {
+            fields.push_back(field);
+        }
+        if (fields.size() == 6) {
+            StoredUser user;
+            user.publicUser.id = fields[0];
+            user.publicUser.name = fields[1];
+            user.publicUser.email = fields[2];
+            user.publicUser.role = fields[3];
+            user.salt = fields[4];
+            user.passwordHash = fields[5];
+            if (!user.publicUser.id.empty()) {
+                users_.push_back(std::move(user));
+            }
+        } else if (fields.size() == 5) {
+            StoredUser user;
+            user.publicUser.id = fields[0];
+            user.publicUser.name = fields[1];
+            user.publicUser.email = fields[2];
+            user.publicUser.role = "user";
+            user.salt = fields[3];
+            user.passwordHash = fields[4];
+            if (!user.publicUser.id.empty()) {
+                users_.push_back(std::move(user));
+            }
         }
     }
 }
@@ -218,20 +245,38 @@ std::vector<AuthUser> AuthStore::users() const {
 }
 
 std::optional<AuthUser> AuthStore::createUser(
-    const std::string& name,
+    const std::string& rawName,
     const std::string& rawEmail,
     const std::string& password,
-    const std::string& role) {
+    const std::string& role,
+    std::string* errorOut) {
     std::lock_guard lock(mutex_);
+    const auto name = trim(rawName);
     const auto email = normalizeEmail(rawEmail);
     const bool duplicate = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
         return user.publicUser.email == email;
     });
     const bool validRole = (role == "admin" || role == "user" || role == "registered_user" ||
                             role == "researcher" || role == "project_lead" || role == "guest");
-    if (duplicate || name.size() < 2 || password.size() < 12 ||
-        email.find('@') == std::string::npos || !validRole ||
-        !validField(name) || !validField(email)) {
+
+    if (duplicate) {
+        if (errorOut) *errorOut = "E-mail já cadastrado.";
+        return std::nullopt;
+    }
+    if (name.size() < 2 || !validField(name)) {
+        if (errorOut) *errorOut = "O nome deve ter no mínimo 2 caracteres válidos.";
+        return std::nullopt;
+    }
+    if (email.find('@') == std::string::npos || !validField(email)) {
+        if (errorOut) *errorOut = "Formato de e-mail inválido.";
+        return std::nullopt;
+    }
+    if (password.size() < 12) {
+        if (errorOut) *errorOut = "A senha temporária deve ter no mínimo 12 caracteres.";
+        return std::nullopt;
+    }
+    if (!validRole) {
+        if (errorOut) *errorOut = "Papel de usuário inválido.";
         return std::nullopt;
     }
 
@@ -242,6 +287,117 @@ std::optional<AuthUser> AuthStore::createUser(
     users_.push_back(user);
     save();
     return users_.back().publicUser;
+}
+
+std::optional<AuthUser> AuthStore::updateUser(
+    const std::string& id,
+    const std::string& rawName,
+    const std::string& rawEmail,
+    const std::string& role,
+    const std::string& optionalPassword,
+    std::string* errorOut) {
+    std::lock_guard lock(mutex_);
+    const auto name = trim(rawName);
+    const auto email = normalizeEmail(rawEmail);
+    const auto target = std::find_if(users_.begin(), users_.end(), [&](const StoredUser& user) {
+        return user.publicUser.id == id;
+    });
+
+    if (target == users_.end()) {
+        if (errorOut) *errorOut = "Usuário não encontrado.";
+        return std::nullopt;
+    }
+
+    const bool duplicate = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
+        return user.publicUser.id != id && user.publicUser.email == email;
+    });
+    if (duplicate) {
+        if (errorOut) *errorOut = "E-mail já cadastrado para outra pessoa.";
+        return std::nullopt;
+    }
+
+    if (name.size() < 2 || !validField(name)) {
+        if (errorOut) *errorOut = "O nome deve ter no mínimo 2 caracteres válidos.";
+        return std::nullopt;
+    }
+    if (email.find('@') == std::string::npos || !validField(email)) {
+        if (errorOut) *errorOut = "Formato de e-mail inválido.";
+        return std::nullopt;
+    }
+
+    const bool validRole = (role == "admin" || role == "user" || role == "registered_user" ||
+                            role == "researcher" || role == "project_lead" || role == "guest");
+    if (!validRole) {
+        if (errorOut) *errorOut = "Papel de usuário inválido.";
+        return std::nullopt;
+    }
+
+    if (target->publicUser.role == "admin" && role != "admin") {
+        const auto adminCount = std::count_if(users_.begin(), users_.end(), [](const StoredUser& user) {
+            return user.publicUser.role == "admin";
+        });
+        if (adminCount <= 1) {
+            if (errorOut) *errorOut = "Não é possível alterar o papel do único administrador do sistema.";
+            return std::nullopt;
+        }
+    }
+
+    if (!optionalPassword.empty()) {
+        if (optionalPassword.size() < 12) {
+            if (errorOut) *errorOut = "A nova senha temporária deve ter no mínimo 12 caracteres.";
+            return std::nullopt;
+        }
+        target->salt = randomHex(16);
+        target->passwordHash = passwordHash(optionalPassword, target->salt);
+    }
+
+    target->publicUser.name = name;
+    target->publicUser.email = email;
+    target->publicUser.role = role;
+    save();
+    return target->publicUser;
+}
+
+bool AuthStore::deleteUser(
+    const std::string& id,
+    const std::string& currentActorId,
+    std::string* errorOut) {
+    std::lock_guard lock(mutex_);
+    const auto target = std::find_if(users_.begin(), users_.end(), [&](const StoredUser& user) {
+        return user.publicUser.id == id;
+    });
+
+    if (target == users_.end()) {
+        if (errorOut) *errorOut = "Usuário não encontrado.";
+        return false;
+    }
+
+    if (id == currentActorId) {
+        if (errorOut) *errorOut = "Você não pode excluir a sua própria conta logada.";
+        return false;
+    }
+
+    if (target->publicUser.role == "admin") {
+        const auto adminCount = std::count_if(users_.begin(), users_.end(), [](const StoredUser& user) {
+            return user.publicUser.role == "admin";
+        });
+        if (adminCount <= 1) {
+            if (errorOut) *errorOut = "Não é possível excluir o único administrador do sistema.";
+            return false;
+        }
+    }
+
+    users_.erase(target);
+    for (auto it = sessions_.begin(); it != sessions_.end();) {
+        if (it->second.userId == id) {
+            it = sessions_.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
+    save();
+    return true;
 }
 
 std::optional<AuthUser> AuthStore::importUser(
