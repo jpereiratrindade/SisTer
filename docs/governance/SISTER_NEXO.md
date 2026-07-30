@@ -38,6 +38,11 @@ Aggregate raiz. O projeto Resiliência é o registro fundador migrado, não um
 contexto implícito da plataforma. Novos projetos podem registrar nome, sigla,
 instituição líder, descrição, período e estado.
 
+O campo `name` é o título oficial e pode ser extenso. O campo `short_name` é o
+rótulo compacto usado em navegação, seletores e integrações visuais, com
+`project_id` como fallback. O título integral permanece preservado nos detalhes
+e contratos.
+
 Desafios e atividades exigem `project_id` explícito, e atividades científicas
 só podem referenciar desafios do mesmo projeto. Equipe, autorização,
 informações de compras e vínculos externos são resolvidos pelo projeto

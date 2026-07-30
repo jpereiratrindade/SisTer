@@ -92,6 +92,10 @@ visualização pode ser filtrada localmente, mas a indisponibilidade ou troca de
 filtro não apaga nem oculta estruturalmente os registros do banco. Novas
 necessidades e reatribuições selecionam um projeto autorizado recebido do Nexo.
 
+Seletores e cabeçalhos usam `short_name` ou, na ausência dele, `project_id`.
+`name` permanece o título oficial completo e é apresentado somente onde há
+espaço para leitura detalhada.
+
 ## Identidade do produto
 
 **Nexo-Compras** é o nome adotado para explicitar que compras é uma extensão
