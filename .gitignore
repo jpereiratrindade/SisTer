@@ -12,3 +12,5 @@ __pycache__/
 .DS_Store
 .env
 .env.production
+sister-local.env
+sisterd-local.service
