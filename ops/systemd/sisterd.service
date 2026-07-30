@@ -16,7 +16,7 @@ EnvironmentFile=/etc/sister/sister.env
 
 # Variáveis de ambiente de configuração geral (sem credenciais)
 Environment=SISTER_ENV=production
-Environment=SISTER_HOST=127.0.0.1
+Environment=SISTER_BIND_HOST=127.0.0.1
 Environment=SISTER_PORT=8000
 Environment=SISTER_COOKIE_SECURE=true
 
