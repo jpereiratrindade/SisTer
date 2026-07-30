@@ -19,9 +19,9 @@ LOG_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.log"
 PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
 
 if command -v setsid >/dev/null 2>&1; then
-  setsid env SISTER_DATABASE_URL="$SISTER_DATABASE_URL" ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
+  setsid env SISTER_ENV="$ENV_NAME" SISTER_DATABASE_URL="$SISTER_DATABASE_URL" ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
 else
-  SISTER_DATABASE_URL="$SISTER_DATABASE_URL" nohup ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
+  SISTER_ENV="$ENV_NAME" SISTER_DATABASE_URL="$SISTER_DATABASE_URL" nohup ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
 fi
 PID="$!"
 echo "$PID" > "$PID_FILE"

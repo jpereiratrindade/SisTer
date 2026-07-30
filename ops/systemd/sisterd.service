@@ -1,0 +1,34 @@
+[Unit]
+Description=Servidor SisTer (Produção)
+After=network.target postgresql.service
+
+[Service]
+Type=simple
+# Substitua 'sister' pelo usuário real do sistema que vai rodar a aplicação
+User=sister
+Group=sister
+
+# O diretório raiz onde o código está baixado
+WorkingDirectory=/opt/sister
+
+# Carrega variáveis de ambiente de um arquivo protegido com permissões 600
+EnvironmentFile=/etc/sister/sister.env
+
+# Variáveis de ambiente de configuração geral (sem credenciais)
+Environment=SISTER_ENV=production
+Environment=SISTER_HOST=127.0.0.1
+Environment=SISTER_PORT=8000
+Environment=SISTER_COOKIE_SECURE=true
+
+# Comando que inicia o sistema
+ExecStart=/opt/sister/build/apps/sisterd/sisterd 8000 web
+
+# Regras de reinício automático
+Restart=always
+RestartSec=5
+
+# Limites de sistema úteis para servidores de alta performance
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target

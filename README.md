@@ -50,6 +50,15 @@ O comando sobe o núcleo do SisTer e garante os subsistemas declarados com
 `ensure-running`. Cada subsistema continua podendo ser executado isoladamente
 em seu próprio repositório, mas nenhum deles inicia o SisTer.
 
+## Produção
+
+Para colocar o SisTer em produção (Infrastructure as Code), utilize os scripts de deploy e configurações do sistema fornecidos:
+
+- **Template do Serviço:** Copie `ops/systemd/sisterd.service` para `/etc/systemd/system/sisterd.service`.
+- **Credenciais:** Copie `.env.production.example` para `/etc/sister/sister.env` (proteja com `chmod 600`).
+- **Deploy:** O script `scripts/app/deploy.sh` centraliza os passos de build (Release), migrações e restart do serviço, dispensando containers de banco embutidos que o modo `dev` exige.
+
+
 ## Servidor/API
 
 O servidor `sisterd` pode ser iniciado diretamente para diagnóstico de baixo

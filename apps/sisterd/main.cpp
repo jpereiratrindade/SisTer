@@ -305,7 +305,7 @@ ServerConfig loadConfig(int argc, char** argv) {
     ServerConfig config;
 
     const std::string environmentName = environment("SISTER_ENV").value_or("production");
-    config.production = lowercase(environmentName) != "development";
+    config.production = lowercase(environmentName) != "development" && lowercase(environmentName) != "dev";
 
     const auto configuredPort = environment("SISTER_PORT").value_or("8000");
     config.port = parseInteger<int>(configuredPort, 1, 65535, "SISTER_PORT");
