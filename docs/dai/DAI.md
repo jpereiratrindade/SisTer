@@ -222,7 +222,7 @@
 
 - Decision: incluir uma primeira interface estatica antes do servidor para validar linguagem, navegacao e leitura dos contratos.
 - Action: criar `web/index.html`, `web/styles.css` e `web/app.js` com visao geral, sistemas, contratos, evidencias e mapa territorial sintetico.
-- Impediment: a interface ainda usa dados demonstrativos embutidos; a ligacao com `sister_core` deve vir por API ou export JSON em incremento posterior.
+- Impediment: ~~a interface ainda usa dados demonstrativos embutidos; a ligacao com `sister_core` deve vir por API ou export JSON em incremento posterior.~~ **Resolvido em 2026-07-30**: sistemas e contratos agora sao lidos do PostgreSQL via libpq.
 
 ## 2026-07-10 - Identidade Radar e novas funcoes
 
@@ -275,11 +275,21 @@
 - Decision: criar `sisterd` como servidor C++ inicial para interface estatica e endpoints JSON basicos.
 - Decision: criar `compose.yml` para PostgreSQL/PostGIS/pgvector com volume persistente.
 - Action: adicionar migration inicial e script `scripts/dev/run_postgres.sh`.
-- Impediment: a API ainda usa dados em memoria; falta porta de persistencia e integracao real com PostgreSQL.
+- Impediment: ~~a API ainda usa dados em memoria; falta porta de persistencia e integracao real com PostgreSQL.~~ **Resolvido em 2026-07-30**: `sisterd` conecta ao PostgreSQL via libpq; fallback automatico sem banco.
 
 ## 2026-07-10 - Finalizacao operacional do banco
 
 - Decision: expor comandos `sisterctl db-check` e `sisterctl db-migrate`.
 - Action: adicionar scripts que usam `psql` local ou `docker exec sister-db psql`.
 - Action: registrar migration aplicada em `sister_schema_migrations`.
-- Impediment: ainda nao ha repositorio C++ persistindo entidades no PostgreSQL.
+- Impediment: ~~ainda nao ha repositorio C++ persistindo entidades no PostgreSQL.~~ **Resolvido em 2026-07-30**: `DbConn` lida sistemas, contratos, evidencias e diagnosticos diretamente das tabelas via `row_to_json()`.
+
+## 2026-07-30 - Persistencia PostgreSQL no sisterd
+
+- Decision: conectar `sisterd` ao PostgreSQL via `libpq` (C), sem nova dependencia externa; unica conexao persistente com reconexao supervisionada.
+- Decision: manter literais estaticos como fallback explicito; servidor opera sem banco sem interrupção.
+- Action: criar `db.hpp`/`db.cpp` com `DbConn` (RAII), `ensureConnected()` e metodos `query*()` usando `row_to_json()` do banco.
+- Action: atualizar `CMakeLists.txt` com `find_package(PostgreSQL)` opcional e definicao `SISTER_HAVE_LIBPQ`.
+- Action: aplicar `004_seed_systems.sql` com os 4 sistemas canonicos e 3 contratos adicionais.
+- Action: instalar `libpq-devel` no toolbox `fedora-44-sister`.
+- Impediment: dados territoriais (objetos geoespaciais) ainda sao demonstrativos; falta coletor real para `/api/diagnostics`.

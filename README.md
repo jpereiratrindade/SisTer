@@ -146,8 +146,10 @@ SISTER_AUTH_FILE=/caminho/protegido/auth-users.tsv \
   ./build/apps/sisterd/sisterd 8000 web
 ```
 
-Os dados territoriais e diagnosticos da API ainda sao demonstrativos em
-memoria. A ligacao desses dados com PostgreSQL sera o proximo incremento.
+Os dados territoriais (objetos geoespaciais) ainda são demonstrativos. Sistemas,
+contratos, evidências e diagnósticos são lidos do PostgreSQL quando
+`SISTER_DATABASE_URL` está definido; sem banco, o servidor usa literais de
+fallback sem interrupção de serviço.
 
 ## Banco de dados
 

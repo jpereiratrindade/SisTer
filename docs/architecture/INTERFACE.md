@@ -73,7 +73,10 @@ Exibe eventos e referencias que sustentam proveniencia e auditabilidade.
 
 ## Estado atual
 
-A interface esta em `web/` e usa dados demonstrativos embutidos em `web/app.js`.
+A interface está em `web/` e consome a API do `sisterd`. Sistemas, contratos,
+evidências e diagnósticos são servidos por endpoints JSON lidos do PostgreSQL
+quando `SISTER_DATABASE_URL` está definido. Sem banco, o servidor responde com
+dados de fallback sem interrupção de serviço.
 
 Execucao local:
 
@@ -89,8 +92,8 @@ http://localhost:8000
 
 ## Proximos incrementos
 
-1. Exportar dados do `sister_core` para JSON consumido pela interface.
-2. Adicionar API local para contratos, sistemas, evidencias e diagnosticos.
-3. Persistir resultados de integracao e diagnostico.
-4. Conectar validacao real de CampoSync aos dashboards.
-5. Criar criterios formais para status operacional, LGPD e seguranca.
+1. Alimentar `/api/diagnostics` com coletor real conectado ao banco e aos subsistemas.
+2. Persistir resultados de integracao e pacotes CampoSync recebidos.
+3. Conectar validacao real de CampoSync aos dashboards.
+4. Criar criterios formais para status operacional, LGPD e seguranca.
+5. Adicionar objetos territoriais persistidos (PostGIS).
