@@ -15,3 +15,12 @@ target_link_libraries(sisterd_auth_tests PRIVATE OpenSSL::Crypto)
 target_compile_features(sisterd_auth_tests PRIVATE cxx_std_20)
 
 add_test(NAME sisterd_auth_tests COMMAND sisterd_auth_tests)
+
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+add_test(
+    NAME sisterd_clima_proxy_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_clima_proxy_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)

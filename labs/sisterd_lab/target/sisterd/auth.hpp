@@ -72,15 +72,12 @@ private:
     };
 
     std::filesystem::path path_;
-    std::filesystem::path sessionsPath_;
     mutable std::mutex mutex_;
     std::vector<StoredUser> users_;
     std::unordered_map<std::string, Session> sessions_;
 
     void load();
     void save() const;
-    void loadSessions();
-    void saveSessions() const;
     AuthResult createSession(const StoredUser& user);
 };
 

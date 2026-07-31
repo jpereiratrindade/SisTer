@@ -75,7 +75,6 @@ struct ServerConfig {
     std::size_t queueLimit = 256;
     int clientTimeoutSeconds = 10;
     int upstreamTimeoutMilliseconds = 5'000;
-    uint16_t climaPort = 8501;
     uint16_t nexoPort = 8015;
     std::string internalProxyToken;
 };
@@ -339,9 +338,6 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.upstreamTimeoutMilliseconds = parseInteger<int>(
         environment("SISTER_UPSTREAM_TIMEOUT_MS").value_or("5000"),
         100, 120'000, "SISTER_UPSTREAM_TIMEOUT_MS");
-    config.climaPort = parseInteger<uint16_t>(
-        environment("SISTER_CLIMA_PORT").value_or("8501"),
-        1, std::numeric_limits<uint16_t>::max(), "SISTER_CLIMA_PORT");
     config.nexoPort = parseInteger<uint16_t>(
         environment("SISTER_NEXO_PORT").value_or("8015"),
         1, std::numeric_limits<uint16_t>::max(), "SISTER_NEXO_PORT");
@@ -1063,25 +1059,6 @@ bool sendAll(int socket, std::string_view data) {
     return true;
 }
 
-bool headerContainsToken(const HttpRequest& request, std::string_view name, std::string_view token) {
-    const auto header = request.headers.find(std::string(name));
-    if (header == request.headers.end()) return false;
-
-    const auto expected = lowercase(std::string(token));
-    std::istringstream values(header->second);
-    std::string value;
-    while (std::getline(values, value, ',')) {
-        if (lowercase(trim(value)) == expected) return true;
-    }
-    return false;
-}
-
-bool isWebSocketUpgrade(const HttpRequest& request) {
-    return request.method == "GET" &&
-           headerContainsToken(request, "connection", "upgrade") &&
-           headerContainsToken(request, "upgrade", "websocket");
-}
-
 std::string safeProxyHeaderValue(std::string_view value, std::size_t maximum = 1024) {
     if (value.size() > maximum || containsInvalidHeaderValueCharacter(value) ||
         value.find('\r') != std::string_view::npos || value.find('\n') != std::string_view::npos) {
@@ -1216,130 +1193,6 @@ std::string proxyToSubsystem(
         throw std::runtime_error("incomplete response from " + std::string(serviceName));
     }
     return response;
-}
-
-UniqueFd openWebSocketProxy(
-    int client,
-    const HttpRequest& request,
-    const sisterd::AuthUser& actor,
-    std::string_view prefix,
-    uint16_t port,
-    std::string_view serviceName,
-    std::string_view requestId,
-    const ServerConfig& config) {
-    if (!request.path.starts_with(prefix)) throw std::runtime_error("invalid proxy prefix");
-
-    std::string upstreamPath = request.path.substr(prefix.size());
-    if (upstreamPath.empty()) upstreamPath = "/";
-    upstreamPath += request.query;
-    if (upstreamPath.find('\r') != std::string::npos || upstreamPath.find('\n') != std::string::npos) {
-        throw std::runtime_error("invalid upstream path");
-    }
-
-    const auto requiredHeader = [&request](std::string_view name) -> std::string {
-        const auto found = request.headers.find(std::string(name));
-        if (found == request.headers.end() || found->second.empty()) {
-            throw std::runtime_error("incomplete WebSocket handshake");
-        }
-        return safeProxyHeaderValue(found->second, 4096);
-    };
-    const auto sessionToken = cookieValue(request, kSessionCookie);
-    if (sessionToken.empty()) throw std::runtime_error("missing authenticated session cookie");
-    const auto requestHost = requiredHeader("host");
-    const std::string forwardedProto = config.secureCookie ? "https" : "http";
-
-    auto upstream = connectLoopback(port, config.upstreamTimeoutMilliseconds);
-    std::ostringstream forwarded;
-    forwarded << "GET " << upstreamPath << " HTTP/1.1\r\n"
-              << "Host: 127.0.0.1:" << port << "\r\n"
-              << "Connection: Upgrade\r\n"
-              << "Upgrade: websocket\r\n"
-              << "Sec-WebSocket-Key: " << requiredHeader("sec-websocket-key") << "\r\n"
-              << "Sec-WebSocket-Version: " << requiredHeader("sec-websocket-version") << "\r\n"
-              << "Cookie: " << kSessionCookie << '=' << safeProxyHeaderValue(sessionToken, 4096) << "\r\n"
-              << "X-Forwarded-Host: " << requestHost << "\r\n"
-              << "X-Forwarded-Proto: " << forwardedProto << "\r\n"
-              << "X-Sister-Subject: " << safeProxyHeaderValue(actor.id) << "\r\n"
-              << "X-Sister-Name: " << safeProxyHeaderValue(actor.name) << "\r\n"
-              << "X-Sister-Email: " << safeProxyHeaderValue(actor.email) << "\r\n"
-              << "X-Sister-Role: " << safeProxyHeaderValue(actor.role) << "\r\n"
-              << "X-Request-ID: " << safeProxyHeaderValue(requestId, 128) << "\r\n";
-
-    for (const std::string_view name : {
-             "origin", "user-agent", "sec-websocket-protocol", "sec-websocket-extensions"}) {
-        if (const auto header = request.headers.find(std::string(name)); header != request.headers.end()) {
-            forwarded << name << ": " << safeProxyHeaderValue(header->second, 4096) << "\r\n";
-        }
-    }
-    if (!config.internalProxyToken.empty()) {
-        forwarded << "X-Sister-Proxy-Token: "
-                  << safeProxyHeaderValue(config.internalProxyToken, 4096) << "\r\n";
-    }
-    forwarded << "\r\n";
-
-    if (!sendAll(upstream.get(), forwarded.str())) {
-        throw std::runtime_error("cannot send WebSocket handshake to " + std::string(serviceName));
-    }
-
-    std::string handshake;
-    handshake.reserve(4096);
-    while (handshake.find("\r\n\r\n") == std::string::npos) {
-        char buffer[8192];
-        const auto count = recv(upstream.get(), buffer, sizeof(buffer), 0);
-        if (count < 0 && errno == EINTR) continue;
-        if (count <= 0) {
-            throw std::runtime_error("cannot read WebSocket handshake from " + std::string(serviceName));
-        }
-        handshake.append(buffer, static_cast<std::size_t>(count));
-        if (handshake.size() > kMaxHeaderBytes) {
-            throw std::runtime_error("WebSocket handshake exceeds header limit");
-        }
-    }
-    if (!handshake.starts_with("HTTP/1.1 101 ") && !handshake.starts_with("HTTP/1.0 101 ")) {
-        throw std::runtime_error(std::string(serviceName) + " rejected WebSocket upgrade");
-    }
-    if (!sendAll(client, handshake)) {
-        throw std::runtime_error("cannot send WebSocket handshake to client");
-    }
-    return upstream;
-}
-
-void tunnelSockets(int client, int upstream) {
-    const timeval noTimeout{};
-    setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &noTimeout, sizeof(noTimeout));
-    setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, &noTimeout, sizeof(noTimeout));
-    setsockopt(upstream, SOL_SOCKET, SO_RCVTIMEO, &noTimeout, sizeof(noTimeout));
-    setsockopt(upstream, SOL_SOCKET, SO_SNDTIMEO, &noTimeout, sizeof(noTimeout));
-
-    std::array<pollfd, 2> descriptors{{
-        {client, POLLIN, 0},
-        {upstream, POLLIN, 0},
-    }};
-    std::array<char, 16 * 1024> buffer{};
-    while (gKeepRunning) {
-        int ready;
-        do {
-            ready = poll(descriptors.data(), descriptors.size(), 1000);
-        } while (ready < 0 && errno == EINTR);
-        if (ready < 0) throw std::runtime_error("WebSocket tunnel poll failed");
-        if (ready == 0) continue;
-
-        for (std::size_t index = 0; index < descriptors.size(); ++index) {
-            const auto events = descriptors[index].revents;
-            if ((events & (POLLERR | POLLNVAL)) != 0) return;
-            if ((events & POLLIN) != 0) {
-                const auto count = recv(descriptors[index].fd, buffer.data(), buffer.size(), 0);
-                if (count < 0 && errno == EINTR) continue;
-                if (count <= 0) return;
-                const int destination = index == 0 ? upstream : client;
-                if (!sendAll(destination, std::string_view(buffer.data(), static_cast<std::size_t>(count)))) {
-                    return;
-                }
-            } else if ((events & POLLHUP) != 0) {
-                return;
-            }
-        }
-    }
 }
 
 int statusFromRawHttpResponse(std::string_view response) {
@@ -1628,17 +1481,8 @@ void handleClient(
             return;
         }
         try {
-            if (isWebSocketUpgrade(request)) {
-                auto upstream = openWebSocketProxy(
-                    client.get(), request, *actor, "/integrations/clima", config.climaPort,
-                    "Sister-Clima", requestId, config);
-                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-                logEvent("info", requestId, peer, request.method, request.path, 101, elapsed);
-                tunnelSockets(client.get(), upstream.get());
-                return;
-            }
             const auto raw = proxyToSubsystem(
-                request, *actor, "/integrations/clima", config.climaPort,
+                request, *actor, "/integrations/clima", 8501,
                 "Sister-Clima", requestId, config);
             sendAll(client.get(), raw);
             const auto proxyStatus = statusFromRawHttpResponse(raw);

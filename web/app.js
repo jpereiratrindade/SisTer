@@ -791,8 +791,20 @@ async function loadSisterClimaAccess() {
     if (!response.ok) return;
     const payload = await response.json();
     system.accessUrl = payload.access_url;
+    try {
+      const url = resolveSystemAccessUrl(system);
+      if (url) {
+        const hRes = await fetch(url, { method: "GET", mode: "no-cors", cache: "no-store", headers: { "Accept": "application/json" } });
+        system.healthStatus = hRes.status < 500 ? "online" : "offline";
+      }
+    } catch {
+      system.healthStatus = "offline";
+    }
+    rerenderSystems();
   } catch {
     system.accessUrl = null;
+    system.healthStatus = "offline";
+    rerenderSystems();
   }
 }
 
@@ -828,7 +840,7 @@ async function checkSystemHealth() {
         continue;
       }
       
-      const response = await fetch(url, { method: "GET", cache: "no-store", headers: { "Accept": "application/json" } });
+      const response = await fetch(url, { method: "GET", mode: "no-cors", cache: "no-store", headers: { "Accept": "application/json" } });
       system.healthStatus = response.status < 500 ? "online" : "offline";
     } catch {
       system.healthStatus = "offline";

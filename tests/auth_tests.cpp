@@ -23,6 +23,7 @@ int main() {
         std::chrono::steady_clock::now().time_since_epoch().count());
     const auto authFile =
         std::filesystem::temp_directory_path() / ("sister-auth-test-" + suffix + ".tsv");
+    std::string persistentToken;
 
     {
         sisterd::AuthStore auth(authFile);
@@ -93,13 +94,10 @@ int main() {
 
         const auto login = auth.login("admin@sister.local", "senha-segura-123");
         expect(login.has_value(), "valid password should authenticate");
+        persistentToken = login->token;
         expect(
-            auth.userForToken(login->token).has_value(),
+            auth.userForToken(persistentToken).has_value(),
             "issued token should identify its user");
-        auth.logout(login->token);
-        expect(
-            !auth.userForToken(login->token),
-            "revoked token should not identify a user");
 
         // Test updateUser
         std::string updateErr;
@@ -153,11 +151,23 @@ int main() {
         sisterd::AuthStore auth(authFile);
         expect(!auth.bootstrapOpen(), "user should persist across restart");
         expect(
+            auth.userForToken(persistentToken).has_value(),
+            "active session should persist across restart");
+        auth.logout(persistentToken);
+        expect(
             auth.login("admin@sister.local", "senha-segura-123").has_value(),
             "persisted user should authenticate");
     }
 
+    {
+        sisterd::AuthStore auth(authFile);
+        expect(
+            !auth.userForToken(persistentToken),
+            "revoked persisted session should remain revoked after restart");
+    }
+
     std::filesystem::remove(authFile);
+    std::filesystem::remove(authFile.string() + ".sessions");
     std::cout << "sisterd_auth_tests ok\n";
     return 0;
 }

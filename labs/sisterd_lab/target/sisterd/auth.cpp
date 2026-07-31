@@ -7,7 +7,6 @@
 
 #include <algorithm>
 #include <array>
-#include <charconv>
 #include <cctype>
 #include <fstream>
 #include <iomanip>
@@ -122,10 +121,8 @@ bool validUuid(const std::string& value) {
 
 } // namespace
 
-AuthStore::AuthStore(std::filesystem::path path)
-    : path_(std::move(path)), sessionsPath_(path_.string() + ".sessions") {
+AuthStore::AuthStore(std::filesystem::path path) : path_(std::move(path)) {
     load();
-    loadSessions();
 }
 
 void AuthStore::load() {
@@ -190,59 +187,6 @@ void AuthStore::save() const {
     std::filesystem::rename(temporary, path_);
 }
 
-void AuthStore::loadSessions() {
-    std::lock_guard lock(mutex_);
-    sessions_.clear();
-
-    std::ifstream input(sessionsPath_);
-    std::string line;
-    const auto now = std::chrono::system_clock::now();
-    while (std::getline(input, line)) {
-        std::istringstream row(line);
-        std::string tokenHash;
-        std::string userId;
-        std::string expiresValue;
-        if (!std::getline(row, tokenHash, '\t') || !std::getline(row, userId, '\t') ||
-            !std::getline(row, expiresValue) || tokenHash.size() != SHA256_DIGEST_LENGTH * 2 ||
-            !std::all_of(tokenHash.begin(), tokenHash.end(), [](unsigned char value) {
-                return std::isdigit(value) || (value >= 'a' && value <= 'f');
-            })) {
-            continue;
-        }
-
-        std::int64_t expiresSeconds = 0;
-        const auto [pointer, error] = std::from_chars(
-            expiresValue.data(), expiresValue.data() + expiresValue.size(), expiresSeconds);
-        if (error != std::errc{} || pointer != expiresValue.data() + expiresValue.size()) continue;
-
-        const auto expiresAt = std::chrono::system_clock::time_point{
-            std::chrono::seconds{expiresSeconds}};
-        const bool knownUser = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
-            return user.publicUser.id == userId;
-        });
-        if (knownUser && expiresAt > now) sessions_[tokenHash] = {userId, expiresAt};
-    }
-}
-
-void AuthStore::saveSessions() const {
-    std::filesystem::create_directories(sessionsPath_.parent_path());
-    const auto temporary = sessionsPath_.string() + ".tmp";
-    {
-        std::ofstream output(temporary, std::ios::trunc);
-        if (!output) throw std::runtime_error("unable to persist sessions");
-        for (const auto& [tokenHash, session] : sessions_) {
-            const auto expiresSeconds = std::chrono::duration_cast<std::chrono::seconds>(
-                session.expiresAt.time_since_epoch()).count();
-            output << tokenHash << '\t' << session.userId << '\t' << expiresSeconds << '\n';
-        }
-    }
-    std::filesystem::permissions(
-        temporary,
-        std::filesystem::perms::owner_read | std::filesystem::perms::owner_write,
-        std::filesystem::perm_options::replace);
-    std::filesystem::rename(temporary, sessionsPath_);
-}
-
 bool AuthStore::bootstrapOpen() const {
     std::lock_guard lock(mutex_);
     return users_.empty();
@@ -251,7 +195,6 @@ bool AuthStore::bootstrapOpen() const {
 AuthResult AuthStore::createSession(const StoredUser& user) {
     const auto token = randomHex(32);
     sessions_[sha256(token)] = {user.publicUser.id, std::chrono::system_clock::now() + sessionLifetime};
-    saveSessions();
     return {user.publicUser, token};
 }
 
@@ -454,7 +397,6 @@ bool AuthStore::deleteUser(
     }
 
     save();
-    saveSessions();
     return true;
 }
 
@@ -494,7 +436,6 @@ std::optional<AuthUser> AuthStore::userForToken(const std::string& token) {
     if (session == sessions_.end()) return std::nullopt;
     if (session->second.expiresAt <= std::chrono::system_clock::now()) {
         sessions_.erase(session);
-        saveSessions();
         return std::nullopt;
     }
     const auto user = std::find_if(users_.begin(), users_.end(), [&](const StoredUser& item) {
@@ -507,7 +448,6 @@ void AuthStore::logout(const std::string& token) {
     if (token.empty()) return;
     std::lock_guard lock(mutex_);
     sessions_.erase(sha256(token));
-    saveSessions();
 }
 
 } // namespace sisterd
