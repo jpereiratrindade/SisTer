@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/maturity/1.0.0/maturity-status.schema.json",
+  "title": "SisTer Maturity Status",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "project", "target_stage", "result", "generated_at", "verifier_version", "source", "summary", "stages", "blockers", "next_actions", "attestation"],
+  "properties": {
+    "schema": {"const": "sister.maturity-status/1.0.0"},
+    "project": {"const": "SisTer"},
+    "target_stage": {"enum": ["pre-alpha", "alpha", "beta", "gamma", "production"]},
+    "result": {"enum": ["PASS", "FAIL"]},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "verifier_version": {"type": "string", "minLength": 1, "maxLength": 32},
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["commit", "short_commit", "branch", "dirty"],
+      "properties": {
+        "commit": {"type": "string", "pattern": "^([0-9a-f]{40,64}|unknown)$"},
+        "short_commit": {"type": "string", "pattern": "^([0-9a-f]{7,16}|unknown)$"},
+        "branch": {"type": "string", "minLength": 1, "maxLength": 128},
+        "dirty": {"type": "boolean"}
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["total", "passed", "failed", "warned", "skipped", "mandatory_failures"],
+      "properties": {
+        "total": {"type": "integer", "minimum": 0},
+        "passed": {"type": "integer", "minimum": 0},
+        "failed": {"type": "integer", "minimum": 0},
+        "warned": {"type": "integer", "minimum": 0},
+        "skipped": {"type": "integer", "minimum": 0},
+        "mandatory_failures": {"type": "integer", "minimum": 0}
+      }
+    },
+    "stages": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 5,
+      "items": {"$ref": "#/$defs/stage"}
+    },
+    "blockers": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {"$ref": "#/$defs/blocker"}
+    },
+    "next_actions": {
+      "type": "array",
+      "maxItems": 20,
+      "items": {"type": "string", "minLength": 1, "maxLength": 300}
+    },
+    "attestation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["available", "signed", "relative_path"],
+      "properties": {
+        "available": {"type": "boolean"},
+        "signed": {"type": "boolean"},
+        "relative_path": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/relativePath"}]}
+      }
+    }
+  },
+  "$defs": {
+    "relativePath": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 300,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[A-Za-z0-9._/-]+$"
+    },
+    "check": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "status", "mandatory", "description", "detail", "evidence"],
+      "properties": {
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$"},
+        "status": {"enum": ["PASS", "FAIL", "WARN", "SKIP"]},
+        "mandatory": {"type": "boolean"},
+        "description": {"type": "string", "minLength": 1, "maxLength": 300},
+        "detail": {"type": "string", "maxLength": 500},
+        "evidence": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/relativePath"}}
+      }
+    },
+    "stage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "label", "state", "checks"],
+      "properties": {
+        "id": {"enum": ["pre-alpha", "alpha", "beta", "gamma", "production"]},
+        "label": {"type": "string", "minLength": 1, "maxLength": 40},
+        "state": {"enum": ["approved", "in_progress", "blocked", "not_started"]},
+        "checks": {"type": "array", "maxItems": 200, "items": {"$ref": "#/$defs/check"}}
+      }
+    },
+    "blocker": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["stage", "id", "description", "detail"],
+      "properties": {
+        "stage": {"enum": ["pre-alpha", "alpha", "beta", "gamma", "production"]},
+        "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$"},
+        "description": {"type": "string", "minLength": 1, "maxLength": 300},
+        "detail": {"type": "string", "maxLength": 500}
+      }
+    }
+  }
+}

@@ -34,7 +34,9 @@ for protected_path in \
   evidence \
   diagnostics \
   integrations/sister-clima \
-  integrations/sister-studio
+  integrations/sister-studio \
+  admin/maturity/latest \
+  admin/maturity/history
 do
   status="$(
     curl -sS -o /dev/null -w '%{http_code}' \
@@ -45,6 +47,15 @@ do
     exit 1
   fi
 done
+
+maturity_page_status="$(
+  curl -sS -o /dev/null -w '%{http_code}' \
+    "http://127.0.0.1:${PORT}/admin/maturity"
+)"
+if [[ "$maturity_page_status" != "303" ]]; then
+  echo "Expected /admin/maturity to redirect unauthenticated users; received ${maturity_page_status}." >&2
+  exit 1
+fi
 
 app_status="$(
   curl -sS -o /dev/null -w '%{http_code}' \

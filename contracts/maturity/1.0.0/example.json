@@ -1,0 +1,38 @@
+{
+  "schema": "sister.maturity-status/1.0.0",
+  "project": "SisTer",
+  "target_stage": "pre-alpha",
+  "result": "FAIL",
+  "generated_at": "2026-07-31T13:30:00Z",
+  "verifier_version": "1.0.0",
+  "source": {
+    "commit": "0123456789abcdef0123456789abcdef01234567",
+    "short_commit": "0123456789ab",
+    "branch": "main",
+    "dirty": true
+  },
+  "summary": {
+    "total": 3,
+    "passed": 1,
+    "failed": 1,
+    "warned": 1,
+    "skipped": 0,
+    "mandatory_failures": 1
+  },
+  "stages": [
+    {"id": "pre-alpha", "label": "Pré-Alfa", "state": "blocked", "checks": [
+      {"id": "baseline-integrity", "status": "PASS", "mandatory": true, "description": "Snapshot permanece íntegro", "detail": "Verificação concluída", "evidence": ["labs/sisterd_lab/manifests/target.sha256"]},
+      {"id": "smoke-flow", "status": "FAIL", "mandatory": true, "description": "Smoke tests aprovados", "detail": "Script não encontrado", "evidence": []},
+      {"id": "git-clean", "status": "WARN", "mandatory": false, "description": "Árvore Git limpa", "detail": "Há alterações locais", "evidence": []}
+    ]},
+    {"id": "alpha", "label": "Alfa", "state": "not_started", "checks": []},
+    {"id": "beta", "label": "Beta", "state": "not_started", "checks": []},
+    {"id": "gamma", "label": "Gama", "state": "not_started", "checks": []},
+    {"id": "production", "label": "Produção", "state": "not_started", "checks": []}
+  ],
+  "blockers": [
+    {"stage": "pre-alpha", "id": "smoke-flow", "description": "Smoke tests aprovados", "detail": "Script não encontrado"}
+  ],
+  "next_actions": ["Resolver o check obrigatório smoke-flow", "Executar novamente o gate Pré-Alfa"],
+  "attestation": {"available": false, "signed": false, "relative_path": null}
+}

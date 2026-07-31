@@ -55,6 +55,7 @@ constexpr std::size_t kMaxRequestTargetBytes = 8 * 1024;
 constexpr std::size_t kMaxHeaderCount = 100;
 constexpr std::size_t kMaxHeaderLineBytes = 8 * 1024;
 constexpr std::size_t kMaxAuthJsonBytes = 64 * 1024;
+constexpr std::size_t kMaxMaturityJsonBytes = 512 * 1024;
 constexpr std::string_view kSessionCookie = "sister_session";
 
 volatile std::sig_atomic_t gKeepRunning = 1;
@@ -66,6 +67,7 @@ struct ServerConfig {
     std::filesystem::path canonicalWebRoot;
     std::string bindHost = "127.0.0.1";
     std::filesystem::path authFile = ".run/auth-users.tsv";
+    std::filesystem::path maturityRoot = ".run/maturity";
     std::string databaseUrl;
     bool production = true;
     bool secureCookie = true;
@@ -317,6 +319,7 @@ ServerConfig loadConfig(int argc, char** argv) {
 
     config.bindHost = environment("SISTER_BIND_HOST").value_or("127.0.0.1");
     config.authFile = environment("SISTER_AUTH_FILE").value_or(".run/auth-users.tsv");
+    config.maturityRoot = environment("SISTER_MATURITY_ROOT").value_or(".run/maturity");
     config.databaseUrl = environment("SISTER_DATABASE_URL").value_or("");
 
     config.secureCookie = parseBool(
@@ -945,6 +948,62 @@ std::string readFile(const std::filesystem::path& path) {
     return body;
 }
 
+enum class FixedJsonState { Ready, Missing, Invalid };
+
+struct FixedJsonDocument {
+    FixedJsonState state = FixedJsonState::Missing;
+    std::string body;
+};
+
+bool hasJsonStringField(std::string_view document, std::string_view name, std::string_view value) {
+    const std::string key = "\"" + std::string(name) + "\"";
+    auto position = document.find(key);
+    if (position == std::string_view::npos) return false;
+    position = document.find(':', position + key.size());
+    if (position == std::string_view::npos) return false;
+    ++position;
+    while (position < document.size() && std::isspace(static_cast<unsigned char>(document[position]))) {
+        ++position;
+    }
+    const std::string expected = "\"" + std::string(value) + "\"";
+    return document.substr(position, expected.size()) == expected;
+}
+
+FixedJsonDocument readFixedJsonDocument(
+    const std::filesystem::path& path,
+    std::string_view expectedSchema) {
+    std::error_code error;
+    const auto status = std::filesystem::symlink_status(path, error);
+    if (error) {
+        if (error == std::errc::no_such_file_or_directory ||
+            error == std::errc::not_a_directory) {
+            return {FixedJsonState::Missing, {}};
+        }
+        return {FixedJsonState::Invalid, {}};
+    }
+    if (!std::filesystem::exists(status)) return {FixedJsonState::Missing, {}};
+    if (!std::filesystem::is_regular_file(status)) return {FixedJsonState::Invalid, {}};
+    const auto size = std::filesystem::file_size(path, error);
+    if (error || size == 0 || size > kMaxMaturityJsonBytes) {
+        return {FixedJsonState::Invalid, {}};
+    }
+
+    std::ifstream input(path, std::ios::binary);
+    if (!input) return {FixedJsonState::Invalid, {}};
+    std::string body(static_cast<std::size_t>(size), '\0');
+    if (!input.read(body.data(), static_cast<std::streamsize>(size))) {
+        return {FixedJsonState::Invalid, {}};
+    }
+
+    const auto first = body.find_first_not_of(" \t\r\n");
+    const auto last = body.find_last_not_of(" \t\r\n");
+    if (first == std::string::npos || body[first] != '{' || body[last] != '}' ||
+        !hasJsonStringField(body, "schema", expectedSchema)) {
+        return {FixedJsonState::Invalid, {}};
+    }
+    return {FixedJsonState::Ready, std::move(body)};
+}
+
 bool pathStartsWith(const std::filesystem::path& candidate, const std::filesystem::path& root) {
     auto candidateIterator = candidate.begin();
     auto rootIterator = root.begin();
@@ -961,6 +1020,7 @@ std::optional<std::filesystem::path> resolveStaticPath(
     if (routePath.empty() || routePath == "/") routePath = "/index.html";
     else if (routePath == "/login") routePath = "/login.html";
     else if (routePath == "/admin/users") routePath = "/admin.html";
+    else if (routePath == "/admin/maturity") routePath = "/maturity/index.html";
 
     std::filesystem::path relative = routePath.substr(1);
     if (relative.empty() || relative.is_absolute()) return std::nullopt;
@@ -1697,6 +1757,58 @@ void handleClient(
         return;
     }
 
+    // --- /api/admin/maturity ---
+    if (request.path == "/api/admin/maturity/latest" ||
+        request.path == "/api/admin/maturity/history") {
+        if (request.method != "GET" && request.method != "HEAD") {
+            sendResponse(client.get(), jsonError(405, "Method Not Allowed", "Método não permitido."),
+                         config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("warn", requestId, peer, request.method, request.path, 405, elapsed);
+            return;
+        }
+        if (!actor) {
+            sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
+                         config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
+            return;
+        }
+        if (actor->role != "admin") {
+            sendResponse(client.get(), jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa."),
+                         config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("info", requestId, peer, request.method, request.path, 403, elapsed);
+            return;
+        }
+
+        const bool latest = request.path.ends_with("/latest");
+        const auto document = readFixedJsonDocument(
+            latest ? config.maturityRoot / "latest.json" : config.maturityRoot / "history" / "index.json",
+            latest ? "sister.maturity-status/1.0.0" : "sister.maturity-history/1.0.0");
+        if (document.state == FixedJsonState::Missing) {
+            sendResponse(client.get(), jsonError(404, "Not Found", "Nenhuma evidência de maturidade foi publicada."),
+                         config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("info", requestId, peer, request.method, request.path, 404, elapsed);
+            return;
+        }
+        if (document.state == FixedJsonState::Invalid) {
+            sendResponse(client.get(), jsonError(503, "Service Unavailable", "A evidência de maturidade publicada é inválida."),
+                         config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("warn", requestId, peer, request.method, request.path, 503, elapsed, "invalid maturity document");
+            return;
+        }
+
+        const HttpResponse response{200, "OK", document.body, "application/json; charset=utf-8",
+            {{"Cache-Control", "no-store"}}};
+        sendResponse(client.get(), response, config, requestId, isHead);
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+        logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
+        return;
+    }
+
     // --- /api/admin/users ---
     if (request.path == "/api/admin/users" || request.path.starts_with("/api/admin/users/")) {
         if (!actor) {
@@ -1919,7 +2031,7 @@ void handleClient(
         return;
     }
 
-    if (request.path == "/admin/users") {
+    if (request.path == "/admin/users" || request.path == "/admin/maturity") {
         if (!actor) {
             sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
                          config, requestId, isHead);

@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/maturity/1.0.0/maturity-history.schema.json",
+  "title": "SisTer Maturity History",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "items"],
+  "properties": {
+    "schema": {"const": "sister.maturity-history/1.0.0"},
+    "items": {
+      "type": "array",
+      "maxItems": 100,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["generated_at", "target_stage", "result", "short_commit", "passed", "failed", "warned", "relative_path"],
+        "properties": {
+          "generated_at": {"type": "string", "format": "date-time"},
+          "target_stage": {"enum": ["pre-alpha", "alpha", "beta", "gamma", "production"]},
+          "result": {"enum": ["PASS", "FAIL"]},
+          "short_commit": {"type": "string", "pattern": "^([0-9a-f]{7,16}|unknown)$"},
+          "passed": {"type": "integer", "minimum": 0},
+          "failed": {"type": "integer", "minimum": 0},
+          "warned": {"type": "integer", "minimum": 0},
+          "relative_path": {"type": "string", "pattern": "^history/[A-Za-z0-9._-]+\\.json$"}
+        }
+      }
+    }
+  }
+}

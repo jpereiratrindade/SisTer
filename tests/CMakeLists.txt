@@ -24,3 +24,19 @@ add_test(
         ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_clima_proxy_test.py
         $<TARGET_FILE:sisterd>
         ${CMAKE_SOURCE_DIR}/web)
+
+add_test(
+    NAME sisterd_maturity_api_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_maturity_api_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web
+        ${CMAKE_SOURCE_DIR})
+
+add_test(
+    NAME sister_maturity_contract_tests
+    COMMAND
+        ${Python3_EXECUTABLE} -m unittest discover
+        -s ${CMAKE_CURRENT_SOURCE_DIR}/maturity
+        -p test_*.py)

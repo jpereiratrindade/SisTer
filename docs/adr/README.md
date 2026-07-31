@@ -9,4 +9,4 @@
 - [ADR-0007 - Nexo, operações de pesquisa e fronteira de compras](./ADR-0007-nexo-research-operations-and-procurement.md)
 - [ADR-0008 - Acordos bilaterais para sistemas autônomos](./ADR-0008-bilateral-integration-agreements.md)
 - [ADR-0009 - Perfis de usuário, grupos de pesquisa e controle de acesso](./ADR-0009-user-profiles-and-research-groups-access-control.md)
-
+- [ADR-0010 - Painel administrativo de maturidade](./ADR-0010-maturity-dashboard.md)

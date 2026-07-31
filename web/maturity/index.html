@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="color-scheme" content="light dark">
+    <title>Maturidade · SisTer</title>
+    <link rel="stylesheet" href="/maturity/styles.css">
+  </head>
+  <body>
+    <header class="maturity-topbar">
+      <a class="brand" href="/" aria-label="Voltar ao SisTer">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span><small>ECOSSISTEMA SISTER</small><strong>SisTer</strong></span>
+      </a>
+      <span class="topbar-context">Governança de desenvolvimento</span>
+      <div class="topbar-actions">
+        <span id="admin-name" class="admin-name"></span>
+        <button id="refresh-button" class="icon-button" type="button" title="Atualizar evidência" aria-label="Atualizar evidência">&#8635;</button>
+        <a class="back-link" href="/">Voltar</a>
+      </div>
+    </header>
+
+    <main class="maturity-shell">
+      <header class="page-heading">
+        <div>
+          <p class="eyebrow">CONTROLE DE ENGENHARIA</p>
+          <h1>Painel de Maturidade</h1>
+          <p id="heading-detail" class="heading-detail">Carregando a última evidência publicada...</p>
+        </div>
+        <div id="overall-result" class="overall-result" data-status="SKIP">
+          <span>Resultado</span>
+          <strong>Carregando</strong>
+        </div>
+      </header>
+
+      <div id="notice" class="notice" role="status" aria-live="polite">Consultando evidência...</div>
+
+      <section id="dashboard" hidden>
+        <section class="stage-band" aria-labelledby="stage-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">PROGRESSÃO</p><h2 id="stage-title">Linha de maturidade</h2></div>
+            <span id="target-stage" class="quiet-badge"></span>
+          </div>
+          <ol id="stage-line" class="stage-line"></ol>
+        </section>
+
+        <section class="summary-grid" aria-label="Resumo da verificação">
+          <article class="summary-item summary-pass"><span>Aprovados</span><strong id="count-passed">0</strong></article>
+          <article class="summary-item summary-fail"><span>Falhas</span><strong id="count-failed">0</strong></article>
+          <article class="summary-item summary-warn"><span>Advertências</span><strong id="count-warned">0</strong></article>
+          <article class="summary-item summary-skip"><span>Ignorados</span><strong id="count-skipped">0</strong></article>
+          <article class="summary-item summary-block"><span>Bloqueios</span><strong id="count-blockers">0</strong></article>
+        </section>
+
+        <div class="information-grid">
+          <section class="information-section" aria-labelledby="blockers-title">
+            <div class="section-heading"><div><p class="eyebrow">PRIORIDADE</p><h2 id="blockers-title">Bloqueadores</h2></div></div>
+            <div id="blockers-list" class="blockers-list"></div>
+          </section>
+          <section class="information-section" aria-labelledby="provenance-title">
+            <div class="section-heading"><div><p class="eyebrow">RASTREABILIDADE</p><h2 id="provenance-title">Proveniência</h2></div></div>
+            <dl id="provenance-list" class="provenance-list"></dl>
+          </section>
+        </div>
+
+        <section class="checks-section" aria-labelledby="checks-title">
+          <div class="section-heading">
+            <div><p class="eyebrow">EVIDÊNCIAS</p><h2 id="checks-title">Verificações por estágio</h2></div>
+            <span id="check-count" class="quiet-badge"></span>
+          </div>
+          <div id="stage-tabs" class="stage-tabs" role="tablist" aria-label="Estágio das verificações"></div>
+          <div class="checks-table-wrap">
+            <table class="checks-table">
+              <thead><tr><th>Estado</th><th>Check</th><th>Descrição</th><th>Obrigatório</th><th>Evidência</th><th>Detalhe</th></tr></thead>
+              <tbody id="checks-body"></tbody>
+            </table>
+            <p id="checks-empty" class="empty-copy" hidden>Nenhuma verificação registrada para este estágio.</p>
+          </div>
+        </section>
+
+        <div class="information-grid lower-grid">
+          <section class="information-section" aria-labelledby="actions-title">
+            <div class="section-heading"><div><p class="eyebrow">SEQUÊNCIA</p><h2 id="actions-title">Próximas ações</h2></div></div>
+            <ol id="actions-list" class="actions-list"></ol>
+          </section>
+          <section class="information-section" aria-labelledby="history-title">
+            <div class="section-heading"><div><p class="eyebrow">EVOLUÇÃO</p><h2 id="history-title">Execuções recentes</h2></div></div>
+            <div class="history-table-wrap">
+              <table class="history-table">
+                <thead><tr><th>Execução</th><th>Gate</th><th>Resultado</th><th>Commit</th></tr></thead>
+                <tbody id="history-body"></tbody>
+              </table>
+              <p id="history-empty" class="empty-copy" hidden>Nenhuma execução anterior publicada.</p>
+            </div>
+          </section>
+        </div>
+      </section>
+    </main>
+    <script src="/maturity/app.js"></script>
+  </body>
+</html>

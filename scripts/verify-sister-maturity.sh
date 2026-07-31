@@ -14,6 +14,7 @@ REPO=""
 CONFIG_FILE=""
 REPORT_FILE=""
 ATTESTATION_FILE=""
+STATUS_JSON_FILE=""
 GPG_KEY=""
 RUNTIME_CHECKS=0
 STRICT=0
@@ -73,6 +74,7 @@ Opções:
   --config <arquivo>        Configuração. Padrão: .sister/maturity.conf.
   --report <arquivo.md>     Salva relatório Markdown.
   --attestation <arquivo>   Caminho da atestação JSON em modo certify.
+  --status-json <arquivo>   Publica status JSON sanitizado em qualquer modo.
   --runtime                 Verifica endpoints em execução.
   --strict                  Converte avisos em falhas.
   --gpg-key <id>            Assina a atestação com GPG.
@@ -768,6 +770,35 @@ PY
   fi
 }
 
+write_status_json() {
+  local destination="$1"
+  local commit branch generated result
+  commit="$(git -C "$REPO" rev-parse HEAD 2>/dev/null || printf unknown)"
+  branch="$(git -C "$REPO" branch --show-current 2>/dev/null || printf detached)"
+  generated="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+  result="PASS"
+  (( MANDATORY_FAILURES > 0 )) && result="FAIL"
+  if [[ "$STRICT" -eq 1 && "$WARNED" -gt 0 ]]; then result="FAIL"; fi
+
+  python3 "$REPO/scripts/maturity/sanitize-attestation.py" \
+    --results "$TMP_RESULTS" \
+    --destination "$destination" \
+    --repository "$REPO" \
+    --target-stage "$TARGET_STAGE" \
+    --result "$result" \
+    --generated-at "$generated" \
+    --verifier-version "$SCRIPT_VERSION" \
+    --commit "$commit" \
+    --branch "${branch:-detached}" \
+    --dirty "$INITIAL_GIT_DIRTY" \
+    --total "$TOTAL" \
+    --passed "$PASSED" \
+    --failed "$FAILED" \
+    --warned "$WARNED" \
+    --skipped "$SKIPPED" \
+    --mandatory-failures "$MANDATORY_FAILURES"
+}
+
 parse_args() {
   local init=0
   while [[ $# -gt 0 ]]; do
@@ -778,6 +809,7 @@ parse_args() {
       --config) CONFIG_FILE="${2:-}"; shift 2;;
       --report) REPORT_FILE="${2:-}"; shift 2;;
       --attestation) ATTESTATION_FILE="${2:-}"; shift 2;;
+      --status-json) STATUS_JSON_FILE="${2:-}"; shift 2;;
       --gpg-key) GPG_KEY="${2:-}"; shift 2;;
       --runtime) RUNTIME_CHECKS=1; shift;;
       --strict) STRICT=1; shift;;
@@ -836,6 +868,11 @@ main() {
     mkdir -p "$(dirname "$REPORT_FILE")"
     write_markdown_report "$REPORT_FILE"
     printf 'Relatório: %s\n' "$REPORT_FILE"
+  fi
+
+  if [[ -n "$STATUS_JSON_FILE" ]]; then
+    write_status_json "$STATUS_JSON_FILE"
+    printf 'Status JSON: %s\n' "$STATUS_JSON_FILE"
   fi
 
   if [[ "$MODE" == "certify" ]]; then
