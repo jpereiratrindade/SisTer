@@ -57,6 +57,7 @@ arquitetural correspondente.
 | Decisões arquiteturais | Registrar escolhas, alternativas e consequências | `docs/adr/` |
 | Arquitetura de transição | Explicar o que construir e por quê | `docs/architecture/sister_transicao_prototipo_para_arquitetura_producao.md` |
 | Roteiro Alfa-Beta-Gama | Definir ordem, estágio e critérios de saída | `docs/architecture/sister_roteiro_alfa_beta_gamma_uma_pagina.md` |
+| Pacotes de trabalho | Converter arquitetura em incrementos governados | `docs/work-packages/` |
 | Contratos | Tornar integrações e evidências verificáveis | `contracts/` |
 | Gates | Declarar critérios de maturidade executáveis | `.sister/maturity.conf`, `scripts/verify-sister-maturity.sh` |
 | Evidências | Registrar aprovações, relatórios e provas humanas | `docs/evidence/` |
@@ -89,6 +90,10 @@ maturidade. Um pacote mínimo deve registrar:
 - checks ou gates impactados;
 - riscos e rollback;
 - responsável técnico.
+
+Pacotes ativos:
+
+- [WP-02 - Contrato comum de subsistema](../work-packages/WP-02-contrato-comum-subsistema.md)
 
 ## Fronteiras
 
