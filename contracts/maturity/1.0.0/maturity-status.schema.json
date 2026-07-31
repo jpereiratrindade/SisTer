@@ -4,12 +4,22 @@
   "title": "SisTer Maturity Status",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schema", "project", "target_stage", "result", "generated_at", "verifier_version", "source", "summary", "stages", "blockers", "next_actions", "attestation"],
+  "required": ["schema", "project", "target_stage", "result", "generated_at", "verifier_version", "source", "summary", "stages", "blockers", "next_actions", "attestation", "promotion"],
   "properties": {
     "schema": {"const": "sister.maturity-status/1.0.0"},
     "project": {"const": "SisTer"},
     "target_stage": {"enum": ["pre-alpha", "alpha", "beta", "gamma", "production"]},
     "result": {"enum": ["PASS", "FAIL"]},
+    "promotion": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["applicable", "eligible", "recommendation"],
+      "properties": {
+        "applicable": {"type": "boolean"},
+        "eligible": {"oneOf": [{"type": "boolean"}, {"type": "null"}]},
+        "recommendation": {"enum": ["promote", "block", "not_applicable"]}
+      }
+    },
     "generated_at": {"type": "string", "format": "date-time"},
     "verifier_version": {"type": "string", "minLength": 1, "maxLength": 32},
     "source": {
@@ -75,6 +85,9 @@
         "profile_id": {"type": "string", "maxLength": 128},
         "model_digest": {"type": "string", "maxLength": 128},
         "profile_digest": {"type": "string", "maxLength": 128},
+        "evaluation_mode": {"enum": ["governed", "shadow"]},
+        "governance_authority": {"type": "boolean"},
+        "promotion_enabled": {"type": "boolean"},
         "comparison": {
           "type": "object",
           "additionalProperties": false,

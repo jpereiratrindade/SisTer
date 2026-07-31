@@ -113,6 +113,19 @@ function renderExecutive(status) {
   const currentLabel = STAGE_LABELS[status.target_stage];
   const nextLabel = STAGE_LABELS[nextStageId(status)];
   const confidence = completion(allChecks(status));
+  
+  let decisionText = completed ? "SIM" : "NÃO";
+  let detailText = completed
+    ? `Próxima avaliação sugerida: ${nextLabel}.`
+    : "Resolver bloqueios obrigatórios antes de avançar.";
+  let cardStatus = completed ? "PASS" : "FAIL";
+
+  if (status.promotion && !status.promotion.applicable) {
+    decisionText = "SHADOW";
+    detailText = "Avaliação técnica aprovada em modo piloto. Promoção não aplicável.";
+    cardStatus = "SHADOW";
+  }
+
   qs("#executive-status").textContent = completed
     ? `${currentLabel} concluída${warning ? " com advertências" : ""}.`
     : `${currentLabel} ainda exige correção antes da promoção.`;
@@ -120,11 +133,9 @@ function renderExecutive(status) {
   qs("#executive-blockers").textContent = status.summary.mandatory_failures;
   qs("#executive-warnings").textContent = status.summary.warned;
   qs("#confidence-score").textContent = `${confidence}%`;
-  qs("#promotion-decision").textContent = completed ? "SIM" : "NÃO";
-  qs("#promotion-detail").textContent = completed
-    ? `Próxima avaliação sugerida: ${nextLabel}.`
-    : "Resolver bloqueios obrigatórios antes de avançar.";
-  qs(".decision-card").dataset.status = completed ? "PASS" : "FAIL";
+  qs("#promotion-decision").textContent = decisionText;
+  qs("#promotion-detail").textContent = detailText;
+  qs(".decision-card").dataset.status = cardStatus;
 }
 
 function renderStages(stages) {
@@ -342,8 +353,13 @@ function renderDecisionTree(status) {
   });
   const answer = create("div", "decision-answer");
   const promoted = status.result === "PASS" && status.summary.mandatory_failures === 0;
-  answer.dataset.status = promoted ? "PASS" : "FAIL";
-  answer.append(create("span", "", "Pode promover?"), create("strong", "", promoted ? "SIM" : "NÃO"));
+  if (status.promotion && !status.promotion.applicable) {
+    answer.dataset.status = "SHADOW";
+    answer.append(create("span", "", "Pode promover?"), create("strong", "", "SHADOW"));
+  } else {
+    answer.dataset.status = promoted ? "PASS" : "FAIL";
+    answer.append(create("span", "", "Pode promover?"), create("strong", "", promoted ? "SIM" : "NÃO"));
+  }
   tree.append(answer);
 }
 

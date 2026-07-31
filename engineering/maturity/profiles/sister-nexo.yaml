@@ -1,0 +1,18 @@
+schema: "sister.engineering.maturity-profile/1.0.0"
+id: "sister-nexo"
+name: "Perfil Piloto do Nexo"
+component: "sister-nexo"
+model: "sister-sge"
+evaluation_mode: "shadow"
+governance_authority: false
+promotion_enabled: false
+component_root:
+  source: "local_path"
+  path_env: "SISTER_NEXO_REPO"
+scripts:
+  ci.test-unit:
+    path: scripts/ci/test-unit.sh
+  ci.test-contract:
+    path: scripts/ci/test-contract.sh
+check_suites:
+  - "engineering/maturity/checks/sister-nexo/pre-alpha-checks.yaml"

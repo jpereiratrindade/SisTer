@@ -50,7 +50,7 @@ def validate_status(payload):
     required = {
         "schema", "project", "target_stage", "result", "generated_at",
         "verifier_version", "source", "summary", "stages", "blockers",
-        "next_actions", "attestation",
+        "next_actions", "attestation", "promotion",
     }
     if not isinstance(payload, dict):
         return ["status root fields do not match the contract"]
@@ -90,6 +90,17 @@ def validate_status(payload):
         _is_int(summary.get(field)) for field in summary_fields
     ):
         errors.append("invalid summary")
+
+    promotion = payload["promotion"]
+    if not isinstance(promotion, dict) or set(promotion) != {"applicable", "eligible", "recommendation"}:
+        errors.append("invalid promotion block")
+    else:
+        if not isinstance(promotion["applicable"], bool):
+            errors.append("invalid promotion applicable")
+        if promotion["eligible"] is not None and not isinstance(promotion["eligible"], bool):
+            errors.append("invalid promotion eligible")
+        if promotion["recommendation"] not in ("promote", "block", "not_applicable"):
+            errors.append("invalid promotion recommendation")
 
     stages = payload["stages"]
     if not isinstance(stages, list) or [item.get("id") for item in stages if isinstance(item, dict)] != list(STAGES):

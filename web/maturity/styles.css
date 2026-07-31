@@ -173,10 +173,12 @@ h2 { margin-bottom: 0; font-size: 18px; font-weight: 700; letter-spacing: -0.2px
 .decision-card { display: grid; align-content: center; gap: 12px; padding: 24px; background: var(--surface-soft); border-radius: 6px; border-top: 4px solid var(--gray); text-align: center; }
 .decision-card[data-status="PASS"] { border-color: var(--green); background: color-mix(in srgb, var(--green) 5%, var(--surface-soft)); }
 .decision-card[data-status="FAIL"] { border-color: var(--red); background: color-mix(in srgb, var(--red) 5%, var(--surface-soft)); }
+.decision-card[data-status="SHADOW"] { border-color: var(--gray); background: color-mix(in srgb, var(--gray) 5%, var(--surface-soft)); }
 .decision-card span { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 .decision-card strong { font-size: 44px; line-height: 1; font-weight: 800; }
 .decision-card[data-status="PASS"] strong { color: var(--green); }
 .decision-card[data-status="FAIL"] strong { color: var(--red); }
+.decision-card[data-status="SHADOW"] strong { color: var(--gray); font-size: 32px; }
 .decision-card small { color: var(--muted); font-size: 13px; line-height: 1.5; font-weight: 500; }
 
 .stage-pipeline { list-style: none; display: grid; grid-template-columns: repeat(5, 1fr); gap: 16px; padding: 24px 0 4px; margin: 0; }
@@ -281,10 +283,12 @@ tr:last-child td { border-bottom: none; }
 .decision-answer { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px; margin-top: 12px; border-radius: 6px; border-left: 5px solid var(--gray); background: var(--surface-soft); }
 .decision-answer[data-status="PASS"] { border-color: var(--green); background: color-mix(in srgb, var(--green) 5%, var(--surface-soft)); }
 .decision-answer[data-status="FAIL"] { border-color: var(--red); background: color-mix(in srgb, var(--red) 5%, var(--surface-soft)); }
+.decision-answer[data-status="SHADOW"] { border-color: var(--gray); background: color-mix(in srgb, var(--gray) 5%, var(--surface-soft)); }
 .decision-answer span { color: var(--muted); font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; }
 .decision-answer strong { font-size: 32px; font-weight: 800; line-height: 1; }
 .decision-answer[data-status="PASS"] strong { color: var(--green); }
 .decision-answer[data-status="FAIL"] strong { color: var(--red); }
+.decision-answer[data-status="SHADOW"] strong { color: var(--gray); }
 
 /* --- Acessibilidade - Reduced Motion --- */
 @media (prefers-reduced-motion: reduce) {

@@ -16,7 +16,19 @@ infer_stage() {
   esac
 }
 
-STAGE="${1:-}"
+STAGE=""
+COMPONENT="sister-core"
+COMPONENT_ROOT="$REPO"
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --component) COMPONENT="$2"; shift 2 ;;
+    --component-root) COMPONENT_ROOT="$2"; shift 2 ;;
+    -*) die "Opção desconhecida: $1" ;;
+    *) STAGE="$1"; shift ;;
+  esac
+done
+
 if [[ -z "$STAGE" ]]; then
   if ! STAGE="$(infer_stage)"; then
     printf 'Uso: %s [pre-alpha|alpha|beta|gamma|production]\n' "$0" >&2
@@ -32,19 +44,30 @@ case "$STAGE" in
 esac
 
 RUNTIME_ROOT="$REPO/.run/maturity"
-HISTORY_ROOT="$RUNTIME_ROOT/history"
+COMPONENTS_DIR="$RUNTIME_ROOT/components"
+COMP_DIR="$COMPONENTS_DIR/$COMPONENT"
+HISTORY_ROOT="$COMP_DIR/history"
 REPORT_ROOT="$REPO/build/maturity"
-mkdir -p "$RUNTIME_ROOT" "$HISTORY_ROOT" "$REPORT_ROOT"
+mkdir -p "$RUNTIME_ROOT" "$COMP_DIR" "$HISTORY_ROOT" "$REPORT_ROOT"
 
 CANDIDATE="$(mktemp "$RUNTIME_ROOT/.candidate.XXXXXX.json")"
 trap 'rm -f "$CANDIDATE"' EXIT
 
 set +e
-"$REPO/scripts/verify-sister-maturity.sh" \
-  --stage "$STAGE" \
-  --report "$REPORT_ROOT/$STAGE-report.md" \
-  --status-json "$CANDIDATE" \
-  --repo "$REPO"
+if [[ "$COMPONENT" == "sister-core" ]]; then
+  "$REPO/scripts/verify-sister-maturity.sh" \
+    --stage "$STAGE" \
+    --report "$REPORT_ROOT/$STAGE-report.md" \
+    --status-json "$CANDIDATE" \
+    --repo "$REPO"
+else
+  # For non-core components, we skip the legacy verifier and run python directly.
+  python3 "$REPO/scripts/maturity/evaluator.py" \
+    --repo "$REPO" \
+    --component-root "$COMPONENT_ROOT" \
+    --profile "engineering/maturity/profiles/$COMPONENT.yaml" \
+    --stage "$STAGE" > "$CANDIDATE"
+fi
 GATE_STATUS=$?
 set -e
 
@@ -53,11 +76,45 @@ if [[ ! -s "$CANDIDATE" ]]; then
   exit "$GATE_STATUS"
 fi
 
+# The python validator might need some updates for the promotion block, we assume it's schema aware.
+# Actually wait, validate-status.py validates the JSON schema. We updated the schema so it should pass.
 python3 "$REPO/scripts/maturity/validate-status.py" "$CANDIDATE"
-mv "$CANDIDATE" "$RUNTIME_ROOT/latest.json"
-python3 "$REPO/scripts/maturity/update-history.py" \
-  "$RUNTIME_ROOT/latest.json" "$HISTORY_ROOT"
+mv "$CANDIDATE" "$COMP_DIR/latest.json"
 
-printf 'Status publicado: %s\n' "$RUNTIME_ROOT/latest.json"
-printf 'Histórico atualizado: %s\n' "$HISTORY_ROOT/index.json"
+python3 "$REPO/scripts/maturity/update-history.py" \
+  "$COMP_DIR/latest.json" "$HISTORY_ROOT"
+
+# Aggregator
+INDEX_FILE="$RUNTIME_ROOT/components.json"
+cat <<EOF > "$INDEX_FILE"
+{
+  "components": [
+$(find "$COMPONENTS_DIR" -mindepth 1 -maxdepth 1 -type d | sort | while read -r d; do
+  c=$(basename "$d")
+  if [[ -f "$d/latest.json" ]]; then
+    printf '    {"component_id": "%s", "latest": "components/%s/latest.json"}' "$c" "$c"
+  fi
+done)
+  ]
+}
+EOF
+
+python3 -c '
+import json, glob, os
+components = []
+base = "'$RUNTIME_ROOT'"
+for p in sorted(glob.glob(os.path.join(base, "components", "*", "latest.json"))):
+    comp = os.path.basename(os.path.dirname(p))
+    components.append({"component_id": comp, "latest": f"components/{comp}/latest.json"})
+with open(os.path.join(base, "components.json"), "w") as f:
+    json.dump({"components": components}, f, indent=2)
+'
+
+# Copy the latest component evaluation to the root so the UI can still consume it
+cp "$COMP_DIR/latest.json" "$RUNTIME_ROOT/latest.json"
+
+printf 'Status publicado para %s: %s\n' "$COMPONENT" "$COMP_DIR/latest.json"
+printf 'Histórico atualizado para %s: %s\n' "$COMPONENT" "$HISTORY_ROOT/index.json"
+printf 'Índice de componentes atualizado: %s\n' "$INDEX_FILE"
+printf 'Status global atualizado: %s\n' "$RUNTIME_ROOT/latest.json"
 exit "$GATE_STATUS"

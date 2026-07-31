@@ -1,0 +1,60 @@
+- schema: sister.engineering.maturity-check/1.0.0
+  id: git-repository
+  stage: pre-alpha
+  type: git_repo
+  mandatory: true
+  description: Repositório Git reconhecido
+- schema: sister.engineering.maturity-check/1.0.0
+  id: git-worktree-state
+  stage: pre-alpha
+  type: git_clean
+  mandatory: false
+  description: Árvore Git limpa para atestação
+- schema: sister.engineering.maturity-check/1.0.0
+  id: project-readme
+  stage: pre-alpha
+  type: file_exists
+  mandatory: true
+  description: Arquivo README.md do projeto existe
+  arguments:
+    path: README.md
+- schema: sister.engineering.maturity-check/1.0.0
+  id: build-definition
+  stage: pre-alpha
+  type: min_count
+  mandatory: true
+  description: Arquivos de build definidos (CMake ou Python/JS)
+  arguments:
+    dir: "."
+    minimum: 1
+    regex: ^(CMakeLists\.txt|pyproject\.toml|package\.json)$
+- schema: sister.engineering.maturity-check/1.0.0
+  id: integration-contract
+  stage: pre-alpha
+  type: file_exists
+  mandatory: true
+  description: Contrato de integração estrutural existe
+  arguments:
+    path: contracts/sister_nexo_integration.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: tests-present
+  stage: pre-alpha
+  type: directory_exists
+  mandatory: true
+  description: Diretório de testes presente
+  arguments:
+    path: tests
+- schema: sister.engineering.maturity-check/1.0.0
+  id: no-obvious-secrets
+  stage: pre-alpha
+  type: no_tracked_secrets
+  mandatory: true
+  description: Nenhum segredo óbvio está versionado
+- schema: sister.engineering.maturity-check/1.0.0
+  id: shadow-profile-valid
+  stage: pre-alpha
+  type: file_exists
+  mandatory: true
+  description: O perfil shadow do próprio SisTer existe no core
+  arguments:
+    path: .
