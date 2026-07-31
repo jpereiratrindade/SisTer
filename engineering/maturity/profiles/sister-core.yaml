@@ -1,0 +1,7 @@
+schema: "sister.engineering.maturity-profile/1.0.0"
+id: "sister-core"
+name: "Perfil de avaliação do SisTer Core (sisterd)"
+component: "sister-core"
+model: "sister-sge"
+check_suites:
+  - "engineering/maturity/checks/sister-core/alpha-checks.yaml"

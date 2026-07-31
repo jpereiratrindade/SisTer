@@ -1,0 +1,55 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sister.local/schemas/engineering/maturity-check/1.0.0/manifest.schema.json",
+  "title": "SisTer Maturity Check Schema",
+  "type": "object",
+  "required": [
+    "schema",
+    "id",
+    "stage",
+    "type",
+    "mandatory",
+    "description"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "sister.engineering.maturity-check/1.0.0"
+    },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "stage": {
+      "type": "string",
+      "pattern": "^[a-z0-9-]+$"
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "script",
+        "file_exists",
+        "directory_exists",
+        "regex_match",
+        "regex_absent",
+        "approval",
+        "runtime_url",
+        "git_clean",
+        "git_repo",
+        "stable_tag",
+        "signed_tag",
+        "no_tracked_secrets"
+      ]
+    },
+    "mandatory": {
+      "type": "boolean"
+    },
+    "description": {
+      "type": "string"
+    },
+    "arguments": {
+      "type": "object",
+      "additionalProperties": true
+    }
+  }
+}

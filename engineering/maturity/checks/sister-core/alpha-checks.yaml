@@ -1,0 +1,26 @@
+- schema: "sister.engineering.maturity-check/1.0.0"
+  id: "unit-tests"
+  stage: "alpha"
+  type: "script"
+  mandatory: true
+  description: "Testes unitários aprovados"
+  arguments:
+    path: "scripts/ci/test-unit.sh"
+
+- schema: "sister.engineering.maturity-check/1.0.0"
+  id: "architecture-approval"
+  stage: "alpha"
+  type: "approval"
+  mandatory: true
+  description: "Arquitetura Alfa aprovada"
+  arguments:
+    path: "docs/evidence/alpha/architecture.md"
+
+- schema: "sister.engineering.maturity-check/1.0.0"
+  id: "security-approval"
+  stage: "alpha"
+  type: "approval"
+  mandatory: true
+  description: "Segurança Alfa aprovada"
+  arguments:
+    path: "docs/evidence/alpha/security.md"

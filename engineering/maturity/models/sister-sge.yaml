@@ -1,0 +1,25 @@
+schema: "sister.engineering.maturity-model/1.0.0"
+id: "sister-sge"
+name: "SisTer Sistema de Governança por Evidências"
+description: "Modelo unificado de maturidade para a evolução técnica do SisTer."
+stages:
+  - id: "pre-alpha"
+    name: "Pré-Alfa"
+    description: "Protótipo e planejamento inicial."
+    order: 0
+  - id: "alpha"
+    name: "Alfa"
+    description: "Fundações técnicas, identidade, sessão e contratos básicos."
+    order: 1
+  - id: "beta"
+    name: "Beta"
+    description: "Integração desacoplada, gateway especializado e contratos confirmados."
+    order: 2
+  - id: "gamma"
+    name: "Gama"
+    description: "Prontidão operacional, segurança ofensiva, carga e resiliência."
+    order: 3
+  - id: "production"
+    name: "Produção"
+    description: "Versão estável e disponível aos usuários."
+    order: 4
