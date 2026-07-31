@@ -35,7 +35,7 @@
   mandatory: true
   description: Contrato de integração estrutural existe
   arguments:
-    path: contracts/sister_nexo_integration.schema.json
+    path: contracts/nexo_compras_integration.schema.json
 - schema: sister.engineering.maturity-check/1.0.0
   id: tests-present
   stage: pre-alpha
@@ -50,11 +50,3 @@
   type: no_tracked_secrets
   mandatory: true
   description: Nenhum segredo óbvio está versionado
-- schema: sister.engineering.maturity-check/1.0.0
-  id: shadow-profile-valid
-  stage: pre-alpha
-  type: file_exists
-  mandatory: true
-  description: O perfil shadow do próprio SisTer existe no core
-  arguments:
-    path: .
