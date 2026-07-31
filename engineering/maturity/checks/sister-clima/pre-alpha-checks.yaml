@@ -1,0 +1,26 @@
+- schema: sister.engineering.maturity-check/1.0.0
+  id: build-definition
+  stage: pre-alpha
+  type: min_count
+  mandatory: true
+  description: Arquivo de dependências (requirements.txt) existe
+  arguments:
+    dir: "."
+    minimum: 1
+    regex: ^(requirements\.txt)$
+- schema: sister.engineering.maturity-check/1.0.0
+  id: integration-contract
+  stage: pre-alpha
+  type: file_exists
+  mandatory: true
+  description: Contrato de integração estrutural existe
+  arguments:
+    path: SISTER_INTEGRATION.md
+- schema: sister.engineering.maturity-check/1.0.0
+  id: app-entrypoint
+  stage: pre-alpha
+  type: file_exists
+  mandatory: true
+  description: Ponto de entrada do app (app.py) existe
+  arguments:
+    path: app.py

@@ -1,0 +1,14 @@
+schema: "sister.engineering.maturity-profile/1.0.0"
+id: "sister-clima"
+name: "Perfil de avaliação do Sister-Clima (Python/Streamlit)"
+component: "sister-clima"
+model: "sister-sge"
+evaluation_mode: "shadow"
+governance_authority: false
+promotion_enabled: false
+check_suites:
+  - "engineering/maturity/checks/common/repository.yaml"
+  - "engineering/maturity/checks/common/security-baseline.yaml"
+  - "engineering/maturity/checks/common/documentation-baseline.yaml"
+  - "engineering/maturity/checks/common/test-baseline.yaml"
+  - "engineering/maturity/checks/sister-clima/pre-alpha-checks.yaml"
