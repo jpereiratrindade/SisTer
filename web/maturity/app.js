@@ -20,6 +20,23 @@ const STAGE_STATE_LABELS = {
   not_started: "Não iniciado",
 };
 
+const ENGINEERING_DIMENSIONS = [
+  { id: "architecture", label: "Arquitetura", patterns: ["architecture", "arquitet", "roadmap", "transition", "baseline"] },
+  { id: "security", label: "Segurança", patterns: ["security", "secret", "identity", "identidade", "auth", "assin"] },
+  { id: "tests", label: "Testes", patterns: ["test", "smoke", "verify", "quality"] },
+  { id: "docs", label: "Documentação", patterns: ["doc", "adr", "roadmap", "plan"] },
+  { id: "contracts", label: "Contratos", patterns: ["contract", "contrato", "schema"] },
+  { id: "observability", label: "Observabilidade", patterns: ["health", "observ", "status", "provenance", "proveni"] },
+];
+
+const SUBSYSTEMS = [
+  { id: "sister-core", label: "SisTer-Core", patterns: ["repository", "baseline", "status-file", "prototype-status", "git-"] },
+  { id: "clima", label: "Clima", patterns: ["clima"] },
+  { id: "nexo", label: "Nexo", patterns: ["nexo"] },
+  { id: "campo", label: "Campo", patterns: ["campo"] },
+  { id: "studio", label: "Studio", patterns: ["studio"] },
+];
+
 const qs = (selector) => document.querySelector(selector);
 const create = (tag, className, text) => {
   const element = document.createElement(tag);
@@ -53,6 +70,32 @@ function statusPill(status) {
   return pill;
 }
 
+function allChecks(status) {
+  return status.stages.flatMap((stage) => stage.checks.map((check) => ({ ...check, stage: stage.id })));
+}
+
+function completion(checks) {
+  if (!checks.length) return 0;
+  const earned = checks.reduce((total, check) => total + (check.status === "PASS" ? 1 : check.status === "WARN" ? 0.65 : 0), 0);
+  return Math.round((earned / checks.length) * 100);
+}
+
+function stageCompletion(stage) {
+  if (!stage.checks.length) return stage.state === "approved" ? 100 : 0;
+  return completion(stage.checks);
+}
+
+function nextStageId(status) {
+  const current = status.stages.findIndex((stage) => stage.id === status.target_stage);
+  if (status.result !== "PASS" || current < 0 || current >= status.stages.length - 1) return status.target_stage;
+  return status.stages[current + 1].id;
+}
+
+function matches(check, patterns) {
+  const haystack = `${check.id} ${check.description} ${check.detail || ""}`.toLowerCase();
+  return patterns.some((pattern) => haystack.includes(pattern));
+}
+
 function renderHeader(status) {
   const warning = status.result === "PASS" && status.summary.warned > 0;
   const result = qs("#overall-result");
@@ -64,6 +107,26 @@ function renderHeader(status) {
   qs("#target-stage").textContent = `Gate avaliado: ${STAGE_LABELS[status.target_stage]}`;
 }
 
+function renderExecutive(status) {
+  const completed = status.result === "PASS" && status.summary.mandatory_failures === 0;
+  const warning = status.summary.warned > 0;
+  const currentLabel = STAGE_LABELS[status.target_stage];
+  const nextLabel = STAGE_LABELS[nextStageId(status)];
+  const confidence = completion(allChecks(status));
+  qs("#executive-status").textContent = completed
+    ? `${currentLabel} concluída${warning ? " com advertências" : ""}.`
+    : `${currentLabel} ainda exige correção antes da promoção.`;
+  qs("#next-stage").textContent = nextLabel;
+  qs("#executive-blockers").textContent = status.summary.mandatory_failures;
+  qs("#executive-warnings").textContent = status.summary.warned;
+  qs("#confidence-score").textContent = `${confidence}%`;
+  qs("#promotion-decision").textContent = completed ? "SIM" : "NÃO";
+  qs("#promotion-detail").textContent = completed
+    ? `Próxima avaliação sugerida: ${nextLabel}.`
+    : "Resolver bloqueios obrigatórios antes de avançar.";
+  qs(".decision-card").dataset.status = completed ? "PASS" : "FAIL";
+}
+
 function renderStages(stages) {
   const line = qs("#stage-line");
   line.replaceChildren();
@@ -73,7 +136,19 @@ function renderStages(stages) {
     const marker = create("span", "stage-marker", stage.state === "approved" ? "✓" : stage.state === "blocked" ? "!" : String(index + 1));
     marker.setAttribute("aria-hidden", "true");
     const copy = create("span", "stage-copy");
-    copy.append(create("strong", "", stage.label), create("small", "", STAGE_STATE_LABELS[stage.state]));
+    const meta = create("span", "stage-meta");
+    meta.append(
+      create("small", "", `${stageCompletion(stage)}%`),
+      create("small", "", STAGE_STATE_LABELS[stage.state]),
+      create("small", "", `${stage.checks.length} checks`),
+    );
+    const details = create("button", "stage-detail-button", "Detalhes");
+    details.type = "button";
+    details.addEventListener("click", () => {
+      renderChecks(stage.id);
+      qs("#checks-title").scrollIntoView({ block: "start", behavior: "smooth" });
+    });
+    copy.append(create("strong", "", stage.label), meta, details);
     item.append(marker, copy);
     line.append(item);
   });
@@ -200,13 +275,67 @@ function renderHistory(history) {
   });
 }
 
+function renderEngineeringHealth(status) {
+  const checks = allChecks(status);
+  const list = qs("#engineering-health");
+  list.replaceChildren();
+  ENGINEERING_DIMENSIONS.forEach((dimension) => {
+    const matched = checks.filter((check) => matches(check, dimension.patterns));
+    const score = completion(matched);
+    const row = create("div", "health-row");
+    const label = create("span", "", dimension.label);
+    const meter = create("span", "health-meter");
+    const fill = create("span");
+    fill.style.width = `${score}%`;
+    meter.append(fill);
+    row.append(label, meter, create("strong", "", `${score}%`));
+    list.append(row);
+  });
+}
+
+function renderSubsystems(status) {
+  const checks = allChecks(status);
+  const list = qs("#subsystems-list");
+  list.replaceChildren();
+  const platform = create("article", "subsystem-item subsystem-platform");
+  platform.append(create("strong", "", "SisTer"), statusPill(status.result), create("span", "", STAGE_LABELS[status.target_stage]));
+  list.append(platform);
+  SUBSYSTEMS.forEach((subsystem) => {
+    const matched = checks.filter((check) => matches(check, subsystem.patterns));
+    const result = !matched.length ? "SKIP" : matched.some((check) => check.status === "FAIL" && check.mandatory) ? "FAIL" : matched.some((check) => check.status === "WARN" || check.status === "FAIL") ? "WARN" : "PASS";
+    const item = create("article", "subsystem-item");
+    item.append(create("strong", "", subsystem.label), statusPill(result), create("span", "", matched.length ? `${completion(matched)}%` : "Sem evidência"));
+    list.append(item);
+  });
+}
+
+function renderDecisionTree(status) {
+  const stage = status.stages.find((item) => item.id === status.target_stage);
+  const tree = qs("#decision-tree");
+  tree.replaceChildren();
+  stage.checks.forEach((check) => {
+    const row = create("div", "decision-node");
+    row.append(statusPill(check.status), create("strong", "mono", check.id), create("span", "", check.description));
+    tree.append(row);
+  });
+  const answer = create("div", "decision-answer");
+  const promoted = status.result === "PASS" && status.summary.mandatory_failures === 0;
+  answer.dataset.status = promoted ? "PASS" : "FAIL";
+  answer.append(create("span", "", "Pode promover?"), create("strong", "", promoted ? "SIM" : "NÃO"));
+  tree.append(answer);
+}
+
 function renderDashboard(status, history) {
   currentStatus = status;
   renderHeader(status);
+  renderExecutive(status);
   renderStages(status.stages);
   renderSummary(status.summary);
   renderBlockers(status.blockers);
   renderProvenance(status);
+  renderEngineeringHealth(status);
+  renderSubsystems(status);
+  renderDecisionTree(status);
   renderStageTabs(status.stages);
   renderActions(status.next_actions);
   renderHistory(history);

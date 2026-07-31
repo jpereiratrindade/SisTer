@@ -4,6 +4,9 @@
 
 Aceita
 
+Atualizada em 2026-07-31 para explicitar a evolução do painel para um Centro
+de Engenharia do SisTer.
+
 ## Contexto
 
 O SisTer possui gates executáveis de Pré-Alfa, Alfa, Beta, Gama e Produção.
@@ -18,7 +21,7 @@ um contrato estável, sanitizado e produzido pelo próprio verificador.
 ## Decisão
 
 Adotar o contrato `sister.maturity-status/1.0.0` como única fonte de dados do
-Painel de Maturidade, com as seguintes invariantes:
+Centro de Engenharia do SisTer, com as seguintes invariantes:
 
 - `verify-sister-maturity.sh` permanece como autoridade sobre os gates;
 - o painel é somente leitura e não calcula estados ou promoções;
@@ -32,9 +35,16 @@ Painel de Maturidade, com as seguintes invariantes:
   saída bruta não podem integrar o contrato público;
 - o histórico é limitado, sanitizado e ordenado por execução.
 
+A interface administrativa pode apresentar projeções derivadas da evidência,
+como síntese executiva, pipeline de gates, saúde da engenharia, diagnóstico de
+promoção e leitura por subsistema. Essas projeções são explicativas: elas não
+substituem os estados, bloqueios e resultados publicados pelo verificador.
+
 ## Consequências
 
 - a equipe passa a consultar evidências de maturidade no plano administrativo;
+- o painel passa a operar como centro de governança técnica, mantendo leitura
+  executiva e rastreabilidade no mesmo lugar;
 - uma falha do painel não altera o resultado do gate;
 - atualizar a página apenas relê a evidência publicada;
 - executar ou agendar gates continua responsabilidade do terminal, CI ou de

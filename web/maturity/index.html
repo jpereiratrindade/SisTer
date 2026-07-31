@@ -25,7 +25,7 @@
       <header class="page-heading">
         <div>
           <p class="eyebrow">CONTROLE DE ENGENHARIA</p>
-          <h1>Painel de Maturidade</h1>
+          <h1>Centro de Engenharia do SisTer</h1>
           <p id="heading-detail" class="heading-detail">Carregando a última evidência publicada...</p>
         </div>
         <div id="overall-result" class="overall-result" data-status="SKIP">
@@ -37,12 +37,31 @@
       <div id="notice" class="notice" role="status" aria-live="polite">Consultando evidência...</div>
 
       <section id="dashboard" hidden>
+        <section class="executive-panel" aria-labelledby="executive-title">
+          <div>
+            <p class="eyebrow">STATUS GERAL</p>
+            <h2 id="executive-title">Síntese executiva</h2>
+            <p id="executive-status" class="executive-status">Aguardando evidência.</p>
+            <dl class="executive-facts">
+              <div><dt>Próximo objetivo</dt><dd id="next-stage">—</dd></div>
+              <div><dt>Bloqueadores</dt><dd id="executive-blockers">0</dd></div>
+              <div><dt>Advertências</dt><dd id="executive-warnings">0</dd></div>
+              <div><dt>Confiança</dt><dd id="confidence-score">0%</dd></div>
+            </dl>
+          </div>
+          <div class="decision-card">
+            <span>Pode promover?</span>
+            <strong id="promotion-decision">—</strong>
+            <small id="promotion-detail">Última avaliação ainda não carregada.</small>
+          </div>
+        </section>
+
         <section class="stage-band" aria-labelledby="stage-title">
           <div class="section-heading">
-            <div><p class="eyebrow">PROGRESSÃO</p><h2 id="stage-title">Linha de maturidade</h2></div>
+            <div><p class="eyebrow">PIPELINE</p><h2 id="stage-title">Gates de engenharia</h2></div>
             <span id="target-stage" class="quiet-badge"></span>
           </div>
-          <ol id="stage-line" class="stage-line"></ol>
+          <ol id="stage-line" class="stage-pipeline"></ol>
         </section>
 
         <section class="summary-grid" aria-label="Resumo da verificação">
@@ -63,6 +82,22 @@
             <dl id="provenance-list" class="provenance-list"></dl>
           </section>
         </div>
+
+        <div class="engineering-grid">
+          <section class="information-section" aria-labelledby="health-title">
+            <div class="section-heading"><div><p class="eyebrow">DIMENSÕES VERIFICADAS</p><h2 id="health-title">Saúde da Engenharia</h2></div></div>
+            <div id="engineering-health" class="health-list"></div>
+          </section>
+          <section class="information-section" aria-labelledby="subsystems-title">
+            <div class="section-heading"><div><p class="eyebrow">ECOSSISTEMA</p><h2 id="subsystems-title">Plataforma e subsistemas</h2></div></div>
+            <div id="subsystems-list" class="subsystem-list"></div>
+          </section>
+        </div>
+
+        <section class="information-section decision-tree" aria-labelledby="decision-title">
+          <div class="section-heading"><div><p class="eyebrow">DIAGNÓSTICO</p><h2 id="decision-title">Árvore de decisão do gate avaliado</h2></div></div>
+          <div id="decision-tree" class="decision-tree-list"></div>
+        </section>
 
         <section class="checks-section" aria-labelledby="checks-title">
           <div class="section-heading">

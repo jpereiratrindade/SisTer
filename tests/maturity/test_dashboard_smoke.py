@@ -18,7 +18,19 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
 
     def test_dashboard_has_all_status_labels(self):
         source = (ROOT / "web" / "maturity" / "index.html").read_text(encoding="utf-8")
-        for label in ("Aprovados", "Falhas", "Advertências", "Ignorados", "Bloqueios"):
+        for label in (
+            "Centro de Engenharia do SisTer",
+            "Síntese executiva",
+            "Gates de engenharia",
+            "Saúde da Engenharia",
+            "Plataforma e subsistemas",
+            "Árvore de decisão",
+            "Aprovados",
+            "Falhas",
+            "Advertências",
+            "Ignorados",
+            "Bloqueios",
+        ):
             self.assertIn(label, source)
 
     @unittest.skipUnless(shutil.which("node"), "node is not installed")
