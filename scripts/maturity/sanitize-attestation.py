@@ -120,6 +120,11 @@ def build_payload(arguments):
         "blockers": blockers[:100],
         "next_actions": actions,
         "attestation": {"available": False, "signed": False, "relative_path": None},
+        "promotion": {
+            "applicable": True,
+            "eligible": arguments.result == "PASS",
+            "recommendation": "promote" if arguments.result == "PASS" else "block"
+        },
     }
     
     if arguments.engine:
