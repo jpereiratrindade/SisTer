@@ -37,6 +37,13 @@ publicados. Eles ajudam a leitura, mas a decisão formal continua sendo o
 ## Publicação
 
 ```bash
+./scripts/maturity/run-and-publish.sh
+```
+
+Sem argumento, o script infere o estágio a partir de `.sister/status.yml`.
+Também é possível informar explicitamente:
+
+```bash
 ./scripts/maturity/run-and-publish.sh pre-alpha
 ```
 

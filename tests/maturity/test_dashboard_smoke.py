@@ -26,7 +26,7 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
             "Plataforma e subsistemas",
             "Árvore de decisão",
             "Publicar nova atestação",
-            "./scripts/maturity/run-and-publish.sh pre-alpha",
+            "./scripts/maturity/run-and-publish.sh",
             "Aprovados",
             "Falhas",
             "Advertências",
@@ -41,6 +41,7 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
 
     def test_application_smoke_script_syntax(self):
         subprocess.run(["bash", "-n", str(ROOT / "scripts" / "app" / "smoke.sh")], check=True)
+        subprocess.run(["bash", "-n", str(ROOT / "scripts" / "maturity" / "run-and-publish.sh")], check=True)
 
 
 if __name__ == "__main__":

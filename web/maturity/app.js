@@ -259,11 +259,11 @@ function renderActions(actions) {
 }
 
 function renderOperationalAction(status) {
-  const command = `./scripts/maturity/run-and-publish.sh ${status.target_stage}`;
+  const command = "./scripts/maturity/run-and-publish.sh";
   qs("#publish-command").textContent = command;
   qs("#copy-publish-command").dataset.command = command;
   qs("#copy-publish-command").textContent = "Copiar";
-  qs("#operation-detail").textContent = "Executa o gate, publica latest.json e arquiva a execução no histórico local.";
+  qs("#operation-detail").textContent = `Sem argumento, o script infere o estágio atual e hoje deve publicar ${STAGE_LABELS[status.target_stage]}.`;
 }
 
 function renderHistory(history) {
