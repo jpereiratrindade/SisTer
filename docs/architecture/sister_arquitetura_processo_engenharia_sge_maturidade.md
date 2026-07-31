@@ -783,7 +783,8 @@ Responsável por:
 - comunicação;
 - histórico;
 - métricas;
-- projeções explicativas.
+- projeções explicativas;
+- transparência operacional (exibição estruturada da proveniência do motor e perfil avaliador).
 
 ## 12.5 Subsistemas
 

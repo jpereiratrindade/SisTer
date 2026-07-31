@@ -94,7 +94,8 @@ def build_payload(arguments):
 
     commit = arguments.commit if re.fullmatch(r"[0-9a-f]{40,64}", arguments.commit) else "unknown"
     short_commit = commit[:12] if commit != "unknown" else "unknown"
-    return {
+    
+    payload = {
         "schema": SCHEMA,
         "project": "SisTer",
         "target_stage": arguments.target_stage,
@@ -120,6 +121,28 @@ def build_payload(arguments):
         "next_actions": actions,
         "attestation": {"available": False, "signed": False, "relative_path": None},
     }
+    
+    if arguments.engine:
+        evaluation = {
+            "engine": arguments.engine,
+            "mode": arguments.engine_mode or "check",
+        }
+        if arguments.engine_version: evaluation["engine_version"] = arguments.engine_version
+        if getattr(arguments, "model_id", None): evaluation["model_id"] = arguments.model_id
+        if getattr(arguments, "model_version", None): evaluation["model_version"] = arguments.model_version
+        if getattr(arguments, "profile_id", None): evaluation["profile_id"] = arguments.profile_id
+        if getattr(arguments, "model_digest", None): evaluation["model_digest"] = arguments.model_digest
+        if getattr(arguments, "profile_digest", None): evaluation["profile_digest"] = arguments.profile_digest
+        
+        if getattr(arguments, "compare_performed", None) == "true":
+            evaluation["comparison"] = {
+                "performed": True,
+                "equivalent": getattr(arguments, "compare_equivalent", None) == "true"
+            }
+            
+        payload["evaluation"] = evaluation
+        
+    return payload
 
 
 def main():
@@ -130,6 +153,11 @@ def main():
         "warned", "skipped", "mandatory-failures",
     ):
         parser.add_argument(f"--{name}", required=True)
+    for name in (
+        "engine", "engine-mode", "engine-version", "model-id", "model-version", "profile-id",
+        "model-digest", "profile-digest", "compare-performed", "compare-equivalent",
+    ):
+        parser.add_argument(f"--{name}", required=False)
     arguments = parser.parse_args()
     payload = build_payload(arguments)
     errors = validate_status(payload)

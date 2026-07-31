@@ -189,6 +189,20 @@ function addDefinition(list, term, value, className = "") {
 function renderProvenance(status) {
   const list = qs("#provenance-list");
   list.replaceChildren();
+  
+  if (status.evaluation) {
+    const engineMap = { legacy: "Legado", declarative: "Declarativo", compare: "Compare (Paralelo)" };
+    const modeMap = { check: "Verificação", certify: "Certificação" };
+    addDefinition(list, "Motor", engineMap[status.evaluation.engine] || status.evaluation.engine);
+    addDefinition(list, "Modo de Avaliação", modeMap[status.evaluation.mode] || status.evaluation.mode);
+    if (status.evaluation.model_id) {
+      addDefinition(list, "Modelo / Perfil", `${status.evaluation.model_id} / ${status.evaluation.profile_id}`, "mono");
+    }
+    if (status.evaluation.comparison?.performed) {
+      addDefinition(list, "Equivalência", status.evaluation.comparison.equivalent ? "Comprovada" : "Divergente");
+    }
+  }
+
   addDefinition(list, "Commit", status.source.short_commit, "mono");
   addDefinition(list, "Branch", status.source.branch, "mono");
   addDefinition(list, "Árvore Git", status.source.dirty ? "Alterada" : "Limpa");

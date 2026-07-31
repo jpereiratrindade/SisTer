@@ -52,7 +52,11 @@ def validate_status(payload):
         "verifier_version", "source", "summary", "stages", "blockers",
         "next_actions", "attestation",
     }
-    if not isinstance(payload, dict) or set(payload) != required:
+    if not isinstance(payload, dict):
+        return ["status root fields do not match the contract"]
+    
+    actual_keys = set(payload)
+    if not required.issubset(actual_keys) or not actual_keys.issubset(required | {"evaluation"}):
         return ["status root fields do not match the contract"]
     if payload["schema"] != SCHEMA:
         errors.append("unsupported status schema")

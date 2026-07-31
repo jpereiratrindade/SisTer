@@ -61,6 +61,30 @@
         "signed": {"type": "boolean"},
         "relative_path": {"oneOf": [{"type": "null"}, {"$ref": "#/$defs/relativePath"}]}
       }
+    },
+    "evaluation": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["engine", "mode"],
+      "properties": {
+        "engine": {"enum": ["legacy", "declarative", "compare"]},
+        "mode": {"enum": ["check", "certify"]},
+        "engine_version": {"type": "string", "maxLength": 32},
+        "model_id": {"type": "string", "maxLength": 128},
+        "model_version": {"type": "string", "maxLength": 32},
+        "profile_id": {"type": "string", "maxLength": 128},
+        "model_digest": {"type": "string", "maxLength": 128},
+        "profile_digest": {"type": "string", "maxLength": 128},
+        "comparison": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["performed"],
+          "properties": {
+            "performed": {"type": "boolean"},
+            "equivalent": {"type": "boolean"}
+          }
+        }
+      }
     }
   },
   "$defs": {

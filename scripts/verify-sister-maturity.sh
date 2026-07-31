@@ -20,6 +20,7 @@ RUNTIME_CHECKS=0
 STRICT=0
 NO_COLOR=0
 VERBOSE=0
+ENGINE="compare"
 
 declare -A STAGE_RANK=(
   [pre-alpha]=0
@@ -75,6 +76,7 @@ Opções:
   --report <arquivo.md>     Salva relatório Markdown.
   --attestation <arquivo>   Caminho da atestação JSON em modo certify.
   --status-json <arquivo>   Publica status JSON sanitizado em qualquer modo.
+  --engine <modo>           Define o motor: legacy, declarative, compare (padrão: legacy).
   --runtime                 Verifica endpoints em execução.
   --strict                  Converte avisos em falhas.
   --gpg-key <id>            Assina a atestação com GPG.
@@ -788,23 +790,33 @@ write_status_json() {
   (( MANDATORY_FAILURES > 0 )) && result="FAIL"
   if [[ "$STRICT" -eq 1 && "$WARNED" -gt 0 ]]; then result="FAIL"; fi
 
-  python3 "$REPO/scripts/maturity/sanitize-attestation.py" \
-    --results "$TMP_RESULTS" \
-    --destination "$destination" \
-    --repository "$REPO" \
-    --target-stage "$TARGET_STAGE" \
-    --result "$result" \
-    --generated-at "$generated" \
-    --verifier-version "$SCRIPT_VERSION" \
-    --commit "$commit" \
-    --branch "${branch:-detached}" \
-    --dirty "$INITIAL_GIT_DIRTY" \
-    --total "$TOTAL" \
-    --passed "$PASSED" \
-    --failed "$FAILED" \
-    --warned "$WARNED" \
-    --skipped "$SKIPPED" \
-    --mandatory-failures "$MANDATORY_FAILURES"
+  local python_args=(
+    "--results" "$TMP_RESULTS"
+    "--destination" "$destination"
+    "--repository" "$REPO"
+    "--target-stage" "$TARGET_STAGE"
+    "--result" "$result"
+    "--generated-at" "$generated"
+    "--verifier-version" "$SCRIPT_VERSION"
+    "--commit" "$commit"
+    "--branch" "${branch:-detached}"
+    "--dirty" "$INITIAL_GIT_DIRTY"
+    "--total" "$TOTAL"
+    "--passed" "$PASSED"
+    "--failed" "$FAILED"
+    "--warned" "$WARNED"
+    "--skipped" "$SKIPPED"
+    "--mandatory-failures" "$MANDATORY_FAILURES"
+    "--engine" "$ENGINE"
+    "--engine-mode" "$MODE"
+    "--engine-version" "$SCRIPT_VERSION"
+  )
+  
+  if [[ "$ENGINE" == "compare" ]]; then
+    python_args+=("--compare-performed" "true" "--compare-equivalent" "true")
+  fi
+  
+  python3 "$REPO/scripts/maturity/sanitize-attestation.py" "${python_args[@]}"
 }
 
 parse_args() {
@@ -818,6 +830,7 @@ parse_args() {
       --report) REPORT_FILE="${2:-}"; shift 2;;
       --attestation) ATTESTATION_FILE="${2:-}"; shift 2;;
       --status-json) STATUS_JSON_FILE="${2:-}"; shift 2;;
+      --engine) ENGINE="${2:-}"; shift 2;;
       --gpg-key) GPG_KEY="${2:-}"; shift 2;;
       --runtime) RUNTIME_CHECKS=1; shift;;
       --strict) STRICT=1; shift;;
@@ -843,6 +856,9 @@ parse_args() {
   [[ -n "$TARGET_STAGE" ]] || die "--stage é obrigatório"
   [[ -n "${STAGE_RANK[$TARGET_STAGE]+x}" ]] || die "estágio inválido: $TARGET_STAGE"
   [[ "$MODE" == "check" || "$MODE" == "certify" ]] || die "modo inválido: $MODE"
+  [[ "$ENGINE" == "legacy" || "$ENGINE" == "declarative" || "$ENGINE" == "compare" ]] || die "motor inválido: $ENGINE"
+  
+  export MODE
 }
 
 main() {
@@ -859,11 +875,89 @@ main() {
   printf '%sSisTer maturity gates%s — estágio alvo: %s%s%s — modo: %s\n\n' \
     "$C_BOLD" "$C_RESET" "$C_BOLD" "$TARGET_STAGE" "$C_RESET" "$MODE"
 
-  stage_enabled pre-alpha && run_pre_alpha
-  stage_enabled alpha && run_alpha
-  stage_enabled beta && run_beta
-  stage_enabled gamma && run_gamma
-  stage_enabled production && run_production
+  if [[ "$ENGINE" == "legacy" ]]; then
+    stage_enabled pre-alpha && run_pre_alpha
+    stage_enabled alpha && run_alpha
+    stage_enabled beta && run_beta
+    stage_enabled gamma && run_gamma
+    stage_enabled production && run_production
+  elif [[ "$ENGINE" == "declarative" ]]; then
+    local strict_flag=""
+    [[ "$STRICT" -eq 1 ]] && strict_flag="--strict"
+    local json_out
+    if ! json_out="$(python3 "$REPO/scripts/maturity/evaluator.py" --repo "$REPO" --profile "engineering/maturity/profiles/sister-core.yaml" --stage "$TARGET_STAGE" $strict_flag)"; then
+       die "Falha ao executar evaluator.py: $json_out"
+    fi
+    mkdir -p "$REPO/.run/maturity"
+    printf "%s\n" "$json_out" > "$REPO/.run/maturity/execution-plan.json"
+    
+    while IFS=$'\t' read -r status stage id mandatory description detail; do
+      record_result "$status" "$stage" "$id" "$mandatory" "$description" "$detail"
+    done < <(python3 "$REPO/scripts/maturity/json-to-tabular.py" "$REPO/.run/maturity/execution-plan.json")
+  elif [[ "$ENGINE" == "compare" ]]; then
+    # Run legacy silently
+    local original_verbose="$VERBOSE"
+    VERBOSE=0
+    local legacy_results="$(mktemp)"
+    local old_tmp="$TMP_RESULTS"
+    TMP_RESULTS="$legacy_results"
+    
+    # Save legacy counters
+    local old_total=$TOTAL
+    local old_passed=$PASSED
+    local old_failed=$FAILED
+    local old_warned=$WARNED
+    local old_skipped=$SKIPPED
+    local old_mandatory=$MANDATORY_FAILURES
+    TOTAL=0; PASSED=0; FAILED=0; WARNED=0; SKIPPED=0; MANDATORY_FAILURES=0
+    
+    # Supress stdout for legacy
+    {
+      stage_enabled pre-alpha && run_pre_alpha
+      stage_enabled alpha && run_alpha
+      stage_enabled beta && run_beta
+      stage_enabled gamma && run_gamma
+      stage_enabled production && run_production
+    } >/dev/null 2>&1
+    
+    local legacy_total=$TOTAL
+    local legacy_passed=$PASSED
+    
+    # Restore counters for declarative
+    TOTAL=$old_total; PASSED=$old_passed; FAILED=$old_failed; WARNED=$old_warned; SKIPPED=$old_skipped; MANDATORY_FAILURES=$old_mandatory
+    TMP_RESULTS="$old_tmp"
+    VERBOSE="$original_verbose"
+    
+    # Run declarative normally
+    local strict_flag=""
+    [[ "$STRICT" -eq 1 ]] && strict_flag="--strict"
+    local json_out
+    if ! json_out="$(python3 "$REPO/scripts/maturity/evaluator.py" --repo "$REPO" --profile "engineering/maturity/profiles/sister-core.yaml" --stage "$TARGET_STAGE" $strict_flag)"; then
+       die "Falha ao executar evaluator.py: $json_out"
+    fi
+    mkdir -p "$REPO/.run/maturity"
+    printf "%s\n" "$json_out" > "$REPO/.run/maturity/execution-plan.json"
+    
+    local decl_results="$(mktemp)"
+    while IFS=$'\t' read -r status stage id mandatory description detail; do
+      record_result "$status" "$stage" "$id" "$mandatory" "$description" "$detail"
+      printf '%s\t%s\t%s\t%s\t%s\n' "$status" "$stage" "$id" "$mandatory" "$description" >> "$decl_results"
+    done < <(python3 "$REPO/scripts/maturity/json-to-tabular.py" "$REPO/.run/maturity/execution-plan.json")
+    
+    local legacy_cleaned="$(mktemp)"
+    awk -F'\t' '{print $1"\t"$2"\t"$3"\t"$4"\t"$5}' "$legacy_results" > "$legacy_cleaned"
+    
+    printf "\n%s--- Comparação de Motores ---%s\n" "$C_BOLD" "$C_RESET"
+    if cmp -s "$legacy_cleaned" "$decl_results"; then
+      printf "%sEquivalência comprovada.%s\n" "$C_GREEN" "$C_RESET"
+    else
+      printf "%sDiscrepância detectada entre legacy e declarative!%s\n" "$C_RED" "$C_RESET"
+      diff -u "$legacy_cleaned" "$decl_results" || true
+      die "Os motores divergiram. Verifique o plano."
+    fi
+    
+    rm -f "$legacy_results" "$decl_results" "$legacy_cleaned"
+  fi
 
   local result="PASS"
   if (( MANDATORY_FAILURES > 0 )); then result="FAIL"; fi
