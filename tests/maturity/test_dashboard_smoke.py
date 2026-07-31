@@ -23,7 +23,7 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
             "Síntese executiva",
             "Gates de engenharia",
             "Saúde da Engenharia",
-            "Plataforma e subsistemas",
+            "Componentes do Ecossistema",
             "Árvore de decisão",
             "Publicar nova atestação",
             "./scripts/maturity/run-and-publish.sh",

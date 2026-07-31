@@ -34,5 +34,6 @@
     {"stage": "pre-alpha", "id": "smoke-flow", "description": "Smoke tests aprovados", "detail": "Script não encontrado"}
   ],
   "next_actions": ["Resolver o check obrigatório smoke-flow", "Executar novamente o gate Pré-Alfa"],
-  "attestation": {"available": false, "signed": false, "relative_path": null}
+  "attestation": {"available": false, "signed": false, "relative_path": null},
+  "promotion": {"applicable": false, "eligible": null, "recommendation": "not_applicable"}
 }

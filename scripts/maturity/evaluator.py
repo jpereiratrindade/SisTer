@@ -306,7 +306,18 @@ def main():
                 "checks": stage_checks
             })
         elif stages_order.index(s) < stages_order.index(args.stage):
-            stages.append({"id": s, "label": s, "state": "approved", "checks": []})
+            # Populate previous stages with their checks too (needed for compare mode parity)
+            prior_checks = [
+                {
+                    "id": c["id"],
+                    "status": c["status"],
+                    "mandatory": c["mandatory"],
+                    "description": c["description"],
+                    "detail": c["detail"],
+                    "evidence": c["evidence"]
+                } for c in all_results if c["stage"] == s
+            ]
+            stages.append({"id": s, "label": s, "state": "approved", "checks": prior_checks})
         else:
             stages.append({"id": s, "label": s, "state": "not_started", "checks": []})
 
