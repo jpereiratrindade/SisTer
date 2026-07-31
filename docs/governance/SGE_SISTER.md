@@ -60,7 +60,7 @@ arquitetural correspondente.
 | Pacotes de trabalho | Converter arquitetura em incrementos governados | `docs/work-packages/` |
 | Módulos de engenharia | Consolidar processo, governança e maturidade reutilizáveis | `engineering/` |
 | Contratos | Tornar integrações e evidências verificáveis | `contracts/` |
-| Gates | Declarar critérios de maturidade executáveis | `.sister/maturity.conf`, `scripts/verify-sister-maturity.sh` |
+| Gates | Declarar critérios de maturidade executáveis | `engineering/maturity/`, `scripts/maturity/evaluator.py` |
 | Evidências | Registrar aprovações, relatórios e provas humanas | `docs/evidence/` |
 | Atestações | Publicar resultado sanitizado dos gates | `.run/maturity/` |
 | Centro de Engenharia | Apresentar estado, proveniência e evolução | `/admin/maturity` |
@@ -75,9 +75,11 @@ O SGE-SisTer possui três níveis de leitura sobre maturidade:
 3. **Tendência:** métricas de permanência por estágio, regressões, estabilidade
    e dimensões de engenharia serão derivadas do histórico acumulado.
 
-O comando `scripts/verify-sister-maturity.sh` não arquiva histórico sozinho. Ele
-é a autoridade de avaliação. O rastreamento automático acontece quando o gate é
-executado pelo fluxo de publicação.
+O comando `scripts/verify-sister-maturity.sh` permanece como compatibilidade do
+Core durante a transição. O módulo declarativo em
+`engineering/maturity/`, executado por `scripts/maturity/evaluator.py`, é a
+direção arquitetural. O rastreamento automático acontece quando o gate é
+executado pelo fluxo de publicação `scripts/maturity/run-and-publish.sh`.
 
 ## Modularização interna
 
@@ -89,6 +91,7 @@ após evidência de reutilização real entre componentes.
 Referências:
 
 - [Arquitetura do Processo de Engenharia, SGE-SisTer e Módulo de Maturidade](../architecture/sister_arquitetura_processo_engenharia_sge_maturidade.md)
+- [Tutorial do Módulo de Maturidade](../../engineering/maturity/README.md)
 - [ADR-0012](../adr/ADR-0012-internal-engineering-modules.md)
 
 ## Roadmap do SGE

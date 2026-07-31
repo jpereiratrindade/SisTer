@@ -277,6 +277,7 @@ Cada sistema federado tambem declara no seu contrato o que compartilha com o Sis
 - `docs/architecture/INTERFACE.md`: interface, navegacao, identidade visual e proximos incrementos.
 - `docs/architecture/DATABASE.md`: arquitetura PostgreSQL e pgvector.
 - `docs/architecture/CONTAINERS.md`: estrategia de containers e persistencia do banco.
+- `docs/architecture/sgr/`: arquitetura do SGR, engines de verificacao e modos de governanca.
 - `docs/governance/PUBLIC_PRIVATE_SCOPE.md`: escopo publico, restrito e privado.
 - `docs/adr/`: decisoes arquiteturais aceitas.
 - `docs/dai/DAI.md`: decisoes, acoes e impedimentos.

@@ -48,6 +48,33 @@ Um componente pode ter **Avaliação técnica: PASS** e **Governança: SHADOW**
 ao mesmo tempo — isso significa que o ambiente técnico está sadio, mas que o
 componente está em modo piloto e não influencia promoções do Core.
 
+## Engines e modos de governança
+
+O engine determina como a maturidade é verificada; o modo de governança
+determina que autoridade o resultado possui.
+
+| Conceito | Opções | Efeito |
+|---|---|---|
+| Engine | `compare`, `declarative`, `legacy` | Define como os critérios são executados |
+| Governança | `shadow`, `governed` | Define se o resultado pode bloquear uma promoção |
+
+Durante a transição, `compare` é o padrão porque executa `legacy` e
+`declarative` e detecta divergências. `declarative` é o motor de destino.
+`legacy` permanece como diagnóstico temporário.
+
+`shadow` observa sem bloquear; `governed` pode bloquear somente no escopo
+declarado. A passagem de `shadow` para `governed` exige maturidade técnica,
+criticidade arquitetural e responsabilidade operacional formal.
+
+Regra operacional mínima:
+
+- `compare` divergiu: executar `legacy` e `declarative` isoladamente, comparar evidências e registrar a decisão.
+- `shadow` falhou: registrar, alertar e acompanhar sem bloquear fora do escopo.
+- `governed` falhou: bloquear o escopo afetado, preservar evidências e corrigir ou aprovar exceção formal.
+
+Para critérios, impactos operacionais e procedimentos detalhados, consulte
+[Engines de verificação e modos de governança](./sgr/verification-engines-and-governance-modes.md).
+
 ## Publicação
 
 ```bash

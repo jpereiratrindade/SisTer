@@ -14,8 +14,18 @@ reutilização real.
 - `governance/`: modelos e templates do SGE-SisTer.
 - `maturity/`: perfis, checks e modelos do módulo de maturidade.
 
-Scripts existentes em `scripts/` continuam válidos durante a transição. A
-migração para `engineering/` deve ser incremental e preservada por contratos.
+Scripts existentes em `scripts/` continuam válidos durante a transição. O
+módulo de maturidade já usa perfis e checks em `engineering/maturity/`, mas o
+avaliador e o publicador ainda vivem em `scripts/maturity/`. Essa separação é
+transitória e deve ser preservada por contratos.
+
+Uso principal:
+
+```bash
+./scripts/maturity/run-and-publish.sh pre-alpha
+```
+
+Tutorial específico: [maturity/README.md](./maturity/README.md).
 
 ## Decisão
 

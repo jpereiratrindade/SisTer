@@ -12,3 +12,5 @@
 - [ADR-0010 - Painel administrativo de maturidade](./ADR-0010-maturity-dashboard.md)
 - [ADR-0011 - Sistema de Governança da Engenharia do SisTer](./ADR-0011-sge-sister-engineering-governance-system.md)
 - [ADR-0012 - Módulos internos do Processo de Engenharia e SGE-SisTer](./ADR-0012-internal-engineering-modules.md)
+- [ADR-0013 - Validação da Federação do Motor Declarativo](./ADR-0013-declarative-engine-federation-validation.md)
+- [ADR-0014 - Engines de verificação e modos de governança do SGR](./ADR-0014-sgr-engines-and-governance.md)
