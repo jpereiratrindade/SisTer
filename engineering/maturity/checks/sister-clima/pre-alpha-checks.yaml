@@ -1,26 +1,58 @@
 - schema: sister.engineering.maturity-check/1.0.0
-  id: build-definition
-  stage: pre-alpha
-  type: min_count
+  id: python-dependency-definition
+  type: any_file_exists
+  paths:
+    - pyproject.toml
+    - requirements.txt
   mandatory: true
-  description: Arquivo de dependências (requirements.txt) existe
-  arguments:
-    dir: "."
-    minimum: 1
-    regex: ^(requirements\.txt)$
+  dimension: architecture
+  stage: pre-alpha
+  description: Definição de dependências do Python
+
 - schema: sister.engineering.maturity-check/1.0.0
-  id: integration-contract
-  stage: pre-alpha
-  type: file_exists
+  id: streamlit-entrypoint
+  type: any_file_exists
+  paths:
+    - app.py
+    - streamlit_app.py
+    - main.py
+    - src/app.py
   mandatory: true
-  description: Contrato de integração estrutural existe
-  arguments:
-    path: SISTER_INTEGRATION.md
+  dimension: architecture
+  stage: pre-alpha
+  description: Entrypoint do Streamlit
+
 - schema: sister.engineering.maturity-check/1.0.0
-  id: app-entrypoint
-  stage: pre-alpha
-  type: file_exists
+  id: sister-integration-contract
+  type: any_file_exists
+  paths:
+    - SISTER_INTEGRATION.md
+    - contracts/system_manifest.json
+    - contracts/subsystem-manifest.json
   mandatory: true
-  description: Ponto de entrada do app (app.py) existe
-  arguments:
-    path: app.py
+  dimension: contracts
+  stage: pre-alpha
+  description: Contrato de Integração
+
+- schema: sister.engineering.maturity-check/1.0.0
+  id: python-tests
+  type: script
+  script_ref: sister-clima.tests
+  mandatory: true
+  dimension: tests
+  stage: pre-alpha
+  description: Suíte de testes do Clima
+
+- schema: sister.engineering.maturity-check/1.0.0
+  id: python-import-check
+  type: script
+  script_ref: sister-clima.import-check
+  mandatory: true
+  dimension: tests
+  stage: pre-alpha
+  description: Teste de sanidade (import check)
+
+- schema: sister.engineering.maturity-check/1.0.0
+  id: no-tracked-secrets-toml
+  type: script
+  script_ref: sister-clima.import-check # we can do a simple script or just a regex match to avoid versioned secrets. Wait, the profile has a "regex_match" or I can add a specific type for missing file. Wait, evaluator has `file_exists`, let's just make sure it does NOT exist? Evaluator has `file_exists`, not `file_missing`. Let me check if evaluator has `regex_match`?

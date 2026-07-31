@@ -11,10 +11,10 @@ aprovações.
 scripts e testes -> verificador -> status JSON -> API admin -> painel
 ```
 
-O verificador (`scripts/verify-sister-maturity.sh`) avalia uma execução. O
-histórico automático é produzido pelo wrapper de publicação
-`scripts/maturity/run-and-publish.sh`, que arquiva cada status válido em
-`.run/maturity/history/` e atualiza `.run/maturity/history/index.json`.
+O verificador (`scripts/maturity/evaluator.py`) avalia uma execução usando
+o Motor Declarativo. O histórico automático é produzido pelo wrapper de
+publicação `scripts/maturity/run-and-publish.sh`, que arquiva cada status
+válido em `.run/maturity/history/` e atualiza `.run/maturity/history/index.json`.
 
 ## Visões
 
@@ -25,7 +25,8 @@ A tela combina leituras operacionais e executivas sobre a mesma atestação:
 - pipeline Pré-Alfa, Alfa, Beta, Gama e Produção;
 - bloqueadores e proveniência;
 - saúde da engenharia por dimensão derivada dos checks;
-- leitura inicial por plataforma e subsistemas;
+- **componentes do ecossistema federado** (Core, Nexo, Clima, etc.) com
+  resultado técnico e modo de governança separados visualmente;
 - árvore de decisão do gate avaliado;
 - evidências por estágio;
 - histórico recente de execuções.
@@ -33,6 +34,19 @@ A tela combina leituras operacionais e executivas sobre a mesma atestação:
 As porcentagens e agrupamentos são derivados no navegador a partir dos checks
 publicados. Eles ajudam a leitura, mas a decisão formal continua sendo o
 `result`, os `blockers` e os estados produzidos pelo verificador.
+
+## Separação visual: Avaliação técnica × Governança
+
+O painel distingue explicitamente dois conceitos:
+
+| Conceito | Badge | Semântica |
+|---|---|---|
+| Avaliação técnica | Verde/Vermelho/Amarelo | Resultado dos checks do estágio avaliado |
+| Modo de governança | Cinza neutro (`SHADOW`) | Se o componente tem autoridade sobre promoções |
+
+Um componente pode ter **Avaliação técnica: PASS** e **Governança: SHADOW**
+ao mesmo tempo — isso significa que o ambiente técnico está sadio, mas que o
+componente está em modo piloto e não influencia promoções do Core.
 
 ## Publicação
 
@@ -49,7 +63,7 @@ Também é possível informar explicitamente o estágio:
 
 ### Componentes e Pilotos (Modo Shadow)
 
-Para avaliar um subsistema ou componente externo (ex: Nexo), forneça o ID do componente e o caminho raiz do repositório respectivo:
+Para avaliar um subsistema ou componente externo, forneça o ID do componente e o caminho raiz do respectivo repositório:
 
 ```bash
 ./scripts/maturity/run-and-publish.sh pre-alpha \
@@ -57,12 +71,40 @@ Para avaliar um subsistema ou componente externo (ex: Nexo), forneça o ID do co
   --component-root /caminho/para/o/repo/do/nexo
 ```
 
-O orquestrador utilizará o Motor Declarativo sob o perfil respectivo (ex: `sister-nexo.yaml`). O resultado será projetado no dashboard mantendo o isolamento de métricas.
+#### Exemplo com Sister-Clima (Python/Streamlit)
+
+```bash
+./scripts/maturity/run-and-publish.sh pre-alpha \
+  --component sister-clima \
+  --component-root /caminho/para/o/repo/do/clima
+```
+
+O Motor Declarativo suporta componentes em qualquer tecnologia via scripts delegados.
+Para componentes Python que usam `venv`, os scripts de CI detectam automaticamente
+o interpretador correto em `venv/bin/python` ou `.venv/bin/python`, garantindo
+que dependências como `h3`, `shapely` etc. sejam encontradas sem alterar o ambiente
+do sistema.
+
+### Tipos de checks suportados
+
+| Tipo | Descrição |
+|---|---|
+| `file_exists` | Verifica a existência de um arquivo específico |
+| `any_file_exists` | Verifica se ao menos um arquivo de uma lista existe (útil para entrypoints alternativos) |
+| `directory_exists` | Verifica a existência de um diretório |
+| `regex_match` | Verifica se algum arquivo corresponde a um padrão de nome |
+| `regex_present` | Verifica se um padrão está presente no conteúdo de arquivo(s) |
+| `script` | Executa um script delegado registrado no perfil do componente |
+| `min_count` | Verifica contagem mínima de arquivos em diretório |
+| `no_tracked_secrets` | Verifica ausência de arquivos suspeitos no repositório |
+| `git_repo` | Verifica se o diretório é um repositório Git válido |
+| `git_clean` | Verifica se o repositório está limpo (não bloqueante fora do modo certify) |
+| `approval` | Verifica presença de aprovação formal em arquivo YAML |
 
 ### Arquivos Locais
 
-- `.run/maturity/latest.json`: estado da última execução (consumido imediatamente pela UI);
-- `.run/maturity/components.json`: índice federado com as últimas execuções de todos os componentes testados;
+- `.run/maturity/latest.json`: estado da última execução do Core (consumido pela UI);
+- `.run/maturity/components.json`: índice federado com as últimas execuções de todos os componentes;
 - `.run/maturity/components/<id>/latest.json`: estado consolidado de um componente específico;
 - `.run/maturity/components/<id>/history/*.json`: atestações históricas do componente;
 - `build/maturity/`: relatórios Markdown tradicionais.

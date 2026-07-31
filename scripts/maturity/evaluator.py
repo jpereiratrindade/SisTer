@@ -21,7 +21,7 @@ def evaluate_check(check, repo, component_root, profile_scripts, strict=False):
                 status, detail = "FAIL", f"Script ref {ref} not found in profile"
             else:
                 path = script_info.get("path")
-                full_path = repo / path
+                full_path = repo.resolve() / path
                 if not full_path.exists() or not os.access(full_path, os.X_OK):
                     status, detail = "FAIL", f"Script not executable or missing: {path}"
                 else:
@@ -30,8 +30,11 @@ def evaluate_check(check, repo, component_root, profile_scripts, strict=False):
                     if proc.returncode == 0:
                         status, detail = "PASS", f"script={path}"
                     else:
-                        tail_out = proc.stdout[-1000:] + proc.stderr[-1000:]
-                        status, detail = "FAIL", f"rc={proc.returncode}; {tail_out.replace('\n', ' ')}"
+                        tail_out = proc.stdout[-500:] + proc.stderr[-500:]
+                        # Sanitize absolute paths to avoid breaking status_contract
+                        tail_out = re.sub(r"(?<![A-Za-z0-9_.:-])/(?:[A-Za-z0-9._-]+/)+[A-Za-z0-9._-]+|[A-Za-z]:\\", "[PATH]", tail_out)
+                        detail_str = f"rc={proc.returncode}; {tail_out.replace('\n', ' ')}"
+                        status, detail = "FAIL", detail_str[:490]
         elif ctype == "directory_exists":
             args = check.get("arguments", {})
             path = component_root / args.get("path", "")
@@ -46,6 +49,17 @@ def evaluate_check(check, repo, component_root, profile_scripts, strict=False):
                 status, detail = "PASS", str(args.get("path"))
             else:
                 status, detail = "FAIL", f"ausente: {args.get('path')}"
+        elif ctype == "any_file_exists":
+            paths = check.get("paths", [])
+            found_path = None
+            for p in paths:
+                if (component_root / p).is_file():
+                    found_path = p
+                    break
+            if found_path:
+                status, detail = "PASS", str(found_path)
+            else:
+                status, detail = "FAIL", f"nenhum dos arquivos ausentes: {', '.join(paths)}"
         elif ctype == "min_count":
             args = check.get("arguments", {})
             dir_path = component_root / args.get("dir", "")

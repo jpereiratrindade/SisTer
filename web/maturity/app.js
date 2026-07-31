@@ -343,13 +343,18 @@ function renderComponents(index) {
     let govText = GOVERNANCE_LABELS[comp.governance_mode] || "Sem perfil";
     if (comp.profile_state === "missing") govText = "Sem perfil";
 
-    // Result pill
-    let pillStatus = "SKIP";
-    if (comp.technical_result) {
-      pillStatus = comp.technical_result;
-    }
+    const resultText = comp.technical_result ? `${STAGE_LABELS[comp.stage] || comp.stage} — ${comp.technical_result}` : "Não avaliado";
+    const technicalPill = statusPill(comp.technical_result || "SKIP");
+    technicalPill.textContent = resultText;
 
-    item.append(title, statusPill(pillStatus), create("span", "", govText));
+    let govType = "SKIP";
+    if (comp.governance_mode === "shadow") govType = "SHADOW";
+    else if (comp.governance_mode === "governed") govType = "PASS";
+    
+    const govPill = statusPill(govType);
+    govPill.textContent = govText.toUpperCase();
+
+    item.append(title, technicalPill, govPill);
     list.append(item);
   });
 }

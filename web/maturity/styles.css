@@ -247,6 +247,7 @@ tr:last-child td { border-bottom: none; }
 .status-pill[data-status="PASS"] { border-color: rgba(5, 150, 105, 0.3); color: var(--green); background: color-mix(in srgb, var(--green) 15%, transparent); }
 .status-pill[data-status="FAIL"] { border-color: rgba(220, 38, 38, 0.3); color: var(--red); background: color-mix(in srgb, var(--red) 15%, transparent); }
 .status-pill[data-status="WARN"] { border-color: rgba(217, 119, 6, 0.3); color: var(--amber); background: color-mix(in srgb, var(--amber) 15%, transparent); }
+.status-pill[data-status="SHADOW"] { border-color: rgba(100, 116, 139, 0.3); color: var(--gray); background: color-mix(in srgb, var(--gray) 15%, transparent); }
 
 .empty-copy { color: var(--muted); margin: 20px 0 8px; font-weight: 500; font-size: 14px; text-align: center; padding: 32px; background: var(--surface-soft); border-radius: 6px; border: 1px dashed var(--line); }
 

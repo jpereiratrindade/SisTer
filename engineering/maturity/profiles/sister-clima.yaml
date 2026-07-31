@@ -2,10 +2,20 @@ schema: "sister.engineering.maturity-profile/1.0.0"
 id: "sister-clima"
 name: "Perfil de avaliação do Sister-Clima (Python/Streamlit)"
 component: "sister-clima"
+component_type:
+  - "subsystem-http"
+  - "subsystem-websocket"
+  - "python-application"
+  - "streamlit-application"
 model: "sister-sge"
 evaluation_mode: "shadow"
 governance_authority: false
 promotion_enabled: false
+scripts:
+  sister-clima.tests:
+    path: scripts/ci/test-sister-clima.sh
+  sister-clima.import-check:
+    path: scripts/ci/test-sister-clima-import.sh
 check_suites:
   - "engineering/maturity/checks/common/repository.yaml"
   - "engineering/maturity/checks/common/security-baseline.yaml"
