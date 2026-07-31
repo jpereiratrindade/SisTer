@@ -1,0 +1,11 @@
+{
+  "schema": "sister.subsystem.capabilities/1.0.0",
+  "system_id": "sister_clima",
+  "contract": "sister.subsystem/1.0.0",
+  "generated_at": "2026-07-31T13:30:00Z",
+  "capabilities": [
+    {"id": "climate.dashboard.read", "description": "Ler painéis climáticos integrados.", "risk": "low"},
+    {"id": "climate.analysis.execute", "description": "Executar análise climática governada.", "risk": "medium"},
+    {"id": "climate.dataset.export", "description": "Exportar conjunto climático autorizado.", "risk": "high"}
+  ]
+}

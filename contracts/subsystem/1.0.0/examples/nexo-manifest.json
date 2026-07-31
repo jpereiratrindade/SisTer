@@ -1,0 +1,29 @@
+{
+  "schema": "sister.subsystem.manifest/1.0.0",
+  "system_id": "sister_nexo",
+  "name": "SisTer Nexo",
+  "version": "0.1.0",
+  "contract": "sister.subsystem/1.0.0",
+  "adapter_version": "1.0.0",
+  "mount_path": "/integrations/nexo/",
+  "audience": "sister_nexo",
+  "transport": {
+    "http": true,
+    "websocket": false,
+    "internal_endpoint": "http://127.0.0.1:8015"
+  },
+  "technical_endpoints": {
+    "manifest": "/_sister/manifest",
+    "health": "/_sister/health",
+    "readiness": "/_sister/ready",
+    "capabilities": "/_sister/capabilities"
+  },
+  "capabilities": [
+    "nexo.projects.read",
+    "nexo.research_activities.manage",
+    "nexo.evidence.review"
+  ],
+  "data_ownership": "exclusive",
+  "audit_level": "domain_relevant_operations",
+  "production_eligible": false
+}

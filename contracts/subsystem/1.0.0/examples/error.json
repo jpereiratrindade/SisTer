@@ -1,0 +1,7 @@
+{
+  "schema": "sister.subsystem.error/1.0.0",
+  "error": "capability_denied",
+  "message": "Capability is required for this operation.",
+  "request_id": "req-20260731-0001",
+  "retryable": false
+}

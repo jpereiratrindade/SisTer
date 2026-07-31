@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/subsystem/1.0.0/capabilities.schema.json",
+  "title": "SisTer Subsystem Capabilities",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "system_id", "contract", "generated_at", "capabilities"],
+  "properties": {
+    "schema": {"const": "sister.subsystem.capabilities/1.0.0"},
+    "system_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+    "contract": {"const": "sister.subsystem/1.0.0"},
+    "generated_at": {"type": "string", "format": "date-time"},
+    "capabilities": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "description", "risk"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"},
+          "description": {"type": "string", "minLength": 5, "maxLength": 200},
+          "risk": {"enum": ["low", "medium", "high"]}
+        }
+      }
+    }
+  }
+}

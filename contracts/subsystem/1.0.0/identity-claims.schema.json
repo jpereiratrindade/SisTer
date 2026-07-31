@@ -1,0 +1,23 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/subsystem/1.0.0/identity-claims.schema.json",
+  "title": "SisTer Internal Identity Claims",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["iss", "sub", "aud", "iat", "exp", "jti", "capabilities"],
+  "properties": {
+    "iss": {"const": "sister"},
+    "sub": {"type": "string", "minLength": 1, "maxLength": 120},
+    "aud": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+    "iat": {"type": "integer", "minimum": 0},
+    "exp": {"type": "integer", "minimum": 0},
+    "jti": {"type": "string", "minLength": 16, "maxLength": 120},
+    "capabilities": {
+      "type": "array",
+      "maxItems": 100,
+      "uniqueItems": true,
+      "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"}
+    },
+    "context": {"type": "object", "additionalProperties": {"type": "string"}, "maxProperties": 20}
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema": "sister.subsystem.readiness/1.0.0",
+  "system_id": "sister_clima",
+  "status": "degraded",
+  "contract_version": "1.0.0",
+  "manifest_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "dependencies": {
+    "process": "ready",
+    "meteorological_provider": "degraded"
+  },
+  "degraded_capabilities": [
+    "climate.analysis.execute"
+  ]
+}

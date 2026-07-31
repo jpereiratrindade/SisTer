@@ -1,0 +1,45 @@
+openapi: 3.1.0
+info:
+  title: SisTer Subsystem Technical Surface
+  version: 1.0.0
+paths:
+  /_sister/manifest:
+    get:
+      summary: Return the approved subsystem manifest.
+      responses:
+        "200":
+          description: Manifest
+          content:
+            application/json:
+              schema:
+                $ref: "./manifest.schema.json"
+  /_sister/health:
+    get:
+      summary: Return sanitized process health.
+      responses:
+        "200":
+          description: Health
+          content:
+            application/json:
+              schema:
+                $ref: "./health.schema.json"
+  /_sister/ready:
+    get:
+      summary: Return sanitized readiness for useful traffic.
+      responses:
+        "200":
+          description: Readiness
+          content:
+            application/json:
+              schema:
+                $ref: "./readiness.schema.json"
+  /_sister/capabilities:
+    get:
+      summary: Return implemented subsystem capabilities.
+      responses:
+        "200":
+          description: Capabilities
+          content:
+            application/json:
+              schema:
+                $ref: "./capabilities.schema.json"

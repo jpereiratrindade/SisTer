@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposto para abertura da fase Alfa.
+Contrato inicial publicado.
 
 ## Objetivo arquitetural
 
@@ -94,6 +94,14 @@ Esses itens pertencem aos WPs seguintes.
 - teste de contrato executado;
 - relatório de maturidade Alfa em modo check;
 - atualização do Centro de Engenharia após publicação da atestação.
+
+## Evidências registradas
+
+- `contracts/subsystem/1.0.0/` publicado com schemas, OpenAPI e exemplos.
+- `scripts/ci/test-contract.sh` valida o contrato comum.
+- `python3 -m unittest tests.maturity.test_subsystem_contract` aprovado.
+- `./scripts/verify-sister-maturity.sh --stage alpha --mode check --repo .`
+  reconhece todos os artefatos de contrato do WP-02 como `PASS`.
 
 ## Riscos
 

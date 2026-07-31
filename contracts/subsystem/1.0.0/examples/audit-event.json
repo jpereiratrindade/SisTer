@@ -1,0 +1,11 @@
+{
+  "schema": "sister.subsystem.audit-event/1.0.0",
+  "event_id": "evt-20260731-0001",
+  "occurred_at": "2026-07-31T13:30:00Z",
+  "system_id": "sister_nexo",
+  "actor": "user:demo",
+  "action": "nexo.evidence.review",
+  "resource": "evidence:demo",
+  "outcome": "allowed",
+  "request_id": "req-20260731-0001"
+}

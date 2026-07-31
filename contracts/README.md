@@ -4,6 +4,9 @@ Esta pasta e a fonte de verdade dos contratos de integracao do SisTer.
 
 Contratos iniciais:
 
+- `subsystem/1.0.0/`: contrato comum `sister.subsystem/1.0.0` para
+  manifestos, saúde, prontidão, capacidades, identidade interna, erros,
+  auditoria e superfície técnica de subsistemas.
 - `system_manifest.schema.json`: declaracao de um sistema federado.
 - `camposync_package.schema.json`: pacote `camposync.package/1.0.0`,
   transportado por API local ou por meio offline sem alterar sua semantica.

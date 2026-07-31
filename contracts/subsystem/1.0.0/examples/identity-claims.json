@@ -1,0 +1,15 @@
+{
+  "iss": "sister",
+  "sub": "user:demo",
+  "aud": "sister_nexo",
+  "iat": 1785504600,
+  "exp": 1785504900,
+  "jti": "identity-demo-20260731",
+  "capabilities": [
+    "nexo.projects.read",
+    "nexo.evidence.review"
+  ],
+  "context": {
+    "purpose": "development"
+  }
+}
