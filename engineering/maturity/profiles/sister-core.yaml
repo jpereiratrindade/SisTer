@@ -3,5 +3,15 @@ id: "sister-core"
 name: "Perfil de avaliação do SisTer Core (sisterd)"
 component: "sister-core"
 model: "sister-sge"
+scripts:
+  ci.test-unit:
+    path: scripts/ci/test-unit.sh
+  ci.test-contract:
+    path: scripts/ci/test-contract.sh
+  ci.test-smoke:
+    path: scripts/app/smoke.sh
+  baseline.verify:
+    path: labs/sisterd_lab/scripts/verify-identical.sh
 check_suites:
+  - "engineering/maturity/checks/sister-core/pre-alpha-checks.yaml"
   - "engineering/maturity/checks/sister-core/alpha-checks.yaml"

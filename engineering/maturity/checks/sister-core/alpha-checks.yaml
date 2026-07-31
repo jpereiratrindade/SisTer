@@ -1,26 +1,173 @@
-- schema: "sister.engineering.maturity-check/1.0.0"
-  id: "unit-tests"
-  stage: "alpha"
-  type: "script"
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-dir
+  stage: alpha
+  type: directory_exists
   mandatory: true
-  description: "Testes unitários aprovados"
+  description: Contrato sister.subsystem/1.0.0 existe
   arguments:
-    path: "scripts/ci/test-unit.sh"
-
-- schema: "sister.engineering.maturity-check/1.0.0"
-  id: "architecture-approval"
-  stage: "alpha"
-  type: "approval"
+    path: contracts/subsystem/1.0.0
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-manifest-schema-json
+  stage: alpha
+  type: file_exists
   mandatory: true
-  description: "Arquitetura Alfa aprovada"
+  description: Artefato contratual manifest.schema.json existe
   arguments:
-    path: "docs/evidence/alpha/architecture.md"
-
-- schema: "sister.engineering.maturity-check/1.0.0"
-  id: "security-approval"
-  stage: "alpha"
-  type: "approval"
+    path: contracts/subsystem/1.0.0/manifest.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-capabilities-schema-json
+  stage: alpha
+  type: file_exists
   mandatory: true
-  description: "Segurança Alfa aprovada"
+  description: Artefato contratual capabilities.schema.json existe
   arguments:
-    path: "docs/evidence/alpha/security.md"
+    path: contracts/subsystem/1.0.0/capabilities.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-identity-claims-schema-json
+  stage: alpha
+  type: file_exists
+  mandatory: true
+  description: Artefato contratual identity-claims.schema.json existe
+  arguments:
+    path: contracts/subsystem/1.0.0/identity-claims.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-health-schema-json
+  stage: alpha
+  type: file_exists
+  mandatory: true
+  description: Artefato contratual health.schema.json existe
+  arguments:
+    path: contracts/subsystem/1.0.0/health.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-readiness-schema-json
+  stage: alpha
+  type: file_exists
+  mandatory: true
+  description: Artefato contratual readiness.schema.json existe
+  arguments:
+    path: contracts/subsystem/1.0.0/readiness.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-error-schema-json
+  stage: alpha
+  type: file_exists
+  mandatory: true
+  description: Artefato contratual error.schema.json existe
+  arguments:
+    path: contracts/subsystem/1.0.0/error.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-audit-event-schema-json
+  stage: alpha
+  type: file_exists
+  mandatory: true
+  description: Artefato contratual audit-event.schema.json existe
+  arguments:
+    path: contracts/subsystem/1.0.0/audit-event.schema.json
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-openapi-yaml
+  stage: alpha
+  type: file_exists
+  mandatory: true
+  description: Artefato contratual openapi.yaml existe
+  arguments:
+    path: contracts/subsystem/1.0.0/openapi.yaml
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-readme-md
+  stage: alpha
+  type: file_exists
+  mandatory: true
+  description: Artefato contratual README.md existe
+  arguments:
+    path: contracts/subsystem/1.0.0/README.md
+- schema: sister.engineering.maturity-check/1.0.0
+  id: adrs
+  stage: alpha
+  type: min_count
+  mandatory: true
+  description: ADRs arquiteturais mínimos estão registrados
+  arguments:
+    dir: docs/adr
+    regex: ADR-[0-9]{4}.*\.(md|adoc|txt)$
+    minimum: 7
+- schema: sister.engineering.maturity-check/1.0.0
+  id: migration-users
+  stage: alpha
+  type: regex_match
+  mandatory: true
+  description: Migração de usuários existe
+  arguments:
+    regex: (^|/)storage/migrations/.*user.*\.sql$
+- schema: sister.engineering.maturity-check/1.0.0
+  id: migration-sessions
+  stage: alpha
+  type: regex_match
+  mandatory: true
+  description: Migração de sessões existe
+  arguments:
+    regex: (^|/)storage/migrations/.*session.*\.sql$
+- schema: sister.engineering.maturity-check/1.0.0
+  id: migration-capabilities
+  stage: alpha
+  type: regex_match
+  mandatory: true
+  description: Migração de capacidades existe
+  arguments:
+    regex: (^|/)storage/migrations/.*capabilit.*\.sql$
+- schema: sister.engineering.maturity-check/1.0.0
+  id: token-hash
+  stage: alpha
+  type: regex_present
+  mandatory: true
+  description: Sessões armazenam hash do token
+  arguments:
+    path: apps
+    regex: token_hash|session_token_hash
+- schema: sister.engineering.maturity-check/1.0.0
+  id: signed-identity
+  stage: alpha
+  type: regex_present
+  mandatory: true
+  description: Código contém emissão/validação de identidade assinada
+  arguments:
+    path: apps
+    regex: audience|["']aud["']|token_issuer|signing_key|kid
+- schema: sister.engineering.maturity-check/1.0.0
+  id: capability-api
+  stage: alpha
+  type: regex_present
+  mandatory: true
+  description: API de capacidades do usuário está implementada
+  arguments:
+    path: apps
+    regex: /api/me/capabilities|me/capabilities
+- schema: sister.engineering.maturity-check/1.0.0
+  id: unit-tests
+  stage: alpha
+  type: script
+  mandatory: true
+  description: Testes unitários aprovados
+  script_ref: ci.test-unit
+  timeout_seconds: 300
+- schema: sister.engineering.maturity-check/1.0.0
+  id: contract-tests
+  stage: alpha
+  type: script
+  mandatory: true
+  description: Testes de contrato aprovados
+  script_ref: ci.test-contract
+  timeout_seconds: 300
+- schema: sister.engineering.maturity-check/1.0.0
+  id: architecture-approval
+  stage: alpha
+  type: approval
+  mandatory: true
+  description: Arquitetura Alfa aprovada
+  arguments:
+    path: docs/evidence/alpha/architecture.md
+- schema: sister.engineering.maturity-check/1.0.0
+  id: security-approval
+  stage: alpha
+  type: approval
+  mandatory: true
+  description: Segurança Alfa aprovada
+  arguments:
+    path: docs/evidence/alpha/security.md

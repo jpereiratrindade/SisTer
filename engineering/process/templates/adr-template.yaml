@@ -1,0 +1,16 @@
+schema: "sister.engineering.process-decision/1.0.0"
+id: "ADR-XXXX"
+title: "Título Curto Descritivo da Decisão"
+status: "proposed" # proposed, accepted, rejected, deprecated, superseded
+date: "2026-XX-XX"
+authors:
+  - "Equipe de Engenharia"
+context: |
+  Qual é a força motriz para esta decisão?
+  Descreva o problema e o contexto tecnológico ou de negócios que nos levou a precisar de uma decisão.
+decision: |
+  Qual é a decisão técnica que foi tomada?
+  Descreva as escolhas de arquitetura, padrões adotados ou componentes afetados.
+consequences: |
+  O que se torna mais fácil ou mais difícil de fazer por causa desta decisão?
+  Liste prós, contras e riscos associados.

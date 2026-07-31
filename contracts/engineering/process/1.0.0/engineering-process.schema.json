@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sister.local/schemas/engineering/process/1.0.0/engineering-process.schema.json",
+  "title": "SisTer Engineering Process Schema",
+  "type": "object",
+  "required": [
+    "schema",
+    "process_id",
+    "version",
+    "phases"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "sister.engineering-process/1.0.0"
+    },
+    "process_id": {
+      "type": "string",
+      "pattern": "^[a-z0-9.-]+$"
+    },
+    "version": {
+      "type": "string"
+    },
+    "phases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["id"],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "depends_on": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "outputs": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      },
+      "minItems": 1
+    }
+  }
+}

@@ -1,0 +1,43 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sister.local/schemas/engineering/process/1.0.0/process-decision.schema.json",
+  "title": "SisTer Process Decision Schema",
+  "type": "object",
+  "required": [
+    "schema",
+    "decision_id",
+    "status",
+    "owners"
+  ],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "sister.process-decision/1.0.0"
+    },
+    "decision_id": {
+      "type": "string",
+      "pattern": "^ADR-[0-9]{4}$"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "proposed",
+        "accepted",
+        "rejected",
+        "deprecated",
+        "superseded"
+      ]
+    },
+    "owners": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1
+    },
+    "review_at": {
+      "type": ["string", "null"],
+      "format": "date"
+    }
+  }
+}

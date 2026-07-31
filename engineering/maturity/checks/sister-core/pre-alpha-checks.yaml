@@ -1,0 +1,68 @@
+- schema: sister.engineering.maturity-check/1.0.0
+  id: git-repository
+  stage: pre-alpha
+  type: git_repo
+  mandatory: true
+  description: Repositório Git reconhecido
+- schema: sister.engineering.maturity-check/1.0.0
+  id: git-clean
+  stage: pre-alpha
+  type: git_clean
+  mandatory: false
+  description: Árvore Git limpa para atestação
+- schema: sister.engineering.maturity-check/1.0.0
+  id: tracked-secrets
+  stage: pre-alpha
+  type: no_tracked_secrets
+  mandatory: true
+  description: Nenhum arquivo de segredo óbvio está versionado
+- schema: sister.engineering.maturity-check/1.0.0
+  id: baseline-integrity
+  stage: pre-alpha
+  type: script
+  mandatory: true
+  description: Snapshot/baseline permanece íntegro
+  script_ref: baseline.verify
+  timeout_seconds: 300
+- schema: sister.engineering.maturity-check/1.0.0
+  id: smoke-flow
+  stage: pre-alpha
+  type: script
+  mandatory: true
+  description: Smoke tests preservam autenticação, Nexo e Clima
+  script_ref: ci.test-smoke
+  timeout_seconds: 300
+- schema: sister.engineering.maturity-check/1.0.0
+  id: transition-plan
+  stage: pre-alpha
+  type: regex_match
+  mandatory: true
+  description: Plano de transição está versionado
+  arguments:
+    regex: (^|/)(docs/.*)?sister.*transi(c|ç)(a|ã)o.*prototipo.*\.(md|tex)$
+- schema: sister.engineering.maturity-check/1.0.0
+  id: maturity-roadmap
+  stage: pre-alpha
+  type: regex_match
+  mandatory: true
+  description: Roteiro Alfa–Beta–Gama está versionado
+  arguments:
+    regex: (^|/)(docs/.*)?sister.*(alfa|alpha).*beta.*(gama|gamma).*\.(md|tex)$
+- schema: sister.engineering.maturity-check/1.0.0
+  id: status-file
+  stage: pre-alpha
+  type: file_exists
+  mandatory: true
+  description: Arquivo formal de estado do SisTer existe
+  arguments:
+    path: .sister/status.yml
+- schema: sister.engineering.maturity-check/1.0.0
+  id: prototype-status
+  stage: pre-alpha
+  type: regex_present
+  mandatory: true
+  description: Estado provisório está declarado
+  arguments:
+    path: .sister/status.yml
+    regex: "stage[ \t]*:[ \t]*(development_prototype|development_provisional|pre-alpha)|production_ready[\
+      \ \t]*:[ \t]*false"
