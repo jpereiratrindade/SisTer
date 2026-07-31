@@ -128,7 +128,7 @@ def evaluate_check(check, repo, profile_scripts, strict=False):
             dirty_out = subprocess.run(["git", "status", "--porcelain", "--untracked-files=normal"], cwd=repo, capture_output=True, text=True).stdout.strip()
             if not dirty_out:
                 status, detail = "PASS", "clean"
-                mandatory = True
+                mandatory = False
             elif os.environ.get("MODE") == "certify":
                 status, detail = "FAIL", dirty_out[:100].replace('\n', ' ')
                 mandatory = True
