@@ -58,6 +58,7 @@ arquitetural correspondente.
 | Arquitetura de transição | Explicar o que construir e por quê | `docs/architecture/sister_transicao_prototipo_para_arquitetura_producao.md` |
 | Roteiro Alfa-Beta-Gama | Definir ordem, estágio e critérios de saída | `docs/architecture/sister_roteiro_alfa_beta_gamma_uma_pagina.md` |
 | Pacotes de trabalho | Converter arquitetura em incrementos governados | `docs/work-packages/` |
+| Módulos de engenharia | Consolidar processo, governança e maturidade reutilizáveis | `engineering/` |
 | Contratos | Tornar integrações e evidências verificáveis | `contracts/` |
 | Gates | Declarar critérios de maturidade executáveis | `.sister/maturity.conf`, `scripts/verify-sister-maturity.sh` |
 | Evidências | Registrar aprovações, relatórios e provas humanas | `docs/evidence/` |
@@ -77,6 +78,18 @@ O SGE-SisTer possui três níveis de leitura sobre maturidade:
 O comando `scripts/verify-sister-maturity.sh` não arquiva histórico sozinho. Ele
 é a autoridade de avaliação. O rastreamento automático acontece quando o gate é
 executado pelo fluxo de publicação.
+
+## Modularização interna
+
+O Processo de Engenharia e o SGE-SisTer serão consolidados inicialmente como
+módulos internos em `engineering/`, orientados por contratos e sem dependência
+irreversível do núcleo. A extração para projeto independente só será avaliada
+após evidência de reutilização real entre componentes.
+
+Referências:
+
+- [Arquitetura do Processo de Engenharia, SGE-SisTer e Módulo de Maturidade](../architecture/sister_arquitetura_processo_engenharia_sge_maturidade.md)
+- [ADR-0012](../adr/ADR-0012-internal-engineering-modules.md)
 
 ## Roadmap do SGE
 

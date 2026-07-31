@@ -28,6 +28,8 @@ Referência: [SGE_SISTER.md](./SGE_SISTER.md).
 
 Pacotes de trabalho: [docs/work-packages](../work-packages/README.md).
 
+Módulos internos de engenharia: [engineering](../../engineering/README.md).
+
 ## Componentes governados
 
 O estado atual do SisTer inclui componentes que devem ser tratados como superficie governada:

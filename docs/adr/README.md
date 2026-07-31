@@ -11,3 +11,4 @@
 - [ADR-0009 - Perfis de usuário, grupos de pesquisa e controle de acesso](./ADR-0009-user-profiles-and-research-groups-access-control.md)
 - [ADR-0010 - Painel administrativo de maturidade](./ADR-0010-maturity-dashboard.md)
 - [ADR-0011 - Sistema de Governança da Engenharia do SisTer](./ADR-0011-sge-sister-engineering-governance-system.md)
+- [ADR-0012 - Módulos internos do Processo de Engenharia e SGE-SisTer](./ADR-0012-internal-engineering-modules.md)
