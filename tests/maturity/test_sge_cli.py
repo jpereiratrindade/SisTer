@@ -17,7 +17,18 @@ class SgeCliTests(unittest.TestCase):
         )
         self.assertIn("evaluate", proc.stdout)
         self.assertIn("publish", proc.stdout)
+        self.assertIn("publish-all", proc.stdout)
         self.assertIn("validate", proc.stdout)
+
+    def test_evaluate_help_lists_engine_option(self):
+        proc = subprocess.run(
+            [str(ROOT / "scripts" / "sge"), "maturity", "evaluate", "--help"],
+            cwd=ROOT,
+            capture_output=True,
+            text=True,
+            check=True,
+        )
+        self.assertIn("--engine", proc.stdout)
 
     def test_contract_validation_command_passes(self):
         subprocess.run(

@@ -29,7 +29,7 @@
           <p id="heading-detail" class="heading-detail">Carregando a última evidência publicada...</p>
         </div>
         <div id="overall-result" class="overall-result" data-status="SKIP">
-          <span>Avaliação técnica</span>
+          <span>Resultado técnico do componente</span>
           <strong>Carregando</strong>
         </div>
       </header>
@@ -37,12 +37,24 @@
       <div id="notice" class="notice" role="status" aria-live="polite">Consultando evidência...</div>
 
       <section id="dashboard" hidden>
+        <nav class="dashboard-tabs" role="tablist" aria-label="Leituras de maturidade">
+          <button type="button" role="tab" data-panel-tab="summary" aria-selected="true">Resumo</button>
+          <button type="button" role="tab" data-panel-tab="components" aria-selected="false">Componentes</button>
+          <button type="button" role="tab" data-panel-tab="engines" aria-selected="false">SGE / Engines</button>
+          <button type="button" role="tab" data-panel-tab="catalog" aria-selected="false">Testes Disponíveis</button>
+          <button type="button" role="tab" data-panel-tab="evidence" aria-selected="false">Evidências Executadas</button>
+          <button type="button" role="tab" data-panel-tab="history" aria-selected="false">Histórico</button>
+        </nav>
+
+        <div class="dashboard-panel" data-panel="summary">
         <section class="executive-panel" aria-labelledby="executive-title">
           <div>
-            <p class="eyebrow">STATUS GERAL</p>
-            <h2 id="executive-title">Síntese executiva</h2>
+            <p class="eyebrow">MATURIDADE DO COMPONENTE</p>
+            <h2 id="executive-title">Síntese do gate</h2>
             <p id="executive-status" class="executive-status">Aguardando evidência.</p>
             <dl class="executive-facts">
+              <div><dt>Componente avaliado</dt><dd id="evaluated-target">—</dd></div>
+              <div><dt>Escopo</dt><dd id="evaluation-scope">—</dd></div>
               <div><dt>Próximo objetivo</dt><dd id="next-stage">—</dd></div>
               <div><dt>Bloqueadores</dt><dd id="executive-blockers">0</dd></div>
               <div><dt>Advertências</dt><dd id="executive-warnings">0</dd></div>
@@ -50,9 +62,35 @@
             </dl>
           </div>
           <div class="decision-card">
-            <span>Pode promover?</span>
+            <span>Promoção do componente</span>
             <strong id="promotion-decision">—</strong>
             <small id="promotion-detail">Última avaliação ainda não carregada.</small>
+          </div>
+        </section>
+
+        <section class="scope-band" aria-labelledby="scope-title">
+          <div class="section-heading"><div><p class="eyebrow">ESCOPO DA EVIDÊNCIA</p><h2 id="scope-title">Camadas avaliadas nesta execução</h2></div></div>
+          <dl class="scope-grid">
+            <div><dt>Camadas</dt><dd id="scope-layer">—</dd></div>
+            <div><dt>Componente avaliado</dt><dd id="scope-component">—</dd></div>
+            <div><dt>Gate</dt><dd id="scope-stage">—</dd></div>
+            <div><dt>Engine SGE</dt><dd id="scope-engine">—</dd></div>
+            <div><dt>Governança</dt><dd id="scope-governance">—</dd></div>
+            <div><dt>Impacto na promoção</dt><dd id="scope-impact">—</dd></div>
+          </dl>
+          <button id="core-scope-toggle" class="inline-disclosure" type="button">O que significa testar SisTer Core?</button>
+          <div id="core-scope-detail" class="scope-detail" hidden>
+            <p>
+              SisTer Core é o conjunto central deste repositório usado para governar a plataforma:
+              contratos, autenticação, sessão, APIs administrativas, integração dos adaptadores,
+              evidências, maturidade e o serviço `sisterd`.
+            </p>
+            <p>
+              Testar SisTer Core não significa testar todos os subsistemas externos. Significa
+              verificar se o núcleo e seus contratos estão prontos para o gate avaliado. Os
+              subsistemas aparecem na aba Componentes e seus checks disponíveis aparecem na aba
+              Testes Disponíveis.
+            </p>
           </div>
         </section>
 
@@ -71,18 +109,22 @@
           <article class="summary-item summary-skip"><span>Ignorados</span><strong id="count-skipped">0</strong></article>
           <article class="summary-item summary-block"><span>Bloqueios</span><strong id="count-blockers">0</strong></article>
         </section>
+        </div>
 
+        <div class="dashboard-panel" data-panel="engines" hidden>
         <div class="information-grid">
           <section class="information-section" aria-labelledby="blockers-title">
             <div class="section-heading"><div><p class="eyebrow">PRIORIDADE</p><h2 id="blockers-title">Bloqueadores</h2></div></div>
             <div id="blockers-list" class="blockers-list"></div>
           </section>
           <section class="information-section" aria-labelledby="provenance-title">
-            <div class="section-heading"><div><p class="eyebrow">RASTREABILIDADE</p><h2 id="provenance-title">Proveniência</h2></div></div>
+            <div class="section-heading"><div><p class="eyebrow">SGE E RASTREABILIDADE</p><h2 id="provenance-title">Proveniência da verificação</h2></div></div>
             <dl id="provenance-list" class="provenance-list"></dl>
           </section>
         </div>
+        </div>
 
+        <div class="dashboard-panel" data-panel="components" hidden>
         <div class="engineering-grid">
           <section class="information-section" aria-labelledby="health-title">
             <div class="section-heading"><div><p class="eyebrow">DIMENSÕES VERIFICADAS</p><h2 id="health-title">Saúde da Engenharia</h2></div></div>
@@ -93,7 +135,16 @@
             <div id="subsystems-list" class="subsystem-list"></div>
           </section>
         </div>
+        </div>
 
+        <div class="dashboard-panel" data-panel="catalog" hidden>
+        <section class="catalog-section" aria-labelledby="catalog-title">
+          <div class="section-heading"><div><p class="eyebrow">CATÁLOGO SGE</p><h2 id="catalog-title">Testes disponíveis nos perfis versionados</h2></div></div>
+          <div id="checks-catalog" class="catalog-grid"></div>
+        </section>
+        </div>
+
+        <div class="dashboard-panel" data-panel="evidence" hidden>
         <section class="information-section decision-tree" aria-labelledby="decision-title">
           <div class="section-heading"><div><p class="eyebrow">DIAGNÓSTICO</p><h2 id="decision-title">Árvore de decisão do gate avaliado</h2></div></div>
           <div id="decision-tree" class="decision-tree-list"></div>
@@ -113,7 +164,9 @@
             <p id="checks-empty" class="empty-copy" hidden>Nenhuma verificação registrada para este estágio.</p>
           </div>
         </section>
+        </div>
 
+        <div class="dashboard-panel" data-panel="summary">
         <div class="information-grid lower-grid">
           <section class="information-section" aria-labelledby="actions-title">
             <div class="section-heading"><div><p class="eyebrow">SEQUÊNCIA</p><h2 id="actions-title">Próximas ações</h2></div></div>
@@ -122,13 +175,15 @@
           <section class="information-section" aria-labelledby="operation-title">
             <div class="section-heading"><div><p class="eyebrow">AÇÃO OPERACIONAL</p><h2 id="operation-title">Publicar nova atestação</h2></div></div>
             <div class="operation-box">
-              <code id="publish-command" class="operation-command">./scripts/sge maturity publish</code>
+              <code id="publish-command" class="operation-command">./scripts/sge maturity publish-all</code>
               <button id="copy-publish-command" class="copy-command" type="button">Copiar</button>
             </div>
             <p id="operation-detail" class="operation-detail">A execução permanece no terminal, CI ou unidade operacional aprovada.</p>
           </section>
         </div>
+        </div>
 
+        <div class="dashboard-panel" data-panel="history" hidden>
         <div class="information-grid lower-grid">
           <section class="information-section" aria-labelledby="history-title">
             <div class="section-heading"><div><p class="eyebrow">EVOLUÇÃO</p><h2 id="history-title">Execuções recentes</h2></div></div>
@@ -140,6 +195,7 @@
               <p id="history-empty" class="empty-copy" hidden>Nenhuma execução anterior publicada.</p>
             </div>
           </section>
+        </div>
         </div>
       </section>
     </main>

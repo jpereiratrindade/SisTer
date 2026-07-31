@@ -118,6 +118,12 @@ def main():
                 '{"schema":"sister.maturity-history/1.0.0","items":[]}\n', encoding="utf-8"
             )
             assert request(port, "GET", "/api/admin/maturity/history", cookie=admin_cookie)[0] == 200
+            assert request(port, "GET", "/api/admin/maturity/catalog", cookie=admin_cookie)[0] == 404
+            (maturity_root / "catalog.json").write_text(
+                '{"schema":"sister.maturity-catalog/1.0.0","generated_at":"2026-07-31T00:00:00Z","components":[]}\n',
+                encoding="utf-8",
+            )
+            assert request(port, "GET", "/api/admin/maturity/catalog", cookie=admin_cookie)[0] == 200
             status, _, page = request(port, "GET", "/admin/maturity", cookie=admin_cookie)
             assert status == 200 and b"Centro de Engenharia do SisTer" in page
         finally:

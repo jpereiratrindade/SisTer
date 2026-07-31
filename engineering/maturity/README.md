@@ -41,6 +41,23 @@ Avaliar e publicar um estágio específico do Core:
 ./scripts/sge maturity publish alpha
 ```
 
+Avaliar e publicar todos os componentes resolvíveis do ecossistema:
+
+```bash
+./scripts/sge maturity publish-all pre-alpha
+```
+
+`publish-all` percorre `engineering/maturity/ecosystem.yaml`. Componentes sem
+perfil ou sem raiz local resolvível são registrados como `SKIP` no terminal e
+continuam aparecendo no índice de componentes. Para componentes externos,
+declare a raiz por variável de ambiente, por exemplo:
+
+```bash
+export SISTER_CLIMA_REPO=/caminho/para/sister-clima
+export SISTER_NEXO_REPO=/caminho/para/sister-nexo
+./scripts/sge maturity publish-all pre-alpha
+```
+
 Avaliar um componente federado em modo `shadow`:
 
 ```bash
@@ -53,6 +70,7 @@ Executar diretamente o motor declarativo, sem publicar histórico:
 
 ```bash
 ./scripts/sge maturity evaluate pre-alpha
+./scripts/sge maturity evaluate pre-alpha --engine compare
 ```
 
 Validar modelos, perfis e checks contra os contratos:
@@ -66,6 +84,24 @@ Validar uma atestação JSON publicada:
 ```bash
 ./scripts/sge maturity validate --status-json .run/maturity/latest.json
 ```
+
+Engines disponíveis:
+
+| Engine | Escopo inicial | Uso |
+|---|---|---|
+| `legacy` | `sister-core` | Compatibilidade e diagnóstico do verificador histórico |
+| `declarative` | Todos os componentes com perfil | Motor de destino baseado em YAML |
+| `compare` | `sister-core` | Executa `legacy` e `declarative`, compara resultados e publica divergências |
+
+Padrões quando `--engine` não é informado:
+
+- `sister-core`: `compare`;
+- componentes federados: `declarative`.
+
+`compare` produz uma atestação própria. O bloco `evaluation.comparison`
+registra `status`, `equivalent`, `engines_executed` e divergências
+estruturadas. Divergência bloqueante retorna código `5`, diferente de
+reprovação técnica do gate, que retorna código `1`.
 
 Comandos de compatibilidade continuam disponíveis:
 
@@ -84,11 +120,57 @@ O publicador escreve em `.run/maturity/`, que não é versionado:
 
 - `.run/maturity/latest.json`: última atestação publicada para consumo da UI;
 - `.run/maturity/components.json`: índice federado dos componentes avaliados;
+- `.run/maturity/catalog.json`: catálogo dos checks disponíveis nos perfis versionados;
 - `.run/maturity/components/<id>/latest.json`: última atestação do componente;
 - `.run/maturity/components/<id>/history/*.json`: histórico do componente;
 - `.run/maturity/components/<id>/history/index.json`: índice do histórico.
 
 Relatórios Markdown tradicionais do Core continuam em `build/maturity/`.
+
+## O que significa testar SisTer Core
+
+`sister-core` é o perfil de maturidade do núcleo deste repositório. Ele cobre
+o conjunto central que sustenta a plataforma: contratos, autenticação, sessão,
+APIs administrativas, evidências, maturidade, integração dos adaptadores e o
+serviço `sisterd`.
+
+Testar `sister-core` não significa executar todos os subsistemas externos. A
+execução do Core verifica se o núcleo e seus contratos estão aderentes ao gate.
+Os subsistemas federados, como `sister-clima` e `sister-nexo`, possuem perfis
+próprios e podem ser executados em conjunto por `publish-all` quando suas raízes
+locais estão configuradas.
+
+## Testes disponíveis × testes executados
+
+O SGE distingue duas leituras:
+
+| Leitura | Fonte | Significado |
+|---|---|---|
+| Testes disponíveis | `.run/maturity/catalog.json` | Inventário dos checks declarados nos perfis versionados |
+| Evidências executadas | `.run/maturity/latest.json` e histórico | Checks que rodaram na última atestação publicada |
+| Componentes | `.run/maturity/components.json` | Estado consolidado por componente federado |
+
+Na situação atual, o catálogo de maturidade contém checks declarados para:
+
+- `sister-core`;
+- `sister-clima`;
+- `sister-nexo`.
+
+`sister-campo` e `sister-studio` aparecem no ecossistema, mas ainda não possuem
+perfil de maturidade versionado neste repositório.
+
+## Relação com outros testes do repositório
+
+O módulo de maturidade não substitui a suíte geral de qualidade. O comando:
+
+```bash
+./scripts/run_quality.sh
+```
+
+executa build CMake, `ctest`, validações de contratos, governança, recursos
+locais, testes Python e validação de shell scripts. Esses testes verificam a
+saúde do repositório e das ferramentas. O SGE usa parte deles como evidência de
+maturidade quando um perfil referencia scripts delegados.
 
 ## Como ler o resultado
 
@@ -208,6 +290,18 @@ Critérios mínimos para novo check obrigatório:
 
 Componentes novos entram em `shadow` por padrão. A passagem para `governed`
 deve declarar escopo bloqueante, responsável operacional e rollback.
+
+## Códigos de saída
+
+| Código | Significado |
+|---|---|
+| `0` | Avaliação válida e promoção permitida |
+| `1` | Gate reprovado |
+| `2` | Uso inválido do CLI |
+| `3` | Contrato inválido |
+| `4` | Erro de execução |
+| `5` | Divergência entre engines |
+| `6` | Falha de publicação |
 
 ## Referências
 

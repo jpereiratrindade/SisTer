@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 import argparse
+import os
 import subprocess
 import sys
 from pathlib import Path
+
+import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,19 +18,26 @@ def run(command):
 def cmd_maturity_evaluate(args):
     command = [
         sys.executable,
-        str(ROOT / "scripts/maturity/evaluator.py"),
+        str(ROOT / "scripts/maturity/evaluate-engine.py"),
         "--repo",
         str(ROOT),
         "--component-root",
         args.component_root,
-        "--profile",
-        args.profile or f"engineering/maturity/profiles/{args.component}.yaml",
+        "--component",
+        args.component,
         "--stage",
         args.stage,
+        "--status-json",
+        "-",
     ]
+    if args.engine:
+        command.extend(["--engine", args.engine])
+    if args.profile:
+        command.extend(["--profile", args.profile])
     if args.strict:
         command.append("--strict")
-    return run(command)
+    with subprocess.Popen(command, cwd=ROOT) as proc:
+        return proc.wait()
 
 
 def cmd_maturity_publish(args):
@@ -38,11 +48,63 @@ def cmd_maturity_publish(args):
         command.extend(["--component", args.component])
     if args.component_root:
         command.extend(["--component-root", args.component_root])
+    if args.engine:
+        command.extend(["--engine", args.engine])
     return run(command)
+
+def infer_component_root(component_id, profile):
+    if component_id == "sister-core":
+        return ROOT
+    root_config = profile.get("component_root", {}) if isinstance(profile, dict) else {}
+    path_env = root_config.get("path_env")
+    if path_env and os.environ.get(path_env):
+        return Path(os.environ[path_env]).expanduser().resolve()
+    return None
+
+
+def cmd_maturity_publish_all(args):
+    ecosystem_path = ROOT / "engineering/maturity/ecosystem.yaml"
+    ecosystem = yaml.safe_load(ecosystem_path.read_text(encoding="utf-8")) or {"components": []}
+    failures = 0
+    skipped = 0
+    for component in ecosystem.get("components", []):
+        component_id = component["id"]
+        profile_path = ROOT / "engineering/maturity/profiles" / f"{component_id}.yaml"
+        if not profile_path.exists():
+            print(f"SKIP {component_id}: perfil ausente")
+            skipped += 1
+            continue
+        profile = yaml.safe_load(profile_path.read_text(encoding="utf-8")) or {}
+        component_root = infer_component_root(component_id, profile)
+        if component_root is None or not component_root.exists():
+            root_config = profile.get("component_root", {}) if isinstance(profile, dict) else {}
+            path_env = root_config.get("path_env", "COMPONENT_REPO")
+            print(f"SKIP {component_id}: raiz não resolvida; defina {path_env}")
+            skipped += 1
+            continue
+        command = [
+            str(ROOT / "scripts/maturity/run-and-publish.sh"),
+        ]
+        if args.stage:
+            command.append(args.stage)
+        command.extend(["--component", component_id, "--component-root", str(component_root)])
+        if args.engine:
+            command.extend(["--engine", args.engine])
+        print(f"RUN {component_id}: {' '.join(command)}", flush=True)
+        rc = run(command)
+        if rc != 0:
+            failures += 1
+            print(f"FAIL {component_id}: rc={rc}")
+    cmd_maturity_components(args)
+    print(f"publish-all concluído: failures={failures} skipped={skipped}")
+    return 1 if failures else 0
 
 
 def cmd_maturity_components(_args):
-    return run([sys.executable, str(ROOT / "scripts/maturity/aggregate-components.py")])
+    rc = run([sys.executable, str(ROOT / "scripts/maturity/aggregate-components.py")])
+    if rc != 0:
+        return rc
+    return run([sys.executable, str(ROOT / "scripts/maturity/build-catalog.py")])
 
 
 def cmd_maturity_validate(args):
@@ -63,6 +125,7 @@ def build_parser():
     evaluate.add_argument("--component", default="sister-core")
     evaluate.add_argument("--component-root", default=str(ROOT))
     evaluate.add_argument("--profile")
+    evaluate.add_argument("--engine", choices=["legacy", "declarative", "compare"])
     evaluate.add_argument("--strict", action="store_true")
     evaluate.set_defaults(func=cmd_maturity_evaluate)
 
@@ -70,7 +133,13 @@ def build_parser():
     publish.add_argument("stage", nargs="?", choices=["pre-alpha", "alpha", "beta", "gamma", "production"])
     publish.add_argument("--component", default="sister-core")
     publish.add_argument("--component-root")
+    publish.add_argument("--engine", choices=["legacy", "declarative", "compare"])
     publish.set_defaults(func=cmd_maturity_publish)
+
+    publish_all = maturity_sub.add_parser("publish-all", help="Evaluate and publish all resolvable ecosystem components.")
+    publish_all.add_argument("stage", nargs="?", choices=["pre-alpha", "alpha", "beta", "gamma", "production"])
+    publish_all.add_argument("--engine", choices=["legacy", "declarative", "compare"])
+    publish_all.set_defaults(func=cmd_maturity_publish_all)
 
     components = maturity_sub.add_parser("components", help="Rebuild the federated components index.")
     components.set_defaults(func=cmd_maturity_components)

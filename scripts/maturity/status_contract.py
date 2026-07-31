@@ -162,6 +162,60 @@ def validate_status(payload):
         path = attestation["relative_path"]
         if path is not None and (not isinstance(path, str) or not RELATIVE_PATH.fullmatch(path)):
             errors.append("invalid attestation path")
+    evaluation = payload.get("evaluation")
+    if evaluation is not None:
+        allowed = {
+            "engine", "mode", "engine_version", "model_id", "model_version", "profile_id",
+            "model_digest", "profile_digest", "evaluation_mode", "governance_authority",
+            "promotion_enabled", "requested_engine", "engines_executed", "comparison",
+        }
+        if not isinstance(evaluation, dict) or not {"engine", "mode"}.issubset(evaluation) or not set(evaluation).issubset(allowed):
+            errors.append("invalid evaluation fields")
+        else:
+            if evaluation["engine"] not in ("legacy", "declarative", "compare"):
+                errors.append("invalid evaluation engine")
+            if evaluation["mode"] not in ("check", "certify"):
+                errors.append("invalid evaluation mode")
+            if "requested_engine" in evaluation and evaluation["requested_engine"] not in ("legacy", "declarative", "compare"):
+                errors.append("invalid requested engine")
+            if "engines_executed" in evaluation and (
+                not isinstance(evaluation["engines_executed"], list)
+                or len(evaluation["engines_executed"]) > 3
+                or not all(item in ("legacy", "declarative", "compare") for item in evaluation["engines_executed"])
+            ):
+                errors.append("invalid engines_executed")
+            comparison = evaluation.get("comparison")
+            if comparison is not None:
+                allowed_comparison = {"performed", "equivalent", "status", "divergences"}
+                if not isinstance(comparison, dict) or "performed" not in comparison or not set(comparison).issubset(allowed_comparison):
+                    errors.append("invalid comparison")
+                elif not isinstance(comparison["performed"], bool):
+                    errors.append("invalid comparison performed")
+                else:
+                    if "equivalent" in comparison and not isinstance(comparison["equivalent"], bool):
+                        errors.append("invalid comparison equivalent")
+                    if "status" in comparison and comparison["status"] not in ("EQUIVALENT", "DIVERGENT"):
+                        errors.append("invalid comparison status")
+                    divergences = comparison.get("divergences", [])
+                    if not isinstance(divergences, list) or len(divergences) > 100:
+                        errors.append("invalid comparison divergences")
+                    else:
+                        for divergence in divergences:
+                            required_divergence = {"path", "classification", "legacy", "declarative", "blocking"}
+                            allowed_divergence = required_divergence | {"check_id", "mandatory"}
+                            if not isinstance(divergence, dict) or not required_divergence.issubset(divergence) or not set(divergence).issubset(allowed_divergence):
+                                errors.append("invalid divergence fields")
+                                continue
+                            if not _safe_text(divergence["path"], 160, allow_empty=False):
+                                errors.append("invalid divergence path")
+                            if not _safe_text(divergence["classification"], 80, allow_empty=False):
+                                errors.append("invalid divergence classification")
+                            if not isinstance(divergence["blocking"], bool):
+                                errors.append("invalid divergence blocking")
+                            if "check_id" in divergence and not re.fullmatch(r"[a-z0-9][a-z0-9-]{0,79}", divergence["check_id"] or ""):
+                                errors.append("invalid divergence check_id")
+                            if "mandatory" in divergence and not isinstance(divergence["mandatory"], bool):
+                                errors.append("invalid divergence mandatory")
     return errors
 
 

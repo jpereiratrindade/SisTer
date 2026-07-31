@@ -22,7 +22,10 @@ A tela combina leituras operacionais e executivas sobre a mesma atestação:
 
 - síntese executiva do gate avaliado, próximo objetivo, bloqueios,
   advertências e confiança;
+- escopo explícito da evidência: componente avaliado, gate, engine SGE,
+  governança e impacto na promoção;
 - pipeline Pré-Alfa, Alfa, Beta, Gama e Produção;
+- catálogo de checks disponíveis nos perfis versionados;
 - bloqueadores e proveniência;
 - saúde da engenharia por dimensão derivada dos checks;
 - **componentes do ecossistema federado** (Core, Nexo, Clima, etc.) com
@@ -79,6 +82,7 @@ Para critérios, impactos operacionais e procedimentos detalhados, consulte
 
 ```bash
 ./scripts/sge maturity publish
+./scripts/sge maturity publish-all pre-alpha
 ```
 
 Sem argumento, o script avalia o projeto principal (`sister-core`) e infere o estágio a partir de `.sister/status.yml`.
@@ -86,6 +90,7 @@ Também é possível informar explicitamente o estágio:
 
 ```bash
 ./scripts/sge maturity publish pre-alpha
+./scripts/sge maturity publish pre-alpha --engine compare
 ```
 
 ### Componentes e Pilotos (Modo Shadow)
@@ -132,6 +137,7 @@ do sistema.
 
 - `.run/maturity/latest.json`: estado da última execução do Core (consumido pela UI);
 - `.run/maturity/components.json`: índice federado com as últimas execuções de todos os componentes;
+- `.run/maturity/catalog.json`: catálogo de checks disponíveis nos perfis versionados;
 - `.run/maturity/components/<id>/latest.json`: estado consolidado de um componente específico;
 - `.run/maturity/components/<id>/history/*.json`: atestações históricas do componente;
 - `build/maturity/`: relatórios Markdown tradicionais.
@@ -144,6 +150,7 @@ do gate, portanto uma execução reprovada ainda produz evidência e retorna err
 - página: `/admin/maturity`;
 - status: `GET /api/admin/maturity/latest`;
 - componentes (ecossistema): `GET /api/admin/maturity/components`;
+- catálogo de checks: `GET /api/admin/maturity/catalog`;
 - histórico: `GET /api/admin/maturity/history`.
 
 As rotas exigem sessão administrativa e respondem com `Cache-Control: no-store`.

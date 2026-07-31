@@ -70,5 +70,45 @@ RouteResponse getMaturityComponents(const std::optional<AuthUser>& actor, const 
     return {200, "OK", "application/json; charset=utf-8", std::move(body)};
 }
 
+RouteResponse getMaturityCatalog(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot) {
+    if (!actor) {
+        return {401, "Unauthorized", "application/json; charset=utf-8", jsonError(401, "Unauthorized", "Autenticação necessária.")};
+    }
+    if (actor->role != "admin") {
+        return {403, "Forbidden", "application/json; charset=utf-8", jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa.")};
+    }
+
+    std::filesystem::path catalogPath = maturityRoot / "catalog.json";
+    std::error_code ec;
+    auto status = std::filesystem::symlink_status(catalogPath, ec);
+    if (ec || !std::filesystem::exists(status) || !std::filesystem::is_regular_file(status)) {
+        return {404, "Not Found", "application/json; charset=utf-8", jsonError(404, "Not Found", "Catálogo de checks não foi publicado.")};
+    }
+
+    auto size = std::filesystem::file_size(catalogPath, ec);
+    if (ec || size == 0 || size > 10 * 1024 * 1024) {
+        return {503, "Service Unavailable", "application/json; charset=utf-8", jsonError(503, "Service Unavailable", "O catálogo é inválido ou excede o limite de tamanho.")};
+    }
+
+    std::ifstream input(catalogPath, std::ios::binary);
+    if (!input) {
+        return {503, "Service Unavailable", "application/json; charset=utf-8", jsonError(503, "Service Unavailable", "Falha ao ler o catálogo.")};
+    }
+
+    std::string body(static_cast<std::size_t>(size), '\0');
+    if (!input.read(body.data(), static_cast<std::streamsize>(size))) {
+        return {503, "Service Unavailable", "application/json; charset=utf-8", jsonError(503, "Service Unavailable", "Leitura incompleta do catálogo.")};
+    }
+
+    const auto first = body.find_first_not_of(" \t\r\n");
+    const auto last = body.find_last_not_of(" \t\r\n");
+    if (first == std::string::npos || body[first] != '{' || body[last] != '}' ||
+        !hasJsonStringField(body, "schema", "sister.maturity-catalog/1.0.0")) {
+        return {503, "Service Unavailable", "application/json; charset=utf-8", jsonError(503, "Service Unavailable", "Schema inválido no catálogo de checks.")};
+    }
+
+    return {200, "OK", "application/json; charset=utf-8", std::move(body)};
+}
+
 } // namespace api
 } // namespace sisterd

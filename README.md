@@ -281,13 +281,19 @@ Comandos principais:
 
 ```bash
 ./scripts/sge maturity evaluate pre-alpha
+./scripts/sge maturity evaluate pre-alpha --engine compare
 ./scripts/sge maturity publish pre-alpha
+./scripts/sge maturity publish-all pre-alpha
+./scripts/sge maturity publish pre-alpha --engine declarative
 ./scripts/sge maturity validate
 ./scripts/sge maturity validate --status-json .run/maturity/latest.json
 ```
 
 O tutorial completo de uso fica em `engineering/maturity/README.md`.
 A arquitetura de engines e governanca fica em `docs/architecture/sgr/`.
+No painel, a aba `Testes Disponíveis` mostra o catálogo de checks declarados
+nos perfis; a aba `Evidências Executadas` mostra somente o que rodou na última
+atestação publicada.
 
 ## Documentacao
 

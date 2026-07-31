@@ -88,13 +88,25 @@
         "evaluation_mode": {"enum": ["governed", "shadow"]},
         "governance_authority": {"type": "boolean"},
         "promotion_enabled": {"type": "boolean"},
+        "requested_engine": {"enum": ["legacy", "declarative", "compare"]},
+        "engines_executed": {
+          "type": "array",
+          "maxItems": 3,
+          "items": {"enum": ["legacy", "declarative", "compare"]}
+        },
         "comparison": {
           "type": "object",
           "additionalProperties": false,
           "required": ["performed"],
           "properties": {
             "performed": {"type": "boolean"},
-            "equivalent": {"type": "boolean"}
+            "equivalent": {"type": "boolean"},
+            "status": {"enum": ["EQUIVALENT", "DIVERGENT"]},
+            "divergences": {
+              "type": "array",
+              "maxItems": 100,
+              "items": {"$ref": "#/$defs/divergence"}
+            }
           }
         }
       }
@@ -140,6 +152,20 @@
         "id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$"},
         "description": {"type": "string", "minLength": 1, "maxLength": 300},
         "detail": {"type": "string", "maxLength": 500}
+      }
+    },
+    "divergence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "classification", "legacy", "declarative", "blocking"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1, "maxLength": 160},
+        "classification": {"type": "string", "minLength": 1, "maxLength": 80},
+        "check_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,79}$"},
+        "mandatory": {"type": "boolean"},
+        "legacy": {},
+        "declarative": {},
+        "blocking": {"type": "boolean"}
       }
     }
   }

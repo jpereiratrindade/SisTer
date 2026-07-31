@@ -11,6 +11,9 @@ model: "sister-sge"
 evaluation_mode: "shadow"
 governance_authority: false
 promotion_enabled: false
+component_root:
+  source: "local_path"
+  path_env: "SISTER_CLIMA_REPO"
 scripts:
   sister-clima.tests:
     path: scripts/ci/test-sister-clima.sh

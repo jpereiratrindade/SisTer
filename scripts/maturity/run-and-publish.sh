@@ -19,11 +19,13 @@ infer_stage() {
 STAGE=""
 COMPONENT="sister-core"
 COMPONENT_ROOT="$REPO"
+ENGINE=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --component) COMPONENT="$2"; shift 2 ;;
     --component-root) COMPONENT_ROOT="$2"; shift 2 ;;
+    --engine) ENGINE="$2"; shift 2 ;;
     -*) die "Opção desconhecida: $1" ;;
     *) STAGE="$1"; shift ;;
   esac
@@ -31,7 +33,7 @@ done
 
 if [[ -z "$STAGE" ]]; then
   if ! STAGE="$(infer_stage)"; then
-    printf 'Uso: %s [pre-alpha|alpha|beta|gamma|production]\n' "$0" >&2
+    printf 'Uso: %s [pre-alpha|alpha|beta|gamma|production] [--engine legacy|declarative|compare]\n' "$0" >&2
     printf 'Não foi possível inferir o estágio a partir de .sister/status.yml\n' >&2
     exit 2
   fi
@@ -40,7 +42,7 @@ fi
 
 case "$STAGE" in
   pre-alpha|alpha|beta|gamma|production) ;;
-  *) printf 'Uso: %s [pre-alpha|alpha|beta|gamma|production]\n' "$0" >&2; exit 2;;
+  *) printf 'Uso: %s [pre-alpha|alpha|beta|gamma|production] [--engine legacy|declarative|compare]\n' "$0" >&2; exit 2;;
 esac
 
 RUNTIME_ROOT="$REPO/.run/maturity"
@@ -54,20 +56,18 @@ CANDIDATE="$(mktemp "$RUNTIME_ROOT/.candidate.XXXXXX.json")"
 trap 'rm -f "$CANDIDATE"' EXIT
 
 set +e
-if [[ "$COMPONENT" == "sister-core" ]]; then
-  "$REPO/scripts/verify-sister-maturity.sh" \
-    --stage "$STAGE" \
-    --report "$REPORT_ROOT/$STAGE-report.md" \
-    --status-json "$CANDIDATE" \
-    --repo "$REPO"
-else
-  # For non-core components, we skip the legacy verifier and run python directly.
-  python3 "$REPO/scripts/maturity/evaluator.py" \
-    --repo "$REPO" \
-    --component-root "$COMPONENT_ROOT" \
-    --profile "engineering/maturity/profiles/$COMPONENT.yaml" \
-    --stage "$STAGE" > "$CANDIDATE"
+ENGINE_ARGS=()
+if [[ -n "$ENGINE" ]]; then
+  ENGINE_ARGS=(--engine "$ENGINE")
 fi
+python3 "$REPO/scripts/maturity/evaluate-engine.py" \
+  --repo "$REPO" \
+  --component-root "$COMPONENT_ROOT" \
+  --component "$COMPONENT" \
+  --profile "engineering/maturity/profiles/$COMPONENT.yaml" \
+  --stage "$STAGE" \
+  --status-json "$CANDIDATE" \
+  "${ENGINE_ARGS[@]}"
 GATE_STATUS=$?
 set -e
 
@@ -86,6 +86,7 @@ python3 "$REPO/scripts/maturity/update-history.py" \
 
 # Atualizar o agregador de componentes do ecossistema
 python3 "$REPO/scripts/maturity/aggregate-components.py"
+python3 "$REPO/scripts/maturity/build-catalog.py"
 
 INDEX_FILE="$RUNTIME_ROOT/components.json"
 
@@ -93,6 +94,7 @@ INDEX_FILE="$RUNTIME_ROOT/components.json"
 cp "$COMP_DIR/latest.json" "$RUNTIME_ROOT/latest.json"
 
 printf 'Status publicado para %s: %s\n' "$COMPONENT" "$COMP_DIR/latest.json"
+printf 'Engine solicitado: %s\n' "${ENGINE:-default}"
 printf 'Histórico atualizado para %s: %s\n' "$COMPONENT" "$HISTORY_ROOT/index.json"
 printf 'Índice de componentes atualizado: %s\n' "$INDEX_FILE"
 printf 'Status global atualizado: %s\n' "$RUNTIME_ROOT/latest.json"

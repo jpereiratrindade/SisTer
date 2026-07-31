@@ -47,6 +47,45 @@ const create = (tag, className, text) => {
 let currentStatus = null;
 let selectedStage = "pre-alpha";
 
+function activatePanel(panelId) {
+  document.querySelectorAll("[data-panel-tab]").forEach((tab) => {
+    tab.setAttribute("aria-selected", String(tab.dataset.panelTab === panelId));
+  });
+  document.querySelectorAll("[data-panel]").forEach((panel) => {
+    panel.hidden = panel.dataset.panel !== panelId;
+  });
+}
+
+function evaluatedComponent(status) {
+  return status.evaluation?.profile_id || status.evaluation?.component || "sister-core";
+}
+
+function componentLabel(id) {
+  const labels = {
+    "sister-core": "SisTer Core",
+    "sister-clima": "Sister-Clima",
+    "sister-nexo": "SisTer Nexo",
+  };
+  return labels[id] || id;
+}
+
+function engineLabel(engine) {
+  const engineMap = { legacy: "Legado", declarative: "Declarativo", compare: "Compare" };
+  return engineMap[engine] || engine || "Não informado";
+}
+
+function governanceLabel(status) {
+  const mode = status.evaluation?.evaluation_mode;
+  if (mode === "shadow" || status.promotion?.applicable === false) return "Shadow";
+  if (mode === "governed" || status.promotion?.applicable === true) return "Governed";
+  return "Não declarado";
+}
+
+function scopeLayer(status) {
+  if (status.evaluation?.engine === "compare") return "Componente + SGE/engine + governança";
+  return "Componente + governança";
+}
+
 function formatDate(value) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "Data indisponível";
@@ -102,7 +141,7 @@ function renderHeader(status) {
   result.querySelector("strong").textContent = warning
     ? "Aprovado com advertências"
     : STATUS_LABELS[status.result];
-  qs("#heading-detail").textContent = `${STAGE_LABELS[status.target_stage]} · ${formatDate(status.generated_at)} · commit ${status.source.short_commit}`;
+  qs("#heading-detail").textContent = `${componentLabel(evaluatedComponent(status))} · gate ${STAGE_LABELS[status.target_stage]} · ${formatDate(status.generated_at)} · commit ${status.source.short_commit}`;
   qs("#target-stage").textContent = `Gate avaliado: ${STAGE_LABELS[status.target_stage]}`;
 }
 
@@ -115,19 +154,21 @@ function renderExecutive(status) {
   
   let decisionText = completed ? "SIM" : "NÃO";
   let detailText = completed
-    ? `Próxima avaliação sugerida: ${nextLabel}.`
-    : "Resolver bloqueios obrigatórios antes de avançar.";
+    ? `O componente pode avançar para a próxima avaliação sugerida: ${nextLabel}.`
+    : "Resolver bloqueios obrigatórios do componente antes de avançar.";
   let cardStatus = completed ? "PASS" : "FAIL";
 
   if (status.promotion && !status.promotion.applicable) {
     decisionText = "SHADOW";
-    detailText = "Avaliação técnica aprovada em modo piloto. Promoção não aplicável.";
+    detailText = "Avaliação técnica registrada em modo shadow. Promoção não aplicável ao ecossistema.";
     cardStatus = "SHADOW";
   }
 
   qs("#executive-status").textContent = completed
-    ? `${currentLabel} concluída${warning ? " com advertências" : ""}.`
-    : `${currentLabel} ainda exige correção antes da promoção.`;
+    ? `${componentLabel(evaluatedComponent(status))}: gate ${currentLabel} aprovado${warning ? " com advertências" : ""}.`
+    : `${componentLabel(evaluatedComponent(status))}: gate ${currentLabel} ainda exige correção.`;
+  qs("#evaluated-target").textContent = componentLabel(evaluatedComponent(status));
+  qs("#evaluation-scope").textContent = scopeLayer(status);
   qs("#next-stage").textContent = nextLabel;
   qs("#executive-blockers").textContent = status.summary.mandatory_failures;
   qs("#executive-warnings").textContent = status.summary.warned;
@@ -135,6 +176,23 @@ function renderExecutive(status) {
   qs("#promotion-decision").textContent = decisionText;
   qs("#promotion-detail").textContent = detailText;
   qs(".decision-card").dataset.status = cardStatus;
+}
+
+function renderScope(status) {
+  const comparison = status.evaluation?.comparison;
+  const impact = status.promotion?.applicable === false
+    ? "Não bloqueia promoção global"
+    : status.promotion?.recommendation === "promote"
+      ? "Pode recomendar avanço do componente"
+      : "Bloqueia avanço do componente";
+  qs("#scope-layer").textContent = scopeLayer(status);
+  qs("#scope-component").textContent = componentLabel(evaluatedComponent(status));
+  qs("#scope-stage").textContent = STAGE_LABELS[status.target_stage] || status.target_stage;
+  qs("#scope-engine").textContent = comparison?.performed
+    ? `${engineLabel(status.evaluation.engine)} · ${comparison.status || (comparison.equivalent ? "EQUIVALENT" : "DIVERGENT")}`
+    : engineLabel(status.evaluation?.engine);
+  qs("#scope-governance").textContent = governanceLabel(status);
+  qs("#scope-impact").textContent = impact;
 }
 
 function renderStages(stages) {
@@ -201,15 +259,16 @@ function renderProvenance(status) {
   list.replaceChildren();
   
   if (status.evaluation) {
-    const engineMap = { legacy: "Legado", declarative: "Declarativo", compare: "Compare (Paralelo)" };
     const modeMap = { check: "Verificação", certify: "Certificação" };
-    addDefinition(list, "Motor", engineMap[status.evaluation.engine] || status.evaluation.engine);
+    addDefinition(list, "Engine SGE", engineLabel(status.evaluation.engine));
     addDefinition(list, "Modo de Avaliação", modeMap[status.evaluation.mode] || status.evaluation.mode);
+    addDefinition(list, "Componente avaliado", componentLabel(evaluatedComponent(status)));
+    addDefinition(list, "Governança", governanceLabel(status));
     if (status.evaluation.model_id) {
       addDefinition(list, "Modelo / Perfil", `${status.evaluation.model_id} / ${status.evaluation.profile_id}`, "mono");
     }
     if (status.evaluation.comparison?.performed) {
-      addDefinition(list, "Equivalência", status.evaluation.comparison.equivalent ? "Comprovada" : "Divergente");
+      addDefinition(list, "Compare", status.evaluation.comparison.equivalent ? "Equivalente" : "Divergente");
     }
   }
 
@@ -283,11 +342,11 @@ function renderActions(actions) {
 }
 
 function renderOperationalAction(status) {
-  const command = "./scripts/sge maturity publish";
+  const command = "./scripts/sge maturity publish-all";
   qs("#publish-command").textContent = command;
   qs("#copy-publish-command").dataset.command = command;
   qs("#copy-publish-command").textContent = "Copiar";
-  qs("#operation-detail").textContent = `Sem argumento, o script infere o estágio atual e hoje deve publicar ${STAGE_LABELS[status.target_stage]}.`;
+  qs("#operation-detail").textContent = `Executa todos os componentes resolvíveis. Use publish ${status.target_stage} para diagnóstico focal do componente atual.`;
 }
 
 function renderHistory(history) {
@@ -359,6 +418,41 @@ function renderComponents(index) {
   });
 }
 
+function renderCatalog(catalog) {
+  const grid = qs("#checks-catalog");
+  grid.replaceChildren();
+  const components = catalog?.components || [];
+  if (!components.length) {
+    grid.append(create("p", "positive-empty", "Catálogo de checks ainda não publicado."));
+    return;
+  }
+  components.forEach((component) => {
+    const card = create("article", "catalog-card");
+    const header = create("div", "catalog-card-header");
+    header.append(
+      create("strong", "", componentLabel(component.component_id)),
+      create("span", "", `${component.total_checks || 0} checks`),
+    );
+    const stages = create("dl", "catalog-stage-list");
+    Object.entries(component.checks_by_stage || {}).forEach(([stage, count]) => {
+      const group = create("div");
+      group.append(create("dt", "", STAGE_LABELS[stage] || stage), create("dd", "", String(count)));
+      stages.append(group);
+    });
+    const checks = create("div", "catalog-check-list");
+    (component.checks || []).slice(0, 8).forEach((check) => {
+      const row = create("div", "catalog-check");
+      row.append(create("span", "mono", check.id), create("small", "", `${STAGE_LABELS[check.stage] || check.stage} · ${check.type}${check.mandatory ? " · obrigatório" : ""}`));
+      checks.append(row);
+    });
+    if ((component.checks || []).length > 8) {
+      checks.append(create("small", "catalog-more", `+${component.checks.length - 8} checks no perfil`));
+    }
+    card.append(header, stages, checks);
+    grid.append(card);
+  });
+}
+
 function renderDecisionTree(status) {
   const stage = status.stages.find((item) => item.id === status.target_stage);
   const tree = qs("#decision-tree");
@@ -372,19 +466,21 @@ function renderDecisionTree(status) {
   const promoted = status.result === "PASS" && status.summary.mandatory_failures === 0;
   if (status.promotion && !status.promotion.applicable) {
     answer.dataset.status = "SHADOW";
-    answer.append(create("span", "", "Pode promover?"), create("strong", "", "SHADOW"));
+    answer.append(create("span", "", "Promoção do componente"), create("strong", "", "SHADOW"));
   } else {
     answer.dataset.status = promoted ? "PASS" : "FAIL";
-    answer.append(create("span", "", "Pode promover?"), create("strong", "", promoted ? "SIM" : "NÃO"));
+    answer.append(create("span", "", "Promoção do componente"), create("strong", "", promoted ? "SIM" : "NÃO"));
   }
   tree.append(answer);
 }
 
-function renderDashboard(status, history, components) {
+function renderDashboard(status, history, components, catalog) {
   currentStatus = status;
   renderHeader(status);
   renderExecutive(status);
+  renderScope(status);
   renderStages(status.stages);
+  renderCatalog(catalog);
   renderSummary(status.summary);
   renderBlockers(status.blockers);
   renderProvenance(status);
@@ -418,14 +514,15 @@ async function loadDashboard() {
   button.disabled = true;
   setNotice("Consultando evidência...", "neutral");
   try {
-    const [user, status, history, components] = await Promise.all([
+    const [user, status, history, components, catalog] = await Promise.all([
       fetchJson("/api/me"),
       fetchJson("/api/admin/maturity/latest"),
       fetchJson("/api/admin/maturity/history", true),
       fetchJson("/api/admin/maturity/components", true),
+      fetchJson("/api/admin/maturity/catalog", true),
     ]);
     qs("#admin-name").textContent = user.name;
-    renderDashboard(status, history, components);
+    renderDashboard(status, history, components, catalog);
   } catch (error) {
     qs("#dashboard").hidden = true;
     if (error.message !== "unauthorized") {
@@ -440,6 +537,16 @@ async function loadDashboard() {
 }
 
 qs("#refresh-button").addEventListener("click", loadDashboard);
+qs("#core-scope-toggle").addEventListener("click", () => {
+  const detail = qs("#core-scope-detail");
+  detail.hidden = !detail.hidden;
+  qs("#core-scope-toggle").textContent = detail.hidden
+    ? "O que significa testar SisTer Core?"
+    : "Ocultar explicação sobre SisTer Core";
+});
+document.querySelectorAll("[data-panel-tab]").forEach((tab) => {
+  tab.addEventListener("click", () => activatePanel(tab.dataset.panelTab));
+});
 qs("#copy-publish-command").addEventListener("click", async () => {
   const button = qs("#copy-publish-command");
   const command = button.dataset.command || qs("#publish-command").textContent;

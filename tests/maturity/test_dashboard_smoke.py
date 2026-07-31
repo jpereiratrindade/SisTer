@@ -12,6 +12,7 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
         source = (ROOT / "web" / "maturity" / "app.js").read_text(encoding="utf-8")
         self.assertIn("/api/admin/maturity/latest", source)
         self.assertIn("/api/admin/maturity/history", source)
+        self.assertIn("/api/admin/maturity/catalog", source)
         self.assertIn("textContent", source)
         self.assertNotIn("innerHTML", source)
         self.assertNotIn("/api/admin/maturity/run", source)
@@ -20,13 +21,18 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
         source = (ROOT / "web" / "maturity" / "index.html").read_text(encoding="utf-8")
         for label in (
             "Centro de Engenharia do SisTer",
-            "Síntese executiva",
+            "Síntese do gate",
+            "Camadas avaliadas nesta execução",
+            "Resultado técnico do componente",
+            "Promoção do componente",
+            "O que significa testar SisTer Core?",
             "Gates de engenharia",
+            "Testes disponíveis nos perfis versionados",
             "Saúde da Engenharia",
             "Componentes do Ecossistema",
             "Árvore de decisão",
             "Publicar nova atestação",
-            "./scripts/sge maturity publish",
+            "./scripts/sge maturity publish-all",
             "Aprovados",
             "Falhas",
             "Advertências",
