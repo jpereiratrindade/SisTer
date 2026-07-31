@@ -213,6 +213,7 @@ function renderStages(stages) {
     const details = create("button", "stage-detail-button", "Detalhes");
     details.type = "button";
     details.addEventListener("click", () => {
+      activatePanel("evidence");
       renderChecks(stage.id);
       qs("#checks-title").scrollIntoView({ block: "start", behavior: "smooth" });
     });
@@ -421,6 +422,16 @@ function renderComponents(index) {
 function renderCatalog(catalog) {
   const grid = qs("#checks-catalog");
   grid.replaceChildren();
+  if (catalog?.unavailable) {
+    const message = create("div", "unavailable-state");
+    message.append(
+      create("strong", "", "Catálogo indisponível"),
+      create("p", "", catalog.detail || "O servidor não disponibilizou o catálogo de testes."),
+      create("code", "mono", "./scripts/sge maturity components"),
+    );
+    grid.append(message);
+    return;
+  }
   const components = catalog?.components || [];
   if (!components.length) {
     grid.append(create("p", "positive-empty", "Catálogo de checks ainda não publicado."));
@@ -453,6 +464,45 @@ function renderCatalog(catalog) {
   });
 }
 
+function formatDuration(milliseconds) {
+  if (!Number.isFinite(milliseconds)) return "—";
+  if (milliseconds < 1000) return `${milliseconds} ms`;
+  return `${(milliseconds / 1000).toFixed(milliseconds < 10000 ? 1 : 0)} s`;
+}
+
+function renderQuality(quality) {
+  const body = qs("#quality-body");
+  body.replaceChildren();
+  const empty = qs("#quality-empty");
+  const result = qs("#quality-result");
+  if (!quality || quality.unavailable) {
+    empty.hidden = false;
+    result.dataset.status = "SKIP";
+    result.querySelector("strong").textContent = "Não publicada";
+    qs("#quality-meta").textContent = quality?.detail || "Execute ./scripts/run_quality.sh para publicar os resultados.";
+    ["total", "passed", "failed", "skipped"].forEach((key) => { qs(`#quality-${key}`).textContent = "0"; });
+    return;
+  }
+
+  empty.hidden = true;
+  result.dataset.status = quality.result;
+  result.querySelector("strong").textContent = STATUS_LABELS[quality.result] || quality.result;
+  qs("#quality-meta").textContent = `${formatDate(quality.finished_at)} · commit ${quality.source?.short_commit || "não informado"} · árvore ${quality.source?.worktree === "clean" ? "limpa" : "com alterações"}`;
+  ["total", "passed", "failed", "skipped"].forEach((key) => {
+    qs(`#quality-${key}`).textContent = String(quality.summary?.[key] || 0);
+  });
+  (quality.steps || []).forEach((step) => {
+    const commandCell = create("td");
+    commandCell.append(create("code", "mono", (step.command || []).join(" ")));
+    const stateCell = create("td");
+    stateCell.append(statusPill(step.status));
+    const exit = step.exit_code === null || step.exit_code === undefined ? "—" : `exit ${step.exit_code}`;
+    const row = create("tr");
+    row.append(stateCell, create("td", "", step.label), commandCell, create("td", "mono", formatDuration(step.duration_ms)), create("td", "mono", exit));
+    body.append(row);
+  });
+}
+
 function renderDecisionTree(status) {
   const stage = status.stages.find((item) => item.id === status.target_stage);
   const tree = qs("#decision-tree");
@@ -474,13 +524,14 @@ function renderDecisionTree(status) {
   tree.append(answer);
 }
 
-function renderDashboard(status, history, components, catalog) {
+function renderDashboard(status, history, components, catalog, quality) {
   currentStatus = status;
   renderHeader(status);
   renderExecutive(status);
   renderScope(status);
   renderStages(status.stages);
   renderCatalog(catalog);
+  renderQuality(quality);
   renderSummary(status.summary);
   renderBlockers(status.blockers);
   renderProvenance(status);
@@ -509,20 +560,35 @@ async function fetchJson(path, optional = false) {
   return response.json();
 }
 
+async function fetchPublishedJson(path) {
+  const response = await fetch(path, { cache: "no-store", headers: { Accept: "application/json" } });
+  if (response.status === 401) {
+    window.location.assign("/login");
+    throw new Error("unauthorized");
+  }
+  const payload = await response.json().catch(() => ({}));
+  if (response.status === 404) {
+    return { unavailable: true, detail: payload?.error?.detail || payload?.detail || "Recurso ainda não publicado ou servidor desatualizado." };
+  }
+  if (!response.ok) throw new Error(payload?.error?.detail || payload?.detail || `Falha HTTP ${response.status}`);
+  return payload;
+}
+
 async function loadDashboard() {
   const button = qs("#refresh-button");
   button.disabled = true;
   setNotice("Consultando evidência...", "neutral");
   try {
-    const [user, status, history, components, catalog] = await Promise.all([
+    const [user, status, history, components, catalog, quality] = await Promise.all([
       fetchJson("/api/me"),
       fetchJson("/api/admin/maturity/latest"),
       fetchJson("/api/admin/maturity/history", true),
       fetchJson("/api/admin/maturity/components", true),
-      fetchJson("/api/admin/maturity/catalog", true),
+      fetchPublishedJson("/api/admin/maturity/catalog"),
+      fetchPublishedJson("/api/admin/maturity/quality"),
     ]);
     qs("#admin-name").textContent = user.name;
-    renderDashboard(status, history, components, catalog);
+    renderDashboard(status, history, components, catalog, quality);
   } catch (error) {
     qs("#dashboard").hidden = true;
     if (error.message !== "unauthorized") {

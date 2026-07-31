@@ -17,6 +17,7 @@ struct RouteResponse {
 
 RouteResponse getMaturityComponents(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot);
 RouteResponse getMaturityCatalog(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot);
+RouteResponse getQualityStatus(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot);
 
 } // namespace api
 } // namespace sisterd

@@ -16,6 +16,11 @@ o Motor Declarativo. O histórico automático é produzido pelo comando
 `scripts/sge maturity publish`, que arquiva cada status válido em
 `.run/maturity/history/` e atualiza `.run/maturity/history/index.json`.
 
+`scripts/sge` é a única interface operacional suportada. Os arquivos em
+`scripts/maturity/` são implementações internas, não comandos alternativos.
+A CLI resolve o engine explicitamente: `compare` para `sister-core` e
+`declarative` para componentes federados, salvo quando `--engine` é informado.
+
 ## Visões
 
 A tela combina leituras operacionais e executivas sobre a mesma atestação:
@@ -32,7 +37,11 @@ A tela combina leituras operacionais e executivas sobre a mesma atestação:
   resultado técnico e modo de governança separados visualmente;
 - árvore de decisão do gate avaliado;
 - evidências por estágio;
+- resultados da suíte geral de qualidade, com estado, comando, duração e código
+  de saída de cada grupo de testes;
 - histórico recente de execuções.
+- guia interno explicando SisTer Core, componentes federados, engines,
+  testes disponíveis, evidências executadas e suíte geral de qualidade.
 
 As porcentagens e agrupamentos são derivados no navegador a partir dos checks
 publicados. Eles ajudam a leitura, mas a decisão formal continua sendo o
@@ -138,6 +147,7 @@ do sistema.
 - `.run/maturity/latest.json`: estado da última execução do Core (consumido pela UI);
 - `.run/maturity/components.json`: índice federado com as últimas execuções de todos os componentes;
 - `.run/maturity/catalog.json`: catálogo de checks disponíveis nos perfis versionados;
+- `.run/maturity/quality.json`: última execução da suíte geral de qualidade;
 - `.run/maturity/components/<id>/latest.json`: estado consolidado de um componente específico;
 - `.run/maturity/components/<id>/history/*.json`: atestações históricas do componente;
 - `build/maturity/`: relatórios Markdown tradicionais.
@@ -151,6 +161,7 @@ do gate, portanto uma execução reprovada ainda produz evidência e retorna err
 - status: `GET /api/admin/maturity/latest`;
 - componentes (ecossistema): `GET /api/admin/maturity/components`;
 - catálogo de checks: `GET /api/admin/maturity/catalog`;
+- suíte geral de qualidade: `GET /api/admin/maturity/quality`;
 - histórico: `GET /api/admin/maturity/history`.
 
 As rotas exigem sessão administrativa e respondem com `Cache-Control: no-store`.

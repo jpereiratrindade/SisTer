@@ -43,7 +43,9 @@
           <button type="button" role="tab" data-panel-tab="engines" aria-selected="false">SGE / Engines</button>
           <button type="button" role="tab" data-panel-tab="catalog" aria-selected="false">Testes Disponíveis</button>
           <button type="button" role="tab" data-panel-tab="evidence" aria-selected="false">Evidências Executadas</button>
+          <button type="button" role="tab" data-panel-tab="quality" aria-selected="false">Qualidade</button>
           <button type="button" role="tab" data-panel-tab="history" aria-selected="false">Histórico</button>
+          <button type="button" role="tab" data-panel-tab="guide" aria-selected="false">Guia</button>
         </nav>
 
         <div class="dashboard-panel" data-panel="summary">
@@ -183,6 +185,29 @@
         </div>
         </div>
 
+        <div class="dashboard-panel" data-panel="quality" hidden>
+          <section class="quality-section" aria-labelledby="quality-title">
+            <div class="section-heading quality-heading">
+              <div><p class="eyebrow">SUÍTE DO REPOSITÓRIO</p><h2 id="quality-title">Resultados dos testes de qualidade</h2></div>
+              <div id="quality-result" class="quality-result" data-status="SKIP"><span>Última execução</span><strong>Não publicada</strong></div>
+            </div>
+            <p id="quality-meta" class="quality-meta">Execute <code>./scripts/run_quality.sh</code> para publicar os resultados.</p>
+            <div class="quality-summary" aria-label="Resumo da suíte de qualidade">
+              <div><span>Total</span><strong id="quality-total">0</strong></div>
+              <div><span>Aprovados</span><strong id="quality-passed">0</strong></div>
+              <div><span>Falhas</span><strong id="quality-failed">0</strong></div>
+              <div><span>Não executados</span><strong id="quality-skipped">0</strong></div>
+            </div>
+            <div class="quality-table-wrap">
+              <table class="quality-table">
+                <thead><tr><th>Estado</th><th>Grupo de testes</th><th>Comando</th><th>Duração</th><th>Saída</th></tr></thead>
+                <tbody id="quality-body"></tbody>
+              </table>
+              <p id="quality-empty" class="empty-copy">Nenhuma execução da suíte de qualidade foi publicada.</p>
+            </div>
+          </section>
+        </div>
+
         <div class="dashboard-panel" data-panel="history" hidden>
         <div class="information-grid lower-grid">
           <section class="information-section" aria-labelledby="history-title">
@@ -196,6 +221,44 @@
             </div>
           </section>
         </div>
+        </div>
+
+        <div class="dashboard-panel" data-panel="guide" hidden>
+          <section class="guide-section" aria-labelledby="guide-title">
+            <div class="section-heading"><div><p class="eyebrow">GUIA DO CENTRO DE ENGENHARIA</p><h2 id="guide-title">Como ler os testes do SGE</h2></div></div>
+            <div class="guide-grid">
+              <article>
+                <h3>SisTer Core</h3>
+                <p>É o núcleo deste repositório: contratos, autenticação, sessão, APIs administrativas, evidências, maturidade, integração dos adaptadores e o serviço <code>sisterd</code>.</p>
+                <p>Testar SisTer Core não significa testar todos os subsistemas externos. Significa verificar se o núcleo está coerente com o gate avaliado.</p>
+              </article>
+              <article>
+                <h3>Componentes Federados</h3>
+                <p>São sistemas avaliados por perfis próprios, como Sister-Clima e SisTer Nexo. Eles podem estar em <code>shadow</code>, sem bloquear promoção global.</p>
+                <p>A aba Componentes mostra o estado publicado de cada componente do ecossistema.</p>
+              </article>
+              <article>
+                <h3>Testes Disponíveis</h3>
+                <p>Mostra o catálogo de checks declarados nos perfis versionados em <code>engineering/maturity/</code>.</p>
+                <p>Essa aba responde: quais testes o SGE conhece e poderia executar para cada componente?</p>
+              </article>
+              <article>
+                <h3>Evidências Executadas</h3>
+                <p>Mostra somente os checks que rodaram na última atestação publicada.</p>
+                <p>Essa aba responde: o que foi efetivamente executado nesta evidência?</p>
+              </article>
+              <article>
+                <h3>SGE / Engines</h3>
+                <p><code>legacy</code>, <code>declarative</code> e <code>compare</code> entram como testes do verificador SGE.</p>
+                <p><code>legacy</code> executa o verificador histórico. <code>declarative</code> executa os perfis YAML. <code>compare</code> executa os dois e testa se continuam equivalentes.</p>
+              </article>
+              <article>
+                <h3>Qualidade</h3>
+                <p>Mostra os resultados publicados por <code>./scripts/run_quality.sh</code>: build, CTest, contratos, governança, recursos, testes Python e shell scripts.</p>
+                <p>É uma suíte complementar. Só vira evidência de maturidade quando um perfil SGE referencia um de seus testes.</p>
+              </article>
+            </div>
+          </section>
         </div>
       </section>
     </main>

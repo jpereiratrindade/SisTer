@@ -11,8 +11,18 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def run(command):
-    return subprocess.call(command, cwd=ROOT)
+def run(command, env=None):
+    return subprocess.call(command, cwd=ROOT, env=env)
+
+
+def resolved_engine(component, requested_engine):
+    return requested_engine or ("compare" if component == "sister-core" else "declarative")
+
+
+def run_internal_publisher(command):
+    environment = os.environ.copy()
+    environment["SGE_INTERNAL_PUBLISH"] = "1"
+    return run(command, env=environment)
 
 
 def cmd_maturity_evaluate(args):
@@ -48,9 +58,8 @@ def cmd_maturity_publish(args):
         command.extend(["--component", args.component])
     if args.component_root:
         command.extend(["--component-root", args.component_root])
-    if args.engine:
-        command.extend(["--engine", args.engine])
-    return run(command)
+    command.extend(["--engine", resolved_engine(args.component, args.engine)])
+    return run_internal_publisher(command)
 
 def infer_component_root(component_id, profile):
     if component_id == "sister-core":
@@ -88,10 +97,9 @@ def cmd_maturity_publish_all(args):
         if args.stage:
             command.append(args.stage)
         command.extend(["--component", component_id, "--component-root", str(component_root)])
-        if args.engine:
-            command.extend(["--engine", args.engine])
+        command.extend(["--engine", resolved_engine(component_id, args.engine)])
         print(f"RUN {component_id}: {' '.join(command)}", flush=True)
-        rc = run(command)
+        rc = run_internal_publisher(command)
         if rc != 0:
             failures += 1
             print(f"FAIL {component_id}: rc={rc}")

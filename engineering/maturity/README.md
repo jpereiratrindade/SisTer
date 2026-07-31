@@ -18,7 +18,7 @@ modelo -> perfil do componente -> suites de checks -> avaliador -> atestação J
 | Perfil | `engineering/maturity/profiles/` | Declara componente, modo de governança, scripts e suites aplicáveis |
 | Checks | `engineering/maturity/checks/` | Declaram critérios executáveis por estágio |
 | Avaliador | `scripts/maturity/evaluator.py` | Executa perfis declarativos e produz `sister.maturity-status/1.0.0` |
-| Publicador | `scripts/maturity/run-and-publish.sh` | Executa o gate, valida JSON, atualiza histórico e índice de componentes |
+| Publicador interno | `scripts/maturity/run-and-publish.sh` | Implementação chamada exclusivamente pela CLI SGE |
 | CLI SGE | `scripts/sge` | Entrada operacional única para avaliação, publicação e validação |
 | Contratos | `contracts/engineering/` e `contracts/maturity/` | Definem formatos de entrada e saída |
 
@@ -103,15 +103,12 @@ registra `status`, `equivalent`, `engines_executed` e divergências
 estruturadas. Divergência bloqueante retorna código `5`, diferente de
 reprovação técnica do gate, que retorna código `1`.
 
-Comandos de compatibilidade continuam disponíveis:
+Não execute os scripts de `scripts/maturity/` diretamente. Eles são detalhes de
+implementação e podem mudar. A entrada operacional suportada é sempre
+`./scripts/sge`. Para avaliar sem publicar:
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha
-python3 scripts/maturity/evaluator.py \
-  --repo "$PWD" \
-  --component-root "$PWD" \
-  --profile engineering/maturity/profiles/sister-core.yaml \
-  --stage pre-alpha
+./scripts/sge maturity evaluate pre-alpha
 ```
 
 ## Arquivos produzidos
@@ -148,6 +145,7 @@ O SGE distingue duas leituras:
 |---|---|---|
 | Testes disponíveis | `.run/maturity/catalog.json` | Inventário dos checks declarados nos perfis versionados |
 | Evidências executadas | `.run/maturity/latest.json` e histórico | Checks que rodaram na última atestação publicada |
+| Qualidade | `.run/maturity/quality.json` | Resultado de build, CTest e validadores da última execução de `run_quality.sh` |
 | Componentes | `.run/maturity/components.json` | Estado consolidado por componente federado |
 
 Na situação atual, o catálogo de maturidade contém checks declarados para:
@@ -170,7 +168,35 @@ O módulo de maturidade não substitui a suíte geral de qualidade. O comando:
 executa build CMake, `ctest`, validações de contratos, governança, recursos
 locais, testes Python e validação de shell scripts. Esses testes verificam a
 saúde do repositório e das ferramentas. O SGE usa parte deles como evidência de
-maturidade quando um perfil referencia scripts delegados.
+maturidade quando um perfil referencia scripts delegados. A execução publica
+automaticamente `.run/maturity/quality.json`, exibido na aba `Qualidade` com o
+estado, comando, duração e código de saída de cada grupo.
+
+Lista atual da suíte geral:
+
+```text
+cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+python3 scripts/validate_tool_contracts.py
+python3 scripts/validate_governance_repo.py
+python3 scripts/validate_local_resources.py
+python3 scripts/maturity/validate-contracts.py
+python3 -m unittest scripts/subsystems/test_ensure.py
+python3 -m unittest discover -s tests/maturity -p 'test_*.py'
+./scripts/validate_shell_scripts.sh
+```
+
+`legacy`, `declarative` e `compare` não são componentes. Eles são engines do
+verificador SGE:
+
+- `legacy`: executa o verificador histórico do Core;
+- `declarative`: executa perfis e checks YAML;
+- `compare`: executa `legacy` e `declarative`, compara os resultados e registra
+  divergências estruturadas.
+
+Portanto, eles entram na aba `SGE / Engines` do Centro de Engenharia. Já os
+checks por componente entram em `Testes Disponíveis` e `Evidências Executadas`.
 
 ## Como ler o resultado
 

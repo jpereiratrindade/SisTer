@@ -124,6 +124,11 @@ def main():
                 encoding="utf-8",
             )
             assert request(port, "GET", "/api/admin/maturity/catalog", cookie=admin_cookie)[0] == 200
+            assert request(port, "GET", "/api/admin/maturity/quality", cookie=admin_cookie)[0] == 404
+            (maturity_root / "quality.json").write_text(
+                '{"schema":"sister.quality-status/1.0.0","result":"PASS","steps":[]}\n', encoding="utf-8"
+            )
+            assert request(port, "GET", "/api/admin/maturity/quality", cookie=admin_cookie)[0] == 200
             status, _, page = request(port, "GET", "/admin/maturity", cookie=admin_cookie)
             assert status == 200 and b"Centro de Engenharia do SisTer" in page
         finally:

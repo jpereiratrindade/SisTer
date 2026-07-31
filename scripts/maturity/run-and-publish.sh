@@ -4,6 +4,12 @@ IFS=$'\n\t'
 
 REPO="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 
+if [[ "${SGE_INTERNAL_PUBLISH:-}" != "1" ]]; then
+  printf 'Este é um detalhe interno do SGE. Use a interface única:\n' >&2
+  printf '  ./scripts/sge maturity publish [estágio] [opções]\n' >&2
+  exit 2
+fi
+
 infer_stage() {
   local status_file="$REPO/.sister/status.yml"
   [[ -f "$status_file" ]] || return 1
@@ -94,7 +100,7 @@ INDEX_FILE="$RUNTIME_ROOT/components.json"
 cp "$COMP_DIR/latest.json" "$RUNTIME_ROOT/latest.json"
 
 printf 'Status publicado para %s: %s\n' "$COMPONENT" "$COMP_DIR/latest.json"
-printf 'Engine solicitado: %s\n' "${ENGINE:-default}"
+printf 'Engine executado: %s\n' "$ENGINE"
 printf 'Histórico atualizado para %s: %s\n' "$COMPONENT" "$HISTORY_ROOT/index.json"
 printf 'Índice de componentes atualizado: %s\n' "$INDEX_FILE"
 printf 'Status global atualizado: %s\n' "$RUNTIME_ROOT/latest.json"

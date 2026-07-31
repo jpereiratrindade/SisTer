@@ -13,6 +13,9 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
         self.assertIn("/api/admin/maturity/latest", source)
         self.assertIn("/api/admin/maturity/history", source)
         self.assertIn("/api/admin/maturity/catalog", source)
+        self.assertIn("/api/admin/maturity/quality", source)
+        self.assertIn('activatePanel("evidence")', source)
+        self.assertIn("fetchPublishedJson", source)
         self.assertIn("textContent", source)
         self.assertNotIn("innerHTML", source)
         self.assertNotIn("/api/admin/maturity/run", source)
@@ -28,6 +31,11 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
             "O que significa testar SisTer Core?",
             "Gates de engenharia",
             "Testes disponíveis nos perfis versionados",
+            "Como ler os testes do SGE",
+            "Resultados dos testes de qualidade",
+            "legacy",
+            "declarative",
+            "compare",
             "Saúde da Engenharia",
             "Componentes do Ecossistema",
             "Árvore de decisão",
@@ -48,6 +56,15 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
     def test_application_smoke_script_syntax(self):
         subprocess.run(["bash", "-n", str(ROOT / "scripts" / "app" / "smoke.sh")], check=True)
         subprocess.run(["bash", "-n", str(ROOT / "scripts" / "maturity" / "run-and-publish.sh")], check=True)
+        subprocess.run(["python3", "-m", "py_compile", str(ROOT / "scripts" / "quality" / "run.py")], check=True)
+
+    def test_internal_publisher_rejects_direct_use(self):
+        completed = subprocess.run(
+            [str(ROOT / "scripts" / "maturity" / "run-and-publish.sh"), "pre-alpha"],
+            cwd=ROOT, text=True, capture_output=True,
+        )
+        self.assertEqual(completed.returncode, 2)
+        self.assertIn("./scripts/sge maturity publish", completed.stderr)
 
 
 if __name__ == "__main__":
