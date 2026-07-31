@@ -19,6 +19,7 @@ modelo -> perfil do componente -> suites de checks -> avaliador -> atestação J
 | Checks | `engineering/maturity/checks/` | Declaram critérios executáveis por estágio |
 | Avaliador | `scripts/maturity/evaluator.py` | Executa perfis declarativos e produz `sister.maturity-status/1.0.0` |
 | Publicador | `scripts/maturity/run-and-publish.sh` | Executa o gate, valida JSON, atualiza histórico e índice de componentes |
+| CLI SGE | `scripts/sge` | Entrada operacional única para avaliação, publicação e validação |
 | Contratos | `contracts/engineering/` e `contracts/maturity/` | Definem formatos de entrada e saída |
 
 `scripts/verify-sister-maturity.sh` continua como compatibilidade do Core
@@ -30,20 +31,20 @@ durante a transição, mas o destino arquitetural é o avaliador declarativo em
 Avaliar e publicar o estágio inferido de `.sister/status.yml`:
 
 ```bash
-./scripts/maturity/run-and-publish.sh
+./scripts/sge maturity publish
 ```
 
 Avaliar e publicar um estágio específico do Core:
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha
-./scripts/maturity/run-and-publish.sh alpha
+./scripts/sge maturity publish pre-alpha
+./scripts/sge maturity publish alpha
 ```
 
 Avaliar um componente federado em modo `shadow`:
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha \
+./scripts/sge maturity publish pre-alpha \
   --component sister-clima \
   --component-root /caminho/para/sister-clima
 ```
@@ -51,17 +52,30 @@ Avaliar um componente federado em modo `shadow`:
 Executar diretamente o motor declarativo, sem publicar histórico:
 
 ```bash
+./scripts/sge maturity evaluate pre-alpha
+```
+
+Validar modelos, perfis e checks contra os contratos:
+
+```bash
+./scripts/sge maturity validate
+```
+
+Validar uma atestação JSON publicada:
+
+```bash
+./scripts/sge maturity validate --status-json .run/maturity/latest.json
+```
+
+Comandos de compatibilidade continuam disponíveis:
+
+```bash
+./scripts/maturity/run-and-publish.sh pre-alpha
 python3 scripts/maturity/evaluator.py \
   --repo "$PWD" \
   --component-root "$PWD" \
   --profile engineering/maturity/profiles/sister-core.yaml \
   --stage pre-alpha
-```
-
-Validar uma atestação JSON:
-
-```bash
-python3 scripts/maturity/validate-status.py .run/maturity/latest.json
 ```
 
 ## Arquivos produzidos
@@ -162,9 +176,38 @@ Tipos suportados pelo avaliador atual:
 3. Reutilizar suites comuns quando fizer sentido.
 4. Criar `engineering/maturity/checks/<id>/pre-alpha-checks.yaml`.
 5. Declarar scripts delegados no perfil, não no avaliador.
-6. Executar `scripts/maturity/run-and-publish.sh` com `--component` e `--component-root`.
+6. Executar `scripts/sge maturity publish` com `--component` e `--component-root`.
 7. Confirmar `.run/maturity/components.json` e o Centro de Engenharia.
 8. Registrar ADR quando o componente ganhar autoridade `governed`.
+
+## Governança do módulo
+
+O módulo de maturidade é parte do plano de controle do SGE. Mudanças nele podem
+alterar a autoridade de promoção do ecossistema, portanto seguem regras
+próprias.
+
+Exigem registro arquitetural ou decisão equivalente:
+
+- mudar `evaluation_mode`, `governance_authority` ou `promotion_enabled`;
+- adicionar check obrigatório em estágio já usado para promoção;
+- remover check obrigatório;
+- alterar severidade de check;
+- alterar semântica de tipo de check no avaliador;
+- aceitar divergência entre `legacy` e `declarative`;
+- retirar compatibilidade com `legacy`;
+- mudar schema versionado em `contracts/engineering/` ou `contracts/maturity/`.
+
+Critérios mínimos para novo check obrigatório:
+
+1. possuir descrição orientada a evidência, não a implementação interna;
+2. ter resultado reproduzível em ambiente limpo;
+3. declarar artefato, script ou padrão verificável;
+4. evitar dependência de caminho local privado;
+5. definir se a falha bloqueia promoção ou apenas gera advertência;
+6. estar coberto por validação contratual.
+
+Componentes novos entram em `shadow` por padrão. A passagem para `governed`
+deve declarar escopo bloqueante, responsável operacional e rollback.
 
 ## Referências
 

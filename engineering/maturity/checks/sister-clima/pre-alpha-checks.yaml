@@ -51,8 +51,3 @@
   dimension: tests
   stage: pre-alpha
   description: Teste de sanidade (import check)
-
-- schema: sister.engineering.maturity-check/1.0.0
-  id: no-tracked-secrets-toml
-  type: script
-  script_ref: sister-clima.import-check # we can do a simple script or just a regex match to avoid versioned secrets. Wait, the profile has a "regex_match" or I can add a specific type for missing file. Wait, evaluator has `file_exists`, let's just make sure it does NOT exist? Evaluator has `file_exists`, not `file_missing`. Let me check if evaluator has `regex_match`?

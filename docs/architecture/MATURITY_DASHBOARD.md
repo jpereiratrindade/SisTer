@@ -12,9 +12,9 @@ scripts e testes -> verificador -> status JSON -> API admin -> painel
 ```
 
 O verificador (`scripts/maturity/evaluator.py`) avalia uma execução usando
-o Motor Declarativo. O histórico automático é produzido pelo wrapper de
-publicação `scripts/maturity/run-and-publish.sh`, que arquiva cada status
-válido em `.run/maturity/history/` e atualiza `.run/maturity/history/index.json`.
+o Motor Declarativo. O histórico automático é produzido pelo comando
+`scripts/sge maturity publish`, que arquiva cada status válido em
+`.run/maturity/history/` e atualiza `.run/maturity/history/index.json`.
 
 ## Visões
 
@@ -78,14 +78,14 @@ Para critérios, impactos operacionais e procedimentos detalhados, consulte
 ## Publicação
 
 ```bash
-./scripts/maturity/run-and-publish.sh
+./scripts/sge maturity publish
 ```
 
 Sem argumento, o script avalia o projeto principal (`sister-core`) e infere o estágio a partir de `.sister/status.yml`.
 Também é possível informar explicitamente o estágio:
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha
+./scripts/sge maturity publish pre-alpha
 ```
 
 ### Componentes e Pilotos (Modo Shadow)
@@ -93,7 +93,7 @@ Também é possível informar explicitamente o estágio:
 Para avaliar um subsistema ou componente externo, forneça o ID do componente e o caminho raiz do respectivo repositório:
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha \
+./scripts/sge maturity publish pre-alpha \
   --component sister-nexo \
   --component-root /caminho/para/o/repo/do/nexo
 ```
@@ -101,7 +101,7 @@ Para avaliar um subsistema ou componente externo, forneça o ID do componente e 
 #### Exemplo com Sister-Clima (Python/Streamlit)
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha \
+./scripts/sge maturity publish pre-alpha \
   --component sister-clima \
   --component-root /caminho/para/o/repo/do/clima
 ```

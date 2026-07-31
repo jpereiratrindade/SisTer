@@ -283,7 +283,7 @@ function renderActions(actions) {
 }
 
 function renderOperationalAction(status) {
-  const command = "./scripts/maturity/run-and-publish.sh";
+  const command = "./scripts/sge maturity publish";
   qs("#publish-command").textContent = command;
   qs("#copy-publish-command").dataset.command = command;
   qs("#copy-publish-command").textContent = "Copiar";

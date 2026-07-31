@@ -22,7 +22,7 @@ transitória e deve ser preservada por contratos.
 Uso principal:
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha
+./scripts/sge maturity publish pre-alpha
 ```
 
 Tutorial específico: [maturity/README.md](./maturity/README.md).

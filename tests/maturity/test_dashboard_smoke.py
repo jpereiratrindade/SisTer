@@ -26,7 +26,7 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
             "Componentes do Ecossistema",
             "Árvore de decisão",
             "Publicar nova atestação",
-            "./scripts/maturity/run-and-publish.sh",
+            "./scripts/sge maturity publish",
             "Aprovados",
             "Falhas",
             "Advertências",

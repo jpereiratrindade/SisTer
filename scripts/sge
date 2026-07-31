@@ -1,0 +1,92 @@
+#!/usr/bin/env python3
+import argparse
+import subprocess
+import sys
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def run(command):
+    return subprocess.call(command, cwd=ROOT)
+
+
+def cmd_maturity_evaluate(args):
+    command = [
+        sys.executable,
+        str(ROOT / "scripts/maturity/evaluator.py"),
+        "--repo",
+        str(ROOT),
+        "--component-root",
+        args.component_root,
+        "--profile",
+        args.profile or f"engineering/maturity/profiles/{args.component}.yaml",
+        "--stage",
+        args.stage,
+    ]
+    if args.strict:
+        command.append("--strict")
+    return run(command)
+
+
+def cmd_maturity_publish(args):
+    command = [str(ROOT / "scripts/maturity/run-and-publish.sh")]
+    if args.stage:
+        command.append(args.stage)
+    if args.component:
+        command.extend(["--component", args.component])
+    if args.component_root:
+        command.extend(["--component-root", args.component_root])
+    return run(command)
+
+
+def cmd_maturity_components(_args):
+    return run([sys.executable, str(ROOT / "scripts/maturity/aggregate-components.py")])
+
+
+def cmd_maturity_validate(args):
+    if args.status_json:
+        return run([sys.executable, str(ROOT / "scripts/maturity/validate-status.py"), args.status_json])
+    return run([sys.executable, str(ROOT / "scripts/maturity/validate-contracts.py"), "--repo", str(ROOT)])
+
+
+def build_parser():
+    parser = argparse.ArgumentParser(prog="scripts/sge", description="SGE-SisTer command line tools.")
+    subparsers = parser.add_subparsers(dest="area", required=True)
+
+    maturity = subparsers.add_parser("maturity", help="Maturity module commands.")
+    maturity_sub = maturity.add_subparsers(dest="command", required=True)
+
+    evaluate = maturity_sub.add_parser("evaluate", help="Evaluate a maturity profile without publishing history.")
+    evaluate.add_argument("stage", choices=["pre-alpha", "alpha", "beta", "gamma", "production"])
+    evaluate.add_argument("--component", default="sister-core")
+    evaluate.add_argument("--component-root", default=str(ROOT))
+    evaluate.add_argument("--profile")
+    evaluate.add_argument("--strict", action="store_true")
+    evaluate.set_defaults(func=cmd_maturity_evaluate)
+
+    publish = maturity_sub.add_parser("publish", help="Evaluate and publish maturity status/history.")
+    publish.add_argument("stage", nargs="?", choices=["pre-alpha", "alpha", "beta", "gamma", "production"])
+    publish.add_argument("--component", default="sister-core")
+    publish.add_argument("--component-root")
+    publish.set_defaults(func=cmd_maturity_publish)
+
+    components = maturity_sub.add_parser("components", help="Rebuild the federated components index.")
+    components.set_defaults(func=cmd_maturity_components)
+
+    validate = maturity_sub.add_parser("validate", help="Validate maturity contracts or a status JSON.")
+    validate.add_argument("--status-json")
+    validate.set_defaults(func=cmd_maturity_validate)
+
+    return parser
+
+
+def main():
+    parser = build_parser()
+    args = parser.parse_args()
+    return args.func(args)
+
+
+if __name__ == "__main__":
+    sys.exit(main())

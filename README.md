@@ -269,6 +269,26 @@ Essa separacao evita misturar a funcao epistemica do SisTer, que transforma conh
 
 Cada sistema federado tambem declara no seu contrato o que compartilha com o SisTer, o que permanece nativo de sua propria plataforma, o link de acesso direto e a classificacao publico/restrito/privado/sensivel. A integracao segue a cadeia dado, informacao, conhecimento e sabedoria: a informacao ofertada pelo sistema produtor chega ao SisTer como dado contratado; depois de validada e contextualizada, pode virar informacao integrada, conhecimento territorial e apoio decisorio governado.
 
+## SGE e maturidade
+
+O ponto de entrada operacional do SGE e:
+
+```bash
+./scripts/sge maturity publish pre-alpha
+```
+
+Comandos principais:
+
+```bash
+./scripts/sge maturity evaluate pre-alpha
+./scripts/sge maturity publish pre-alpha
+./scripts/sge maturity validate
+./scripts/sge maturity validate --status-json .run/maturity/latest.json
+```
+
+O tutorial completo de uso fica em `engineering/maturity/README.md`.
+A arquitetura de engines e governanca fica em `docs/architecture/sgr/`.
+
 ## Documentacao
 
 - `docs/CONCEPTUAL_BASE.md`: conexao viva com a construcao conceitual e ontologica mantida em `docs/conceptual`.
@@ -278,6 +298,7 @@ Cada sistema federado tambem declara no seu contrato o que compartilha com o Sis
 - `docs/architecture/DATABASE.md`: arquitetura PostgreSQL e pgvector.
 - `docs/architecture/CONTAINERS.md`: estrategia de containers e persistencia do banco.
 - `docs/architecture/sgr/`: arquitetura do SGR, engines de verificacao e modos de governanca.
+- `engineering/maturity/README.md`: tutorial de uso do modulo de maturidade do SGE.
 - `docs/governance/PUBLIC_PRIVATE_SCOPE.md`: escopo publico, restrito e privado.
 - `docs/adr/`: decisoes arquiteturais aceitas.
 - `docs/dai/DAI.md`: decisoes, acoes e impedimentos.

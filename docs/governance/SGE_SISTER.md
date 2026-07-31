@@ -70,16 +70,17 @@ arquitetural correspondente.
 O SGE-SisTer possui três níveis de leitura sobre maturidade:
 
 1. **Fotografia:** a última execução publicada mostra o estado atual do gate.
-2. **Histórico:** cada execução feita por `scripts/maturity/run-and-publish.sh`
+2. **Histórico:** cada execução feita por `scripts/sge maturity publish`
    arquiva uma atestação em `.run/maturity/history/` e atualiza o índice.
 3. **Tendência:** métricas de permanência por estágio, regressões, estabilidade
    e dimensões de engenharia serão derivadas do histórico acumulado.
 
 O comando `scripts/verify-sister-maturity.sh` permanece como compatibilidade do
-Core durante a transição. O módulo declarativo em
-`engineering/maturity/`, executado por `scripts/maturity/evaluator.py`, é a
-direção arquitetural. O rastreamento automático acontece quando o gate é
-executado pelo fluxo de publicação `scripts/maturity/run-and-publish.sh`.
+Core durante a transição. O módulo declarativo em `engineering/maturity/`,
+executado por `scripts/maturity/evaluator.py`, é a direção arquitetural.
+Operacionalmente, a entrada preferencial é `scripts/sge maturity`. O
+rastreamento automático acontece quando o gate é executado pelo fluxo de
+publicação `scripts/sge maturity publish`.
 
 ## Modularização interna
 
