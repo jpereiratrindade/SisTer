@@ -9,6 +9,7 @@ if [[ "${SGE_INTERNAL_PUBLISH:-}" != "1" ]]; then
   printf '  ./scripts/sge maturity publish [estágio] [opções]\n' >&2
   exit 2
 fi
+unset SGE_INTERNAL_PUBLISH
 
 infer_stage() {
   local status_file="$REPO/.sister/status.yml"

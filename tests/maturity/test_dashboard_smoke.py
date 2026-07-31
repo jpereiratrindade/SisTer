@@ -1,3 +1,4 @@
+import os
 import shutil
 import subprocess
 import unittest
@@ -59,9 +60,11 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
         subprocess.run(["python3", "-m", "py_compile", str(ROOT / "scripts" / "quality" / "run.py")], check=True)
 
     def test_internal_publisher_rejects_direct_use(self):
+        environment = os.environ.copy()
+        environment.pop("SGE_INTERNAL_PUBLISH", None)
         completed = subprocess.run(
             [str(ROOT / "scripts" / "maturity" / "run-and-publish.sh"), "pre-alpha"],
-            cwd=ROOT, text=True, capture_output=True,
+            cwd=ROOT, env=environment, text=True, capture_output=True,
         )
         self.assertEqual(completed.returncode, 2)
         self.assertIn("./scripts/sge maturity publish", completed.stderr)
