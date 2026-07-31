@@ -313,10 +313,11 @@ Responsabilidades:
 8. arquivar uma cópia no histórico;
 9. preservar o código de saída do gate.
 
-Uso esperado:
+O arquivo é uma implementação interna. O uso operacional suportado ocorre pela
+CLI SGE:
 
 ```bash
-./scripts/maturity/run-and-publish.sh pre-alpha
+./scripts/sge maturity publish pre-alpha
 ```
 
 Saídas:
@@ -655,7 +656,8 @@ Criar testes que provem a ausência de caminhos absolutos e segredos.
 
 ### Passo 5 — publicador
 
-Implementar `run-and-publish.sh`.
+Implementar o publicador interno `run-and-publish.sh` e expô-lo somente por
+`./scripts/sge maturity publish`.
 
 ### Passo 6 — API somente leitura
 

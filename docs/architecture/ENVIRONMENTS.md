@@ -107,6 +107,13 @@ Para executar o fluxo completo, incluindo servidor e teste dos endpoints:
 ./scripts/run_all.sh dev 8000
 ```
 
+Esse fluxo de ambiente é diferente da verificação completa de engenharia. Para
+executar qualidade e maturidade sem subir banco ou servidor, use:
+
+```bash
+./scripts/sge verify
+```
+
 Esse é o ponto de entrada canônico do ecossistema integrado. O comando também
 garante os subsistemas governados; executar `run_all.sh` dentro de um subsistema
 inicia somente esse produto.

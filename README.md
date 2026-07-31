@@ -271,7 +271,18 @@ Cada sistema federado tambem declara no seu contrato o que compartilha com o Sis
 
 ## SGE e maturidade
 
-O ponto de entrada operacional do SGE e:
+Para executar todos os testes disponíveis localmente e publicar as avaliações
+de maturidade dos componentes resolvíveis:
+
+```bash
+./scripts/sge verify
+```
+
+O comando executa a suíte geral de qualidade e depois `maturity publish-all`.
+Componentes externos sem raiz local configurada aparecem como `SKIP`, sem
+ocultar os testes que efetivamente foram executados.
+
+Para publicar somente uma avaliação de maturidade:
 
 ```bash
 ./scripts/sge maturity publish pre-alpha
@@ -317,7 +328,12 @@ atestação publicada.
 ## Qualidade e governanca
 
 ```bash
-python3 scripts/validate_governance_repo.py
-python3 scripts/validate_tool_contracts.py
+./scripts/sge verify
+```
+
+Para executar apenas build, CTest e validadores do repositório, sem publicar
+maturidade:
+
+```bash
 ./scripts/run_quality.sh
 ```

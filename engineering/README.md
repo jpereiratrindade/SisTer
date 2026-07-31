@@ -19,7 +19,14 @@ módulo de maturidade já usa perfis e checks em `engineering/maturity/`, mas o
 avaliador e o publicador ainda vivem em `scripts/maturity/`. Essa separação é
 transitória e deve ser preservada por contratos.
 
-Uso principal:
+Uso principal para executar qualidade e maturidade de todos os componentes
+localmente resolvíveis:
+
+```bash
+./scripts/sge verify
+```
+
+Para uma avaliação de maturidade específica:
 
 ```bash
 ./scripts/sge maturity publish pre-alpha

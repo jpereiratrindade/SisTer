@@ -82,6 +82,11 @@ Operacionalmente, a entrada preferencial é `scripts/sge maturity`. O
 rastreamento automático acontece quando o gate é executado pelo fluxo de
 publicação `scripts/sge maturity publish`.
 
+A entrada cotidiana completa é `./scripts/sge verify`. Ela executa a suíte de
+qualidade do repositório e publica a maturidade de todos os componentes
+localmente resolvíveis. O engine é selecionado automaticamente por componente:
+`compare` para o Core e `declarative` para componentes federados.
+
 ## Modularização interna
 
 O Processo de Engenharia e o SGE-SisTer serão consolidados inicialmente como

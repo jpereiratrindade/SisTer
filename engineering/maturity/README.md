@@ -28,6 +28,23 @@ durante a transição, mas o destino arquitetural é o avaliador declarativo em
 
 ## Uso rápido
 
+Executar a verificação completa recomendada, combinando a suíte geral de
+qualidade com a publicação de maturidade de todos os componentes resolvíveis:
+
+```bash
+./scripts/sge verify
+```
+
+Para usar um gate explícito em todos os componentes:
+
+```bash
+./scripts/sge verify alpha
+```
+
+`verify` continua até executar as duas camadas e retorna erro se qualidade ou
+maturidade falharem. Componentes externos cuja raiz não esteja configurada são
+informados como `SKIP`.
+
 Avaliar e publicar o estágio inferido de `.sister/status.yml`:
 
 ```bash

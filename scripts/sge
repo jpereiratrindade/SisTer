@@ -98,7 +98,9 @@ def cmd_maturity_publish_all(args):
             command.append(args.stage)
         command.extend(["--component", component_id, "--component-root", str(component_root)])
         command.extend(["--engine", resolved_engine(component_id, args.engine)])
-        print(f"RUN {component_id}: {' '.join(command)}", flush=True)
+        stage_label = args.stage or "inferido"
+        engine_label = resolved_engine(component_id, args.engine)
+        print(f"RUN {component_id}: gate={stage_label} engine={engine_label}", flush=True)
         rc = run_internal_publisher(command)
         if rc != 0:
             failures += 1
@@ -121,9 +123,27 @@ def cmd_maturity_validate(args):
     return run([sys.executable, str(ROOT / "scripts/maturity/validate-contracts.py"), "--repo", str(ROOT)])
 
 
+def cmd_verify(args):
+    quality_rc = run([str(ROOT / "scripts/run_quality.sh")])
+    maturity_rc = cmd_maturity_publish_all(argparse.Namespace(stage=args.stage, engine=None))
+    print(
+        f"verificação completa: qualidade={'PASS' if quality_rc == 0 else 'FAIL'} "
+        f"maturidade={'PASS' if maturity_rc == 0 else 'FAIL'}"
+    )
+    return quality_rc or maturity_rc
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="scripts/sge", description="SGE-SisTer command line tools.")
     subparsers = parser.add_subparsers(dest="area", required=True)
+
+    verify = subparsers.add_parser(
+        "verify",
+        help="Run repository quality and publish maturity for all resolvable components.",
+        description="Run repository quality and publish maturity for all resolvable components.",
+    )
+    verify.add_argument("stage", nargs="?", choices=["pre-alpha", "alpha", "beta", "gamma", "production"])
+    verify.set_defaults(func=cmd_verify)
 
     maturity = subparsers.add_parser("maturity", help="Maturity module commands.")
     maturity_sub = maturity.add_subparsers(dest="command", required=True)

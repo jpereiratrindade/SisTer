@@ -34,6 +34,7 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
             "Testes disponíveis nos perfis versionados",
             "Como ler os testes do SGE",
             "Resultados dos testes de qualidade",
+            "./scripts/sge verify",
             "legacy",
             "declarative",
             "compare",
@@ -68,6 +69,14 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
         )
         self.assertEqual(completed.returncode, 2)
         self.assertIn("./scripts/sge maturity publish", completed.stderr)
+
+    def test_sge_exposes_complete_verification_command(self):
+        completed = subprocess.run(
+            [str(ROOT / "scripts" / "sge"), "verify", "--help"],
+            cwd=ROOT, text=True, capture_output=True,
+        )
+        self.assertEqual(completed.returncode, 0)
+        self.assertIn("quality", completed.stdout)
 
 
 if __name__ == "__main__":

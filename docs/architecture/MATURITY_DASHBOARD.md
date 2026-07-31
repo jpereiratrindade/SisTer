@@ -89,6 +89,15 @@ Para critérios, impactos operacionais e procedimentos detalhados, consulte
 
 ## Publicação
 
+Fluxo completo recomendado:
+
+```bash
+./scripts/sge verify
+```
+
+Ele executa a suíte geral de qualidade e publica a maturidade de todos os
+componentes localmente resolvíveis. Para operar apenas a maturidade:
+
 ```bash
 ./scripts/sge maturity publish
 ./scripts/sge maturity publish-all pre-alpha
