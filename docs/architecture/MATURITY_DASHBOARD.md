@@ -40,19 +40,32 @@ publicados. Eles ajudam a leitura, mas a decisão formal continua sendo o
 ./scripts/maturity/run-and-publish.sh
 ```
 
-Sem argumento, o script infere o estágio a partir de `.sister/status.yml`.
-Também é possível informar explicitamente:
+Sem argumento, o script avalia o projeto principal (`sister-core`) e infere o estágio a partir de `.sister/status.yml`.
+Também é possível informar explicitamente o estágio:
 
 ```bash
 ./scripts/maturity/run-and-publish.sh pre-alpha
 ```
 
-Arquivos locais:
+### Componentes e Pilotos (Modo Shadow)
 
-- `.run/maturity/latest.json`: última execução;
-- `.run/maturity/history/*.json`: atestações históricas por execução publicada;
-- `.run/maturity/history/index.json`: índice das execuções;
-- `build/maturity/`: relatórios Markdown.
+Para avaliar um subsistema ou componente externo (ex: Nexo), forneça o ID do componente e o caminho raiz do repositório respectivo:
+
+```bash
+./scripts/maturity/run-and-publish.sh pre-alpha \
+  --component sister-nexo \
+  --component-root /caminho/para/o/repo/do/nexo
+```
+
+O orquestrador utilizará o Motor Declarativo sob o perfil respectivo (ex: `sister-nexo.yaml`). O resultado será projetado no dashboard mantendo o isolamento de métricas.
+
+### Arquivos Locais
+
+- `.run/maturity/latest.json`: estado da última execução (consumido imediatamente pela UI);
+- `.run/maturity/components.json`: índice federado com as últimas execuções de todos os componentes testados;
+- `.run/maturity/components/<id>/latest.json`: estado consolidado de um componente específico;
+- `.run/maturity/components/<id>/history/*.json`: atestações históricas do componente;
+- `build/maturity/`: relatórios Markdown tradicionais.
 
 Esses diretórios não são versionados. A publicação preserva o código de saída
 do gate, portanto uma execução reprovada ainda produz evidência e retorna erro.
