@@ -11,6 +11,11 @@ aprovações.
 scripts e testes -> verificador -> status JSON -> API admin -> painel
 ```
 
+O verificador (`scripts/verify-sister-maturity.sh`) avalia uma execução. O
+histórico automático é produzido pelo wrapper de publicação
+`scripts/maturity/run-and-publish.sh`, que arquiva cada status válido em
+`.run/maturity/history/` e atualiza `.run/maturity/history/index.json`.
+
 ## Visões
 
 A tela combina leituras operacionais e executivas sobre a mesma atestação:
@@ -38,6 +43,7 @@ publicados. Eles ajudam a leitura, mas a decisão formal continua sendo o
 Arquivos locais:
 
 - `.run/maturity/latest.json`: última execução;
+- `.run/maturity/history/*.json`: atestações históricas por execução publicada;
 - `.run/maturity/history/index.json`: índice das execuções;
 - `build/maturity/`: relatórios Markdown.
 

@@ -64,6 +64,29 @@ arquitetural correspondente.
 | Atestações | Publicar resultado sanitizado dos gates | `.run/maturity/` |
 | Centro de Engenharia | Apresentar estado, proveniência e evolução | `/admin/maturity` |
 
+## Evolução rastreável
+
+O SGE-SisTer possui três níveis de leitura sobre maturidade:
+
+1. **Fotografia:** a última execução publicada mostra o estado atual do gate.
+2. **Histórico:** cada execução feita por `scripts/maturity/run-and-publish.sh`
+   arquiva uma atestação em `.run/maturity/history/` e atualiza o índice.
+3. **Tendência:** métricas de permanência por estágio, regressões, estabilidade
+   e dimensões de engenharia serão derivadas do histórico acumulado.
+
+O comando `scripts/verify-sister-maturity.sh` não arquiva histórico sozinho. Ele
+é a autoridade de avaliação. O rastreamento automático acontece quando o gate é
+executado pelo fluxo de publicação.
+
+## Roadmap do SGE
+
+| Versão | Foco | Resultado esperado |
+|---|---|---|
+| SGE 1.0 | Fotografia governada | última atestação, Centro de Engenharia e promoção por evidência |
+| SGE 1.1 | Histórico automático | execuções e mudanças de estágio arquivadas sem registro manual |
+| SGE 1.2 | Métricas e tendências | tempo por estágio, regressões, estabilidade e saúde da engenharia |
+| SGE 2.0 | Radar de Engenharia | riscos, gargalos e próximos bloqueadores derivados das evidências |
+
 ## Regra de promoção
 
 Toda promoção de estágio exige quatro elementos:
