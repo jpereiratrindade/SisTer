@@ -258,6 +258,14 @@ function renderActions(actions) {
   actions.forEach((action) => list.append(create("li", "", action)));
 }
 
+function renderOperationalAction(status) {
+  const command = `./scripts/maturity/run-and-publish.sh ${status.target_stage}`;
+  qs("#publish-command").textContent = command;
+  qs("#copy-publish-command").dataset.command = command;
+  qs("#copy-publish-command").textContent = "Copiar";
+  qs("#operation-detail").textContent = "Executa o gate, publica latest.json e arquiva a execução no histórico local.";
+}
+
 function renderHistory(history) {
   const body = qs("#history-body");
   body.replaceChildren();
@@ -338,6 +346,7 @@ function renderDashboard(status, history) {
   renderDecisionTree(status);
   renderStageTabs(status.stages);
   renderActions(status.next_actions);
+  renderOperationalAction(status);
   renderHistory(history);
   qs("#dashboard").hidden = false;
   setNotice("");
@@ -383,4 +392,29 @@ async function loadDashboard() {
 }
 
 qs("#refresh-button").addEventListener("click", loadDashboard);
+qs("#copy-publish-command").addEventListener("click", async () => {
+  const button = qs("#copy-publish-command");
+  const command = button.dataset.command || qs("#publish-command").textContent;
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(command);
+    } else {
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(qs("#publish-command"));
+      selection.removeAllRanges();
+      selection.addRange(range);
+      document.execCommand("copy");
+      selection.removeAllRanges();
+    }
+    button.textContent = "Copiado";
+  } catch (_) {
+    button.textContent = "Selecionar";
+    const selection = window.getSelection();
+    const range = document.createRange();
+    range.selectNodeContents(qs("#publish-command"));
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+});
 loadDashboard();

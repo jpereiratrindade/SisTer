@@ -25,6 +25,8 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
             "Saúde da Engenharia",
             "Plataforma e subsistemas",
             "Árvore de decisão",
+            "Publicar nova atestação",
+            "./scripts/maturity/run-and-publish.sh pre-alpha",
             "Aprovados",
             "Falhas",
             "Advertências",
