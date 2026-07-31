@@ -75,7 +75,7 @@ private:
     std::filesystem::path sessionsPath_;
     mutable std::mutex mutex_;
     std::vector<StoredUser> users_;
-    std::unordered_map<std::string, Session> sessions_;
+    std::unordered_map<std::string, Session> sessionsByTokenHash_;
 
     void load();
     void save() const;

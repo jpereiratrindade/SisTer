@@ -76,6 +76,11 @@ def main():
             })
             assert status == 201, status
             admin_cookie = session_cookie(headers)
+            status, headers, payload = request(port, "GET", "/api/me/capabilities", cookie=admin_cookie)
+            assert status == 200, status
+            capabilities = json.loads(payload)["capabilities"]
+            assert "sister.maturity.read" in capabilities
+            assert headers.get("Cache-Control") == "no-store", headers
 
             assert request(port, "GET", "/api/admin/maturity/latest")[0] == 401
             assert request(port, "GET", "/admin/maturity")[0] == 303

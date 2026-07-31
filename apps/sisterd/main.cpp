@@ -1049,6 +1049,33 @@ std::string jsonUser(const sisterd::AuthUser& user) {
         "\",\"role\":\"" + jsonEscape(user.role) + "\"}";
 }
 
+std::vector<std::string> capabilitiesForRole(const std::string& role) {
+    if (role == "admin") {
+        return {
+            "sister.maturity.read",
+            "subsystem.manifest.read",
+            "nexo.projects.read",
+            "climate.dashboard.read"
+        };
+    }
+    if (role == "researcher" || role == "project_lead") {
+        return {"nexo.projects.read", "climate.dashboard.read"};
+    }
+    return {};
+}
+
+std::string jsonCapabilities(const sisterd::AuthUser& user) {
+    const auto capabilities = capabilitiesForRole(user.role);
+    std::string body = "{\"user_id\":\"" + jsonEscape(user.id) +
+        "\",\"role\":\"" + jsonEscape(user.role) + "\",\"capabilities\":[";
+    for (std::size_t index = 0; index < capabilities.size(); ++index) {
+        if (index > 0) body += ',';
+        body += "\"" + jsonEscape(capabilities[index]) + "\"";
+    }
+    body += "]}";
+    return body;
+}
+
 HttpResponse jsonError(int status, std::string reason, std::string_view detail) {
     return {
         status,
@@ -1741,6 +1768,22 @@ void handleClient(
     }
 
     // --- /api/me ---
+    if (request.path == "/api/me/capabilities") {
+        if (!actor) {
+            sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
+                         config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
+            return;
+        }
+        const HttpResponse resp{200, "OK", jsonCapabilities(*actor),
+            "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
+        sendResponse(client.get(), resp, config, requestId, isHead);
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+        logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
+        return;
+    }
+
     if (request.path == "/api/me") {
         if (!actor) {
             sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),

@@ -192,7 +192,7 @@ void AuthStore::save() const {
 
 void AuthStore::loadSessions() {
     std::lock_guard lock(mutex_);
-    sessions_.clear();
+    sessionsByTokenHash_.clear();
 
     std::ifstream input(sessionsPath_);
     std::string line;
@@ -220,7 +220,7 @@ void AuthStore::loadSessions() {
         const bool knownUser = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
             return user.publicUser.id == userId;
         });
-        if (knownUser && expiresAt > now) sessions_[tokenHash] = {userId, expiresAt};
+        if (knownUser && expiresAt > now) sessionsByTokenHash_[tokenHash] = {userId, expiresAt};
     }
 }
 
@@ -230,7 +230,7 @@ void AuthStore::saveSessions() const {
     {
         std::ofstream output(temporary, std::ios::trunc);
         if (!output) throw std::runtime_error("unable to persist sessions");
-        for (const auto& [tokenHash, session] : sessions_) {
+        for (const auto& [tokenHash, session] : sessionsByTokenHash_) {
             const auto expiresSeconds = std::chrono::duration_cast<std::chrono::seconds>(
                 session.expiresAt.time_since_epoch()).count();
             output << tokenHash << '\t' << session.userId << '\t' << expiresSeconds << '\n';
@@ -250,7 +250,10 @@ bool AuthStore::bootstrapOpen() const {
 
 AuthResult AuthStore::createSession(const StoredUser& user) {
     const auto token = randomHex(32);
-    sessions_[sha256(token)] = {user.publicUser.id, std::chrono::system_clock::now() + sessionLifetime};
+    const auto session_token_hash = sha256(token);
+    sessionsByTokenHash_[session_token_hash] = {
+        user.publicUser.id,
+        std::chrono::system_clock::now() + sessionLifetime};
     saveSessions();
     return {user.publicUser, token};
 }
@@ -445,9 +448,9 @@ bool AuthStore::deleteUser(
     }
 
     users_.erase(target);
-    for (auto it = sessions_.begin(); it != sessions_.end();) {
+    for (auto it = sessionsByTokenHash_.begin(); it != sessionsByTokenHash_.end();) {
         if (it->second.userId == id) {
-            it = sessions_.erase(it);
+            it = sessionsByTokenHash_.erase(it);
         } else {
             ++it;
         }
@@ -489,11 +492,11 @@ std::optional<AuthUser> AuthStore::importUser(
 std::optional<AuthUser> AuthStore::userForToken(const std::string& token) {
     if (token.empty()) return std::nullopt;
     std::lock_guard lock(mutex_);
-    const auto key = sha256(token);
-    const auto session = sessions_.find(key);
-    if (session == sessions_.end()) return std::nullopt;
+    const auto session_token_hash = sha256(token);
+    const auto session = sessionsByTokenHash_.find(session_token_hash);
+    if (session == sessionsByTokenHash_.end()) return std::nullopt;
     if (session->second.expiresAt <= std::chrono::system_clock::now()) {
-        sessions_.erase(session);
+        sessionsByTokenHash_.erase(session);
         saveSessions();
         return std::nullopt;
     }
@@ -506,7 +509,8 @@ std::optional<AuthUser> AuthStore::userForToken(const std::string& token) {
 void AuthStore::logout(const std::string& token) {
     if (token.empty()) return;
     std::lock_guard lock(mutex_);
-    sessions_.erase(sha256(token));
+    const auto session_token_hash = sha256(token);
+    sessionsByTokenHash_.erase(session_token_hash);
     saveSessions();
 }
 
