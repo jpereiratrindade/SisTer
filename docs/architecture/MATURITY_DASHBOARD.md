@@ -1,8 +1,9 @@
 # Centro de Engenharia do SisTer
 
-O Centro de Engenharia do SisTer é uma funcionalidade administrativa de
-desenvolvimento. Ele apresenta relatórios sanitizados produzidos pelos gates
-sem executar comandos e sem recalcular aprovações.
+O Centro de Engenharia do SisTer é a interface visível do
+[SGE-SisTer](../governance/SGE_SISTER.md). Ele apresenta relatórios
+sanitizados produzidos pelos gates sem executar comandos e sem recalcular
+aprovações.
 
 ## Fluxo
 

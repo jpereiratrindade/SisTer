@@ -11,6 +11,21 @@ O SisTer segue uma base inspirada no modelo do LabGestao:
 
 Mudancas em contratos, ingestao, proveniencia e catalogo territorial devem registrar evidencia proporcional ao risco.
 
+## SGE-SisTer
+
+Encerrada a fase de validação do protótipo integrado, a evolução técnica passa
+a ser conduzida pelo **Sistema de Governança da Engenharia do SisTer
+(SGE-SisTer)**.
+
+O SGE-SisTer conecta arquitetura, contratos, pacotes de trabalho, testes,
+gates, evidências, Centro de Engenharia e promoções de estágio. A regra de
+entrada para novos incrementos passa a ser:
+
+> Em qual pacote de trabalho, em qual ADR e em qual gate esta mudança se
+> encaixa?
+
+Referência: [SGE_SISTER.md](./SGE_SISTER.md).
+
 ## Componentes governados
 
 O estado atual do SisTer inclui componentes que devem ser tratados como superficie governada:
