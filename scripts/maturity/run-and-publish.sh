@@ -48,6 +48,11 @@ set +e
 GATE_STATUS=$?
 set -e
 
+if [[ ! -s "$CANDIDATE" ]]; then
+  printf 'O gate não produziu uma atestação JSON válida; latest.json não foi alterado.\n' >&2
+  exit "$GATE_STATUS"
+fi
+
 python3 "$REPO/scripts/maturity/validate-status.py" "$CANDIDATE"
 mv "$CANDIDATE" "$RUNTIME_ROOT/latest.json"
 python3 "$REPO/scripts/maturity/update-history.py" \

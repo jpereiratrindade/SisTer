@@ -122,6 +122,14 @@ sanitize_field() {
   printf '%s' "$value"
 }
 
+check_id_slug() {
+  local value="$1"
+  value="$(printf '%s' "$value" | tr '[:upper:]' '[:lower:]')"
+  value="${value//[^a-z0-9]/-}"
+  value="$(printf '%s' "$value" | sed -E 's/-+/-/g; s/^-//; s/-$//')"
+  printf '%s' "${value:-check}"
+}
+
 sha256_file() {
   local file="$1"
   if command -v sha256sum >/dev/null 2>&1; then
@@ -506,7 +514,7 @@ run_alpha() {
   check_dir alpha contract-dir yes contracts/subsystem/1.0.0 \
     "Contrato sister.subsystem/1.0.0 existe"
   for file in manifest.schema.json capabilities.schema.json identity-claims.schema.json health.schema.json readiness.schema.json error.schema.json audit-event.schema.json openapi.yaml README.md; do
-    check_file alpha "contract-${file//[^a-zA-Z0-9]/-}" yes \
+    check_file alpha "contract-$(check_id_slug "$file")" yes \
       "contracts/subsystem/1.0.0/$file" "Artefato contratual $file existe"
   done
 
