@@ -84,31 +84,10 @@ mv "$CANDIDATE" "$COMP_DIR/latest.json"
 python3 "$REPO/scripts/maturity/update-history.py" \
   "$COMP_DIR/latest.json" "$HISTORY_ROOT"
 
-# Aggregator
-INDEX_FILE="$RUNTIME_ROOT/components.json"
-cat <<EOF > "$INDEX_FILE"
-{
-  "components": [
-$(find "$COMPONENTS_DIR" -mindepth 1 -maxdepth 1 -type d | sort | while read -r d; do
-  c=$(basename "$d")
-  if [[ -f "$d/latest.json" ]]; then
-    printf '    {"component_id": "%s", "latest": "components/%s/latest.json"}' "$c" "$c"
-  fi
-done)
-  ]
-}
-EOF
+# Atualizar o agregador de componentes do ecossistema
+python3 "$REPO/scripts/maturity/aggregate-components.py"
 
-python3 -c '
-import json, glob, os
-components = []
-base = "'$RUNTIME_ROOT'"
-for p in sorted(glob.glob(os.path.join(base, "components", "*", "latest.json"))):
-    comp = os.path.basename(os.path.dirname(p))
-    components.append({"component_id": comp, "latest": f"components/{comp}/latest.json"})
-with open(os.path.join(base, "components.json"), "w") as f:
-    json.dump({"components": components}, f, indent=2)
-'
+INDEX_FILE="$RUNTIME_ROOT/components.json"
 
 # Copy the latest component evaluation to the root so the UI can still consume it
 cp "$COMP_DIR/latest.json" "$RUNTIME_ROOT/latest.json"

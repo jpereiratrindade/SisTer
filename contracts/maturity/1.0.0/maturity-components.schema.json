@@ -1,0 +1,53 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "sister.maturity-components/1.0.0",
+  "title": "Catálogo de Componentes do SisTer",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "generated_at", "components"],
+  "properties": {
+    "schema": {
+      "type": "string",
+      "const": "sister.maturity-components/1.0.0"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "components": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["component_id", "label", "governance_mode", "profile_state"],
+        "properties": {
+          "component_id": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "governance_mode": {
+            "type": "string",
+            "enum": ["governed", "shadow", "none"]
+          },
+          "profile_state": {
+            "type": "string",
+            "enum": ["configured", "missing"]
+          },
+          "technical_result": {
+            "type": ["string", "null"],
+            "enum": ["PASS", "FAIL", "WARN", "SKIP", null]
+          },
+          "stage": {
+            "type": ["string", "null"]
+          },
+          "latest_ref": {
+            "type": "string",
+            "description": "Path to the component's latest.json relative to the maturity index"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,11 @@
+components:
+  - id: sister-core
+    label: SisTer-Core
+  - id: sister-nexo
+    label: SisTer Nexo
+  - id: sister-clima
+    label: Sister-Clima
+  - id: sister-campo
+    label: SisTer Campo
+  - id: sister-studio
+    label: Sister-Studio

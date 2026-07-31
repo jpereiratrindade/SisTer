@@ -1,21 +1,4 @@
-- schema: sister.engineering.maturity-check/1.0.0
-  id: git-repository
-  stage: pre-alpha
-  type: git_repo
-  mandatory: true
-  description: Repositório Git reconhecido
-- schema: sister.engineering.maturity-check/1.0.0
-  id: git-clean
-  stage: pre-alpha
-  type: git_clean
-  mandatory: false
-  description: Árvore Git limpa para atestação
-- schema: sister.engineering.maturity-check/1.0.0
-  id: tracked-secrets
-  stage: pre-alpha
-  type: no_tracked_secrets
-  mandatory: true
-  description: Nenhum arquivo de segredo óbvio está versionado
+
 - schema: sister.engineering.maturity-check/1.0.0
   id: baseline-integrity
   stage: pre-alpha

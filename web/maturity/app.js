@@ -29,13 +29,12 @@ const ENGINEERING_DIMENSIONS = [
   { id: "observability", label: "Observabilidade", patterns: ["health", "observ", "status", "provenance", "proveni"] },
 ];
 
-const SUBSYSTEMS = [
-  { id: "sister-core", label: "SisTer-Core", patterns: ["repository", "baseline", "status-file", "prototype-status", "git-"] },
-  { id: "clima", label: "Clima", patterns: ["clima"] },
-  { id: "nexo", label: "Nexo", patterns: ["nexo"] },
-  { id: "campo", label: "Campo", patterns: ["campo"] },
-  { id: "studio", label: "Studio", patterns: ["studio"] },
-];
+// Componentes agregados vindo do backend
+const GOVERNANCE_LABELS = {
+  governed: "Governado",
+  shadow: "Shadow",
+  none: "Não iniciado"
+};
 
 const qs = (selector) => document.querySelector(selector);
 const create = (tag, className, text) => {
@@ -326,18 +325,31 @@ function renderEngineeringHealth(status) {
   });
 }
 
-function renderSubsystems(status) {
-  const checks = allChecks(status);
+function renderComponents(index) {
   const list = qs("#subsystems-list");
   list.replaceChildren();
-  const platform = create("article", "subsystem-item subsystem-platform");
-  platform.append(create("strong", "", "SisTer"), statusPill(status.result), create("span", "", STAGE_LABELS[status.target_stage]));
-  list.append(platform);
-  SUBSYSTEMS.forEach((subsystem) => {
-    const matched = checks.filter((check) => matches(check, subsystem.patterns));
-    const result = !matched.length ? "SKIP" : matched.some((check) => check.status === "FAIL" && check.mandatory) ? "FAIL" : matched.some((check) => check.status === "WARN" || check.status === "FAIL") ? "WARN" : "PASS";
+
+  const components = index?.components || [];
+  if (!components.length) {
+    list.append(create("p", "positive-empty", "Nenhum componente federado disponível."));
+    return;
+  }
+
+  components.forEach((comp) => {
     const item = create("article", "subsystem-item");
-    item.append(create("strong", "", subsystem.label), statusPill(result), create("span", "", matched.length ? `${completion(matched)}%` : "Sem evidência"));
+    const title = create("strong", "", comp.label);
+    
+    // Status text (Governado, Shadow, Sem perfil)
+    let govText = GOVERNANCE_LABELS[comp.governance_mode] || "Sem perfil";
+    if (comp.profile_state === "missing") govText = "Sem perfil";
+
+    // Result pill
+    let pillStatus = "SKIP";
+    if (comp.technical_result) {
+      pillStatus = comp.technical_result;
+    }
+
+    item.append(title, statusPill(pillStatus), create("span", "", govText));
     list.append(item);
   });
 }
@@ -363,7 +375,7 @@ function renderDecisionTree(status) {
   tree.append(answer);
 }
 
-function renderDashboard(status, history) {
+function renderDashboard(status, history, components) {
   currentStatus = status;
   renderHeader(status);
   renderExecutive(status);
@@ -372,7 +384,7 @@ function renderDashboard(status, history) {
   renderBlockers(status.blockers);
   renderProvenance(status);
   renderEngineeringHealth(status);
-  renderSubsystems(status);
+  renderComponents(components);
   renderDecisionTree(status);
   renderStageTabs(status.stages);
   renderActions(status.next_actions);
@@ -401,13 +413,14 @@ async function loadDashboard() {
   button.disabled = true;
   setNotice("Consultando evidência...", "neutral");
   try {
-    const [user, status, history] = await Promise.all([
+    const [user, status, history, components] = await Promise.all([
       fetchJson("/api/me"),
       fetchJson("/api/admin/maturity/latest"),
       fetchJson("/api/admin/maturity/history", true),
+      fetchJson("/api/admin/maturity/components", true),
     ]);
     qs("#admin-name").textContent = user.name;
-    renderDashboard(status, history);
+    renderDashboard(status, history, components);
   } catch (error) {
     qs("#dashboard").hidden = true;
     if (error.message !== "unauthorized") {

@@ -1,0 +1,8 @@
+- schema: sister.engineering.maturity-check/1.0.0
+  id: project-readme
+  stage: pre-alpha
+  type: file_exists
+  mandatory: true
+  description: Arquivo README.md do projeto existe
+  arguments:
+    path: README.md

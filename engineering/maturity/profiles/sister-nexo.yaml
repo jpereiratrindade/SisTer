@@ -15,4 +15,8 @@ scripts:
   ci.test-contract:
     path: scripts/ci/test-contract.sh
 check_suites:
+  - "engineering/maturity/checks/common/repository.yaml"
+  - "engineering/maturity/checks/common/security-baseline.yaml"
+  - "engineering/maturity/checks/common/documentation-baseline.yaml"
+  - "engineering/maturity/checks/common/test-baseline.yaml"
   - "engineering/maturity/checks/sister-nexo/pre-alpha-checks.yaml"

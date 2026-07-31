@@ -13,5 +13,7 @@ scripts:
   baseline.verify:
     path: labs/sisterd_lab/scripts/verify-identical.sh
 check_suites:
+  - "engineering/maturity/checks/common/repository.yaml"
+  - "engineering/maturity/checks/common/security-baseline.yaml"
   - "engineering/maturity/checks/sister-core/pre-alpha-checks.yaml"
   - "engineering/maturity/checks/sister-core/alpha-checks.yaml"

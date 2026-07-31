@@ -1,0 +1,6 @@
+- schema: sister.engineering.maturity-check/1.0.0
+  id: tracked-secrets
+  stage: pre-alpha
+  type: no_tracked_secrets
+  mandatory: true
+  description: Nenhum arquivo de segredo óbvio está versionado

@@ -8,6 +8,7 @@ add_executable(
     db.cpp
     studio_client.cpp
     sister_campo_client.cpp
+    api/maturity_routes.cpp
 )
 
 if(PostgreSQL_FOUND)

@@ -1,0 +1,12 @@
+- schema: sister.engineering.maturity-check/1.0.0
+  id: git-repository
+  stage: pre-alpha
+  type: git_repo
+  mandatory: true
+  description: Repositório Git reconhecido
+- schema: sister.engineering.maturity-check/1.0.0
+  id: git-clean
+  stage: pre-alpha
+  type: git_clean
+  mandatory: false
+  description: Árvore Git limpa para atestação

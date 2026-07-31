@@ -1,0 +1,8 @@
+- schema: sister.engineering.maturity-check/1.0.0
+  id: tests-present
+  stage: pre-alpha
+  type: directory_exists
+  mandatory: true
+  description: Diretório de testes presente
+  arguments:
+    path: tests

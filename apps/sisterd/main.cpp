@@ -2,6 +2,7 @@
 #include "db.hpp"
 #include "studio_client.hpp"
 #include "sister_campo_client.hpp"
+#include "api/maturity_routes.hpp"
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -1802,7 +1803,8 @@ void handleClient(
 
     // --- /api/admin/maturity ---
     if (request.path == "/api/admin/maturity/latest" ||
-        request.path == "/api/admin/maturity/history") {
+        request.path == "/api/admin/maturity/history" ||
+        request.path == "/api/admin/maturity/components") {
         if (request.method != "GET" && request.method != "HEAD") {
             sendResponse(client.get(), jsonError(405, "Method Not Allowed", "Método não permitido."),
                          config, requestId, isHead);
@@ -1822,6 +1824,15 @@ void handleClient(
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("info", requestId, peer, request.method, request.path, 403, elapsed);
+            return;
+        }
+
+        if (request.path == "/api/admin/maturity/components") {
+            auto routeResp = sisterd::api::getMaturityComponents(*actor, config.maturityRoot);
+            const HttpResponse response{routeResp.status_code, routeResp.reason_phrase, routeResp.body, routeResp.content_type, {{"Cache-Control", "no-store"}}};
+            sendResponse(client.get(), response, config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent(routeResp.status_code >= 400 ? "warn" : "info", requestId, peer, request.method, request.path, routeResp.status_code, elapsed);
             return;
         }
 

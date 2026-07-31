@@ -74,6 +74,7 @@ do gate, portanto uma execução reprovada ainda produz evidência e retorna err
 
 - página: `/admin/maturity`;
 - status: `GET /api/admin/maturity/latest`;
+- componentes (ecossistema): `GET /api/admin/maturity/components`;
 - histórico: `GET /api/admin/maturity/history`.
 
 As rotas exigem sessão administrativa e respondem com `Cache-Control: no-store`.
