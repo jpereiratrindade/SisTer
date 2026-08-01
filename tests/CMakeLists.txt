@@ -5,6 +5,7 @@ target_compile_features(sister_core_tests PRIVATE cxx_std_20)
 add_test(NAME sister_core_tests COMMAND sister_core_tests)
 
 find_package(OpenSSL REQUIRED)
+find_package(Threads REQUIRED)
 
 add_executable(
     sisterd_auth_tests
@@ -15,6 +16,22 @@ target_link_libraries(sisterd_auth_tests PRIVATE OpenSSL::Crypto)
 target_compile_features(sisterd_auth_tests PRIVATE cxx_std_20)
 
 add_test(NAME sisterd_auth_tests COMMAND sisterd_auth_tests)
+
+add_executable(
+    sisterd_security_hardening_tests
+    security_hardening_tests.cpp
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/http/content_length.cpp
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/runtime/connection_thread_pool.cpp
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/security/login_rate_limiter.cpp)
+target_include_directories(
+    sisterd_security_hardening_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/http
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/runtime
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/security)
+target_link_libraries(sisterd_security_hardening_tests PRIVATE Threads::Threads)
+target_compile_features(sisterd_security_hardening_tests PRIVATE cxx_std_20)
+
+add_test(NAME sisterd_security_hardening_tests COMMAND sisterd_security_hardening_tests)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_test(
@@ -37,6 +54,14 @@ add_test(
     COMMAND
         ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_transport_quarantine_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)
+
+add_test(
+    NAME sisterd_http_hardening_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_http_hardening_test.py
         $<TARGET_FILE:sisterd>
         ${CMAKE_SOURCE_DIR}/web)
 
