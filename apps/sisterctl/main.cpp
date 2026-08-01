@@ -27,6 +27,7 @@ void usage() {
               << "  sisterctl validate-manifest <manifest.json>\n"
               << "  sisterctl db-check\n"
               << "  sisterctl db-migrate [migration.sql]\n"
+              << "  sisterctl auth bootstrap-admin <name> <email>\n"
               << "  sisterctl auth-import-user <uuid> <name> <email> <role>\n";
 }
 
@@ -92,6 +93,36 @@ std::string readHidden(const std::string& prompt) {
 } // namespace
 
 int main(int argc, char** argv) {
+    if (argc >= 3 && std::string(argv[1]) == "auth" &&
+        std::string(argv[2]) == "bootstrap-admin") {
+        if (argc != 5) {
+            usage();
+            return 2;
+        }
+        try {
+            const auto password = readHidden("Nova senha administrativa: ");
+            const auto confirmation = readHidden("Confirme a senha: ");
+            if (password != confirmation) {
+                std::cerr << "password confirmation does not match\n";
+                return 1;
+            }
+            const char* configuredPath = std::getenv("SISTER_AUTH_FILE");
+            const std::filesystem::path authPath =
+                configuredPath != nullptr ? configuredPath : ".run/auth-users.tsv";
+            sisterd::AuthStore auth(authPath);
+            const auto registered = auth.registerAdmin(argv[3], argv[4], password);
+            if (!registered) {
+                std::cerr << "administrator bootstrap is closed or the supplied data is invalid\n";
+                return 1;
+            }
+            std::cout << "administrator created: " << registered->user.email << '\n';
+            return 0;
+        } catch (const std::exception& ex) {
+            std::cerr << "error: " << ex.what() << '\n';
+            return 1;
+        }
+    }
+
     if (argc >= 2 && std::string(argv[1]) == "auth-import-user") {
         if (argc != 6) {
             usage();

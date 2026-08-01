@@ -2,8 +2,6 @@
 
 #include <filesystem>
 #include <string>
-#include <optional>
-#include "../auth.hpp"
 
 namespace sisterd {
 namespace api {
@@ -15,9 +13,9 @@ struct RouteResponse {
     std::string body;
 };
 
-RouteResponse getMaturityComponents(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot);
-RouteResponse getMaturityCatalog(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot);
-RouteResponse getQualityStatus(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot);
+RouteResponse getMaturityComponents(const std::filesystem::path& maturityRoot);
+RouteResponse getMaturityCatalog(const std::filesystem::path& maturityRoot);
+RouteResponse getQualityStatus(const std::filesystem::path& maturityRoot);
 
 } // namespace api
 } // namespace sisterd

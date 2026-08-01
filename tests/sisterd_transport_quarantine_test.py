@@ -20,6 +20,7 @@ def run_to_exit(executable, web_root, overrides):
         {
             "SISTER_ENV": "production",
             "SISTER_BIND_HOST": "127.0.0.1",
+            "SISTER_ENABLE_HTTP_BOOTSTRAP": "false",
             "SISTER_ENABLE_LEGACY_PROXY": "false",
             "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
             "SISTER_DATABASE_URL": "",
@@ -52,6 +53,7 @@ def assert_safe_production_starts(executable, web_root):
         {
             "SISTER_ENV": "production",
             "SISTER_BIND_HOST": "127.0.0.1",
+            "SISTER_ENABLE_HTTP_BOOTSTRAP": "false",
             "SISTER_ENABLE_LEGACY_PROXY": "false",
             "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
             "SISTER_DATABASE_URL": "",
@@ -91,6 +93,23 @@ def assert_safe_production_starts(executable, web_root):
                 response.read()
                 connection.close()
                 assert response.status == 404, (path, response.status)
+
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
+            connection.request("GET", "/api/auth/bootstrap")
+            response = connection.getresponse()
+            body = response.read()
+            connection.close()
+            assert response.status == 200, response.status
+            assert body == b'{"open":false,"http_enabled":false}', body
+
+            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
+            connection.request(
+                "POST", "/api/auth/register", body=b"{}",
+                headers={"Content-Type": "application/json"})
+            response = connection.getresponse()
+            response.read()
+            connection.close()
+            assert response.status == 403, response.status
         finally:
             process.terminate()
             try:
@@ -104,6 +123,12 @@ def main():
     executable, web_root = sys.argv[1:3]
     loopback_error = "production sisterd must bind to an IPv4 loopback address"
     assert_rejected(executable, web_root, {"SISTER_ENV": "developmnt"}, "invalid SISTER_ENV")
+    assert_rejected(
+        executable,
+        web_root,
+        {"SISTER_ENABLE_HTTP_BOOTSTRAP": "true"},
+        "HTTP administrator bootstrap is forbidden in production",
+    )
     assert_rejected(executable, web_root, {"SISTER_BIND_HOST": "0.0.0.0"}, loopback_error)
     assert_rejected(executable, web_root, {"SISTER_BIND_HOST": "192.0.2.10"}, loopback_error)
     assert_rejected(

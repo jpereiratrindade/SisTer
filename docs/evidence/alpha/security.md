@@ -28,7 +28,7 @@ A revisão abrange:
 - `storage/migrations/006_identity_sessions.sql`;
 - `storage/migrations/007_capabilities.sql`;
 - API autenticada `/api/me/capabilities`;
-- capacidade `sister.maturity.read`;
+- capacidade `maturity.evidence.read`;
 - autenticação, autorização, logs e tratamento de erro relacionados;
 - testes unitários e de qualidade associados.
 
@@ -52,7 +52,7 @@ Não estão sendo aprovados neste gate:
 - migration `007_capabilities.sql`;
 - implementação de `session_token_hash`;
 - implementação de `/api/me/capabilities`;
-- testes da capacidade `sister.maturity.read`;
+- testes da capacidade `maturity.evidence.read`;
 - configuração de cookies, autenticação e autorização aplicável;
 - registro de riscos e ADRs de segurança relacionados.
 
@@ -80,7 +80,7 @@ Não estão sendo aprovados neste gate:
 
 - [x] `/api/me/capabilities` exige autenticação.
 - [x] A API não concede capacidades por inferência insegura.
-- [x] A capacidade `sister.maturity.read` é testada.
+- [x] A capacidade `maturity.evidence.read` é testada.
 - [x] A ausência de capacidade resulta em negação no backend.
 - [x] A interface não é tratada como controle suficiente.
 - [x] O menor privilégio é preservado.

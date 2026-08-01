@@ -26,7 +26,7 @@ A revisão abrange:
 - `storage/migrations/007_capabilities.sql`;
 - uso explícito de `session_token_hash` no `AuthStore`;
 - API autenticada `/api/me/capabilities`;
-- teste da capacidade `sister.maturity.read`;
+- teste da capacidade `maturity.evidence.read`;
 - `scripts/ci/test-unit.sh`;
 - integração dessas evidências ao gate Alpha;
 - impacto sobre `sisterd`, contratos, persistência e governança.

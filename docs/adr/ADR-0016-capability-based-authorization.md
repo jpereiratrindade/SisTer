@@ -32,8 +32,10 @@ As APIs de sistemas, contratos, evidências, diagnóstico e clientes internos
 também declaram capacidades próprias. Uma API autenticada sem mapeamento é
 negada em vez de herdar autorização administrativa implícita.
 
-Cada decisão produz evento estruturado com instante, `request_id`, ator, papel,
-capacidade, recurso, finalidade, resultado e motivo.
+Cada decisão produz log estruturado com instante, `request_id`, ator, papel,
+capacidade, recurso, finalidade, resultado e motivo. Nesta etapa, recurso e
+finalidade são registrados para auditoria operacional, mas a capacidade ainda
+é o atributo efetivamente avaliado pela decisão.
 
 ## Invariantes
 
@@ -43,7 +45,7 @@ capacidade, recurso, finalidade, resultado e motivo.
 - Erros ou ausência de política nunca resultam em permissão.
 - Gateway e interface não substituem a decisão feita pelo plano de controle.
 - A autorização ocorre antes de qualquer conexão com o subsistema.
-- Permissões e negações são auditáveis pelo mesmo `request_id` da requisição.
+- Permissões e negações são correlacionáveis pelo mesmo `request_id` da requisição.
 
 ## Consequências
 
@@ -54,5 +56,7 @@ capacidade, recurso, finalidade, resultado e motivo.
 - O modelo inicial ainda deriva capacidades de papéis persistidos no arquivo de
   autenticação. Políticas por finalidade, escopo, risco e acordo bilateral
   exigirão armazenamento e contratos próprios.
+- O log operacional em `stderr`/`journald` ainda não constitui trilha de
+  auditoria governada com retenção, integridade, consulta e exportação.
 - Antes de reativar integrações em produção, a identidade encaminhada deverá ser
   substituída por asserção interna assinada, curta e restrita à audiência.

@@ -4,8 +4,8 @@
 
 Aceita
 
-Atualizada em 2026-07-31 para explicitar a evolução do painel para um Centro
-de Engenharia do SisTer.
+Atualizada em 2026-08-01 para explicitar a evolução do painel para um Centro
+de Engenharia do SisTer e a autorização efetiva por capacidade.
 
 ## Contexto
 
@@ -29,8 +29,8 @@ Centro de Engenharia do SisTer, com as seguintes invariantes:
 - a publicação do status é atômica, validada e sanitizada;
 - relatórios reais permanecem em `.run/maturity/` e não são versionados;
 - a API lê somente caminhos fixos configurados pelo servidor;
-- a primeira versão exige papel `admin`, migrando futuramente para a
-  capacidade `maturity.evidence.read`;
+- a API e a interface exigem a capacidade `maturity.evidence.read`, sem
+  reinterpretar o papel dentro dos handlers de maturidade;
 - caminhos absolutos, credenciais, cookies, tokens, variáveis de ambiente e
   saída bruta não podem integrar o contrato público;
 - o histórico é limitado, sanitizado e ordenado por execução.

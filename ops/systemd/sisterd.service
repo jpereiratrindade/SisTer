@@ -19,6 +19,7 @@ Environment=SISTER_ENV=production
 Environment=SISTER_BIND_HOST=127.0.0.1
 Environment=SISTER_PORT=8000
 Environment=SISTER_COOKIE_SECURE=true
+Environment=SISTER_ENABLE_HTTP_BOOTSTRAP=false
 Environment=SISTER_ENABLE_LEGACY_PROXY=false
 Environment=SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false
 Environment=SISTER_AUTH_FILE=/var/lib/sister/auth-users.tsv

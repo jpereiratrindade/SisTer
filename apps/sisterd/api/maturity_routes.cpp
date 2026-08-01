@@ -25,18 +25,7 @@ namespace {
     }
 }
 
-RouteResponse getMaturityComponents(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot) {
-    if (!actor) {
-        return {401, "Unauthorized", "application/json; charset=utf-8", jsonError(401, "Unauthorized", "Autenticação necessária.")};
-    }
-    
-    // Check permission (role must be admin to read components)
-    // The user requested `sister.maturity.read` capability, but auth.hpp currently uses `role == "admin"`.
-    // Assuming `role == "admin"` gives `sister.maturity.read` implicitly in the current monolithic logic.
-    if (actor->role != "admin") {
-        return {403, "Forbidden", "application/json; charset=utf-8", jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa.")};
-    }
-
+RouteResponse getMaturityComponents(const std::filesystem::path& maturityRoot) {
     std::filesystem::path componentsPath = maturityRoot / "components.json";
     
     std::error_code ec;
@@ -70,14 +59,7 @@ RouteResponse getMaturityComponents(const std::optional<AuthUser>& actor, const 
     return {200, "OK", "application/json; charset=utf-8", std::move(body)};
 }
 
-RouteResponse getMaturityCatalog(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot) {
-    if (!actor) {
-        return {401, "Unauthorized", "application/json; charset=utf-8", jsonError(401, "Unauthorized", "Autenticação necessária.")};
-    }
-    if (actor->role != "admin") {
-        return {403, "Forbidden", "application/json; charset=utf-8", jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa.")};
-    }
-
+RouteResponse getMaturityCatalog(const std::filesystem::path& maturityRoot) {
     std::filesystem::path catalogPath = maturityRoot / "catalog.json";
     std::error_code ec;
     auto status = std::filesystem::symlink_status(catalogPath, ec);
@@ -110,14 +92,7 @@ RouteResponse getMaturityCatalog(const std::optional<AuthUser>& actor, const std
     return {200, "OK", "application/json; charset=utf-8", std::move(body)};
 }
 
-RouteResponse getQualityStatus(const std::optional<AuthUser>& actor, const std::filesystem::path& maturityRoot) {
-    if (!actor) {
-        return {401, "Unauthorized", "application/json; charset=utf-8", jsonError(401, "Unauthorized", "Autenticação necessária.")};
-    }
-    if (actor->role != "admin") {
-        return {403, "Forbidden", "application/json; charset=utf-8", jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa.")};
-    }
-
+RouteResponse getQualityStatus(const std::filesystem::path& maturityRoot) {
     const std::filesystem::path qualityPath = maturityRoot / "quality.json";
     std::error_code ec;
     const auto status = std::filesystem::symlink_status(qualityPath, ec);

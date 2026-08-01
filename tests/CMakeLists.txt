@@ -18,6 +18,13 @@ add_test(NAME sisterd_auth_tests COMMAND sisterd_auth_tests)
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_test(
+    NAME sisterctl_bootstrap_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterctl_bootstrap_test.py
+        $<TARGET_FILE:sisterctl>)
+
+add_test(
     NAME sisterd_clima_proxy_tests
     COMMAND
         ${Python3_EXECUTABLE}

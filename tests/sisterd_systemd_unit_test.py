@@ -13,6 +13,7 @@ def main():
     required_lines = {
         "Environment=SISTER_ENV=production",
         "Environment=SISTER_BIND_HOST=127.0.0.1",
+        "Environment=SISTER_ENABLE_HTTP_BOOTSTRAP=false",
         "Environment=SISTER_ENABLE_LEGACY_PROXY=false",
         "Environment=SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false",
         "NoNewPrivileges=yes",

@@ -139,10 +139,19 @@ O uso por pessoas identificadas em pesquisa publica sem finalidade comercial e
 regido por `sister-clima.governance/1.0.0`; detalhes, atribuicoes e gatilhos de
 revisao estao em `docs/governance/SISTER_CLIMA_DATA.md`.
 
-No primeiro acesso a `/login`, o SisTer permite criar a conta administradora
-inicial. Depois do login, a barra lateral libera as visoes internas e a opcao
-**Equipe**, em `/admin/users`, permite cadastrar outras contas como `user` ou
-`admin`.
+Em desenvolvimento, o primeiro acesso a `/login` pode criar a conta
+administradora inicial. Em produção, o bootstrap HTTP permanece desativado e o
+administrador deve ser criado localmente, sob o usuário do serviço:
+
+```bash
+sudo -u sister env SISTER_AUTH_FILE=/var/lib/sister/auth-users.tsv \
+  /opt/sister/build/apps/sisterctl/sisterctl \
+  auth bootstrap-admin "Administrador SisTer" admin@example.org
+```
+
+Depois do login, a barra lateral libera as visoes internas e a opção **Equipe**,
+em `/admin/users`, permite cadastrar as demais contas. Consulte a
+[ADR-0017](docs/adr/ADR-0017-offline-administrator-bootstrap.md).
 
 Durante a migração de desenvolvimento, uma conta ativa do Sister-Studio pode
 se tornar a identidade inicial do SisTer sem perder seu UUID, autoria ou
@@ -168,6 +177,7 @@ SISTER_AUTH_FILE=/caminho/protegido/auth-users.tsv \
 SISTER_ENV=production \
 SISTER_WORKERS=4 \
 SISTER_BIND_HOST=127.0.0.1 \
+SISTER_ENABLE_HTTP_BOOTSTRAP=false \
 SISTER_ENABLE_LEGACY_PROXY=false \
 SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false \
   ./build/apps/sisterd/sisterd 8000 web
@@ -178,6 +188,7 @@ O `sisterd` suporta diversas variáveis de ambiente para configuração avançad
 - `SISTER_WORKERS`: Número de threads (padrão baseado em hardware, máx 16).
 - `SISTER_QUEUE_LIMIT`: Limite da fila de conexões simultâneas (padrão `256`).
 - `SISTER_BIND_HOST`: Host de rede para o bind (padrão `127.0.0.1`).
+- `SISTER_ENABLE_HTTP_BOOTSTRAP`: Cadastro inicial pela API HTTP (padrão `false` em produção; não pode ser habilitado em produção).
 - `SISTER_ENABLE_LEGACY_PROXY`: Proxy HTTP embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY`: Túnel WebSocket embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_NEXO_PORT`: Porta para o serviço de federação Nexo (padrão `8015`).

@@ -16,3 +16,4 @@
 - [ADR-0014 - Engines de verificação e modos de governança do SGR](./ADR-0014-sgr-engines-and-governance.md)
 - [ADR-0015 - Quarentena de transporte do sisterd](./ADR-0015-sisterd-transport-quarantine.md)
 - [ADR-0016 - Autorização por capacidades com negação por padrão](./ADR-0016-capability-based-authorization.md)
+- [ADR-0017 - Bootstrap administrativo local em produção](./ADR-0017-offline-administrator-bootstrap.md)

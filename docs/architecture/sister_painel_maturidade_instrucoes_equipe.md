@@ -359,13 +359,14 @@ web/maturity/
 /admin/maturity
 ```
 
-Na primeira versão, o painel deve ser visível somente para `admin`.
-
-Quando o modelo por capacidades estiver implementado, substituir a verificação direta de papel por:
+O painel deve ser visível somente para identidades que possuam:
 
 ```text
-sister.maturity.read
+maturity.evidence.read
 ```
+
+O mapeamento inicial concede essa capacidade ao papel `admin`, mas os handlers
+não devem repetir uma verificação direta de papel.
 
 ### Componentes da página
 
@@ -497,7 +498,7 @@ Ela deve:
 
 - exigir autenticação;
 - exigir `admin` na fase atual;
-- depois exigir `sister.maturity.read`;
+- depois exigir `maturity.evidence.read`;
 - ler somente o arquivo fixo `.run/maturity/latest.json`;
 - limitar o tamanho do arquivo;
 - validar o schema ou ao menos o cabeçalho;
@@ -772,7 +773,7 @@ Somente após a primeira versão estar estável, avaliar:
 - integração com CI;
 - link para relatório Markdown;
 - assinatura e validação de atestações;
-- capacidade `sister.maturity.read`.
+- capacidade `maturity.evidence.read`.
 
 ### Versão 0.3
 

@@ -74,6 +74,7 @@ struct ServerConfig {
     bool secureCookie = true;
     bool hsts = false;
     bool requireSameOrigin = true;
+    bool httpBootstrapEnabled = false;
     bool legacyProxyEnabled = false;
     bool legacyWebSocketProxyEnabled = false;
     std::size_t workerThreads = 4;
@@ -345,6 +346,9 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.requireSameOrigin = parseBool(
         environment("SISTER_REQUIRE_SAME_ORIGIN").value_or(config.production ? "true" : "false"),
         config.production);
+    config.httpBootstrapEnabled = parseBool(
+        environment("SISTER_ENABLE_HTTP_BOOTSTRAP").value_or(config.production ? "false" : "true"),
+        !config.production);
     config.legacyProxyEnabled = parseBool(
         environment("SISTER_ENABLE_LEGACY_PROXY").value_or("false"), false);
     config.legacyWebSocketProxyEnabled = parseBool(
@@ -353,6 +357,10 @@ ServerConfig loadConfig(int argc, char** argv) {
     if (config.production && !isIpv4Loopback(config.bindHost)) {
         throw std::runtime_error(
             "production sisterd must bind to an IPv4 loopback address; expose only the gateway");
+    }
+    if (config.production && config.httpBootstrapEnabled) {
+        throw std::runtime_error(
+            "HTTP administrator bootstrap is forbidden in production; use sisterctl auth-bootstrap-admin");
     }
     if (config.production && config.legacyProxyEnabled) {
         throw std::runtime_error("legacy HTTP proxy is forbidden in production");
@@ -1680,6 +1688,15 @@ void handleClient(
 
     // --- Auth API ---
     if (request.path == "/api/auth/bootstrap" && request.method == "GET") {
+        if (!config.httpBootstrapEnabled) {
+            const HttpResponse resp{200, "OK", R"({"open":false,"http_enabled":false})",
+                "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
+            sendResponse(client.get(), resp, config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("info", requestId, peer, request.method, request.path, 200, elapsed,
+                     "HTTP bootstrap disabled");
+            return;
+        }
         std::lock_guard lock(state.authMutex);
         const bool open = state.auth.bootstrapOpen();
         const HttpResponse resp{200, "OK",
@@ -1693,6 +1710,15 @@ void handleClient(
     }
 
     if (request.path == "/api/auth/register" && request.method == "POST") {
+        if (!config.httpBootstrapEnabled) {
+            sendResponse(client.get(),
+                jsonError(403, "Forbidden", "Bootstrap administrativo HTTP desativado."),
+                config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("warn", requestId, peer, request.method, request.path, 403, elapsed,
+                     "HTTP bootstrap disabled");
+            return;
+        }
         const auto fields = parseFlatJsonObject(request.body);
         const auto name = fields ? jsonStringField(*fields, "name") : std::nullopt;
         const auto email = fields ? jsonStringField(*fields, "email") : std::nullopt;
@@ -1924,7 +1950,7 @@ void handleClient(
                 "engineering_governance", request, config, requestId, peer, isHead, requestStart)) return;
 
         if (request.path == "/api/admin/maturity/components") {
-            auto routeResp = sisterd::api::getMaturityComponents(*actor, config.maturityRoot);
+            auto routeResp = sisterd::api::getMaturityComponents(config.maturityRoot);
             const HttpResponse response{routeResp.status_code, routeResp.reason_phrase, routeResp.body, routeResp.content_type, {{"Cache-Control", "no-store"}}};
             sendResponse(client.get(), response, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1932,7 +1958,7 @@ void handleClient(
             return;
         }
         if (request.path == "/api/admin/maturity/catalog") {
-            auto routeResp = sisterd::api::getMaturityCatalog(*actor, config.maturityRoot);
+            auto routeResp = sisterd::api::getMaturityCatalog(config.maturityRoot);
             const HttpResponse response{routeResp.status_code, routeResp.reason_phrase, routeResp.body, routeResp.content_type, {{"Cache-Control", "no-store"}}};
             sendResponse(client.get(), response, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1940,7 +1966,7 @@ void handleClient(
             return;
         }
         if (request.path == "/api/admin/maturity/quality") {
-            auto routeResp = sisterd::api::getQualityStatus(*actor, config.maturityRoot);
+            auto routeResp = sisterd::api::getQualityStatus(config.maturityRoot);
             const HttpResponse response{routeResp.status_code, routeResp.reason_phrase, routeResp.body, routeResp.content_type, {{"Cache-Control", "no-store"}}};
             sendResponse(client.get(), response, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -2300,6 +2326,7 @@ int main(int argc, char** argv) {
                   << " web_root=" << config.canonicalWebRoot.string()
                   << " workers=" << config.workerThreads
                   << " env=" << (config.production ? "production" : "development")
+                  << " http_bootstrap=" << (config.httpBootstrapEnabled ? "enabled" : "disabled")
                   << " legacy_proxy=" << (config.legacyProxyEnabled ? "enabled" : "disabled")
                   << " legacy_websocket_proxy="
                   << (config.legacyWebSocketProxyEnabled ? "enabled" : "disabled")
