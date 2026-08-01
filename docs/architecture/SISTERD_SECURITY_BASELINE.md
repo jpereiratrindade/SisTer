@@ -1,8 +1,21 @@
 # Baseline de segurança do `sisterd`
 
-**Release de referência:** `v0.2.5`  
-**Estado:** baseline executável de pré-produção  
+**Release de referência:** `v0.2.6`
+
+**Estado:** baseline executável de pré-produção
+
 **Atualização:** 1 de agosto de 2026
+
+**Referência normativa corrente:** EFE-SisTer/1.2
+
+> **Ciclo posterior à `v0.2.6`:** o candidato SEC-02 / I-01A contém a primeira
+> asserção interna Ed25519 e o cliente específico do Nexo. Esse código é
+> preservado fora da release e somente poderá ser publicado depois do SEC-02V.
+
+Antes da validação de SEC-02, a revisão P0 acrescentou SEC-01C e SEC-01D:
+parser e workers contêm exceções, e o limitador de login passou a ser multinível,
+limitado e independente da porta TCP. A `v0.2.6` preserva essa ordem no histórico
+e nas notas de versão.
 
 ## Finalidade
 
@@ -19,11 +32,21 @@ quais entregas ainda bloqueiam essa promoção.
 | SEC-01 — autorização por capacidades | Concluído | rotas sensíveis declaram capacidade e falham fechadas |
 | SEC-01A — remoção do RBAC residual | Concluído | papel alimenta o catálogo inicial, mas não autoriza diretamente rotas sensíveis |
 | SEC-01B — bootstrap administrativo offline | Concluído | produção proíbe bootstrap HTTP; o comando local cria um único administrador sem sessão |
+| SEC-01C — robustez HTTP e dos workers | Concluído em `v0.2.6` | erro de protocolo não atravessa o worker; exceção inesperada é contida |
+| SEC-01D — rate limiting efetivo | Concluído em `v0.2.6` | limites por IP, identidade, combinação e processo; armazenamento limitado |
 
-As decisões normativas estão nas ADRs
+O alinhamento com a EFE-SisTer/1.2 e sua cadeia
+ameaça–controle–evidência está na
+[nota de alinhamento normativo](./EFE_SISTER_1_2_ALIGNMENT.md). As decisões
+específicas estão nas ADRs
 [0015](../adr/ADR-0015-sisterd-transport-quarantine.md),
 [0016](../adr/ADR-0016-capability-based-authorization.md) e
-[0017](../adr/ADR-0017-offline-administrator-bootstrap.md).
+[0017](../adr/ADR-0017-offline-administrator-bootstrap.md), além da
+[0019](../adr/ADR-0019-http-robustness-and-login-rate-limiting.md) para
+SEC-01C/01D.
+
+O registro operacional inicial está no
+[MAES-SisTer/1.0](../security/MAES_SISTER_1_0.md).
 
 ## Configuração mínima de produção
 
@@ -72,9 +95,11 @@ backup e rollback.
 
 ## Próximas entregas bloqueantes
 
-1. **SEC-02 — identidade interna assinada:** asserção curta, audiência restrita,
-   rotação e rejeição de identidade forjável.
-2. Gateway especializado e adaptadores conformantes para Nexo e Clima.
+1. Executar o cartão SEC-02V contra `TH-IDENT-01`, `TH-AUTHZ-01` e
+   `TH-AUD-01`; somente então autorizar implantação conjunta com o Nexo,
+   distribuição de chave pública e operação de rotação.
+2. **SEC-03:** gateway especializado, contenção de abuso e adaptadores
+   conformantes para Nexo e Clima.
 3. Eliminação definitiva do cookie na fronteira interna e remoção física dos
    proxies legados.
 4. Persistência transacional e governança completas de auditoria, políticas e

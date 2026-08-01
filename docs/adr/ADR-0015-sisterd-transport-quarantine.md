@@ -12,8 +12,10 @@ túnel WebSocket legado, cada conexão persistente ocupa um trabalhador do mesmo
 pool usado pelo plano de controle. Essa composição foi útil para validar o
 protótipo, mas não constitui uma borda de rede adequada para produção.
 
-A EFE-SisTer/1.1 define o `sisterd` como plano de controle persistente e exige
-uma decisão explícita sobre manter, endurecer ou substituir o servidor HTTP.
+A EFE-SisTer/1.1 definiu o `sisterd` como plano de controle persistente e exigiu
+uma decisão explícita sobre manter, endurecer ou substituir o servidor HTTP. A
+EFE-SisTer/1.2, referência corrente, preserva essa fronteira e acrescenta o
+perfil restrito de transporte e a engenharia orientada por ameaças.
 O plano de transição já atribui TLS, HTTP, WebSocket, limites e observabilidade
 de transporte a um gateway especializado.
 

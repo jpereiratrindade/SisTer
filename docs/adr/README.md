@@ -17,3 +17,4 @@
 - [ADR-0015 - Quarentena de transporte do sisterd](./ADR-0015-sisterd-transport-quarantine.md)
 - [ADR-0016 - Autorização por capacidades com negação por padrão](./ADR-0016-capability-based-authorization.md)
 - [ADR-0017 - Bootstrap administrativo local em produção](./ADR-0017-offline-administrator-bootstrap.md)
+- [ADR-0019 - Robustez HTTP e contenção interna de tentativas de login](./ADR-0019-http-robustness-and-login-rate-limiting.md)

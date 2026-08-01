@@ -16,15 +16,21 @@ A **Gama** será sempre descrita também como *candidata à produção* ou *pré
 
 ---
 
-## Estado da baseline `v0.2.5`
+## Estado da baseline e próximo ciclo
 
 SEC-00, SEC-01, SEC-01A e SEC-01B estão concluídos: o `sisterd` foi retirado da
 borda de produção, a autorização sensível usa capacidades com negação por
 padrão e o bootstrap produtivo é local, de uso único e sem sessão. Esses itens
 adiantam fundações do roteiro, mas não promovem o conjunto à Beta ou à produção.
-O próximo pacote é SEC-02, identidade interna assinada.
+SEC-01C e SEC-01D estão implementados e validados depois da tag `v0.2.5` e
+formam a `v0.2.6`, junto ao MAES-SisTer/1.0. O candidato SEC-02 / I-01A é
+mantido em ciclo posterior, com identidade interna Ed25519 e cliente específico
+do Nexo, e não integra a release. Sua publicação e implantação permanecem
+bloqueadas até a validação formal contra a EFE-SisTer/1.2 e o MAES. SEC-03
+permanece o gate posterior de borda.
 
-Consulte a [baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md).
+Consulte a [baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md)
+e o [alinhamento com a EFE-SisTer/1.2](./EFE_SISTER_1_2_ALIGNMENT.md).
 
 ---
 

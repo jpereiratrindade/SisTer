@@ -8,25 +8,29 @@
 
 ---
 
-## Atualização executável — baseline `v0.2.5`
+## Atualização executável — baseline e próximo ciclo
 
 Este plano preserva o diagnóstico do protótipo como contexto histórico. Desde a
 sua redação, a baseline de segurança avançou sem concluir a arquitetura de
 produção:
 
-| Pacote | Estado na `v0.2.5` |
+| Pacote | Estado governado |
 |---|---|
 | SEC-00 — quarentena do transporte | concluído: loopback obrigatório e proxies legados proibidos em produção |
 | SEC-01 — autorização por capacidades | concluído: políticas explícitas, negação por padrão e log correlacionado |
 | SEC-01A — remoção do RBAC residual | concluído: papel não autoriza diretamente rotas sensíveis |
 | SEC-01B — bootstrap offline | concluído: caminho absoluto, uso único e nenhuma sessão emitida |
-| SEC-02 — identidade interna assinada | pendente e próximo pacote de segurança |
+| SEC-01C — robustez HTTP e dos workers | implementado, validado e publicado em `v0.2.6` |
+| SEC-01D — contenção de abuso | implementado, validado e publicado em `v0.2.6` |
+| SEC-02 — identidade interna assinada | candidato preservado após `v0.2.6`; publicação, validação formal e implantação pendentes |
 
 O código legado continua presente somente para laboratório e não é um fallback
-de produção. Gateway especializado, identidade interna assinada, retirada física
-dos proxies, eliminação do cookie interno e gates operacionais permanecem
-pendentes. A referência canônica do estado atual é a
-[baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md).
+de produção. A sequência aprovada é publicar SEC-01C/01D como `v0.2.6`, criar o
+MAES-SisTer/1.0 e validar formalmente SEC-02. Gateway especializado, retirada
+física dos proxies, eliminação do cookie interno e gates operacionais permanecem
+pendentes. As referências canônicas do estado atual são a
+[baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md) e o
+[alinhamento com a EFE-SisTer/1.2](./EFE_SISTER_1_2_ALIGNMENT.md).
 
 ---
 

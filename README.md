@@ -60,10 +60,26 @@ recusa bind fora de loopback e recusa os proxies legados. Consulte a
 
 A baseline `v0.2.5` conclui SEC-00, SEC-01, SEC-01A e SEC-01B: quarentena de
 transporte, autorização por capacidades sem fallback de papel e bootstrap
-administrativo offline sem emissão de sessão. SEC-02, gateway, identidade
-interna assinada e os gates operacionais continuam pendentes; portanto, essa
-baseline não declara o sistema pronto para produção. Consulte a
+administrativo offline sem emissão de sessão. A implementação de SEC-02 não
+pertence a essa tag e ainda aguarda validação formal e implantação; gateway e
+gates operacionais também continuam pendentes. Portanto, essa baseline não
+declara o sistema pronto para produção. Consulte a
 [baseline de segurança](docs/architecture/SISTERD_SECURITY_BASELINE.md).
+
+Na revisão posterior, SEC-01C contém exceções do parser e dos workers, enquanto
+SEC-01D aplica limites independentes por endereço observado, identidade,
+combinação e processo. Rejeições de login retornam `429` com `Retry-After`. O
+servidor ignora `X-Forwarded-For` para essa decisão até existir uma relação de
+confiança formalizada com o gateway. Esses controles são fechados na release
+`v0.2.6`; a tag `v0.2.5` permanece imutável. Consulte a
+[ADR-0019](docs/adr/ADR-0019-http-robustness-and-login-rate-limiting.md).
+
+A EFE-SisTer/1.2 é a referência funcional e de engenharia corrente e exige
+segurança orientada por ameaças, controles e evidências. A `v0.2.6` publica o
+MAES-SisTer/1.0 junto ao fechamento de SEC-01C/01D. O candidato SEC-02 é mantido
+em ciclo posterior e será submetido a validação formal antes de sua implantação;
+seu código não integra esta release. Consulte o
+[alinhamento normativo](docs/architecture/EFE_SISTER_1_2_ALIGNMENT.md).
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:
