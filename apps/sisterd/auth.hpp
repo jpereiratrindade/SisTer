@@ -27,6 +27,10 @@ public:
     explicit AuthStore(std::filesystem::path path);
 
     bool bootstrapOpen() const;
+    std::optional<AuthUser> bootstrapAdmin(
+        const std::string& name,
+        const std::string& email,
+        const std::string& password);
     std::optional<AuthResult> registerAdmin(
         const std::string& name,
         const std::string& email,
@@ -81,6 +85,10 @@ private:
     void save() const;
     void loadSessions();
     void saveSessions() const;
+    std::optional<AuthUser> bootstrapAdminUnlocked(
+        const std::string& name,
+        const std::string& email,
+        const std::string& password);
     AuthResult createSession(const StoredUser& user);
 };
 

@@ -263,6 +263,23 @@ std::optional<AuthResult> AuthStore::registerAdmin(
     const std::string& rawEmail,
     const std::string& password) {
     std::lock_guard lock(mutex_);
+    const auto created = bootstrapAdminUnlocked(name, rawEmail, password);
+    if (!created) return std::nullopt;
+    return createSession(users_.back());
+}
+
+std::optional<AuthUser> AuthStore::bootstrapAdmin(
+    const std::string& name,
+    const std::string& rawEmail,
+    const std::string& password) {
+    std::lock_guard lock(mutex_);
+    return bootstrapAdminUnlocked(name, rawEmail, password);
+}
+
+std::optional<AuthUser> AuthStore::bootstrapAdminUnlocked(
+    const std::string& name,
+    const std::string& rawEmail,
+    const std::string& password) {
     const auto email = normalizeEmail(rawEmail);
     if (!users_.empty() || name.size() < 2 || password.size() < 12 ||
         email.find('@') == std::string::npos || !validField(name) || !validField(email)) {
@@ -275,7 +292,7 @@ std::optional<AuthResult> AuthStore::registerAdmin(
     user.passwordHash = passwordHash(password, user.salt);
     users_.push_back(user);
     save();
-    return createSession(users_.back());
+    return users_.back().publicUser;
 }
 
 std::optional<AuthResult> AuthStore::login(

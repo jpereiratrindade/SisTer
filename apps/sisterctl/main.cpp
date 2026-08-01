@@ -7,6 +7,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <termios.h>
 #include <unistd.h>
 
@@ -100,22 +101,29 @@ int main(int argc, char** argv) {
             return 2;
         }
         try {
+            const char* configuredPath = std::getenv("SISTER_AUTH_FILE");
+            if (configuredPath == nullptr || std::string_view(configuredPath).empty()) {
+                throw std::runtime_error(
+                    "SISTER_AUTH_FILE must be explicitly configured for administrator bootstrap");
+            }
+            const std::filesystem::path authPath = configuredPath;
+            if (!authPath.is_absolute()) {
+                throw std::runtime_error(
+                    "SISTER_AUTH_FILE must be an absolute path for administrator bootstrap");
+            }
             const auto password = readHidden("Nova senha administrativa: ");
             const auto confirmation = readHidden("Confirme a senha: ");
             if (password != confirmation) {
                 std::cerr << "password confirmation does not match\n";
                 return 1;
             }
-            const char* configuredPath = std::getenv("SISTER_AUTH_FILE");
-            const std::filesystem::path authPath =
-                configuredPath != nullptr ? configuredPath : ".run/auth-users.tsv";
             sisterd::AuthStore auth(authPath);
-            const auto registered = auth.registerAdmin(argv[3], argv[4], password);
+            const auto registered = auth.bootstrapAdmin(argv[3], argv[4], password);
             if (!registered) {
                 std::cerr << "administrator bootstrap is closed or the supplied data is invalid\n";
                 return 1;
             }
-            std::cout << "administrator created: " << registered->user.email << '\n';
+            std::cout << "administrator created: " << registered->email << '\n';
             return 0;
         } catch (const std::exception& ex) {
             std::cerr << "error: " << ex.what() << '\n';

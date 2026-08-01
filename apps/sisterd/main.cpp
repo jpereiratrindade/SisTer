@@ -360,7 +360,7 @@ ServerConfig loadConfig(int argc, char** argv) {
     }
     if (config.production && config.httpBootstrapEnabled) {
         throw std::runtime_error(
-            "HTTP administrator bootstrap is forbidden in production; use sisterctl auth-bootstrap-admin");
+            "HTTP administrator bootstrap is forbidden in production; use sisterctl auth bootstrap-admin");
     }
     if (config.production && config.legacyProxyEnabled) {
         throw std::runtime_error("legacy HTTP proxy is forbidden in production");
