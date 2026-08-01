@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita
+Aceita — SEC-01 e SEC-01A concluídos na baseline `v0.2.5`
 
 ## Contexto
 

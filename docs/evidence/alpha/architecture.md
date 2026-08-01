@@ -12,6 +12,13 @@ next_stage: beta
 
 # Aprovação de Arquitetura — Gate Alpha
 
+> **Adendo pós-gate (`v0.2.5`):** o `reviewed_commit` acima permanece a evidência
+> imutável desta aprovação. A baseline posterior concluiu a quarentena de
+> transporte, a autorização por capacidades e o bootstrap administrativo
+> offline. O código de proxy permanece apenas como mecanismo explícito de
+> laboratório; gateway, retirada física do legado e identidade assinada seguem
+> pendentes. Consulte a [baseline de segurança](../../architecture/SISTERD_SECURITY_BASELINE.md).
+
 ## 1. Finalidade
 
 Registrar a revisão arquitetural formal do estágio **Alpha** do SisTer.

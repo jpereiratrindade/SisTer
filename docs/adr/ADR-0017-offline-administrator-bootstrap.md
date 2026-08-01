@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita
+Aceita — SEC-01B concluído na baseline `v0.2.5`
 
 ## Contexto
 
@@ -31,8 +31,9 @@ terminal sem eco:
 sisterctl auth bootstrap-admin <name> <email>
 ```
 
-O comando usa `SISTER_AUTH_FILE`, preserva as validações do `AuthStore` e falha
-quando o bootstrap já foi consumido. O arquivo de produção reside em
+O comando exige `SISTER_AUTH_FILE` explícito e absoluto, preserva as validações do
+`AuthStore`, cria o usuário sem emitir sessão e falha quando o bootstrap já foi
+consumido. O arquivo de produção reside em
 `/var/lib/sister/auth-users.tsv`, criado com acesso exclusivo pelo diretório de
 estado do systemd.
 
@@ -45,6 +46,8 @@ preservar o fluxo de laboratório. Ele pode ser desligado explicitamente.
 - `GET /api/auth/bootstrap` não anuncia janela aberta quando HTTP está desativado.
 - `POST /api/auth/register` responde `403` quando HTTP está desativado.
 - O comando local não aceita uma segunda criação administrativa de bootstrap.
+- A criação offline não emite nem persiste sessão de autenticação.
+- A ausência de `SISTER_AUTH_FILE` explícito e absoluto causa falha antes da leitura da senha.
 - A senha não é recebida por argumento, ambiente ou saída do processo.
 - O armazenamento continua protegido por permissões exclusivas.
 
@@ -55,3 +58,10 @@ preservar o fluxo de laboratório. Ele pode ser desligado explicitamente.
   primeira conta administrativa.
 - Um futuro bootstrap remoto exigiria outro ADR e um segredo de instalação de
   alta entropia, curto, descartável e auditável.
+- `auth-import-user` permanece restrito a migração/manutenção local e deve ser
+  tratado como procedimento break-glass, sem concorrência com o `sisterd`, com
+  backup e rollback operacionais.
+- O armazenamento em arquivo ainda não coordena dois processos locais que
+  iniciem o bootstrap exatamente ao mesmo tempo. Até existir bloqueio
+  interprocesso ou criação exclusiva, o procedimento operacional deve garantir
+  execução única. Essa limitação de robustez não reabre SEC-01B.

@@ -58,7 +58,15 @@ termina TLS e trata HTTP, WebSocket, limites e observabilidade. O processo
 recusa bind fora de loopback e recusa os proxies legados. Consulte a
 [ADR-0015](docs/adr/ADR-0015-sisterd-transport-quarantine.md).
 
-Para colocar o SisTer em produção (Infrastructure as Code), utilize os scripts de deploy e configurações do sistema fornecidos:
+A baseline `v0.2.5` conclui SEC-00, SEC-01, SEC-01A e SEC-01B: quarentena de
+transporte, autorização por capacidades sem fallback de papel e bootstrap
+administrativo offline sem emissão de sessão. SEC-02, gateway, identidade
+interna assinada e os gates operacionais continuam pendentes; portanto, essa
+baseline não declara o sistema pronto para produção. Consulte a
+[baseline de segurança](docs/architecture/SISTERD_SECURITY_BASELINE.md).
+
+Para preparar um ambiente candidato a produção (Infrastructure as Code),
+utilize os scripts de deploy e configurações fornecidos:
 
 - **Template do Serviço:** Copie `ops/systemd/sisterd.service` para `/etc/systemd/system/sisterd.service`.
 - **Credenciais:** Copie `.env.production.example` para `/etc/sister/sister.env` (proteja com `chmod 600`).
@@ -167,9 +175,14 @@ recuperável, importa somente a identidade selecionada e reinicia o `sisterd`.
 Depois disso, o SisTer passa a ser a autoridade de login e o Studio reutiliza
 essa sessão.
 
+O comando interno `sisterctl auth-import-user` é reservado a migração,
+manutenção local ou break-glass. Não deve ser executado concorrentemente com o
+`sisterd`; o procedimento operacional deve incluir backup e rollback.
+
 As senhas sao derivadas com PBKDF2-HMAC-SHA256 e sal aleatorio. As identidades
 persistem em `.run/auth-users.tsv`, com permissao exclusiva do usuario do
-processo; os tokens de sessao ficam somente em memoria e expiram em oito horas.
+processo. As sessões persistem em `.run/auth-users.tsv.sessions` somente pelo
+hash SHA-256 do token, nunca pelo token bruto, e expiram em oito horas.
 Para usar outro caminho ou configurar o servidor:
 
 ```bash

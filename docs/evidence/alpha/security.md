@@ -12,6 +12,13 @@ next_stage: beta
 
 # Aprovação de Segurança — Gate Alpha
 
+> **Adendo pós-gate (`v0.2.5`):** o `reviewed_commit` acima permanece a evidência
+> imutável desta aprovação. Alterações posteriores concluíram SEC-00, SEC-01,
+> SEC-01A e SEC-01B, incluindo bootstrap produtivo local sem sessão. Elas são
+> documentadas na [baseline de segurança](../../architecture/SISTERD_SECURITY_BASELINE.md)
+> e não ampliam retroativamente o escopo deste aceite. SEC-02 e os demais itens
+> transferidos para Beta continuam pendentes.
+
 ## 1. Finalidade
 
 Registrar a revisão de segurança formal do estágio **Alpha** do SisTer.

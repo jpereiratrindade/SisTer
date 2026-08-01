@@ -16,6 +16,18 @@ A **Gama** será sempre descrita também como *candidata à produção* ou *pré
 
 ---
 
+## Estado da baseline `v0.2.5`
+
+SEC-00, SEC-01, SEC-01A e SEC-01B estão concluídos: o `sisterd` foi retirado da
+borda de produção, a autorização sensível usa capacidades com negação por
+padrão e o bootstrap produtivo é local, de uso único e sem sessão. Esses itens
+adiantam fundações do roteiro, mas não promovem o conjunto à Beta ou à produção.
+O próximo pacote é SEC-02, identidade interna assinada.
+
+Consulte a [baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md).
+
+---
+
 ## 0. Pré-Alfa — congelar a referência
 
 **Objetivo:** preservar o fluxo que funciona e impedir novas integrações pelo padrão provisório.
@@ -38,7 +50,8 @@ A **Gama** será sempre descrita também como *candidata à produção* ou *pré
 2. Publicar `sister.subsystem/1.0.0` com manifesto, health, readiness, capacidades, erros e auditoria.
 3. Modularizar o `sisterd` sem mudar o comportamento externo.
 4. Migrar usuários e sessões para PostgreSQL; guardar somente hash do token de sessão.
-5. Implementar revogação, expiração, bootstrap seguro e migração controlada.
+5. Integrar ao armazenamento transacional a revogação, a expiração e o
+   bootstrap offline já endurecido; executar migração controlada.
 6. Criar catálogo de capacidades e API `/api/me/capabilities`.
 7. Emitir identidade interna assinada, curta e com audiência específica.
 8. Validar primeiro no Nexo por uma rota de laboratório.

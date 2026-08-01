@@ -8,6 +8,28 @@
 
 ---
 
+## Atualização executável — baseline `v0.2.5`
+
+Este plano preserva o diagnóstico do protótipo como contexto histórico. Desde a
+sua redação, a baseline de segurança avançou sem concluir a arquitetura de
+produção:
+
+| Pacote | Estado na `v0.2.5` |
+|---|---|
+| SEC-00 — quarentena do transporte | concluído: loopback obrigatório e proxies legados proibidos em produção |
+| SEC-01 — autorização por capacidades | concluído: políticas explícitas, negação por padrão e log correlacionado |
+| SEC-01A — remoção do RBAC residual | concluído: papel não autoriza diretamente rotas sensíveis |
+| SEC-01B — bootstrap offline | concluído: caminho absoluto, uso único e nenhuma sessão emitida |
+| SEC-02 — identidade interna assinada | pendente e próximo pacote de segurança |
+
+O código legado continua presente somente para laboratório e não é um fallback
+de produção. Gateway especializado, identidade interna assinada, retirada física
+dos proxies, eliminação do cookie interno e gates operacionais permanecem
+pendentes. A referência canônica do estado atual é a
+[baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md).
+
+---
+
 ## 1. Síntese executiva
 
 A integração atual demonstrou que o SisTer consegue oferecer autenticação central, acesso unificado e encaminhamento protegido para subsistemas distintos. Esse resultado é relevante: o fluxo funcional foi validado e a inclusão do Sister-Clima tornou visíveis requisitos que não apareciam com a mesma intensidade nas integrações anteriores, sobretudo transporte WebSocket, conexões persistentes, propagação de identidade, consumo de recursos e dependência entre a disponibilidade do núcleo e a dos subsistemas.
@@ -879,14 +901,24 @@ Fluxo:
 
 ## 10.5 Bootstrap administrativo
 
-O bootstrap deve:
+Na baseline `v0.2.5`, produção proíbe o bootstrap HTTP. A primeira conta
+administrativa é criada localmente por `sisterctl auth bootstrap-admin`, com
+`SISTER_AUTH_FILE` explícito e absoluto. O comando lê a senha sem eco, cria e
+persiste somente o usuário, não emite sessão e recusa uma segunda tentativa.
+
+Na evolução para armazenamento transacional, o bootstrap deve continuar a:
 
 - estar aberto somente quando não existir administrador ativo;
 - ser fechado de forma transacional após a criação;
-- exigir execução local ou token de instalação de uso único;
+- exigir execução local; um eventual token remoto de instalação exigirá outra
+  decisão arquitetural;
 - produzir evento de auditoria;
 - não reabrir automaticamente após erro de banco;
 - falhar de forma segura.
+
+O backend em arquivo ainda exige operação local única: duas execuções exatamente
+simultâneas não são serializadas entre processos. Bloqueio interprocesso ou
+criação exclusiva é uma melhoria de robustez anterior à operação ampliada.
 
 ---
 
@@ -2278,7 +2310,9 @@ ADR-0011 — Escolha do gateway
 ADR-0012 — Estratégia de chaves e rotação
 ADR-0013 — Política de WebSocket
 ADR-0014 — Estados de integração e promoção
-ADR-0015 — Remoção dos fallbacks de produção
+ADR-0015 — Quarentena de transporte do sisterd
+ADR-0016 — Autorização por capacidades com negação por padrão
+ADR-0017 — Bootstrap administrativo local em produção
 ```
 
 Cada ADR deve registrar:

@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita
+Aceita — SEC-00 concluído na baseline `v0.2.5`
 
 ## Contexto
 
@@ -62,3 +62,6 @@ SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false
   interno e requer implementação posterior.
 - Identidade interna assinada, autorização por capacidades e contenção de abuso
   permanecem entregas de segurança separadas e obrigatórias.
+
+A autorização por capacidades foi concluída em SEC-01. Identidade interna
+assinada e contenção de abuso permanecem fora do escopo desta decisão.
