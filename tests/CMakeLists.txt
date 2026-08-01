@@ -18,6 +18,18 @@ target_compile_features(sisterd_auth_tests PRIVATE cxx_std_20)
 add_test(NAME sisterd_auth_tests COMMAND sisterd_auth_tests)
 
 add_executable(
+    sisterd_internal_assertion_tests
+    internal_assertion_tests.cpp
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/identity/internal_assertion.cpp)
+target_include_directories(
+    sisterd_internal_assertion_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/apps/sisterd/identity)
+target_link_libraries(sisterd_internal_assertion_tests PRIVATE OpenSSL::Crypto)
+target_compile_features(sisterd_internal_assertion_tests PRIVATE cxx_std_20)
+
+add_test(NAME sisterd_internal_assertion_tests COMMAND sisterd_internal_assertion_tests)
+
+add_executable(
     sisterd_security_hardening_tests
     security_hardening_tests.cpp
     ${CMAKE_SOURCE_DIR}/apps/sisterd/http/content_length.cpp
@@ -46,6 +58,14 @@ add_test(
     COMMAND
         ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_clima_proxy_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)
+
+add_test(
+    NAME sisterd_nexo_identity_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_nexo_identity_test.py
         $<TARGET_FILE:sisterd>
         ${CMAKE_SOURCE_DIR}/web)
 
