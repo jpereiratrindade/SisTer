@@ -316,8 +316,15 @@ bool isIpv4Loopback(std::string_view host) {
 ServerConfig loadConfig(int argc, char** argv) {
     ServerConfig config;
 
-    const std::string environmentName = environment("SISTER_ENV").value_or("production");
-    config.production = lowercase(environmentName) != "development" && lowercase(environmentName) != "dev";
+    const std::string environmentName = lowercase(environment("SISTER_ENV").value_or("production"));
+    if (environmentName == "production" || environmentName == "prod") {
+        config.production = true;
+    } else if (environmentName == "development" || environmentName == "dev" ||
+               environmentName == "test") {
+        config.production = false;
+    } else {
+        throw std::runtime_error("invalid SISTER_ENV: " + environmentName);
+    }
 
     const auto configuredPort = environment("SISTER_PORT").value_or("8000");
     config.port = parseInteger<int>(configuredPort, 1, 65535, "SISTER_PORT");
@@ -1080,16 +1087,36 @@ std::string jsonUser(const sisterd::AuthUser& user) {
 std::vector<std::string> capabilitiesForRole(const std::string& role) {
     if (role == "admin") {
         return {
-            "sister.maturity.read",
+            "session.self.read",
+            "identity.users.manage",
+            "maturity.evidence.read",
             "subsystem.manifest.read",
+            "sister.governance.read",
+            "sister.evidence.read",
+            "sister.diagnostics.read",
+            "studio.capabilities.read",
+            "campo.capabilities.read",
             "nexo.projects.read",
             "climate.dashboard.read"
         };
     }
     if (role == "researcher" || role == "project_lead") {
-        return {"nexo.projects.read", "climate.dashboard.read"};
+        return {
+            "session.self.read",
+            "subsystem.manifest.read",
+            "nexo.projects.read",
+            "climate.dashboard.read"
+        };
     }
-    return {};
+    if (role == "user" || role == "registered_user" || role == "guest") {
+        return {"session.self.read"};
+    }
+    return {}; // Unknown roles fail closed.
+}
+
+bool hasCapability(const sisterd::AuthUser& actor, std::string_view capability) {
+    const auto capabilities = capabilitiesForRole(actor.role);
+    return std::find(capabilities.begin(), capabilities.end(), capability) != capabilities.end();
 }
 
 std::string jsonCapabilities(const sisterd::AuthUser& user) {
@@ -1551,6 +1578,71 @@ void sendResponse(int client, const HttpResponse& response, const ServerConfig& 
     }
 }
 
+void logAuthorizationDecision(
+    const std::optional<sisterd::AuthUser>& actor,
+    std::string_view capability,
+    std::string_view resource,
+    std::string_view purpose,
+    std::string_view result,
+    std::string_view reason,
+    std::string_view requestId) {
+    const auto timestampMilliseconds = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::system_clock::now().time_since_epoch()).count();
+    std::lock_guard lock(gLogMutex);
+    std::cerr << "level=info event=authorization"
+              << " timestamp_ms=" << timestampMilliseconds
+              << " request_id=" << logSafe(requestId)
+              << " actor=" << logSafe(actor ? actor->id : "anonymous")
+              << " role=" << logSafe(actor ? actor->role : "none")
+              << " capability=" << logSafe(capability)
+              << " resource=" << logSafe(resource)
+              << " purpose=" << logSafe(purpose)
+              << " result=" << logSafe(result)
+              << " reason=" << logSafe(reason)
+              << '\n';
+}
+
+bool authorizeOrReject(
+    int client,
+    const std::optional<sisterd::AuthUser>& actor,
+    std::string_view capability,
+    std::string_view resource,
+    std::string_view purpose,
+    const HttpRequest& request,
+    const ServerConfig& config,
+    std::string_view requestId,
+    std::string_view peer,
+    bool headOnly,
+    Clock::time_point requestStart) {
+    int status = 200;
+    std::string_view reason = "capability_granted";
+    if (!actor) {
+        status = 401;
+        reason = "authentication_required";
+    } else if (capability.empty()) {
+        status = 403;
+        reason = "capability_not_declared";
+    } else if (!hasCapability(*actor, capability)) {
+        status = 403;
+        reason = "capability_missing";
+    }
+
+    logAuthorizationDecision(
+        actor, capability, resource, purpose,
+        status == 200 ? "allow" : "deny", reason, requestId);
+    if (status == 200) return true;
+
+    sendResponse(
+        client,
+        status == 401
+            ? jsonError(401, "Unauthorized", "Autenticação necessária.")
+            : jsonError(403, "Forbidden", "Capacidade necessária não concedida."),
+        config, requestId, headOnly);
+    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+    logEvent("info", requestId, peer, request.method, request.path, status, elapsed, reason);
+    return false;
+}
+
 void handleClient(
     int clientFd,
     const std::string& peer,
@@ -1705,13 +1797,9 @@ void handleClient(
 
     // --- Nexo reverse proxy ---
     if (config.legacyProxyEnabled && request.path == "/integrations/nexo") {
-        if (!actor) {
-            sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 303, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "nexo.projects.read", "sister-nexo",
+                "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
         sendResponse(client.get(), redirectResponse(308, "Permanent Redirect", "/integrations/nexo/"),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1721,13 +1809,9 @@ void handleClient(
 
     // --- Sister-Clima reverse proxy ---
     if (config.legacyProxyEnabled && request.path == "/integrations/clima") {
-        if (!actor) {
-            sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 303, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "climate.dashboard.read", "sister-clima",
+                "non_commercial_public_research", request, config, requestId, peer, isHead, requestStart)) return;
         sendResponse(client.get(), redirectResponse(308, "Permanent Redirect", "/integrations/clima/"),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1736,13 +1820,9 @@ void handleClient(
     }
 
     if (config.legacyProxyEnabled && request.path.starts_with("/integrations/clima/")) {
-        if (!actor) {
-            sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 303, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "climate.dashboard.read", "sister-clima",
+                "non_commercial_public_research", request, config, requestId, peer, isHead, requestStart)) return;
         try {
             if (isWebSocketUpgrade(request)) {
                 if (!config.legacyWebSocketProxyEnabled) {
@@ -1780,13 +1860,9 @@ void handleClient(
     }
 
     if (config.legacyProxyEnabled && request.path.starts_with("/integrations/nexo/")) {
-        if (!actor) {
-            sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 303, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "nexo.projects.read", "sister-nexo",
+                "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
         try {
             const auto raw = proxyToSubsystem(
                 request, *actor, "/integrations/nexo", config.nexoPort,
@@ -1807,13 +1883,9 @@ void handleClient(
 
     // --- /api/me ---
     if (request.path == "/api/me/capabilities") {
-        if (!actor) {
-            sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "session.self.read", "current-session",
+                "self_service", request, config, requestId, peer, isHead, requestStart)) return;
         const HttpResponse resp{200, "OK", jsonCapabilities(*actor),
             "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
         sendResponse(client.get(), resp, config, requestId, isHead);
@@ -1823,13 +1895,9 @@ void handleClient(
     }
 
     if (request.path == "/api/me") {
-        if (!actor) {
-            sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "session.self.read", "current-session",
+                "self_service", request, config, requestId, peer, isHead, requestStart)) return;
         const HttpResponse resp{200, "OK", jsonUser(*actor),
             "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
         sendResponse(client.get(), resp, config, requestId, isHead);
@@ -1851,20 +1919,9 @@ void handleClient(
             logEvent("warn", requestId, peer, request.method, request.path, 405, elapsed);
             return;
         }
-        if (!actor) {
-            sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
-            return;
-        }
-        if (actor->role != "admin") {
-            sendResponse(client.get(), jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 403, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "maturity.evidence.read", "sister-maturity",
+                "engineering_governance", request, config, requestId, peer, isHead, requestStart)) return;
 
         if (request.path == "/api/admin/maturity/components") {
             auto routeResp = sisterd::api::getMaturityComponents(*actor, config.maturityRoot);
@@ -1920,20 +1977,9 @@ void handleClient(
 
     // --- /api/admin/users ---
     if (request.path == "/api/admin/users" || request.path.starts_with("/api/admin/users/")) {
-        if (!actor) {
-            sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
-            return;
-        }
-        if (actor->role != "admin") {
-            sendResponse(client.get(), jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 403, elapsed);
-            return;
-        }
+        if (!authorizeOrReject(
+                client.get(), actor, "identity.users.manage", "sister-identities",
+                "identity_administration", request, config, requestId, peer, isHead, requestStart)) return;
 
         const bool isBase = (request.path == "/api/admin/users");
         const std::string targetId = isBase ? "" : request.path.substr(std::string("/api/admin/users/").size());
@@ -2083,25 +2129,34 @@ void handleClient(
             return;
         }
 
-        const bool publicApi = (request.path == "/api/health");
-        const bool authenticatedApi =
-            request.path == "/api/systems" ||
-            request.path == "/api/integrations/sister-clima" ||
-            request.path == "/api/integrations/sister-nexo";
+        const bool publicApi = request.path == "/api/health";
+        if (!publicApi) {
+            std::string_view capability;
+            std::string_view resource = "sister-control-plane";
+            std::string_view purpose = "governed_api_access";
+            if (request.path == "/api/systems") capability = "subsystem.manifest.read";
+            else if (request.path == "/api/contracts") capability = "sister.governance.read";
+            else if (request.path == "/api/evidence") capability = "sister.evidence.read";
+            else if (request.path == "/api/diagnostics") capability = "sister.diagnostics.read";
+            else if (request.path == "/api/integrations/sister-clima") {
+                capability = "climate.dashboard.read";
+                resource = "sister-clima";
+                purpose = "non_commercial_public_research";
+            } else if (request.path == "/api/integrations/sister-nexo") {
+                capability = "nexo.projects.read";
+                resource = "sister-nexo";
+                purpose = "research_operations";
+            } else if (request.path == "/api/integrations/sister-studio") {
+                capability = "studio.capabilities.read";
+                resource = "sister-studio";
+            } else if (request.path == "/api/integrations/sister-campo") {
+                capability = "campo.capabilities.read";
+                resource = "sister-campo";
+            }
 
-        if (!publicApi && !actor) {
-            sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
-            return;
-        }
-        if (!publicApi && !authenticatedApi && actor->role != "admin") {
-            sendResponse(client.get(), jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa."),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 403, elapsed);
-            return;
+            if (!authorizeOrReject(
+                    client.get(), actor, capability, resource, purpose, request, config,
+                    requestId, peer, isHead, requestStart)) return;
         }
 
         const auto payload = routeApi(request.path, state);
@@ -2141,21 +2196,13 @@ void handleClient(
     }
 
     if (request.path == "/admin/users" || request.path == "/admin/maturity") {
-        if (!actor) {
-            sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
-                         config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 303, elapsed);
-            return;
-        }
-        if (actor->role != "admin") {
-            sendResponse(client.get(),
-                jsonError(403, "Forbidden", "Acesso restrito à equipe administrativa."),
-                config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, 403, elapsed);
-            return;
-        }
+        const std::string_view capability = request.path == "/admin/users"
+            ? "identity.users.manage" : "maturity.evidence.read";
+        const std::string_view resource = request.path == "/admin/users"
+            ? "sister-identities" : "sister-maturity";
+        if (!authorizeOrReject(
+                client.get(), actor, capability, resource, "administrative_interface",
+                request, config, requestId, peer, isHead, requestStart)) return;
     }
 
     if (request.path.ends_with("/app.js") && !actor) {

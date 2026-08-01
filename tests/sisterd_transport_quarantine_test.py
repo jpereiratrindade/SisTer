@@ -103,6 +103,7 @@ def assert_safe_production_starts(executable, web_root):
 def main():
     executable, web_root = sys.argv[1:3]
     loopback_error = "production sisterd must bind to an IPv4 loopback address"
+    assert_rejected(executable, web_root, {"SISTER_ENV": "developmnt"}, "invalid SISTER_ENV")
     assert_rejected(executable, web_root, {"SISTER_BIND_HOST": "0.0.0.0"}, loopback_error)
     assert_rejected(executable, web_root, {"SISTER_BIND_HOST": "192.0.2.10"}, loopback_error)
     assert_rejected(

@@ -30,7 +30,7 @@ Centro de Engenharia do SisTer, com as seguintes invariantes:
 - relatórios reais permanecem em `.run/maturity/` e não são versionados;
 - a API lê somente caminhos fixos configurados pelo servidor;
 - a primeira versão exige papel `admin`, migrando futuramente para a
-  capacidade `sister.maturity.read`;
+  capacidade `maturity.evidence.read`;
 - caminhos absolutos, credenciais, cookies, tokens, variáveis de ambiente e
   saída bruta não podem integrar o contrato público;
 - o histórico é limitado, sanitizado e ordenado por execução.

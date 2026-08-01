@@ -34,6 +34,13 @@ add_test(
         ${CMAKE_SOURCE_DIR}/web)
 
 add_test(
+    NAME sisterd_systemd_unit_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_systemd_unit_test.py
+        ${CMAKE_SOURCE_DIR}/ops/systemd/sisterd.service)
+
+add_test(
     NAME sisterd_maturity_api_tests
     COMMAND
         ${Python3_EXECUTABLE}

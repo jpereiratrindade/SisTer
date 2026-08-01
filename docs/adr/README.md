@@ -15,3 +15,4 @@
 - [ADR-0013 - Validação da Federação do Motor Declarativo](./ADR-0013-declarative-engine-federation-validation.md)
 - [ADR-0014 - Engines de verificação e modos de governança do SGR](./ADR-0014-sgr-engines-and-governance.md)
 - [ADR-0015 - Quarentena de transporte do sisterd](./ADR-0015-sisterd-transport-quarantine.md)
+- [ADR-0016 - Autorização por capacidades com negação por padrão](./ADR-0016-capability-based-authorization.md)

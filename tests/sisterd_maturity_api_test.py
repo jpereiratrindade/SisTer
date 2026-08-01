@@ -63,6 +63,8 @@ def main():
             "SISTER_MATURITY_ROOT": str(maturity_root),
             "SISTER_DATABASE_URL": "",
             "SISTER_WORKERS": "4",
+            "SISTER_ENABLE_LEGACY_PROXY": "true",
+            "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
         })
         process = subprocess.Popen(
             [executable, str(port), web_root], env=environment,
@@ -79,11 +81,12 @@ def main():
             status, headers, payload = request(port, "GET", "/api/me/capabilities", cookie=admin_cookie)
             assert status == 200, status
             capabilities = json.loads(payload)["capabilities"]
-            assert "sister.maturity.read" in capabilities
+            assert "maturity.evidence.read" in capabilities
+            assert "identity.users.manage" in capabilities
             assert headers.get("Cache-Control") == "no-store", headers
 
             assert request(port, "GET", "/api/admin/maturity/latest")[0] == 401
-            assert request(port, "GET", "/admin/maturity")[0] == 303
+            assert request(port, "GET", "/admin/maturity")[0] == 401
             assert request(port, "GET", "/api/admin/maturity/latest", cookie=admin_cookie)[0] == 404
 
             maturity_root.mkdir(parents=True)
@@ -110,6 +113,12 @@ def main():
             assert status == 200, status
             reader_cookie = session_cookie(headers)
             assert request(port, "GET", "/api/admin/maturity/latest", cookie=reader_cookie)[0] == 403
+            assert request(port, "GET", "/api/admin/users", cookie=reader_cookie)[0] == 403
+            assert request(port, "GET", "/api/integrations/sister-clima", cookie=reader_cookie)[0] == 403
+            assert request(port, "GET", "/integrations/clima", cookie=reader_cookie)[0] == 403
+            assert request(port, "GET", "/integrations/clima")[0] == 401
+            assert request(port, "GET", "/integrations/clima", cookie=admin_cookie)[0] == 308
+            assert request(port, "GET", "/api/not-declared", cookie=admin_cookie)[0] == 403
 
             assert request(port, "GET", "/api/admin/maturity/history", cookie=admin_cookie)[0] == 404
             history_root = maturity_root / "history"
@@ -139,6 +148,14 @@ def main():
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait(timeout=5)
+        audit_log = process.stderr.read()
+        assert "event=authorization" in audit_log
+        assert "capability=maturity.evidence.read" in audit_log
+        assert "capability=climate.dashboard.read" in audit_log
+        assert "result=allow" in audit_log
+        assert "result=deny" in audit_log
+        assert "reason=capability_missing" in audit_log
+        assert "reason=capability_not_declared" in audit_log
     print("sisterd_maturity_api_tests ok")
 
 

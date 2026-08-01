@@ -118,6 +118,13 @@ do painel exigem uma sessao identificada. `contracts`, `evidence`,
 `diagnostics` e a integração com o Sister-Studio exigem sessao com papel
 `admin`.
 
+Rotas sensíveis são autorizadas por capacidade e falham fechadas quando não há
+política declarada. Integrações Clima e Nexo exigem, respectivamente,
+`climate.dashboard.read` e `nexo.projects.read`; administração de identidades
+exige `identity.users.manage`, e evidências de maturidade exigem
+`maturity.evidence.read`. Consulte a
+[ADR-0016](docs/adr/ADR-0016-capability-based-authorization.md).
+
 O adaptador Sister-Studio usa TLS verificado e segredo de execução. A
 configuração e a fronteira de dados estão em
 `adapters/sister_studio/README.md`; conteúdo de usuários não é compartilhado
