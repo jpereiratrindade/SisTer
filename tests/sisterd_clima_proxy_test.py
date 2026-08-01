@@ -45,6 +45,8 @@ def start_sisterd(executable, web_root, port, clima_port, auth_file):
             "SISTER_COOKIE_SECURE": "false",
             "SISTER_DATABASE_URL": "",
             "SISTER_WORKERS": "4",
+            "SISTER_ENABLE_LEGACY_PROXY": "true",
+            "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "true",
         }
     )
     process = subprocess.Popen(

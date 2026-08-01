@@ -74,6 +74,8 @@ struct ServerConfig {
     bool secureCookie = true;
     bool hsts = false;
     bool requireSameOrigin = true;
+    bool legacyProxyEnabled = false;
+    bool legacyWebSocketProxyEnabled = false;
     std::size_t workerThreads = 4;
     std::size_t queueLimit = 256;
     int clientTimeoutSeconds = 10;
@@ -305,6 +307,12 @@ Integer parseInteger(std::string_view value, Integer minimum, Integer maximum, s
     return result;
 }
 
+bool isIpv4Loopback(std::string_view host) {
+    in_addr address{};
+    if (inet_pton(AF_INET, std::string(host).c_str(), &address) != 1) return false;
+    return (ntohl(address.s_addr) & 0xff000000u) == 0x7f000000u;
+}
+
 ServerConfig loadConfig(int argc, char** argv) {
     ServerConfig config;
 
@@ -330,6 +338,25 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.requireSameOrigin = parseBool(
         environment("SISTER_REQUIRE_SAME_ORIGIN").value_or(config.production ? "true" : "false"),
         config.production);
+    config.legacyProxyEnabled = parseBool(
+        environment("SISTER_ENABLE_LEGACY_PROXY").value_or("false"), false);
+    config.legacyWebSocketProxyEnabled = parseBool(
+        environment("SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY").value_or("false"), false);
+
+    if (config.production && !isIpv4Loopback(config.bindHost)) {
+        throw std::runtime_error(
+            "production sisterd must bind to an IPv4 loopback address; expose only the gateway");
+    }
+    if (config.production && config.legacyProxyEnabled) {
+        throw std::runtime_error("legacy HTTP proxy is forbidden in production");
+    }
+    if (config.production && config.legacyWebSocketProxyEnabled) {
+        throw std::runtime_error("legacy WebSocket proxy is forbidden in production");
+    }
+    if (config.legacyWebSocketProxyEnabled && !config.legacyProxyEnabled) {
+        throw std::runtime_error(
+            "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY requires SISTER_ENABLE_LEGACY_PROXY");
+    }
 
     const auto hardwareThreads = std::max(2u, std::thread::hardware_concurrency());
     config.workerThreads = parseInteger<std::size_t>(
@@ -1473,7 +1500,8 @@ ApiPayload routeApi(const std::string& path, AppState& state) {
         std::lock_guard lock(state.dbMutex);
         const std::string dbStatus = state.db.connected() ? "connected" : "not_connected";
         return {true, false,
-            "{\"status\":\"ok\",\"service\":\"sisterd\",\"version\":\"0.2.1\",\"database\":\"" +
+            "{\"status\":\"ok\",\"service\":\"sisterd\",\"version\":\"" SISTER_VERSION
+            "\",\"database\":\"" +
             dbStatus + "\"}"};
     }
 
@@ -1676,7 +1704,7 @@ void handleClient(
     }
 
     // --- Nexo reverse proxy ---
-    if (request.path == "/integrations/nexo") {
+    if (config.legacyProxyEnabled && request.path == "/integrations/nexo") {
         if (!actor) {
             sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
                          config, requestId, isHead);
@@ -1692,7 +1720,7 @@ void handleClient(
     }
 
     // --- Sister-Clima reverse proxy ---
-    if (request.path == "/integrations/clima") {
+    if (config.legacyProxyEnabled && request.path == "/integrations/clima") {
         if (!actor) {
             sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
                          config, requestId, isHead);
@@ -1707,7 +1735,7 @@ void handleClient(
         return;
     }
 
-    if (request.path.starts_with("/integrations/clima/")) {
+    if (config.legacyProxyEnabled && request.path.starts_with("/integrations/clima/")) {
         if (!actor) {
             sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
                          config, requestId, isHead);
@@ -1717,6 +1745,15 @@ void handleClient(
         }
         try {
             if (isWebSocketUpgrade(request)) {
+                if (!config.legacyWebSocketProxyEnabled) {
+                    sendResponse(client.get(),
+                        jsonError(404, "Not Found", "Recurso não encontrado."),
+                        config, requestId, isHead);
+                    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+                    logEvent("warn", requestId, peer, request.method, request.path, 404, elapsed,
+                             "legacy WebSocket proxy disabled");
+                    return;
+                }
                 auto upstream = openWebSocketProxy(
                     client.get(), request, *actor, "/integrations/clima", config.climaPort,
                     "Sister-Clima", requestId, config);
@@ -1742,7 +1779,7 @@ void handleClient(
         return;
     }
 
-    if (request.path.starts_with("/integrations/nexo/")) {
+    if (config.legacyProxyEnabled && request.path.starts_with("/integrations/nexo/")) {
         if (!actor) {
             sendResponse(client.get(), redirectResponse(303, "See Other", "/login"),
                          config, requestId, isHead);
@@ -2216,6 +2253,9 @@ int main(int argc, char** argv) {
                   << " web_root=" << config.canonicalWebRoot.string()
                   << " workers=" << config.workerThreads
                   << " env=" << (config.production ? "production" : "development")
+                  << " legacy_proxy=" << (config.legacyProxyEnabled ? "enabled" : "disabled")
+                  << " legacy_websocket_proxy="
+                  << (config.legacyWebSocketProxyEnabled ? "enabled" : "disabled")
                   << '\n';
     }
 

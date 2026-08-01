@@ -1,7 +1,12 @@
 cmake_minimum_required(VERSION 3.20)
 
+file(STRINGS "${CMAKE_CURRENT_SOURCE_DIR}/VERSION" SISTER_VERSION LIMIT_COUNT 1)
+if(NOT SISTER_VERSION MATCHES "^[0-9]+\\.[0-9]+\\.[0-9]+$")
+    message(FATAL_ERROR "VERSION must contain a semantic version such as 0.2.3")
+endif()
+
 project(SisTer
-    VERSION 0.2.1
+    VERSION "${SISTER_VERSION}"
     DESCRIPTION "SisTer federative territorial convergence platform prototype"
     LANGUAGES CXX)
 

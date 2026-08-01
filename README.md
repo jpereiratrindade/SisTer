@@ -52,6 +52,12 @@ em seu próprio repositório, mas nenhum deles inicia o SisTer.
 
 ## Produção
 
+O `sisterd` é um plano de controle interno, não uma borda HTTP pública. Em
+produção ele deve ficar atrás de um gateway/reverse proxy especializado, que
+termina TLS e trata HTTP, WebSocket, limites e observabilidade. O processo
+recusa bind fora de loopback e recusa os proxies legados. Consulte a
+[ADR-0015](docs/adr/ADR-0015-sisterd-transport-quarantine.md).
+
 Para colocar o SisTer em produção (Infrastructure as Code), utilize os scripts de deploy e configurações do sistema fornecidos:
 
 - **Template do Serviço:** Copie `ops/systemd/sisterd.service` para `/etc/systemd/system/sisterd.service`.
@@ -155,6 +161,8 @@ SISTER_AUTH_FILE=/caminho/protegido/auth-users.tsv \
 SISTER_ENV=production \
 SISTER_WORKERS=4 \
 SISTER_BIND_HOST=127.0.0.1 \
+SISTER_ENABLE_LEGACY_PROXY=false \
+SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false \
   ./build/apps/sisterd/sisterd 8000 web
 ```
 
@@ -163,6 +171,8 @@ O `sisterd` suporta diversas variáveis de ambiente para configuração avançad
 - `SISTER_WORKERS`: Número de threads (padrão baseado em hardware, máx 16).
 - `SISTER_QUEUE_LIMIT`: Limite da fila de conexões simultâneas (padrão `256`).
 - `SISTER_BIND_HOST`: Host de rede para o bind (padrão `127.0.0.1`).
+- `SISTER_ENABLE_LEGACY_PROXY`: Proxy HTTP embarcado, permitido somente para laboratório (padrão `false`).
+- `SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY`: Túnel WebSocket embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_NEXO_PORT`: Porta para o serviço de federação Nexo (padrão `8015`).
 - `SISTER_COOKIE_SECURE`, `SISTER_HSTS`, `SISTER_REQUIRE_SAME_ORIGIN`: Controles de segurança (ativos por padrão em `production`).
 

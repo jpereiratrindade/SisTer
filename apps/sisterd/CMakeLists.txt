@@ -20,6 +20,7 @@ else()
 endif()
 
 target_compile_features(sisterd PRIVATE cxx_std_20)
+target_compile_definitions(sisterd PRIVATE SISTER_VERSION="${PROJECT_VERSION}")
 
 if(MSVC)
     target_compile_options(sisterd PRIVATE /W4)
