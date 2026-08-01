@@ -10,6 +10,8 @@ add_executable(
     sister_campo_client.cpp
     api/maturity_routes.cpp
     http/content_length.cpp
+    identity/internal_assertion.cpp
+    integrations/nexo_client.cpp
     runtime/connection_thread_pool.cpp
     security/login_rate_limiter.cpp
 )

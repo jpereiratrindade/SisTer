@@ -9,7 +9,8 @@ forma governada, testável e independente de regras específicas no núcleo.
 
 - `manifest.schema.json`: manifesto aprovado do subsistema;
 - `capabilities.schema.json`: capacidades ofertadas pelo subsistema em execução;
-- `identity-claims.schema.json`: envelope de identidade interna a ser assinado;
+- `identity-claims.schema.json`: claims mínimos da asserção interna Ed25519,
+  restrita por audiência, capacidade, finalidade e correlação;
 - `health.schema.json`: saúde sanitizada do processo;
 - `readiness.schema.json`: prontidão sanitizada para tráfego útil;
 - `error.schema.json`: erro comum de integração;

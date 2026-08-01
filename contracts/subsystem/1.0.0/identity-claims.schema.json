@@ -4,20 +4,22 @@
   "title": "SisTer Internal Identity Claims",
   "type": "object",
   "additionalProperties": false,
-  "required": ["iss", "sub", "aud", "iat", "exp", "jti", "capabilities"],
+  "required": ["iss", "sub", "aud", "capabilities", "purpose", "iat", "exp", "jti", "request_id"],
   "properties": {
-    "iss": {"const": "sister"},
-    "sub": {"type": "string", "minLength": 1, "maxLength": 120},
+    "iss": {"const": "sisterd"},
+    "sub": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{0,119}$"},
     "aud": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
-    "iat": {"type": "integer", "minimum": 0},
-    "exp": {"type": "integer", "minimum": 0},
-    "jti": {"type": "string", "minLength": 16, "maxLength": 120},
     "capabilities": {
       "type": "array",
-      "maxItems": 100,
+      "minItems": 1,
+      "maxItems": 8,
       "uniqueItems": true,
       "items": {"type": "string", "pattern": "^[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*\\.[a-z][a-z0-9_]*$"}
     },
-    "context": {"type": "object", "additionalProperties": {"type": "string"}, "maxProperties": 20}
+    "purpose": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{2,119}$"},
+    "iat": {"type": "integer", "minimum": 0},
+    "exp": {"type": "integer", "minimum": 0},
+    "jti": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,119}$"},
+    "request_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{15,127}$"}
   }
 }

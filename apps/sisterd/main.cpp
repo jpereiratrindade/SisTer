@@ -4,6 +4,7 @@
 #include "sister_campo_client.hpp"
 #include "api/maturity_routes.hpp"
 #include "http/content_length.hpp"
+#include "integrations/nexo_client.hpp"
 #include "runtime/connection_thread_pool.hpp"
 #include "security/login_rate_limiter.hpp"
 
@@ -87,6 +88,9 @@ struct ServerConfig {
     uint16_t climaPort = 8501;
     uint16_t nexoPort = 8015;
     std::string internalProxyToken;
+    std::filesystem::path internalIdentityPrivateKeyFile;
+    std::string internalIdentityKeyId;
+    int internalIdentityTtlSeconds = 60;
 };
 
 struct HttpRequest {
@@ -289,6 +293,12 @@ ServerConfig loadConfig(int argc, char** argv) {
         environment("SISTER_NEXO_PORT").value_or("8015"),
         1, std::numeric_limits<uint16_t>::max(), "SISTER_NEXO_PORT");
     config.internalProxyToken = environment("SISTER_INTERNAL_PROXY_TOKEN").value_or("");
+    config.internalIdentityPrivateKeyFile =
+        environment("SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE").value_or("");
+    config.internalIdentityKeyId = environment("SISTER_INTERNAL_IDENTITY_KEY_ID").value_or("");
+    config.internalIdentityTtlSeconds = parseInteger<int>(
+        environment("SISTER_INTERNAL_IDENTITY_TTL_SECONDS").value_or("60"),
+        1, 300, "SISTER_INTERNAL_IDENTITY_TTL_SECONDS");
 
     std::error_code error;
     config.canonicalWebRoot = std::filesystem::weakly_canonical(config.webRoot, error);
@@ -1811,9 +1821,31 @@ void handleClient(
                 clientFd, actor, "nexo.projects.read", "sister-nexo",
                 "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
         try {
-            const auto raw = proxyToSubsystem(
-                request, *actor, "/integrations/nexo", config.nexoPort,
-                "SisTer Nexo", requestId, config);
+            const auto contentType = request.headers.find("content-type");
+            const auto accept = request.headers.find("accept");
+            sisterd::integrations::NexoClient nexo({
+                config.nexoPort,
+                config.upstreamTimeoutMilliseconds,
+                config.internalIdentityPrivateKeyFile,
+                config.internalIdentityKeyId,
+                std::chrono::seconds(config.internalIdentityTtlSeconds),
+            });
+            const auto integrationPath =
+                request.path.substr(std::string_view("/integrations/nexo").size());
+            const auto upstreamPath = "/api/v1" +
+                std::string(integrationPath.empty() ? std::string_view("/") : integrationPath);
+            const auto raw = nexo.execute({
+                request.method,
+                upstreamPath,
+                request.query,
+                contentType == request.headers.end() ? "" : contentType->second,
+                accept == request.headers.end() ? "" : accept->second,
+                request.body,
+                actor->id,
+                "nexo.projects.read",
+                "research_operations",
+                requestId,
+            });
             sendAll(clientFd, raw);
             const auto proxyStatus = statusFromRawHttpResponse(raw);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
