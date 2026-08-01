@@ -1,0 +1,67 @@
+# Alinhamento normativo com a EFE-SisTer/1.2
+
+**Referência:** EFE-SisTer/1.2 — *Especificação Funcional e de Engenharia do SisTer*
+
+**Data da referência:** 1 de agosto de 2026
+
+**Status da referência:** versão revisada para validação
+
+**SHA-256 do documento recebido:** `d04c76f4980c861c7717990f2339d86f9681bec6790d77059e5bef4e5f24a410`
+
+## Autoridade e escopo
+
+A EFE-SisTer/1.2 substitui a EFE-SisTer/1.1 como referência funcional e de
+engenharia corrente. Ela é normativa para o modelo-alvo e descritiva somente
+quanto ao snapshot de código que inspecionou. ADRs, contratos, procedimentos e
+evidências continuam sendo artefatos próprios e devem permanecer alinhados à
+EFE.
+
+A revisão 1.2 formaliza a cadeia de segurança:
+
+```text
+ameaça → requisito → controle → implementação → teste → evidência
+       → risco residual → maturidade
+```
+
+Código defensivo isolado não encerra uma ameaça. A promoção requer teste
+reproduzível, evidência válida, risco residual explícito e autoridade definida.
+
+## Consequências para o ciclo atual
+
+1. SEC-01C e SEC-01D estão implementados e validados no worktree posterior à
+   `v0.2.5`. Devem ser publicados em uma nova release `v0.2.6`, sem mover nem
+   recriar tags anteriores.
+2. Em paralelo ao fechamento da release, deve ser criado o MAES-SisTer/1.0,
+   registro operacional versionado de ativos, fronteiras, ameaças, controles,
+   testes, evidências, riscos residuais, responsáveis, estados e datas de
+   revisão.
+3. SEC-02 está implementado, mas sua conformidade deve ser formalmente avaliada
+   contra a EFE-SisTer/1.2 e o MAES antes de implantação conjunta com o Nexo.
+4. SEC-03 permanece posterior ao SEC-02 e responsável pelo gateway
+   especializado. Nenhuma etapa autoriza transformar o `sisterd` em servidor
+   HTTP público.
+
+## Rastreabilidade imediata
+
+| Entrega | Ameaças iniciais relacionadas | Controle/evidência atual | Próximo gate |
+|---|---|---|---|
+| SEC-01C | `TH-HTTP-01`, `TH-HTTP-03`, `TH-CXX-01`, `TH-CXX-02` | parsing estrito, limites, barreira por job e suíte hostil em `docs/evidence/security/SEC-01C-01D.md` | publicação imutável da `v0.2.6` |
+| SEC-01D | `TH-AUTH-01`, `TH-HTTP-03`, `TH-AUD-01` | limites multidimensionais, armazenamento limitado, `429`, métricas e testes concorrentes | publicação imutável da `v0.2.6` |
+| SEC-02 | `TH-IDENT-01`, `TH-AUTHZ-01`, `TH-AUD-01` | asserção Ed25519, audiência, capacidade, finalidade, expiração e rejeição de replay local | ficha MAES, validação formal e evidência conjunta SisTer–Nexo |
+| SEC-03 | `TH-HTTP-02`, `TH-HTTP-03`, `TH-HTTP-04`, `TH-WS-01`, `TH-PROXY-01`, `TH-PROXY-02` | ainda não implementado | ADR do gateway, testes negativos e risco residual |
+
+## Regra de promoção
+
+A sequência aprovada é:
+
+```text
+publicar SEC-01C/SEC-01D como v0.2.6 ─┐
+                                     ├→ validar formalmente SEC-02 (SEC-02V)
+criar e revisar MAES-SisTer/1.0 ─────┘
+→ implantar SEC-02 de forma controlada
+→ implementar e validar SEC-03
+```
+
+Enquanto essa sequência não for concluída, o `sisterd` permanece plano de
+controle interno em loopback, com proxies legados e WebSocket proibidos em
+produção.

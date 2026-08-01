@@ -17,3 +17,9 @@ notes: <ressalvas>
 
 O verificador não cria aprovações. Ele apenas comprova que o arquivo exigido
 existe e contém `status: approved` ou `status: aprovado`.
+
+## Segurança
+
+- [SEC-01C/01D — robustez HTTP e contenção de abuso](./security/SEC-01C-01D.md)
+- [SEC-02V — checklist de validação da identidade interna](./security/SEC-02V-CHECKLIST.md)
+- [MAES-SisTer/1.0](../security/MAES_SISTER_1_0.md)

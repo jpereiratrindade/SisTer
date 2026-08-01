@@ -128,6 +128,10 @@ AuthStore::AuthStore(std::filesystem::path path)
     loadSessions();
 }
 
+std::string AuthStore::normalizeIdentity(std::string identity) {
+    return normalizeEmail(std::move(identity));
+}
+
 void AuthStore::load() {
     std::lock_guard lock(mutex_);
     users_.clear();

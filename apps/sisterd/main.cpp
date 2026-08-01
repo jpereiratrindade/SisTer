@@ -3,6 +3,10 @@
 #include "studio_client.hpp"
 #include "sister_campo_client.hpp"
 #include "api/maturity_routes.hpp"
+#include "http/content_length.hpp"
+#include "integrations/nexo_client.hpp"
+#include "runtime/connection_thread_pool.hpp"
+#include "security/login_rate_limiter.hpp"
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -84,6 +88,9 @@ struct ServerConfig {
     uint16_t climaPort = 8501;
     uint16_t nexoPort = 8015;
     std::string internalProxyToken;
+    std::filesystem::path internalIdentityPrivateKeyFile;
+    std::string internalIdentityKeyId;
+    int internalIdentityTtlSeconds = 60;
 };
 
 struct HttpRequest {
@@ -155,112 +162,6 @@ public:
 
 private:
     int fd_;
-};
-
-class LoginRateLimiter {
-public:
-    bool allowed(const std::string& key) {
-        std::lock_guard lock(mutex_);
-        prune(key);
-        return failures_[key].size() < kMaxFailures;
-    }
-
-    void recordFailure(const std::string& key) {
-        std::lock_guard lock(mutex_);
-        prune(key);
-        failures_[key].push_back(Clock::now());
-    }
-
-    void recordSuccess(const std::string& key) {
-        std::lock_guard lock(mutex_);
-        failures_.erase(key);
-    }
-
-private:
-    static constexpr std::size_t kMaxFailures = 8;
-    static constexpr auto kWindow = std::chrono::minutes(5);
-
-    void prune(const std::string& key) {
-        auto& attempts = failures_[key];
-        const auto cutoff = Clock::now() - kWindow;
-        while (!attempts.empty() && attempts.front() < cutoff) attempts.pop_front();
-        if (attempts.empty()) failures_.erase(key);
-    }
-
-    std::mutex mutex_;
-    std::unordered_map<std::string, std::deque<Clock::time_point>> failures_;
-};
-
-class ThreadPool {
-public:
-    struct Job {
-        int client = -1;
-        std::string peer;
-    };
-
-    using Handler = std::function<void(Job)>;
-
-    ThreadPool(std::size_t workerCount, std::size_t queueLimit, Handler handler)
-        : queueLimit_(queueLimit), handler_(std::move(handler)) {
-        workers_.reserve(workerCount);
-        for (std::size_t i = 0; i < workerCount; ++i) {
-            workers_.emplace_back([this] { workerLoop(); });
-        }
-    }
-
-    ~ThreadPool() { stop(); }
-
-    ThreadPool(const ThreadPool&) = delete;
-    ThreadPool& operator=(const ThreadPool&) = delete;
-
-    bool submit(Job job) {
-        std::lock_guard lock(mutex_);
-        if (stopping_ || jobs_.size() >= queueLimit_) return false;
-        jobs_.push_back(std::move(job));
-        cv_.notify_one();
-        return true;
-    }
-
-    void stop() {
-        {
-            std::lock_guard lock(mutex_);
-            if (stopping_) return;
-            stopping_ = true;
-        }
-        cv_.notify_all();
-        for (auto& worker : workers_) {
-            if (worker.joinable()) worker.join();
-        }
-        workers_.clear();
-
-        while (!jobs_.empty()) {
-            if (jobs_.front().client >= 0) close(jobs_.front().client);
-            jobs_.pop_front();
-        }
-    }
-
-private:
-    void workerLoop() {
-        for (;;) {
-            Job job;
-            {
-                std::unique_lock lock(mutex_);
-                cv_.wait(lock, [this] { return stopping_ || !jobs_.empty(); });
-                if (stopping_ && jobs_.empty()) return;
-                job = std::move(jobs_.front());
-                jobs_.pop_front();
-            }
-            handler_(std::move(job));
-        }
-    }
-
-    std::size_t queueLimit_;
-    Handler handler_;
-    std::mutex mutex_;
-    std::condition_variable cv_;
-    std::deque<Job> jobs_;
-    std::vector<std::thread> workers_;
-    bool stopping_ = false;
 };
 
 void handleSignal(int) {
@@ -392,6 +293,12 @@ ServerConfig loadConfig(int argc, char** argv) {
         environment("SISTER_NEXO_PORT").value_or("8015"),
         1, std::numeric_limits<uint16_t>::max(), "SISTER_NEXO_PORT");
     config.internalProxyToken = environment("SISTER_INTERNAL_PROXY_TOKEN").value_or("");
+    config.internalIdentityPrivateKeyFile =
+        environment("SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE").value_or("");
+    config.internalIdentityKeyId = environment("SISTER_INTERNAL_IDENTITY_KEY_ID").value_or("");
+    config.internalIdentityTtlSeconds = parseInteger<int>(
+        environment("SISTER_INTERNAL_IDENTITY_TTL_SECONDS").value_or("60"),
+        10, 300, "SISTER_INTERNAL_IDENTITY_TTL_SECONDS");
 
     std::error_code error;
     config.canonicalWebRoot = std::filesystem::weakly_canonical(config.webRoot, error);
@@ -414,6 +321,12 @@ std::string logSafe(std::string_view value) {
         }
     }
     return result;
+}
+
+void logUnhandledWorkerException(std::string_view detail) {
+    std::lock_guard lock(gLogMutex);
+    std::cerr << "level=error event=unhandled_worker_exception detail=\""
+              << logSafe(detail) << "\"\n";
 }
 
 void logEvent(
@@ -636,7 +549,20 @@ ReadRequestResult readRequest(int client) {
 
     std::size_t contentLength = 0;
     if (const auto length = request.headers.find("content-length"); length != request.headers.end()) {
-        contentLength = parseInteger<std::size_t>(length->second, 0, kMaxBodyBytes, "Content-Length");
+        const auto parsed = sisterd::http::parseContentLength(length->second, kMaxBodyBytes);
+        if (parsed.status == sisterd::http::ContentLengthStatus::invalid) {
+            failure.status = 400;
+            failure.reason = "Bad Request";
+            failure.detail = "Content-Length inválido.";
+            return failure;
+        }
+        if (parsed.status == sisterd::http::ContentLengthStatus::tooLarge) {
+            failure.status = 413;
+            failure.reason = "Payload Too Large";
+            failure.detail = "Corpo HTTP excede o limite permitido.";
+            return failure;
+        }
+        contentLength = parsed.value;
     }
 
     const std::size_t expectedSize = headerEnd + 4 + contentLength;
@@ -1654,22 +1580,21 @@ bool authorizeOrReject(
 void handleClient(
     int clientFd,
     const std::string& peer,
+    const std::string& remoteAddress,
     AppState& state,
     const ServerConfig& config,
-    LoginRateLimiter& rateLimiter) {
+    sisterd::security::LoginRateLimiter& rateLimiter) {
     const auto requestStart = Clock::now();
     const std::string requestId = randomHex(8);
 
-    UniqueFd client(clientFd);
+    setSocketTimeouts(clientFd, config.clientTimeoutSeconds);
 
-    setSocketTimeouts(client.get(), config.clientTimeoutSeconds);
-
-    auto result = readRequest(client.get());
+    auto result = readRequest(clientFd);
     if (!result.request) {
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("warn", requestId, peer, "-", "-", result.status, elapsed, result.detail);
         const HttpResponse errorResponse = jsonError(result.status, result.reason, result.detail);
-        sendResponse(client.get(), errorResponse, config, requestId, false);
+        sendResponse(clientFd, errorResponse, config, requestId, false);
         return;
     }
 
@@ -1678,7 +1603,7 @@ void handleClient(
     if (config.requireSameOrigin && !sameOriginRequest(request, config)) {
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("warn", requestId, peer, request.method, request.path, 403, elapsed, "cross-origin request rejected");
-        sendResponse(client.get(), jsonError(403, "Forbidden", "Requisição de origem cruzada não permitida."),
+        sendResponse(clientFd, jsonError(403, "Forbidden", "Requisição de origem cruzada não permitida."),
                      config, requestId, false);
         return;
     }
@@ -1691,7 +1616,7 @@ void handleClient(
         if (!config.httpBootstrapEnabled) {
             const HttpResponse resp{200, "OK", R"({"open":false,"http_enabled":false})",
                 "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
-            sendResponse(client.get(), resp, config, requestId, isHead);
+            sendResponse(clientFd, resp, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("info", requestId, peer, request.method, request.path, 200, elapsed,
                      "HTTP bootstrap disabled");
@@ -1703,7 +1628,7 @@ void handleClient(
             open ? R"({"open":true})" : R"({"open":false})",
             "application/json; charset=utf-8",
             {{"Cache-Control", "no-store"}}};
-        sendResponse(client.get(), resp, config, requestId, isHead);
+        sendResponse(clientFd, resp, config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
         return;
@@ -1711,7 +1636,7 @@ void handleClient(
 
     if (request.path == "/api/auth/register" && request.method == "POST") {
         if (!config.httpBootstrapEnabled) {
-            sendResponse(client.get(),
+            sendResponse(clientFd,
                 jsonError(403, "Forbidden", "Bootstrap administrativo HTTP desativado."),
                 config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1724,7 +1649,7 @@ void handleClient(
         const auto email = fields ? jsonStringField(*fields, "email") : std::nullopt;
         const auto password = fields ? jsonStringField(*fields, "password") : std::nullopt;
         if (!name || !email || !password) {
-            sendResponse(client.get(), jsonError(400, "Bad Request", "Preencha nome, e-mail e senha."),
+            sendResponse(clientFd, jsonError(400, "Bad Request", "Preencha nome, e-mail e senha."),
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 400, elapsed);
@@ -1734,7 +1659,7 @@ void handleClient(
             std::lock_guard lock(state.authMutex);
             const auto registered = state.auth.registerAdmin(*name, *email, *password);
             if (!registered) {
-                sendResponse(client.get(),
+                sendResponse(clientFd,
                     jsonError(409, "Conflict", "O cadastro inicial já foi concluído ou os dados são inválidos."),
                     config, requestId, isHead);
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1744,9 +1669,9 @@ void handleClient(
             const HttpResponse resp{201, "Created", R"({"status":"authenticated"})",
                 "application/json; charset=utf-8",
                 sessionHeaders(registered->token, config)};
-            sendResponse(client.get(), resp, config, requestId, isHead);
+            sendResponse(clientFd, resp, config, requestId, isHead);
         } catch (const std::exception& ex) {
-            sendResponse(client.get(),
+            sendResponse(clientFd,
                 jsonError(500, "Internal Server Error", "Não foi possível criar a conta."),
                 config, requestId, isHead);
         }
@@ -1760,39 +1685,45 @@ void handleClient(
         const auto email = fields ? jsonStringField(*fields, "email") : std::nullopt;
         const auto password = fields ? jsonStringField(*fields, "password") : std::nullopt;
         if (!email || !password) {
-            sendResponse(client.get(), jsonError(400, "Bad Request", "Preencha e-mail e senha."),
+            sendResponse(clientFd, jsonError(400, "Bad Request", "Preencha e-mail e senha."),
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 400, elapsed);
             return;
         }
-        const std::string rateLimitKey = *email + "@" + peer;
-        if (!rateLimiter.allowed(rateLimitKey)) {
-            sendResponse(client.get(),
-                jsonError(429, "Too Many Requests", "Muitas tentativas de login. Aguarde alguns minutos."),
-                config, requestId, isHead);
+        const auto normalizedIdentity = sisterd::AuthStore::normalizeIdentity(*email);
+        const auto rateDecision = rateLimiter.checkAndRecord(remoteAddress, normalizedIdentity);
+        if (!rateDecision.allowed) {
+            auto response = jsonError(
+                429, "Too Many Requests", "Muitas tentativas de login. Aguarde alguns minutos.");
+            response.headers.emplace_back(
+                "Retry-After", std::to_string(rateDecision.retryAfter.count()));
+            sendResponse(clientFd, response, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("warn", requestId, peer, request.method, request.path, 429, elapsed, "rate limited");
+            logEvent(
+                "warn", requestId, peer, request.method, request.path, 429, elapsed,
+                "rate_limited scope=" + rateDecision.scope +
+                    " buckets=" + std::to_string(rateDecision.buckets) +
+                    " rejections=" + std::to_string(rateDecision.rejections) +
+                    " evictions=" + std::to_string(rateDecision.evictions));
             return;
         }
         try {
             std::lock_guard lock(state.authMutex);
             const auto logged = state.auth.login(*email, *password);
             if (!logged) {
-                rateLimiter.recordFailure(rateLimitKey);
-                sendResponse(client.get(), jsonError(401, "Unauthorized", "Credenciais inválidas."),
+                sendResponse(clientFd, jsonError(401, "Unauthorized", "Credenciais inválidas."),
                              config, requestId, isHead);
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
                 logEvent("warn", requestId, peer, request.method, request.path, 401, elapsed, "invalid credentials");
                 return;
             }
-            rateLimiter.recordSuccess(rateLimitKey);
             const HttpResponse resp{200, "OK", R"({"status":"authenticated"})",
                 "application/json; charset=utf-8",
                 sessionHeaders(logged->token, config)};
-            sendResponse(client.get(), resp, config, requestId, isHead);
+            sendResponse(clientFd, resp, config, requestId, isHead);
         } catch (const std::exception&) {
-            sendResponse(client.get(),
+            sendResponse(clientFd,
                 jsonError(500, "Internal Server Error", "Não foi possível entrar."),
                 config, requestId, isHead);
         }
@@ -1808,7 +1739,7 @@ void handleClient(
         }
         const HttpResponse resp{204, "No Content", {}, "application/json; charset=utf-8",
             clearSessionHeaders(config)};
-        sendResponse(client.get(), resp, config, requestId, isHead);
+        sendResponse(clientFd, resp, config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 204, elapsed);
         return;
@@ -1824,9 +1755,9 @@ void handleClient(
     // --- Nexo reverse proxy ---
     if (config.legacyProxyEnabled && request.path == "/integrations/nexo") {
         if (!authorizeOrReject(
-                client.get(), actor, "nexo.projects.read", "sister-nexo",
+                clientFd, actor, "nexo.projects.read", "sister-nexo",
                 "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
-        sendResponse(client.get(), redirectResponse(308, "Permanent Redirect", "/integrations/nexo/"),
+        sendResponse(clientFd, redirectResponse(308, "Permanent Redirect", "/integrations/nexo/"),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 308, elapsed);
@@ -1836,9 +1767,9 @@ void handleClient(
     // --- Sister-Clima reverse proxy ---
     if (config.legacyProxyEnabled && request.path == "/integrations/clima") {
         if (!authorizeOrReject(
-                client.get(), actor, "climate.dashboard.read", "sister-clima",
+                clientFd, actor, "climate.dashboard.read", "sister-clima",
                 "non_commercial_public_research", request, config, requestId, peer, isHead, requestStart)) return;
-        sendResponse(client.get(), redirectResponse(308, "Permanent Redirect", "/integrations/clima/"),
+        sendResponse(clientFd, redirectResponse(308, "Permanent Redirect", "/integrations/clima/"),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 308, elapsed);
@@ -1847,12 +1778,12 @@ void handleClient(
 
     if (config.legacyProxyEnabled && request.path.starts_with("/integrations/clima/")) {
         if (!authorizeOrReject(
-                client.get(), actor, "climate.dashboard.read", "sister-clima",
+                clientFd, actor, "climate.dashboard.read", "sister-clima",
                 "non_commercial_public_research", request, config, requestId, peer, isHead, requestStart)) return;
         try {
             if (isWebSocketUpgrade(request)) {
                 if (!config.legacyWebSocketProxyEnabled) {
-                    sendResponse(client.get(),
+                    sendResponse(clientFd,
                         jsonError(404, "Not Found", "Recurso não encontrado."),
                         config, requestId, isHead);
                     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1861,22 +1792,22 @@ void handleClient(
                     return;
                 }
                 auto upstream = openWebSocketProxy(
-                    client.get(), request, *actor, "/integrations/clima", config.climaPort,
+                    clientFd, request, *actor, "/integrations/clima", config.climaPort,
                     "Sister-Clima", requestId, config);
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
                 logEvent("info", requestId, peer, request.method, request.path, 101, elapsed);
-                tunnelSockets(client.get(), upstream.get());
+                tunnelSockets(clientFd, upstream.get());
                 return;
             }
             const auto raw = proxyToSubsystem(
                 request, *actor, "/integrations/clima", config.climaPort,
                 "Sister-Clima", requestId, config);
-            sendAll(client.get(), raw);
+            sendAll(clientFd, raw);
             const auto proxyStatus = statusFromRawHttpResponse(raw);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("info", requestId, peer, request.method, request.path, proxyStatus, elapsed);
         } catch (const std::exception& ex) {
-            sendResponse(client.get(),
+            sendResponse(clientFd,
                 jsonError(502, "Bad Gateway", "O Sister-Clima está temporariamente indisponível."),
                 config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1887,18 +1818,37 @@ void handleClient(
 
     if (config.legacyProxyEnabled && request.path.starts_with("/integrations/nexo/")) {
         if (!authorizeOrReject(
-                client.get(), actor, "nexo.projects.read", "sister-nexo",
+                clientFd, actor, "nexo.projects.read", "sister-nexo",
                 "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
         try {
-            const auto raw = proxyToSubsystem(
-                request, *actor, "/integrations/nexo", config.nexoPort,
-                "SisTer Nexo", requestId, config);
-            sendAll(client.get(), raw);
+            const auto contentType = request.headers.find("content-type");
+            const auto accept = request.headers.find("accept");
+            sisterd::integrations::NexoClient nexo({
+                config.nexoPort,
+                config.upstreamTimeoutMilliseconds,
+                config.internalIdentityPrivateKeyFile,
+                config.internalIdentityKeyId,
+                std::chrono::seconds(config.internalIdentityTtlSeconds),
+            });
+            const auto upstreamPath = request.path.substr(std::string_view("/integrations/nexo").size());
+            const auto raw = nexo.execute({
+                request.method,
+                upstreamPath.empty() ? "/" : upstreamPath,
+                request.query,
+                contentType == request.headers.end() ? "" : contentType->second,
+                accept == request.headers.end() ? "" : accept->second,
+                request.body,
+                actor->id,
+                "nexo.projects.read",
+                "research_operations",
+                requestId,
+            });
+            sendAll(clientFd, raw);
             const auto proxyStatus = statusFromRawHttpResponse(raw);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("info", requestId, peer, request.method, request.path, proxyStatus, elapsed);
         } catch (const std::exception& ex) {
-            sendResponse(client.get(),
+            sendResponse(clientFd,
                 jsonError(502, "Bad Gateway", "O SisTer Nexo está temporariamente indisponível."),
                 config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -1910,11 +1860,11 @@ void handleClient(
     // --- /api/me ---
     if (request.path == "/api/me/capabilities") {
         if (!authorizeOrReject(
-                client.get(), actor, "session.self.read", "current-session",
+                clientFd, actor, "session.self.read", "current-session",
                 "self_service", request, config, requestId, peer, isHead, requestStart)) return;
         const HttpResponse resp{200, "OK", jsonCapabilities(*actor),
             "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
-        sendResponse(client.get(), resp, config, requestId, isHead);
+        sendResponse(clientFd, resp, config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
         return;
@@ -1922,11 +1872,11 @@ void handleClient(
 
     if (request.path == "/api/me") {
         if (!authorizeOrReject(
-                client.get(), actor, "session.self.read", "current-session",
+                clientFd, actor, "session.self.read", "current-session",
                 "self_service", request, config, requestId, peer, isHead, requestStart)) return;
         const HttpResponse resp{200, "OK", jsonUser(*actor),
             "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
-        sendResponse(client.get(), resp, config, requestId, isHead);
+        sendResponse(clientFd, resp, config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
         return;
@@ -1939,20 +1889,20 @@ void handleClient(
         request.path == "/api/admin/maturity/catalog" ||
         request.path == "/api/admin/maturity/quality") {
         if (request.method != "GET" && request.method != "HEAD") {
-            sendResponse(client.get(), jsonError(405, "Method Not Allowed", "Método não permitido."),
+            sendResponse(clientFd, jsonError(405, "Method Not Allowed", "Método não permitido."),
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 405, elapsed);
             return;
         }
         if (!authorizeOrReject(
-                client.get(), actor, "maturity.evidence.read", "sister-maturity",
+                clientFd, actor, "maturity.evidence.read", "sister-maturity",
                 "engineering_governance", request, config, requestId, peer, isHead, requestStart)) return;
 
         if (request.path == "/api/admin/maturity/components") {
             auto routeResp = sisterd::api::getMaturityComponents(config.maturityRoot);
             const HttpResponse response{routeResp.status_code, routeResp.reason_phrase, routeResp.body, routeResp.content_type, {{"Cache-Control", "no-store"}}};
-            sendResponse(client.get(), response, config, requestId, isHead);
+            sendResponse(clientFd, response, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent(routeResp.status_code >= 400 ? "warn" : "info", requestId, peer, request.method, request.path, routeResp.status_code, elapsed);
             return;
@@ -1960,7 +1910,7 @@ void handleClient(
         if (request.path == "/api/admin/maturity/catalog") {
             auto routeResp = sisterd::api::getMaturityCatalog(config.maturityRoot);
             const HttpResponse response{routeResp.status_code, routeResp.reason_phrase, routeResp.body, routeResp.content_type, {{"Cache-Control", "no-store"}}};
-            sendResponse(client.get(), response, config, requestId, isHead);
+            sendResponse(clientFd, response, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent(routeResp.status_code >= 400 ? "warn" : "info", requestId, peer, request.method, request.path, routeResp.status_code, elapsed);
             return;
@@ -1968,7 +1918,7 @@ void handleClient(
         if (request.path == "/api/admin/maturity/quality") {
             auto routeResp = sisterd::api::getQualityStatus(config.maturityRoot);
             const HttpResponse response{routeResp.status_code, routeResp.reason_phrase, routeResp.body, routeResp.content_type, {{"Cache-Control", "no-store"}}};
-            sendResponse(client.get(), response, config, requestId, isHead);
+            sendResponse(clientFd, response, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent(routeResp.status_code >= 400 ? "warn" : "info", requestId, peer, request.method, request.path, routeResp.status_code, elapsed);
             return;
@@ -1979,14 +1929,14 @@ void handleClient(
             latest ? config.maturityRoot / "latest.json" : config.maturityRoot / "history" / "index.json",
             latest ? "sister.maturity-status/1.0.0" : "sister.maturity-history/1.0.0");
         if (document.state == FixedJsonState::Missing) {
-            sendResponse(client.get(), jsonError(404, "Not Found", "Nenhuma evidência de maturidade foi publicada."),
+            sendResponse(clientFd, jsonError(404, "Not Found", "Nenhuma evidência de maturidade foi publicada."),
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("info", requestId, peer, request.method, request.path, 404, elapsed);
             return;
         }
         if (document.state == FixedJsonState::Invalid) {
-            sendResponse(client.get(), jsonError(503, "Service Unavailable", "A evidência de maturidade publicada é inválida."),
+            sendResponse(clientFd, jsonError(503, "Service Unavailable", "A evidência de maturidade publicada é inválida."),
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 503, elapsed, "invalid maturity document");
@@ -1995,7 +1945,7 @@ void handleClient(
 
         const HttpResponse response{200, "OK", document.body, "application/json; charset=utf-8",
             {{"Cache-Control", "no-store"}}};
-        sendResponse(client.get(), response, config, requestId, isHead);
+        sendResponse(clientFd, response, config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
         return;
@@ -2004,7 +1954,7 @@ void handleClient(
     // --- /api/admin/users ---
     if (request.path == "/api/admin/users" || request.path.starts_with("/api/admin/users/")) {
         if (!authorizeOrReject(
-                client.get(), actor, "identity.users.manage", "sister-identities",
+                clientFd, actor, "identity.users.manage", "sister-identities",
                 "identity_administration", request, config, requestId, peer, isHead, requestStart)) return;
 
         const bool isBase = (request.path == "/api/admin/users");
@@ -2021,7 +1971,7 @@ void handleClient(
             body += ']';
             const HttpResponse resp{200, "OK", body, "application/json; charset=utf-8",
                 {{"Cache-Control", "no-store"}}};
-            sendResponse(client.get(), resp, config, requestId, isHead);
+            sendResponse(clientFd, resp, config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
             return;
@@ -2034,7 +1984,7 @@ void handleClient(
             const auto password = fields ? jsonStringField(*fields, "password") : std::nullopt;
             const auto role = fields ? jsonStringField(*fields, "role") : std::nullopt;
             if (!name || !email || !password || !role) {
-                sendResponse(client.get(), jsonError(400, "Bad Request", "Preencha todos os campos."),
+                sendResponse(clientFd, jsonError(400, "Bad Request", "Preencha todos os campos."),
                              config, requestId, isHead);
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
                 logEvent("warn", requestId, peer, request.method, request.path, 400, elapsed);
@@ -2046,7 +1996,7 @@ void handleClient(
                 const auto created = state.auth.createUser(*name, *email, *password, *role, &errorDetail);
                 if (!created) {
                     const int statusCode = (errorDetail == "E-mail já cadastrado.") ? 409 : 400;
-                    sendResponse(client.get(),
+                    sendResponse(clientFd,
                         jsonError(statusCode, statusCode == 409 ? "Conflict" : "Bad Request",
                             errorDetail.empty() ? "Dados inválidos para cadastro." : errorDetail),
                         config, requestId, isHead);
@@ -2056,9 +2006,9 @@ void handleClient(
                 }
                 const HttpResponse resp{201, "Created", jsonUser(*created),
                     "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
-                sendResponse(client.get(), resp, config, requestId, isHead);
+                sendResponse(clientFd, resp, config, requestId, isHead);
             } catch (const std::exception&) {
-                sendResponse(client.get(),
+                sendResponse(clientFd,
                     jsonError(500, "Internal Server Error", "Não foi possível criar a conta."),
                     config, requestId, isHead);
             }
@@ -2074,7 +2024,7 @@ void handleClient(
             const auto role = fields ? jsonStringField(*fields, "role") : std::nullopt;
             const auto password = fields ? jsonStringField(*fields, "password").value_or("") : std::string{};
             if (!name || !email || !role) {
-                sendResponse(client.get(),
+                sendResponse(clientFd,
                     jsonError(400, "Bad Request", "Preencha todos os campos obrigatórios."),
                     config, requestId, isHead);
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
@@ -2088,7 +2038,7 @@ void handleClient(
                 if (!updated) {
                     const int statusCode = (errorDetail == "Usuário não encontrado.") ? 404 :
                                            (errorDetail.find("já cadastrado") != std::string::npos) ? 409 : 400;
-                    sendResponse(client.get(),
+                    sendResponse(clientFd,
                         jsonError(statusCode,
                             statusCode == 404 ? "Not Found" : statusCode == 409 ? "Conflict" : "Bad Request",
                             errorDetail.empty() ? "Dados inválidos para atualização." : errorDetail),
@@ -2099,9 +2049,9 @@ void handleClient(
                 }
                 const HttpResponse resp{200, "OK", jsonUser(*updated),
                     "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
-                sendResponse(client.get(), resp, config, requestId, isHead);
+                sendResponse(clientFd, resp, config, requestId, isHead);
             } catch (const std::exception&) {
-                sendResponse(client.get(),
+                sendResponse(clientFd,
                     jsonError(500, "Internal Server Error", "Não foi possível atualizar a conta."),
                     config, requestId, isHead);
             }
@@ -2117,7 +2067,7 @@ void handleClient(
                 const bool deleted = state.auth.deleteUser(targetId, actor->id, &errorDetail);
                 if (!deleted) {
                     const int statusCode = (errorDetail == "Usuário não encontrado.") ? 404 : 400;
-                    sendResponse(client.get(),
+                    sendResponse(clientFd,
                         jsonError(statusCode, statusCode == 404 ? "Not Found" : "Bad Request",
                             errorDetail.empty() ? "Não foi possível excluir o usuário." : errorDetail),
                         config, requestId, isHead);
@@ -2127,9 +2077,9 @@ void handleClient(
                 }
                 const HttpResponse resp{200, "OK", R"({"status":"deleted"})",
                     "application/json; charset=utf-8", {{"Cache-Control", "no-store"}}};
-                sendResponse(client.get(), resp, config, requestId, isHead);
+                sendResponse(clientFd, resp, config, requestId, isHead);
             } catch (const std::exception&) {
-                sendResponse(client.get(),
+                sendResponse(clientFd,
                     jsonError(500, "Internal Server Error", "Não foi possível excluir a conta."),
                     config, requestId, isHead);
             }
@@ -2138,7 +2088,7 @@ void handleClient(
             return;
         }
 
-        sendResponse(client.get(), jsonError(405, "Method Not Allowed", "Método não permitido."),
+        sendResponse(clientFd, jsonError(405, "Method Not Allowed", "Método não permitido."),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("warn", requestId, peer, request.method, request.path, 405, elapsed);
@@ -2148,7 +2098,7 @@ void handleClient(
     // --- General API routes ---
     if (request.path.starts_with("/api/")) {
         if (request.method != "GET" && request.method != "HEAD") {
-            sendResponse(client.get(), jsonError(405, "Method Not Allowed", "Método não permitido."),
+            sendResponse(clientFd, jsonError(405, "Method Not Allowed", "Método não permitido."),
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 405, elapsed);
@@ -2181,13 +2131,13 @@ void handleClient(
             }
 
             if (!authorizeOrReject(
-                    client.get(), actor, capability, resource, purpose, request, config,
+                    clientFd, actor, capability, resource, purpose, request, config,
                     requestId, peer, isHead, requestStart)) return;
         }
 
         const auto payload = routeApi(request.path, state);
         if (!payload.found) {
-            sendResponse(client.get(), jsonError(404, "Not Found", "Recurso não encontrado."),
+            sendResponse(clientFd, jsonError(404, "Not Found", "Recurso não encontrado."),
                          config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 404, elapsed);
@@ -2197,7 +2147,7 @@ void handleClient(
         const std::string cacheControl = publicApi ? "no-cache" : "no-store";
         const HttpResponse resp{200, "OK", payload.body, "application/json; charset=utf-8",
             {{"Cache-Control", cacheControl}}};
-        sendResponse(client.get(), resp, config, requestId, isHead);
+        sendResponse(clientFd, resp, config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 200, elapsed,
                  payload.fallback ? "fallback" : "");
@@ -2206,7 +2156,7 @@ void handleClient(
 
     // --- Static files ---
     if (request.method != "GET" && request.method != "HEAD") {
-        sendResponse(client.get(), jsonError(405, "Method Not Allowed", "Método não permitido."),
+        sendResponse(clientFd, jsonError(405, "Method Not Allowed", "Método não permitido."),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("warn", requestId, peer, request.method, request.path, 405, elapsed);
@@ -2214,7 +2164,7 @@ void handleClient(
     }
 
     if (request.path == "/login" && actor) {
-        sendResponse(client.get(), redirectResponse(303, "See Other", "/"),
+        sendResponse(clientFd, redirectResponse(303, "See Other", "/"),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 303, elapsed);
@@ -2227,12 +2177,12 @@ void handleClient(
         const std::string_view resource = request.path == "/admin/users"
             ? "sister-identities" : "sister-maturity";
         if (!authorizeOrReject(
-                client.get(), actor, capability, resource, "administrative_interface",
+                clientFd, actor, capability, resource, "administrative_interface",
                 request, config, requestId, peer, isHead, requestStart)) return;
     }
 
     if (request.path.ends_with("/app.js") && !actor) {
-        sendResponse(client.get(), jsonError(401, "Unauthorized", "Autenticação necessária."),
+        sendResponse(clientFd, jsonError(401, "Unauthorized", "Autenticação necessária."),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 401, elapsed);
@@ -2241,7 +2191,7 @@ void handleClient(
 
     const auto staticPath = resolveStaticPath(request.path, config);
     if (!staticPath) {
-        sendResponse(client.get(), jsonError(404, "Not Found", "Página não encontrada."),
+        sendResponse(clientFd, jsonError(404, "Not Found", "Página não encontrada."),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 404, elapsed);
@@ -2260,11 +2210,11 @@ void handleClient(
             extraHeaders.push_back({"Cache-Control", "public, max-age=3600"});
         }
         const HttpResponse resp{200, "OK", body, contentType(*staticPath), std::move(extraHeaders)};
-        sendResponse(client.get(), resp, config, requestId, isHead);
+        sendResponse(clientFd, resp, config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
     } catch (const std::exception& ex) {
-        sendResponse(client.get(), jsonError(404, "Not Found", "Página não encontrada."),
+        sendResponse(clientFd, jsonError(404, "Not Found", "Página não encontrada."),
                      config, requestId, isHead);
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
         logEvent("warn", requestId, peer, request.method, request.path, 404, elapsed, ex.what());
@@ -2287,7 +2237,7 @@ int main(int argc, char** argv) {
     std::signal(SIGTERM, handleSignal);
 
     AppState state(config.authFile, config.databaseUrl);
-    LoginRateLimiter rateLimiter;
+    sisterd::security::LoginRateLimiter rateLimiter;
 
     UniqueFd server(socket(AF_INET, SOCK_STREAM, 0));
     if (!server) {
@@ -2333,10 +2283,15 @@ int main(int argc, char** argv) {
                   << '\n';
     }
 
-    ThreadPool pool(config.workerThreads, config.queueLimit,
-        [&state, &config, &rateLimiter](ThreadPool::Job job) {
-            handleClient(job.client, job.peer, state, config, rateLimiter);
-        });
+    sisterd::runtime::ConnectionThreadPool pool(
+        config.workerThreads, config.queueLimit,
+        [&state, &config, &rateLimiter](
+            const sisterd::runtime::ConnectionThreadPool::Job& job) {
+            handleClient(
+                job.client, job.peer, job.remoteAddress,
+                state, config, rateLimiter);
+        },
+        [](std::string_view detail) { logUnhandledWorkerException(detail); });
 
     while (gKeepRunning) {
         fd_set readSet;
@@ -2368,7 +2323,7 @@ int main(int argc, char** argv) {
         const std::string peer = std::string(peerBuf) + ':' +
             std::to_string(ntohs(clientAddress.sin_port));
 
-        if (!pool.submit({clientFd, peer})) {
+        if (!pool.submit({clientFd, peer, peerBuf})) {
             close(clientFd);
             std::lock_guard lock(gLogMutex);
             std::cerr << "level=warn detail=\"connection rejected: queue full\" peer=\"" << peer << "\"\n";

@@ -60,10 +60,26 @@ recusa bind fora de loopback e recusa os proxies legados. Consulte a
 
 A baseline `v0.2.5` conclui SEC-00, SEC-01, SEC-01A e SEC-01B: quarentena de
 transporte, autorização por capacidades sem fallback de papel e bootstrap
-administrativo offline sem emissão de sessão. SEC-02, gateway, identidade
-interna assinada e os gates operacionais continuam pendentes; portanto, essa
-baseline não declara o sistema pronto para produção. Consulte a
+administrativo offline sem emissão de sessão. A implementação de SEC-02 não
+pertence a essa tag e ainda aguarda validação formal e implantação; gateway e
+gates operacionais também continuam pendentes. Portanto, essa baseline não
+declara o sistema pronto para produção. Consulte a
 [baseline de segurança](docs/architecture/SISTERD_SECURITY_BASELINE.md).
+
+Na revisão posterior, SEC-01C contém exceções do parser e dos workers, enquanto
+SEC-01D aplica limites independentes por endereço observado, identidade,
+combinação e processo. Rejeições de login retornam `429` com `Retry-After`. O
+servidor ignora `X-Forwarded-For` para essa decisão até existir uma relação de
+confiança formalizada com o gateway. Esses controles serão fechados na nova
+release `v0.2.6`; a tag `v0.2.5` permanece imutável. Consulte a
+[ADR-0019](docs/adr/ADR-0019-http-robustness-and-login-rate-limiting.md).
+
+A EFE-SisTer/1.2 é a referência funcional e de engenharia corrente e exige
+segurança orientada por ameaças, controles e evidências. Em paralelo ao
+fechamento da `v0.2.6`, o projeto está criando o MAES-SisTer/1.0. Quando ambos
+os gates estiverem fechados, o SEC-02 já implementado será submetido a uma
+validação formal antes de sua implantação. Consulte o
+[alinhamento normativo](docs/architecture/EFE_SISTER_1_2_ALIGNMENT.md).
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:
@@ -132,6 +148,12 @@ política declarada. Integrações Clima e Nexo exigem, respectivamente,
 exige `identity.users.manage`, e evidências de maturidade exigem
 `maturity.evidence.read`. Consulte a
 [ADR-0016](docs/adr/ADR-0016-capability-based-authorization.md).
+
+Na fatia SEC-02, chamadas HTTP de laboratório ao Nexo recebem uma asserção
+interna Ed25519 de curta duração, restrita à audiência, capacidade e finalidade.
+O cliente específico não encaminha cookie nem confia em cabeçalhos externos de
+identidade. Essa entrega ainda não habilita a integração em produção; consulte
+a [ADR-0018](docs/adr/ADR-0018-signed-internal-identity.md).
 
 O adaptador Sister-Studio usa TLS verificado e segredo de execução. A
 configuração e a fronteira de dados estão em
@@ -205,6 +227,11 @@ O `sisterd` suporta diversas variáveis de ambiente para configuração avançad
 - `SISTER_ENABLE_LEGACY_PROXY`: Proxy HTTP embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY`: Túnel WebSocket embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_NEXO_PORT`: Porta para o serviço de federação Nexo (padrão `8015`).
+- `SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE`: Caminho absoluto da chave privada
+  Ed25519 usada nas asserções internas do Nexo; o arquivo deve ser `0600`.
+- `SISTER_INTERNAL_IDENTITY_KEY_ID`: Identificador `kid` da chave ativa.
+- `SISTER_INTERNAL_IDENTITY_TTL_SECONDS`: Validade da asserção interna, entre 10
+  e 300 segundos (padrão `60`).
 - `SISTER_COOKIE_SECURE`, `SISTER_HSTS`, `SISTER_REQUIRE_SAME_ORIGIN`: Controles de segurança (ativos por padrão em `production`).
 
 Os dados territoriais (objetos geoespaciais) ainda são demonstrativos. Sistemas,
