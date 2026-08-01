@@ -26,6 +26,8 @@ class AuthStore {
 public:
     explicit AuthStore(std::filesystem::path path);
 
+    [[nodiscard]] static std::string normalizeIdentity(std::string identity);
+
     bool bootstrapOpen() const;
     std::optional<AuthUser> bootstrapAdmin(
         const std::string& name,
