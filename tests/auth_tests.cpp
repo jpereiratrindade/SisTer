@@ -23,7 +23,31 @@ int main() {
         std::chrono::steady_clock::now().time_since_epoch().count());
     const auto authFile =
         std::filesystem::temp_directory_path() / ("sister-auth-test-" + suffix + ".tsv");
+    const auto offlineAuthFile =
+        std::filesystem::temp_directory_path() / ("sister-offline-bootstrap-test-" + suffix + ".tsv");
     std::string persistentToken;
+
+    {
+        sisterd::AuthStore auth(offlineAuthFile);
+        const auto administrator = auth.bootstrapAdmin(
+            "Administrador Offline", "OFFLINE@SISTER.LOCAL", "senha-offline-123");
+        expect(administrator.has_value(), "offline bootstrap should create administrator");
+        expect(administrator->role == "admin", "offline bootstrap should assign admin role");
+        expect(administrator->email == "offline@sister.local", "offline email should be normalized");
+        expect(
+            !std::filesystem::exists(offlineAuthFile.string() + ".sessions"),
+            "offline bootstrap must not persist an unused session");
+        expect(
+            !auth.bootstrapAdmin("Outro", "outro@sister.local", "outra-senha-123"),
+            "offline bootstrap should be single-use");
+    }
+    {
+        sisterd::AuthStore auth(offlineAuthFile);
+        expect(!auth.bootstrapOpen(), "offline administrator should persist across restart");
+        expect(
+            !std::filesystem::exists(offlineAuthFile.string() + ".sessions"),
+            "offline bootstrap should remain session-free after restart");
+    }
 
     {
         sisterd::AuthStore auth(authFile);
@@ -168,6 +192,8 @@ int main() {
 
     std::filesystem::remove(authFile);
     std::filesystem::remove(authFile.string() + ".sessions");
+    std::filesystem::remove(offlineAuthFile);
+    std::filesystem::remove(offlineAuthFile.string() + ".sessions");
     std::cout << "sisterd_auth_tests ok\n";
     return 0;
 }

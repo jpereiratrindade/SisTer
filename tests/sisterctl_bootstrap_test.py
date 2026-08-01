@@ -51,6 +51,37 @@ def main():
     executable = sys.argv[1]
     with tempfile.TemporaryDirectory(prefix="sisterctl-bootstrap-") as temporary:
         auth_file = Path(temporary) / "auth.tsv"
+
+        missing_path_environment = os.environ.copy()
+        missing_path_environment.pop("SISTER_AUTH_FILE", None)
+        missing_path = subprocess.run(
+            [executable, "auth", "bootstrap-admin", "Bootstrap Admin", "bootstrap@test.invalid"],
+            env=missing_path_environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        assert missing_path.returncode == 1, missing_path.stdout
+        assert "SISTER_AUTH_FILE must be explicitly configured" in missing_path.stdout
+
+        relative_path_environment = os.environ.copy()
+        relative_path_environment["SISTER_AUTH_FILE"] = ".run/auth-users.tsv"
+        relative_path = subprocess.run(
+            [executable, "auth", "bootstrap-admin", "Bootstrap Admin", "bootstrap@test.invalid"],
+            env=relative_path_environment,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        assert relative_path.returncode == 1, relative_path.stdout
+        assert "SISTER_AUTH_FILE must be an absolute path" in relative_path.stdout
+
         status, output = run_bootstrap(executable, auth_file, "bootstrap-password-123")
         assert status == 0, output
         assert "administrator created: bootstrap@test.invalid" in output, output
@@ -58,6 +89,7 @@ def main():
         assert "bootstrap@test.invalid" in persisted
         assert "\tadmin\t" in persisted
         assert auth_file.stat().st_mode & 0o077 == 0
+        assert not Path(f"{auth_file}.sessions").exists()
 
         status, output = run_bootstrap(executable, auth_file, "another-password-123")
         assert status == 1, output
