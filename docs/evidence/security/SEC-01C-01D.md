@@ -7,7 +7,8 @@
 **Release publicada:** `v0.2.6`
 
 **Referência normativa:** EFE-SisTer/1.2
-**Revisão candidata:** worktree local; registrar o commit definitivo antes da publicação
+
+**Revisão publicada:** commit apontado pela tag imutável `v0.2.6`
 
 ## Rastreabilidade de ameaças
 
