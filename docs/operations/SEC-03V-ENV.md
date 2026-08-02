@@ -65,11 +65,13 @@ Os artefatos instalados devem corresponder byte a byte à revisão avaliada:
 | commit avaliado | `/opt/sister/.sister-revision` | `root:root 0444` |
 | `ops/systemd/sisterd.service` | `/etc/systemd/system/sisterd.service` | `root:root 0644` |
 | `ops/systemd/sisterd.socket` | `/etc/systemd/system/sisterd.socket` | `root:root 0644` |
+| `ops/systemd/sister-gateway.service` | `/etc/systemd/system/sister-gateway.service` | `root:root 0644` |
 | `ops/tmpfiles.d/sister.conf` | `/etc/tmpfiles.d/sister.conf` | `root:root 0644` |
 | configuração preparada fora do Git | `/etc/sister/sister.env` | `root:root 0600` |
 | chave Ed25519 privada local | `/etc/sister/identity-private.pem` | `sister:sister 0600` |
 | chave Ed25519 pública | `/etc/sister/identity-public.pem` | `root:root 0644` |
 | certificado e chave TLS combinados | `/etc/sister/gateway/tls.pem` | `root:sister-gateway 0640` |
+| CA do certificado candidato | `/etc/sister/gateway/ca.crt` | `root:root 0644` |
 
 O arquivo de ambiente parte de `.env.production.example`. Para o candidato,
 `SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=true` e os caminhos canônicos são
@@ -106,6 +108,10 @@ sudo /usr/local/sbin/haproxy-3.2.22 \
   -c -V -f /etc/sister/gateway/haproxy.cfg
 ```
 
+O executável candidato deve pertencer a um RPM assinado e permanecer sem
+divergência segundo `rpm -V`. Wrapper, cópia avulsa e `make install` são
+rejeitados pelo preflight.
+
 O escopo `candidate` fixa listener em `127.0.0.1:8443`, TLS 1.3, Host exato e
 upstream único em `/run/sister/sisterd.sock`. Ele recusa saída fora de
 `/etc/sister/gateway/haproxy.cfg` e não aceita fallback TCP.
@@ -120,9 +126,22 @@ upstream único em `/run/sister/sisterd.sock`. Ele recusa saída fora de
 5. habilitar e iniciar apenas `sisterd.socket`;
 6. validar `/run/sister` como `root:haproxy 0750`;
 7. validar o socket como `sister:haproxy 0660`;
-8. iniciar HAProxy sob `sister-gateway`, nunca como usuário interativo;
-9. executar novamente o preflight;
+8. instalar, habilitar e iniciar `sister-gateway.service`;
+9. executar novamente o preflight como root, preservando o relatório:
+
+   ```bash
+   sudo ./scripts/sec03v_env_preflight.py \
+     --haproxy-bin /usr/local/sbin/haproxy-3.2.22 \
+     --report /var/lib/sister-sec03v-env/sec03v-env-preflight.json
+   ```
+
 10. somente com `READY`, iniciar a matriz SEC-03V sem skips.
+
+O preflight final confirma que o processo ativo corresponde ao binário nativo,
+executa como `sister-gateway`, pertence ao grupo suplementar `haproxy`, escuta
+somente em `127.0.0.1:8443`, completa TLS 1.3 com a CA candidata e alcança o
+health check do `sisterd`. Também deriva a chave pública da chave privada e
+compara o par sem registrar seu conteúdo.
 
 `sisterd.service` é ativado sob demanda pelo socket e não precisa ser habilitado
 diretamente. Falha de ativação bloqueia o gate; é proibido abrir a porta 8000
@@ -138,7 +157,7 @@ repositório.
 
 Rollback permitido:
 
-1. parar o HAProxy candidato;
+1. parar e desabilitar `sister-gateway.service`;
 2. parar `sisterd.service` e `sisterd.socket`;
 3. restaurar conjuntamente binário, web, unidades, tmpfiles e configuração do
    backup selecionado;
