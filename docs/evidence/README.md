@@ -27,3 +27,7 @@ existe e contém `status: approved` ou `status: aprovado`.
 - [SEC-03C — contenção de abuso e recursos](./security/SEC-03C.md)
 - [ISO-01 — isolamento local do upstream](./security/ISO-01.md)
 - [MAES-SisTer/1.0](../security/MAES_SISTER_1_0.md)
+
+## Operação
+
+- [DEV-ORCH-01 — classificação composta do ambiente local](./operations/DEV-ORCH-01.md)

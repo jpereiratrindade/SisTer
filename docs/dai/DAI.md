@@ -45,6 +45,19 @@
 - Impediment: a promocao de dados curados para o catalogo territorial do SisTer
   ainda requer endpoint e teste de aceitacao especificos.
 
+## 2026-08-02 - Resultado composto e perfis do run_all
+
+- Decision: qualidade do núcleo, prontidão do `sisterd` e disponibilidade dos
+  subsistemas são dimensões distintas no relatório de execução.
+- Decision: falha opcional produz `PASS_WITH_DEGRADATION`; componente exigido
+  pelo perfil produz `BLOCKED` e código `2`.
+- Decision: `dev-core`, `dev-ecosystem`, `test-core` e `sec-03v` são contratos
+  versionados; o último valida pré-requisitos, mas não fecha o gate SEC-03V.
+- Decision: mudança de fontes não executa reconciliação implicitamente; ela
+  exige `--update-subsystems`.
+- Action: registrar por componente estado, fase, código, duração, log e origem
+  da inicialização em `.run/maturity/subsystems.json`.
+
 ## 2026-08-02 - Quarentena também no bind de desenvolvimento
 
 - Decision: o listener TCP de desenvolvimento e teste do `sisterd` aceita

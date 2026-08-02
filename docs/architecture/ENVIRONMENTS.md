@@ -105,8 +105,14 @@ No worktree principal:
 Para executar o fluxo completo, incluindo servidor e teste dos endpoints:
 
 ```bash
-./scripts/run_all.sh dev 8000
+./scripts/run_all.sh --profile dev-ecosystem
 ```
+
+Para validar somente banco, qualidade, `sisterd` e smoke test, sem consultar ou
+iniciar subsistemas, use `./scripts/run_all.sh --profile dev-core`. O perfil de
+ecossistema retorna sucesso com `PASS_WITH_DEGRADATION` quando apenas
+componentes opcionais falham; o resumo e `quality.json` preservam essa
+distinção.
 
 Esse fluxo de ambiente é diferente da verificação completa de engenharia. Para
 executar qualidade e maturidade sem subir banco ou servidor, use:

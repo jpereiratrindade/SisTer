@@ -43,12 +43,21 @@ autenticação federada e navegação entre sistemas, inicie sempre neste
 repositório:
 
 ```bash
-./scripts/run_all.sh dev 8000
+./scripts/run_all.sh --profile dev-ecosystem
 ```
 
-O comando sobe o núcleo do SisTer e garante os subsistemas declarados com
-`ensure-running`. Cada subsistema continua podendo ser executado isoladamente
-em seu próprio repositório, mas nenhum deles inicia o SisTer.
+Os perfis separam afirmações que não são equivalentes:
+
+```bash
+./scripts/run_all.sh --profile dev-core       # núcleo, sisterd e smoke
+./scripts/run_all.sh --profile dev-ecosystem  # inclui subsistemas opcionais
+./scripts/run_all.sh --profile sec-03v        # pré-requisitos estritos, não fecha o gate
+```
+
+`dev-ecosystem` sobe o núcleo e tenta garantir os subsistemas declarados com
+`ensure-running`. Falha opcional produz `PASS_WITH_DEGRADATION`; falha de um
+componente exigido pelo perfil produz `BLOCKED` e código `2`. Cada subsistema
+continua podendo ser executado isoladamente, mas nenhum deles inicia o SisTer.
 
 ## Produção
 
@@ -113,17 +122,17 @@ nível:
 ./build/apps/sisterd/sisterd 8000 web
 ```
 
-No fluxo `dev`, o SisTer também verifica os subsistemas contratados declarados
-com `ensure-running` em `config/local_resources.json`. Serviços saudáveis são
-preservados; os indisponíveis são iniciados pelo comando governado e seus logs
-ficam em `.run/subsystems/`. Use `SISTER_ENSURE_SUBSYSTEMS=0` para uma subida
-isolada ou `SISTER_SUBSYSTEMS_STRICT=1` para falhar diante de qualquer
-degradação.
+No perfil `dev-ecosystem`, o SisTer também verifica os subsistemas contratados
+declarados com `ensure-running` em `config/local_resources.json`. Serviços
+saudáveis são preservados; os indisponíveis são iniciados pelo comando
+governado e seus logs ficam em `.run/subsystems/`. O perfil `dev-core` não
+consulta nem inicia subsistemas.
 
-Subsistemas conteinerizados podem declarar `refresh.on-source-change`. Nesse
-caso, o fluxo compara o conteúdo das fontes com a última execução bem-sucedida
-e reconstrói somente a aplicação quando necessário. Bancos e outros dados
-persistentes permanecem nos volumes exclusivos declarados pelo subsistema.
+Subsistemas conteinerizados podem declarar `refresh.on-source-change`. O fluxo
+comum apenas informa divergência; não executa atualização ou rebuild implícito.
+Para solicitar explicitamente a reconciliação, use `--update-subsystems` com o
+perfil de ecossistema. Bancos e outros dados persistentes permanecem nos
+volumes exclusivos declarados pelo subsistema.
 
 O fluxo `dev` deve ser executado no worktree principal. Para preparar e executar
 um teste reproduzivel a partir do mesmo local:

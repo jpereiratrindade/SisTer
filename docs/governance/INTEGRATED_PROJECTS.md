@@ -91,29 +91,32 @@ Projetos integrados podem declarar `orchestration` no registro central. A
 declaracao contém a URL local de saúde, o comando de inicialização sem shell, o
 prazo de prontidão e se a indisponibilidade impede a subida do SisTer.
 
-No ambiente `dev`, `scripts/run_all.sh` executa
+No perfil `dev-ecosystem`, `scripts/run_all.sh` executa
 `scripts/subsystems/ensure.sh` depois de validar e iniciar o núcleo:
 
 1. consulta a saúde e confirma a identidade esperada de cada projeto com
    política `ensure-running`;
 2. preserva processos que já estejam saudáveis;
 3. inicia somente comandos e repositórios explicitamente registrados;
-4. reconcilia serviços que declaram `refresh.on-source-change` quando suas
-   fontes mudam, sem substituir volumes persistentes;
+4. informa divergência de fontes sem executar atualização implícita; a
+   reconciliação exige `--update-subsystems`;
 5. aguarda a saúde e grava logs em `.run/subsystems/`;
 6. distingue serviços já ativos daqueles iniciados ou atualizados pelo SisTer;
 7. trata porta ocupada com resposta inválida como degradação, sem iniciar um
    processo duplicado;
-8. informa degradações opcionais sem ocultá-las.
+8. informa degradações opcionais como `PASS_WITH_DEGRADATION` e bloqueia
+   componentes obrigatórios com código `2`.
 
 O SisTer é o orquestrador raiz desse fluxo. Comandos `run_all.sh` dos projetos
 integrados operam somente dentro da própria fronteira e nunca iniciam o SisTer.
 Essa direção única evita dependência invertida e ciclos de inicialização.
 
-O ambiente `test` não inicia subsistemas. Em desenvolvimento, a automação pode
-ser desativada pontualmente com `SISTER_ENSURE_SUBSYSTEMS=0`; para transformar
-qualquer degradação em erro, use `SISTER_SUBSYSTEMS_STRICT=1`. Nenhum segredo
-pode ser registrado no bloco de ambiente da orquestração.
+O perfil `test-core` não inicia subsistemas. Os perfis executáveis vivem em
+`config/run_profiles.json`: `dev-core` valida somente o núcleo,
+`dev-ecosystem` trata os componentes como opcionais e `sec-03v` exige HAProxy
+real e Nexo. Este último valida pré-requisitos, mas não fecha SEC-03V nem gera
+aprovação. Nenhum segredo pode ser registrado no bloco de ambiente da
+orquestração.
 
 ## Pendencias encontradas na auditoria
 
