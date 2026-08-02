@@ -5,6 +5,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SIGNING_HOME="${GNUPGHOME:-$ROOT_DIR/.run/packaging/haproxy/gnupg}"
 FINGERPRINT="${HAPROXY_SIGNING_FINGERPRINT:-}"
 PUBLIC_KEY="$ROOT_DIR/.run/packaging/haproxy/sister-sec03v-rpm-signing.asc"
+GOVERNED_PUBLIC_KEY="$ROOT_DIR/packaging/haproxy/keys/sister-sec03v-rpm-signing.asc"
 
 if [[ "$#" -lt 1 ]]; then
   echo "Usage: HAPROXY_SIGNING_FINGERPRINT=<full fingerprint> $0 package.rpm [...]" >&2
@@ -39,6 +40,10 @@ fi
 
 GNUPGHOME="$SIGNING_HOME" gpg --armor --export "$FINGERPRINT" > "$PUBLIC_KEY"
 chmod 0600 "$PUBLIC_KEY"
+if ! cmp -s "$PUBLIC_KEY" "$GOVERNED_PUBLIC_KEY"; then
+  echo "Exported key differs from the governed public key" >&2
+  exit 1
+fi
 
 for package in "$@"; do
   [[ -f "$package" ]] || {
@@ -52,15 +57,24 @@ for package in "$@"; do
     "$package"
 done
 
-verification_db="$(mktemp -d "$ROOT_DIR/.run/packaging/haproxy/rpmdb.XXXXXX")"
+verification_keyring="$(mktemp -d "$ROOT_DIR/.run/packaging/haproxy/keyring.XXXXXX")"
+runtime_directory="${XDG_RUNTIME_DIR:-/run/user/$UID}"
+verification_lock="$(mktemp "$runtime_directory/sister-rpmkeys-lock.XXXXXX")"
+unlink "$verification_lock"
 cleanup() {
-  rm -r "$verification_db"
+  find "$verification_keyring" -maxdepth 1 -type f -exec unlink {} \;
+  rmdir "$verification_keyring"
+  [[ ! -e "$verification_lock" ]] || unlink "$verification_lock"
 }
 trap cleanup EXIT
-rpm --dbpath "$verification_db" --initdb
-rpmkeys --dbpath "$verification_db" --import "$PUBLIC_KEY"
+verification_options=(
+  --define "_rpmlock_path $verification_lock"
+  --define "_keyring fs"
+  --define "_keyringpath $verification_keyring"
+)
+rpmkeys "${verification_options[@]}" --import "$GOVERNED_PUBLIC_KEY"
 for package in "$@"; do
-  rpmkeys --dbpath "$verification_db" --checksig --verbose "$package"
+  rpmkeys "${verification_options[@]}" --checksig --verbose "$package"
 done
 
 echo "Packages signed and verified with: $FINGERPRINT"

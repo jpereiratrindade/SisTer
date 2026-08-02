@@ -26,7 +26,7 @@ def sha256(path: Path) -> str:
 def run(*command: str) -> str:
     return subprocess.run(
         command, check=True, text=True, stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT).stdout.strip()
+        stderr=subprocess.PIPE).stdout.strip()
 
 
 def main() -> None:
@@ -70,6 +70,9 @@ def main() -> None:
         parser.error("binary RPM is not signed")
     if fingerprint[-16:].lower() not in rpm_signature.lower():
         parser.error("RPM signature does not identify the reviewed signing key")
+    build_timestamp = datetime.fromtimestamp(
+        int(run("rpm", "-qp", "--qf", "%{BUILDTIME}", str(arguments.rpm))),
+        timezone.utc).isoformat()
 
     manifest = json.loads(TEMPLATE.read_text(encoding="utf-8"))
     manifest.update({
@@ -78,7 +81,8 @@ def main() -> None:
         "build_environment": arguments.build_environment.read_text(encoding="utf-8").strip(),
         "builder": getpass.getuser(),
         "build_host": f"{platform.system()} {platform.machine()}",
-        "build_timestamp_utc": datetime.now(timezone.utc).isoformat(),
+        "build_timestamp_utc": build_timestamp,
+        "manifest_generated_at_utc": datetime.now(timezone.utc).isoformat(),
         "signing_key_fingerprint": fingerprint,
         "public_key_sha256": sha256(arguments.public_key),
         "srpm": arguments.srpm.name,

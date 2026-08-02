@@ -11,6 +11,7 @@
   "builder": null,
   "build_host": null,
   "build_timestamp_utc": null,
+  "manifest_generated_at_utc": null,
   "signing_key_fingerprint": null,
   "public_key_sha256": null,
   "srpm": null,

@@ -9,6 +9,15 @@ O pacote não é oficial do HAProxy nem do Fedora. Sua autoridade é restrita ao
 laboratório candidato SEC-03V e depende de revisão da fonte, build isolado,
 assinatura dedicada e manifesto de proveniência.
 
+Fingerprint da chave pública governada:
+
+```text
+ED3F 4CE4 C756 983F 2110 97B6 AB5D 893C 71F3 1D65
+```
+
+A chave pública está em `keys/sister-sec03v-rpm-signing.asc`. A chave privada e
+a passphrase permanecem exclusivamente no keyring ignorado em `.run`.
+
 ## Host de destino
 
 O host confirmado é Fedora 44 Workstation. A instalação final usa uma transação
@@ -91,7 +100,7 @@ result_dir="$PWD/.run/packaging/haproxy/podman-results/<UTC>"
 python3 scripts/packaging/generate_haproxy_provenance.py \
   --srpm "$(find "$result_dir" -name '*.src.rpm' -print -quit)" \
   --rpm "$(find "$result_dir" -name '*.x86_64.rpm' -print -quit)" \
-  --public-key .run/packaging/haproxy/sister-sec03v-rpm-signing.asc \
+  --public-key packaging/haproxy/keys/sister-sec03v-rpm-signing.asc \
   --fingerprint "$HAPROXY_SIGNING_FINGERPRINT" \
   --build-environment "$result_dir/build-environment.txt" \
   --output docs/evidence/security/HAPROXY-RPM-01.json
@@ -124,7 +133,7 @@ os hashes finais devem ser registrados no manifesto gerado após o build.
 Somente após revisão do manifesto e da chave pública:
 
 ```bash
-public_key="$PWD/.run/packaging/haproxy/sister-sec03v-rpm-signing.asc"
+public_key="$PWD/packaging/haproxy/keys/sister-sec03v-rpm-signing.asc"
 package="$PWD/.run/packaging/haproxy/podman-results/<UTC>/sister-haproxy-lab-3.2.22-1.sistersec03v.fc44.x86_64.rpm"
 
 gpg --show-keys --with-fingerprint "$public_key"

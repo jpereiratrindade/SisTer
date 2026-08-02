@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -18,6 +19,9 @@ def main():
     build_script = (ROOT / "scripts/packaging/build_haproxy_rpm.sh").read_text(encoding="utf-8")
     sign_script = (ROOT / "scripts/packaging/sign_haproxy_rpms.sh").read_text(encoding="utf-8")
     source_script = (ROOT / "scripts/packaging/prepare_haproxy_source.sh").read_text(encoding="utf-8")
+    public_key = PACKAGE_ROOT / "keys/sister-sec03v-rpm-signing.asc"
+    evidence = json.loads((ROOT / "docs/evidence/security/HAPROXY-RPM-01.json").read_text(
+        encoding="utf-8"))
 
     assert checksum == f"{EXPECTED_SHA256}  haproxy-3.2.22.tar.gz"
     assert re.search(r"^Name:\s+sister-haproxy-lab$", spec, re.MULTILINE)
@@ -42,8 +46,27 @@ def main():
     assert "podman run" in build_script
     assert "GNUPGHOME" in sign_script
     assert "HAPROXY_SIGNING_FINGERPRINT" in sign_script
+    assert '"_keyring fs"' in sign_script
+    assert "verification_keyring" in sign_script
+    assert "GOVERNED_PUBLIC_KEY" in sign_script
     assert 'CHECKSUM_URL="${SOURCE_URL}.sha256"' in source_script
     assert "published_sha256" in source_script
+    assert evidence["signing_key_fingerprint"] == "ED3F4CE4C756983F211097B6AB5D893C71F31D65"
+    assert evidence["public_key_sha256"] == hashlib.sha256(public_key.read_bytes()).hexdigest()
+    assert evidence["rpm_signature"].endswith("Key ID ab5d893c71f31d65")
+
+    key_details = subprocess.run(
+        ["gpg", "--batch", "--show-keys", "--with-colons", str(public_key)],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        timeout=10,
+        check=True,
+    ).stdout
+    fingerprints = [
+        line.split(":")[9] for line in key_details.splitlines()
+        if line.startswith("fpr:")]
+    assert fingerprints[0] == evidence["signing_key_fingerprint"]
 
     parsed = subprocess.run(
         ["rpmspec", "-P", str(PACKAGE_ROOT / "haproxy.spec")],
