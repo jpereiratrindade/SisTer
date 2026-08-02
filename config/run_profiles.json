@@ -1,0 +1,53 @@
+{
+  "version": "1.0.0",
+  "profiles": {
+    "dev-core": {
+      "environment": "dev",
+      "default_port": 8000,
+      "scope": "core",
+      "gateway_dynamic_tests": "optional",
+      "subsystems": {
+        "selection": "none",
+        "projects": [],
+        "required": []
+      },
+      "gate_closure_authorized": false
+    },
+    "dev-ecosystem": {
+      "environment": "dev",
+      "default_port": 8000,
+      "scope": "ecosystem",
+      "gateway_dynamic_tests": "optional",
+      "subsystems": {
+        "selection": "all",
+        "projects": [],
+        "required": []
+      },
+      "gate_closure_authorized": false
+    },
+    "test-core": {
+      "environment": "test",
+      "default_port": 8001,
+      "scope": "core",
+      "gateway_dynamic_tests": "optional",
+      "subsystems": {
+        "selection": "none",
+        "projects": [],
+        "required": []
+      },
+      "gate_closure_authorized": false
+    },
+    "sec-03v": {
+      "environment": "dev",
+      "default_port": 8000,
+      "scope": "sec-03v-prerequisites",
+      "gateway_dynamic_tests": "required",
+      "subsystems": {
+        "selection": "listed",
+        "projects": ["sister_nexo"],
+        "required": ["sister_nexo"]
+      },
+      "gate_closure_authorized": false
+    }
+  }
+}

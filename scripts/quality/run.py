@@ -18,6 +18,7 @@ STEPS = [
     ("governance", "Governança do repositório", ["python3", "scripts/validate_governance_repo.py"]),
     ("gateway-profile", "Perfil de segurança do gateway", ["python3", "scripts/validate_gateway_security_profile.py"]),
     ("local-resources", "Recursos locais", ["python3", "scripts/validate_local_resources.py"]),
+    ("run-profiles", "Perfis de execução", ["python3", "scripts/resolve_run_profile.py", "--check"]),
     ("maturity-contracts", "Contratos de maturidade", ["python3", "scripts/maturity/validate-contracts.py"]),
     ("subsystems", "Testes de subsistemas", ["python3", "-m", "unittest", "scripts/subsystems/test_ensure.py"]),
     ("maturity-tests", "Testes do SGE e maturidade", ["python3", "-m", "unittest", "discover", "-s", "tests/maturity", "-p", "test_*.py"]),
