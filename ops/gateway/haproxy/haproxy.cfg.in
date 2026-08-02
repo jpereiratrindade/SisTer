@@ -15,14 +15,20 @@ defaults
     timeout queue 2s
     timeout http-request 5s
     timeout http-keep-alive 2s
+    errorfile 400 @@GATEWAY_ERROR_ROOT@@/400.http
+    errorfile 403 @@GATEWAY_ERROR_ROOT@@/403.http
+    errorfile 405 @@GATEWAY_ERROR_ROOT@@/405.http
+    errorfile 408 @@GATEWAY_ERROR_ROOT@@/408.http
+    errorfile 413 @@GATEWAY_ERROR_ROOT@@/413.http
+    errorfile 503 @@GATEWAY_ERROR_ROOT@@/503.http
 
 frontend sister_gateway_lab
     bind @@GATEWAY_LISTEN_ADDRESS@@:@@GATEWAY_LISTEN_PORT@@ ssl crt @@GATEWAY_TLS_PEM@@ alpn http/1.1 ssl-min-ver TLSv1.3 ssl-max-ver TLSv1.3
     mode http
 
-    acl host_count_invalid req.hdr_cnt(host) ne 1
+    acl host_count_valid req.fhdr_cnt(host) eq 1
     acl host_allowed req.hdr(host),lower,field(1,:) -m str @@GATEWAY_ALLOWED_HOST@@
-    http-request deny status 400 if host_count_invalid
+    http-request deny status 400 unless host_count_valid
     http-request deny status 403 unless host_allowed
 
     acl method_allowed method GET HEAD POST PUT PATCH DELETE

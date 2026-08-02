@@ -58,6 +58,26 @@ add_test(
         ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/gateway_config_render_test.py)
 
+foreach(gateway_test IN ITEMS
+        gateway_protocol_test.py
+        gateway_header_sanitization_test.py
+        gateway_failure_test.py)
+    get_filename_component(gateway_test_name ${gateway_test} NAME_WE)
+    add_test(
+        NAME ${gateway_test_name}s
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/${gateway_test})
+    set_tests_properties(${gateway_test_name}s PROPERTIES SKIP_RETURN_CODE 77)
+endforeach()
+
+add_test(
+    NAME gateway_lab_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/gateway_lab_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)
+set_tests_properties(gateway_lab_tests PROPERTIES SKIP_RETURN_CODE 77)
+
 add_test(
     NAME sisterctl_bootstrap_tests
     COMMAND

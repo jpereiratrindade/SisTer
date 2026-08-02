@@ -1,0 +1,7 @@
+HTTP/1.1 405 Method Not Allowed
+Cache-Control: no-store
+Connection: close
+Content-Type: application/json
+Content-Length: 31
+
+{"error":"method_not_allowed"}

@@ -50,6 +50,20 @@ REQUIRED = [
     "scripts/render_gateway_config.py",
     "scripts/validate_gateway_config.sh",
     "tests/gateway_config_render_test.py",
+    "scripts/create_gateway_lab_certificate.sh",
+    "scripts/run_gateway_lab.sh",
+    "scripts/stop_gateway_lab.sh",
+    "tests/gateway_protocol_test.py",
+    "tests/gateway_header_sanitization_test.py",
+    "tests/gateway_failure_test.py",
+    "tests/gateway_lab_test.py",
+    "tests/gateway_lab_support.py",
+    "ops/gateway/haproxy/errors/400.http",
+    "ops/gateway/haproxy/errors/403.http",
+    "ops/gateway/haproxy/errors/405.http",
+    "ops/gateway/haproxy/errors/408.http",
+    "ops/gateway/haproxy/errors/413.http",
+    "ops/gateway/haproxy/errors/503.http",
 ]
 
 missing = [path for path in REQUIRED if not (ROOT / path).exists()]

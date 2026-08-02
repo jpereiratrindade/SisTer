@@ -1,0 +1,7 @@
+HTTP/1.1 400 Bad Request
+Cache-Control: no-store
+Connection: close
+Content-Type: application/json
+Content-Length: 24
+
+{"error":"bad_request"}

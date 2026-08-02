@@ -99,6 +99,7 @@ def checked_environment(environment):
         "GATEWAY_LISTEN_PORT": environment.get("GATEWAY_LISTEN_PORT", "8443"),
         "GATEWAY_UPSTREAM_ADDRESS": environment.get("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.1"),
         "GATEWAY_UPSTREAM_PORT": environment.get("GATEWAY_UPSTREAM_PORT", "8000"),
+        "GATEWAY_ERROR_ROOT": str((ROOT / "ops/gateway/haproxy/errors").resolve()),
     }
     if values["GATEWAY_LISTEN_ADDRESS"] != "127.0.0.1":
         raise RenderError("laboratory listener must be 127.0.0.1")
