@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sister.local/contracts/gateway-security-profile/1.1.0",
+  "$id": "https://sister.local/contracts/gateway-security-profile/1.2.0",
   "title": "SisTer gateway security profile",
   "type": "object",
   "additionalProperties": false,
@@ -16,6 +16,7 @@
     "http",
     "headers",
     "rate_limits",
+    "resource_limits",
     "observability",
     "rollback",
     "gates",
@@ -23,7 +24,7 @@
   ],
   "properties": {
     "contract_id": {"const": "sister.gateway-security-profile"},
-    "contract_version": {"const": "1.1.0"},
+    "contract_version": {"const": "1.2.0"},
     "status": {"const": "PROFILE_DEFINED"},
     "technology": {
       "type": "object",
@@ -48,6 +49,7 @@
     "http": {"$ref": "#/$defs/object"},
     "headers": {"$ref": "#/$defs/object"},
     "rate_limits": {"$ref": "#/$defs/object"},
+    "resource_limits": {"$ref": "#/$defs/object"},
     "observability": {"$ref": "#/$defs/object"},
     "rollback": {"$ref": "#/$defs/object"},
     "gates": {"$ref": "#/$defs/object"},
@@ -82,6 +84,7 @@
         "ACCEPTED_LAB_DIVERGENCE",
         "DEFERRED_TO_SEC-03V",
         "SEC-03C_PENDING",
+        "PARTIALLY_PROVEN",
         "MECHANISM_UNPROVEN",
         "NOT_IMPLEMENTED"
       ]
@@ -89,7 +92,7 @@
     "realizability": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["verification_gate", "policy", "lua_allowed", "third_party_modules_allowed", "requirements", "laboratory_resolution"],
+      "required": ["verification_gate", "policy", "lua_allowed", "third_party_modules_allowed", "requirements", "laboratory_resolution", "sec_03c_resolution"],
       "properties": {
         "verification_gate": {"const": "SEC-03C"},
         "policy": {"const": "native_simple_or_record_residual_risk"},
@@ -137,6 +140,20 @@
                 "reopen_conditions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
               }
             }
+          }
+        },
+        "sec_03c_resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "decided_on", "evidence", "next_gate", "merge_authorized", "release_authorized", "external_exposure_authorized"],
+          "properties": {
+            "state": {"const": "LAB_PROVEN_WITH_RESTRICTIONS"},
+            "decided_on": {"type": "string", "format": "date"},
+            "evidence": {"const": "docs/evidence/security/SEC-03C.md"},
+            "next_gate": {"const": "ISO-01"},
+            "merge_authorized": {"const": false},
+            "release_authorized": {"const": false},
+            "external_exposure_authorized": {"const": false}
           }
         }
       }

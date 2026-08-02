@@ -1,6 +1,6 @@
 {
   "contract_id": "sister.gateway-security-profile",
-  "contract_version": "1.1.0",
+  "contract_version": "1.2.0",
   "status": "PROFILE_DEFINED",
   "technology": {
     "product": "haproxy",
@@ -67,7 +67,22 @@
       {
         "id": "multidimensional_rate_limiting",
         "mechanism": "stick tables and tracked counters",
-        "state": "SEC-03C_PENDING"
+        "state": "PROVEN"
+      },
+      {
+        "id": "absolute_body_deadline",
+        "mechanism": "client inactivity timeout bounds stalled bodies; absolute whole-body deadline remains unproven for payloads larger than the request buffer",
+        "state": "PARTIALLY_PROVEN"
+      },
+      {
+        "id": "bounded_concurrency_and_queue",
+        "mechanism": "frontend maxconn, per-origin conn_cur table, server maxconn, maxqueue and timeout queue",
+        "state": "PROVEN"
+      },
+      {
+        "id": "sanitized_gateway_observability",
+        "mechanism": "structured log format using generated metadata and path without query",
+        "state": "PROVEN"
       },
       {
         "id": "canonical_host_authority",
@@ -139,6 +154,15 @@
           "change of HAProxy branch or HTTP representation"
         ]
       }
+    },
+    "sec_03c_resolution": {
+      "state": "LAB_PROVEN_WITH_RESTRICTIONS",
+      "decided_on": "2026-08-02",
+      "evidence": "docs/evidence/security/SEC-03C.md",
+      "next_gate": "ISO-01",
+      "merge_authorized": false,
+      "release_authorized": false,
+      "external_exposure_authorized": false
     }
   },
   "deployment": {
@@ -206,8 +230,9 @@
     "timeouts_seconds": {
       "tls_handshake": 5,
       "request_headers_absolute": 5,
-      "request_body_absolute": 10,
-      "client_idle": 30,
+      "request_body_absolute_target": 10,
+      "request_body_inactivity": 15,
+      "client_idle": 15,
       "http_keep_alive": 2,
       "upstream_connect": 2,
       "upstream_queue": 2,
@@ -247,6 +272,20 @@
     "rejection_status": 429,
     "retry_after_required": true
   },
+  "resource_limits": {
+    "upstream_concurrent_maximum": 32,
+    "backend_queue_maximum": 64,
+    "stick_tables": {
+      "connection_by_origin": {"capacity": 128, "expiration_seconds": 30},
+      "global_rate": {"capacity": 1, "expiration_seconds": 10},
+      "origin_rate": {"capacity": 128, "expiration_seconds": 60},
+      "origin_route_rate": {"capacity": 512, "expiration_seconds": 60},
+      "login_rate": {"capacity": 128, "expiration_seconds": 60}
+    },
+    "full_table_policy": "evict_oldest_entries",
+    "usage_metrics": "private_runtime_socket",
+    "runtime_socket_mode": "0600"
+  },
   "observability": {
     "structured_logs_required": true,
     "request_id_format": "^[0-9a-f]{32}$",
@@ -260,10 +299,13 @@
       "path_without_query",
       "status",
       "duration_ms",
+      "queue_ms",
+      "upstream_ms",
       "bytes_in",
       "bytes_out",
       "request_id",
-      "blocking_rule"
+      "blocking_rule",
+      "rate_limiter_result"
     ],
     "forbidden_log_fields": [
       "authorization",
@@ -294,7 +336,7 @@
     ]
   },
   "gates": {
-    "current": "SEC-03C",
+    "current": "ISO-01",
     "required_before_release": ["SEC-03B", "SEC-03C", "SEC-03V"],
     "external_production_authorized": false,
     "functional_scope_expansion_authorized": false,

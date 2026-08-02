@@ -52,7 +52,7 @@ def validate_profile(profile, schema):
         "": {
             "contract_id", "contract_version", "status", "technology", "realizability", "deployment",
             "network", "tls", "http", "headers", "rate_limits", "observability",
-            "rollback", "gates", "threats",
+            "resource_limits", "rollback", "gates", "threats",
         },
         "technology": {
             "product", "edition", "approved_branch", "initial_validated_floor", "patch_policy",
@@ -60,7 +60,7 @@ def validate_profile(profile, schema):
         },
         "realizability": {
             "verification_gate", "policy", "lua_allowed", "third_party_modules_allowed",
-            "requirements", "laboratory_resolution",
+            "requirements", "laboratory_resolution", "sec_03c_resolution",
         },
         "deployment": {
             "service_manager", "package_signature_required", "runtime_user", "config_owner",
@@ -90,7 +90,8 @@ def validate_profile(profile, schema):
             "timeouts_seconds", "connections",
         },
         "http.timeouts_seconds": {
-            "tls_handshake", "request_headers_absolute", "request_body_absolute", "client_idle",
+            "tls_handshake", "request_headers_absolute", "request_body_absolute_target",
+            "request_body_inactivity", "client_idle",
             "http_keep_alive", "upstream_connect", "upstream_queue", "upstream_response",
         },
         "http.connections": {"global_maximum", "per_origin_maximum"},
@@ -109,6 +110,18 @@ def validate_profile(profile, schema):
         "rate_limits.per_origin": {"requests", "window_seconds"},
         "rate_limits.per_origin_route": {"requests", "window_seconds"},
         "rate_limits.login_per_origin": {"requests", "window_seconds"},
+        "resource_limits": {
+            "upstream_concurrent_maximum", "backend_queue_maximum", "stick_tables",
+            "full_table_policy", "usage_metrics", "runtime_socket_mode",
+        },
+        "resource_limits.stick_tables": {
+            "connection_by_origin", "global_rate", "origin_rate", "origin_route_rate", "login_rate",
+        },
+        "resource_limits.stick_tables.connection_by_origin": {"capacity", "expiration_seconds"},
+        "resource_limits.stick_tables.global_rate": {"capacity", "expiration_seconds"},
+        "resource_limits.stick_tables.origin_rate": {"capacity", "expiration_seconds"},
+        "resource_limits.stick_tables.origin_route_rate": {"capacity", "expiration_seconds"},
+        "resource_limits.stick_tables.login_rate": {"capacity", "expiration_seconds"},
         "observability": {
             "structured_logs_required", "request_id_format", "log_fields", "forbidden_log_fields",
             "block_metrics_required", "end_to_end_correlation_required",
@@ -131,12 +144,12 @@ def validate_profile(profile, schema):
     expect(
         schema,
         "$id",
-        "https://sister.local/contracts/gateway-security-profile/1.1.0",
+        "https://sister.local/contracts/gateway-security-profile/1.2.0",
         errors,
     )
 
     expect(profile, "contract_id", "sister.gateway-security-profile", errors)
-    expect(profile, "contract_version", "1.1.0", errors)
+    expect(profile, "contract_version", "1.2.0", errors)
     expect(profile, "status", "PROFILE_DEFINED", errors)
     expect(profile, "technology.product", "haproxy", errors)
     expect(profile, "technology.edition", "community", errors)
@@ -166,7 +179,10 @@ def validate_profile(profile, schema):
         "upstream_response_limit": "MECHANISM_UNPROVEN",
         "request_id_lower_hex_32": "PROVEN",
         "strip_x_sister_prefix": "PROVEN",
-        "multidimensional_rate_limiting": "SEC-03C_PENDING",
+        "multidimensional_rate_limiting": "PROVEN",
+        "absolute_body_deadline": "PARTIALLY_PROVEN",
+        "bounded_concurrency_and_queue": "PROVEN",
+        "sanitized_gateway_observability": "PROVEN",
         "canonical_host_authority": "PROVEN",
         "duplicate_identical_host": "ACCEPTED_LAB_DIVERGENCE",
         "duplicate_divergent_host": "PROVEN",
@@ -238,6 +254,19 @@ def validate_profile(profile, schema):
     else:
         errors.append("realizability.laboratory_resolution must be an object")
 
+    sec_03c = value(profile, "realizability.sec_03c_resolution", errors)
+    expected_sec_03c = {
+        "state": "LAB_PROVEN_WITH_RESTRICTIONS",
+        "decided_on": "2026-08-02",
+        "evidence": "docs/evidence/security/SEC-03C.md",
+        "next_gate": "ISO-01",
+        "merge_authorized": False,
+        "release_authorized": False,
+        "external_exposure_authorized": False,
+    }
+    if sec_03c != expected_sec_03c:
+        errors.append("realizability.sec_03c_resolution must preserve the restricted laboratory decision")
+
     for path, expected in {
         "deployment.service_manager": "systemd",
         "deployment.package_signature_required": True,
@@ -289,8 +318,9 @@ def validate_profile(profile, schema):
         "http.ambiguous_whitespace_action": "reject",
         "http.timeouts_seconds.tls_handshake": 5,
         "http.timeouts_seconds.request_headers_absolute": 5,
-        "http.timeouts_seconds.request_body_absolute": 10,
-        "http.timeouts_seconds.client_idle": 30,
+        "http.timeouts_seconds.request_body_absolute_target": 10,
+        "http.timeouts_seconds.request_body_inactivity": 15,
+        "http.timeouts_seconds.client_idle": 15,
         "http.timeouts_seconds.http_keep_alive": 2,
         "http.timeouts_seconds.upstream_connect": 2,
         "http.timeouts_seconds.upstream_queue": 2,
@@ -303,6 +333,21 @@ def validate_profile(profile, schema):
         "rate_limits.internal_sisterd_limiter_retained": True,
         "rate_limits.rejection_status": 429,
         "rate_limits.retry_after_required": True,
+        "resource_limits.upstream_concurrent_maximum": 32,
+        "resource_limits.backend_queue_maximum": 64,
+        "resource_limits.full_table_policy": "evict_oldest_entries",
+        "resource_limits.usage_metrics": "private_runtime_socket",
+        "resource_limits.runtime_socket_mode": "0600",
+        "resource_limits.stick_tables.connection_by_origin.capacity": 128,
+        "resource_limits.stick_tables.connection_by_origin.expiration_seconds": 30,
+        "resource_limits.stick_tables.global_rate.capacity": 1,
+        "resource_limits.stick_tables.global_rate.expiration_seconds": 10,
+        "resource_limits.stick_tables.origin_rate.capacity": 128,
+        "resource_limits.stick_tables.origin_rate.expiration_seconds": 60,
+        "resource_limits.stick_tables.origin_route_rate.capacity": 512,
+        "resource_limits.stick_tables.origin_route_rate.expiration_seconds": 60,
+        "resource_limits.stick_tables.login_rate.capacity": 128,
+        "resource_limits.stick_tables.login_rate.expiration_seconds": 60,
         "observability.structured_logs_required": True,
         "observability.request_id_format": "^[0-9a-f]{32}$",
         "observability.block_metrics_required": True,
@@ -313,7 +358,7 @@ def validate_profile(profile, schema):
         "rollback.offline_validation_before_reload": True,
         "rollback.external_and_internal_health_required": True,
         "rollback.allowed_failure_mode": "external_unavailable",
-        "gates.current": "SEC-03C",
+        "gates.current": "ISO-01",
         "gates.external_production_authorized": False,
         "gates.functional_scope_expansion_authorized": False,
         "gates.write_capabilities_authorized": False,

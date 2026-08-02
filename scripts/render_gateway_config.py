@@ -100,6 +100,7 @@ def checked_environment(environment):
         "GATEWAY_UPSTREAM_ADDRESS": environment.get("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.1"),
         "GATEWAY_UPSTREAM_PORT": environment.get("GATEWAY_UPSTREAM_PORT", "8000"),
         "GATEWAY_ERROR_ROOT": str((ROOT / "ops/gateway/haproxy/errors").resolve()),
+        "GATEWAY_STATS_SOCKET": str((RUN_ROOT / "haproxy.sock").resolve()),
     }
     if values["GATEWAY_LISTEN_ADDRESS"] != "127.0.0.1":
         raise RenderError("laboratory listener must be 127.0.0.1")
@@ -154,7 +155,7 @@ def render(template, values):
     for forbidden in FORBIDDEN_CONFIG:
         if forbidden.search(rendered):
             raise RenderError("rendered configuration contains a forbidden dynamic or extension directive")
-    expected_server = f"server sisterd {values['GATEWAY_UPSTREAM_ADDRESS']}:{values['GATEWAY_UPSTREAM_PORT']} check"
+    expected_server = f"server sisterd {values['GATEWAY_UPSTREAM_ADDRESS']}:{values['GATEWAY_UPSTREAM_PORT']} check maxconn 32 maxqueue 64"
     if rendered.count(expected_server) != 1:
         raise RenderError("rendered configuration must contain exactly one fixed sisterd upstream")
     return rendered
@@ -178,7 +179,7 @@ def write_private_atomic(output, content):
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Render the governed SEC-03B HAProxy lab configuration")
+    parser = argparse.ArgumentParser(description="Render the governed SEC-03B/03C HAProxy lab configuration")
     parser.add_argument("--profile", type=Path, default=PROFILE_PATH)
     parser.add_argument("--template", type=Path, default=TEMPLATE_PATH)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)

@@ -3,8 +3,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 PID_FILE="$ROOT_DIR/.run/gateway/haproxy.pid"
+STATS_SOCKET="$ROOT_DIR/.run/gateway/haproxy.sock"
 
 if [[ ! -f "$PID_FILE" ]]; then
+  rm -f "$STATS_SOCKET"
   echo "gateway lab is not running"
   exit 0
 fi
@@ -31,5 +33,5 @@ if kill -0 "$gateway_pid" >/dev/null 2>&1; then
     exit 1
   fi
 fi
-rm -f "$PID_FILE"
+rm -f "$PID_FILE" "$STATS_SOCKET"
 echo "gateway lab stopped"

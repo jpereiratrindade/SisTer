@@ -1,16 +1,18 @@
 global
     log stdout format raw local0
     maxconn 1024
+    tune.stick-counters 5
     tune.http.maxhdr 64
+    stats socket @@GATEWAY_STATS_SOCKET@@ mode 600 level operator
     ssl-default-bind-options ssl-min-ver TLSv1.3 ssl-max-ver TLSv1.3
 
 defaults
     mode http
     log global
-    option httplog
     option dontlognull
     timeout connect 2s
     timeout client 15s
+    timeout client-hs 5s
     timeout server 15s
     timeout queue 2s
     timeout http-request 5s
@@ -21,10 +23,18 @@ defaults
     errorfile 408 @@GATEWAY_ERROR_ROOT@@/408.http
     errorfile 413 @@GATEWAY_ERROR_ROOT@@/413.http
     errorfile 503 @@GATEWAY_ERROR_ROOT@@/503.http
+    errorfile 504 @@GATEWAY_ERROR_ROOT@@/504.http
 
 frontend sister_gateway_lab
     bind @@GATEWAY_LISTEN_ADDRESS@@:@@GATEWAY_LISTEN_PORT@@ ssl crt @@GATEWAY_TLS_PEM@@ alpn http/1.1 ssl-min-ver TLSv1.3 ssl-max-ver TLSv1.3 strict-sni
     mode http
+    maxconn 1024
+    log-format '{"timestamp":"%Tl","event":"gateway_request","result":"%[var(txn.sister_rate_result)]","observed_source":"%ci","canonical_host":"@@GATEWAY_CANONICAL_HOST@@","method":"%HM","path":"%[var(txn.sister_path),json(utf8s)]","status":%ST,"duration_ms":%Ta,"queue_ms":%Tw,"upstream_ms":%Tr,"bytes_in":%U,"bytes_out":%B,"request_id":"%[var(txn.sister_request_id)]","blocking_rule":"%[var(txn.sister_block_rule)]"}'
+
+    tcp-request connection track-sc0 src table sister_connection_by_origin
+    tcp-request connection reject if { sc_conn_cur(0) gt 32 }
+
+    http-request set-var(txn.sister_path) path
 
     http-request deny status 400 if HTTP_URL_ABS
 
@@ -49,6 +59,7 @@ frontend sister_gateway_lab
     http-request deny status 413 if body_too_large
 
     acl authentication_path path_beg /api/auth/
+    acl login_path path -m str /api/auth/login
     acl auth_body_too_large req.hdr_val(Content-Length) gt 65536
     http-request deny status 413 if authentication_path auth_body_too_large
 
@@ -60,6 +71,35 @@ frontend sister_gateway_lab
     http-request del-header Forwarded
 
     http-request set-var(txn.sister_request_id) uuid(4),regsub(-,,g),lower
+    http-request set-var(txn.sister_block_rule) str(none)
+    http-request set-var(txn.sister_rate_result) str(accepted)
+
+    http-request track-sc1 str(global) table sister_rate_global
+    http-request track-sc2 src table sister_rate_origin
+    http-request track-sc3 base32+src table sister_rate_origin_route
+    http-request track-sc4 src table sister_rate_login if login_path
+
+    acl login_rate_exceeded sc_http_req_rate(4) gt 10
+    acl route_rate_exceeded sc_http_req_rate(3) gt 60
+    acl origin_rate_exceeded sc_http_req_rate(2) gt 120
+    acl global_rate_exceeded sc_http_req_rate(1) gt 1000
+
+    http-request set-var(txn.sister_block_rule) str(login_rate) if login_path login_rate_exceeded
+    http-request set-var(txn.sister_rate_result) str(blocked) if login_path login_rate_exceeded
+    http-request return status 429 content-type application/json string '{"error":"rate_limited"}' hdr Retry-After 60 if login_path login_rate_exceeded
+
+    http-request set-var(txn.sister_block_rule) str(route_rate) if route_rate_exceeded
+    http-request set-var(txn.sister_rate_result) str(blocked) if route_rate_exceeded
+    http-request return status 429 content-type application/json string '{"error":"rate_limited"}' hdr Retry-After 60 if route_rate_exceeded
+
+    http-request set-var(txn.sister_block_rule) str(origin_rate) if origin_rate_exceeded
+    http-request set-var(txn.sister_rate_result) str(blocked) if origin_rate_exceeded
+    http-request return status 429 content-type application/json string '{"error":"rate_limited"}' hdr Retry-After 60 if origin_rate_exceeded
+
+    http-request set-var(txn.sister_block_rule) str(global_rate) if global_rate_exceeded
+    http-request set-var(txn.sister_rate_result) str(blocked) if global_rate_exceeded
+    http-request return status 429 content-type application/json string '{"error":"rate_limited"}' hdr Retry-After 10 if global_rate_exceeded
+
     http-request set-header X-Request-ID %[var(txn.sister_request_id)]
     http-request set-header X-Forwarded-For %[src]
     http-request set-header X-Forwarded-Host @@GATEWAY_CANONICAL_HOST@@
@@ -71,5 +111,21 @@ frontend sister_gateway_lab
 backend sisterd_internal
     mode http
     option httpchk GET /api/health
+    option abortonclose
     http-check expect status 200
-    server sisterd @@GATEWAY_UPSTREAM_ADDRESS@@:@@GATEWAY_UPSTREAM_PORT@@ check
+    server sisterd @@GATEWAY_UPSTREAM_ADDRESS@@:@@GATEWAY_UPSTREAM_PORT@@ check maxconn 32 maxqueue 64
+
+backend sister_connection_by_origin
+    stick-table type ip size 128 expire 30s store conn_cur
+
+backend sister_rate_global
+    stick-table type string len 8 size 1 expire 10s store http_req_rate(10s)
+
+backend sister_rate_origin
+    stick-table type ip size 128 expire 60s store http_req_rate(60s)
+
+backend sister_rate_origin_route
+    stick-table type binary len 20 size 512 expire 60s store http_req_rate(60s)
+
+backend sister_rate_login
+    stick-table type ip size 128 expire 60s store http_req_rate(60s)

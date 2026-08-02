@@ -6,6 +6,7 @@ RUN_DIR="$ROOT_DIR/.run/gateway"
 PID_FILE="$RUN_DIR/haproxy.pid"
 LOG_FILE="$RUN_DIR/haproxy.log"
 CONFIG_FILE="$RUN_DIR/haproxy.cfg"
+STATS_SOCKET="$RUN_DIR/haproxy.sock"
 
 : "${GATEWAY_HAPROXY_BIN:?GATEWAY_HAPROXY_BIN must be an absolute HAProxy 3.2 path}"
 export GATEWAY_TLS_PEM="${GATEWAY_TLS_PEM:-$RUN_DIR/gateway-lab.pem}"
@@ -14,6 +15,7 @@ export GATEWAY_CANONICAL_HOST="${GATEWAY_CANONICAL_HOST:-$GATEWAY_ALLOWED_HOST}"
 
 mkdir -p "$RUN_DIR"
 chmod 700 "$RUN_DIR"
+rm -f "$STATS_SOCKET"
 if [[ -f "$PID_FILE" ]]; then
   existing_pid="$(cat "$PID_FILE")"
   if [[ "$existing_pid" =~ ^[0-9]+$ ]] && kill -0 "$existing_pid" >/dev/null 2>&1; then
