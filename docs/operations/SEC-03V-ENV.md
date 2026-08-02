@@ -48,6 +48,12 @@ usa DNF com verificação da chave dedicada e `localpkg_gpgcheck=1`; não há
 `rpm-ostree` neste host. Build e assinatura não autorizam a instalação nem a
 ativação do serviço sem a revisão operacional de HAPROXY-RPM-01.
 
+HAPROXY-RPM-01 foi concluído no host candidato Fedora 44 pela transação DNF
+`135`. A evidência verificável está em
+[`HAPROXY-RPM-01.json`](../evidence/security/HAPROXY-RPM-01.json). Esse marco
+satisfaz somente a proveniência do executável; SEC-03V-ENV permanece `BLOCKED`
+até a aplicação privilegiada das identidades, configurações e unidades.
+
 ## Contas e grupos
 
 As identidades canônicas são:

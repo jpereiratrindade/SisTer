@@ -97,14 +97,22 @@ o spec já commitado:
 
 ```bash
 result_dir="$PWD/.run/packaging/haproxy/podman-results/<UTC>"
+installation_arguments=()
+# Depois da instalação validada:
+# installation_arguments=(--installation-transaction-id 135)
 python3 scripts/packaging/generate_haproxy_provenance.py \
   --srpm "$(find "$result_dir" -name '*.src.rpm' -print -quit)" \
   --rpm "$(find "$result_dir" -name '*.x86_64.rpm' -print -quit)" \
   --public-key packaging/haproxy/keys/sister-sec03v-rpm-signing.asc \
   --fingerprint "$HAPROXY_SIGNING_FINGERPRINT" \
   --build-environment "$result_dir/build-environment.txt" \
+  "${installation_arguments[@]}" \
   --output docs/evidence/security/HAPROXY-RPM-01.json
 ```
+
+O argumento de transação é omitido antes da instalação. Quando informado, o
+gerador exige uma transação Fedora 44 com status `Ok`, confere o NEVRA, a
+assinatura instalada e um `rpm -V` sem divergências.
 
 ## Verificações obrigatórias
 

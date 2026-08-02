@@ -54,6 +54,9 @@ def main():
     assert evidence["signing_key_fingerprint"] == "ED3F4CE4C756983F211097B6AB5D893C71F31D65"
     assert evidence["public_key_sha256"] == hashlib.sha256(public_key.read_bytes()).hexdigest()
     assert evidence["rpm_signature"].endswith("Key ID ab5d893c71f31d65")
+    assert evidence["installation_transaction_id"] == 135
+    assert evidence["installation_status"] == "Ok"
+    assert evidence["installed_rpm_verification"] == "PASS"
 
     key_details = subprocess.run(
         ["gpg", "--batch", "--show-keys", "--with-colons", str(public_key)],

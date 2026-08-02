@@ -36,6 +36,7 @@ def main() -> None:
     parser.add_argument("--public-key", required=True, type=Path)
     parser.add_argument("--fingerprint", required=True)
     parser.add_argument("--build-environment", required=True, type=Path)
+    parser.add_argument("--installation-transaction-id", type=int)
     parser.add_argument("--output", required=True, type=Path)
     arguments = parser.parse_args()
 
@@ -91,6 +92,39 @@ def main() -> None:
         "rpm_sha256": sha256(arguments.rpm),
         "rpm_signature": rpm_signature,
     })
+    if arguments.installation_transaction_id is not None:
+        history = json.loads(run(
+            "dnf", "history", "info", str(arguments.installation_transaction_id), "--json"))
+        if len(history) != 1:
+            parser.error("DNF did not return exactly one installation transaction")
+        transaction = history[0]
+        matching_packages = [
+            package for package in transaction.get("packages", [])
+            if package.get("action") == "Install"
+            and package.get("nevra", "").startswith("sister-haproxy-lab-")]
+        if transaction.get("status") != "Ok" or transaction.get("releasever") != "44":
+            parser.error("DNF transaction is not a successful Fedora 44 transaction")
+        if len(matching_packages) != 1:
+            parser.error("DNF transaction does not install exactly one candidate package")
+        installed_nevra = run(
+            "rpm", "-q", "--qf", "%{NEVRA}", "sister-haproxy-lab")
+        if installed_nevra != matching_packages[0]["nevra"].replace("-0:", "-", 1):
+            parser.error("installed NEVRA differs from the DNF transaction")
+        installed_verification = run("rpm", "-V", "sister-haproxy-lab")
+        if installed_verification:
+            parser.error("rpm -V reports modified installed files")
+        installed_signature = run(
+            "rpm", "-q", "--qf", "%{RSAHEADER:pgpsig}", "sister-haproxy-lab")
+        if fingerprint[-16:].lower() not in installed_signature.lower():
+            parser.error("installed package signature differs from the reviewed key")
+        manifest.update({
+            "installation_transaction_id": transaction["id"],
+            "installation_status": transaction["status"],
+            "installation_timestamp_utc": datetime.fromtimestamp(
+                transaction["end_time"], timezone.utc).isoformat(),
+            "installed_nevra": installed_nevra,
+            "installed_rpm_verification": "PASS",
+        })
     arguments.output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     temporary = arguments.output.with_suffix(arguments.output.suffix + ".tmp")
     temporary.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")

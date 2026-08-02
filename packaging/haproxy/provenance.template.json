@@ -20,5 +20,9 @@
   "rpm_sha256": null,
   "rpm_signature": null,
   "installation_manager": "dnf",
-  "installation_transaction_id": null
+  "installation_transaction_id": null,
+  "installation_status": null,
+  "installation_timestamp_utc": null,
+  "installed_nevra": null,
+  "installed_rpm_verification": null
 }
