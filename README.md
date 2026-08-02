@@ -51,6 +51,7 @@ Os perfis separam afirmações que não são equivalentes:
 ```bash
 ./scripts/run_all.sh --profile dev-core       # núcleo, sisterd e smoke
 ./scripts/run_all.sh --profile dev-ecosystem  # inclui subsistemas opcionais
+./scripts/run_all.sh --profile dev-ecosystem-strict # qualquer degradação bloqueia
 ./scripts/run_all.sh --profile sec-03v        # pré-requisitos estritos, não fecha o gate
 ```
 
@@ -58,6 +59,8 @@ Os perfis separam afirmações que não são equivalentes:
 `ensure-running`. Falha opcional produz `PASS_WITH_DEGRADATION`; falha de um
 componente exigido pelo perfil produz `BLOCKED` e código `2`. Cada subsistema
 continua podendo ser executado isoladamente, mas nenhum deles inicia o SisTer.
+`quality.json` permanece evidência exclusiva da qualidade da árvore;
+`run-all-status.json` registra banco, prontidão, smoke e ecossistema.
 
 ## Produção
 

@@ -51,8 +51,13 @@
   subsistemas são dimensões distintas no relatório de execução.
 - Decision: falha opcional produz `PASS_WITH_DEGRADATION`; componente exigido
   pelo perfil produz `BLOCKED` e código `2`.
-- Decision: `dev-core`, `dev-ecosystem`, `test-core` e `sec-03v` são contratos
-  versionados; o último valida pré-requisitos, mas não fecha o gate SEC-03V.
+- Decision: `dev-core`, `dev-ecosystem`, `dev-ecosystem-strict`, `test-core` e
+  `sec-03v` são contratos versionados; o último valida pré-requisitos, mas não
+  fecha o gate SEC-03V.
+- Decision: `quality.json` descreve somente a qualidade da árvore;
+  `run-all-status.json` consolida banco, serviço, smoke e subsistemas.
+- Decision: resumos operacionais nunca imprimem credenciais, e `run_all.sh`
+  inicia o artefato já testado sem recompilação posterior.
 - Decision: mudança de fontes não executa reconciliação implicitamente; ela
   exige `--update-subsystems`.
 - Action: registrar por componente estado, fase, código, duração, log e origem

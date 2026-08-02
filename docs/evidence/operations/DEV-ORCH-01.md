@@ -16,12 +16,19 @@ degradação opcional. Não houve falha em ISO-01 ou no núcleo do SisTer.
 |---|---|---|---|---|
 | `dev-core` | obrigatório | opcional | não consultados | `PASS` |
 | `dev-ecosystem` | obrigatório | opcional | todos opcionais | permite `PASS_WITH_DEGRADATION` |
+| `dev-ecosystem-strict` | obrigatório | opcional | todos obrigatórios | falha produz `BLOCKED` |
 | `test-core` | obrigatório | opcional | não consultados | `PASS` |
 | `sec-03v` | obrigatório | obrigatório | somente Nexo, obrigatório | falha produz `BLOCKED`; não fecha o gate |
 
 O agregador não atualiza repositórios nem reconcilia serviços saudáveis por
 mudança de fontes sem `--update-subsystems`. Cada componente continua dono de
 seu runner, diagnóstico e reparo.
+
+`sister_print_env` mascara a URL do banco. O agregador encerra a instância
+anterior antes da migração e da qualidade, inicia com `serve.sh --no-build` o
+mesmo artefato aprovado e exige readiness antes do smoke. `quality.json`
+permanece evidência da árvore; o resultado integrado é gravado separadamente
+em `.run/maturity/run-all-status.json`.
 
 ## Causas observadas, sem reparo cruzado
 

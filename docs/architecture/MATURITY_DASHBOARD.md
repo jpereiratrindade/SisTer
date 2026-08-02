@@ -156,9 +156,10 @@ do sistema.
 - `.run/maturity/latest.json`: estado da última execução do Core (consumido pela UI);
 - `.run/maturity/components.json`: índice federado com as últimas execuções de todos os componentes;
 - `.run/maturity/catalog.json`: catálogo de checks disponíveis nos perfis versionados;
-- `.run/maturity/quality.json`: qualidade do núcleo e, quando produzido por
-  `run_all.sh`, resumo separado de prontidão, smoke e disponibilidade do
-  ecossistema (`PASS`, `PASS_WITH_DEGRADATION` ou `BLOCKED`);
+- `.run/maturity/quality.json`: qualidade da árvore, anterior à inicialização e
+  independente da disponibilidade do ecossistema;
+- `.run/maturity/run-all-status.json`: resultado integrado do perfil, com banco,
+  prontidão, smoke e ecossistema (`PASS`, `PASS_WITH_DEGRADATION` ou `BLOCKED`);
 - `.run/maturity/subsystems.json`: diagnóstico estruturado da última seleção de
   subsistemas, incluindo fase, obrigatoriedade, código de saída e log;
 - `.run/maturity/components/<id>/latest.json`: estado consolidado de um componente específico;

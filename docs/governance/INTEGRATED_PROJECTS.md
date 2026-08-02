@@ -113,10 +113,12 @@ Essa direção única evita dependência invertida e ciclos de inicialização.
 
 O perfil `test-core` não inicia subsistemas. Os perfis executáveis vivem em
 `config/run_profiles.json`: `dev-core` valida somente o núcleo,
-`dev-ecosystem` trata os componentes como opcionais e `sec-03v` exige HAProxy
+`dev-ecosystem` trata os componentes como opcionais,
+`dev-ecosystem-strict` bloqueia qualquer degradação e `sec-03v` exige HAProxy
 real e Nexo. Este último valida pré-requisitos, mas não fecha SEC-03V nem gera
-aprovação. Nenhum segredo pode ser registrado no bloco de ambiente da
-orquestração.
+aprovação. `quality.json` permanece restrito à árvore; o resultado composto é
+gravado em `run-all-status.json`. Nenhum segredo pode ser registrado no bloco
+de ambiente da orquestração nem impresso pelo resumo do ambiente.
 
 ## Pendencias encontradas na auditoria
 
