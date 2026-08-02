@@ -184,7 +184,11 @@ def main():
 
         bad_name = env.copy()
         bad_name["TEST_LISTEN_FDNAMES"] = "unexpected"
-        assert_fails(executable, bad_name, "unexpected descriptor name", [listener.fileno()])
+        assert_fails(executable, bad_name, "missing or unexpected descriptor name", [listener.fileno()])
+
+        missing_name = env.copy()
+        missing_name["TEST_OMIT_LISTEN_FDNAMES"] = "1"
+        assert_fails(executable, missing_name, "missing or unexpected descriptor name", [listener.fileno()])
 
         zero = env.copy()
         zero["TEST_LISTEN_FDS"] = "0"

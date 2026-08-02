@@ -132,8 +132,8 @@ Listener acquireActivatedUnixListener(
     if (listenFds != 1) activationError("exactly one descriptor is required");
 
     const char* descriptorNames = std::getenv("LISTEN_FDNAMES");
-    if (descriptorNames != nullptr && std::string_view(descriptorNames) != "sisterd-http") {
-        activationError("unexpected descriptor name");
+    if (descriptorNames == nullptr || std::string_view(descriptorNames) != "sisterd-http") {
+        activationError("missing or unexpected descriptor name");
     }
 
     if (fcntl(kActivatedDescriptor, F_GETFD) < 0) activationError("descriptor 3 is not open");

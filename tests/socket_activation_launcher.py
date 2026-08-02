@@ -19,9 +19,12 @@ def main():
     environment = os.environ.copy()
     environment["LISTEN_PID"] = environment.get("TEST_LISTEN_PID", str(os.getpid()))
     environment["LISTEN_FDS"] = environment.get("TEST_LISTEN_FDS", str(len(sources)))
-    environment["LISTEN_FDNAMES"] = environment.get(
-        "TEST_LISTEN_FDNAMES", ":".join("sisterd-http" for _ in sources)
-    )
+    if environment.get("TEST_OMIT_LISTEN_FDNAMES") == "1":
+        environment.pop("LISTEN_FDNAMES", None)
+    else:
+        environment["LISTEN_FDNAMES"] = environment.get(
+            "TEST_LISTEN_FDNAMES", ":".join("sisterd-http" for _ in sources)
+        )
     os.execve(sys.argv[2], [sys.argv[2]], environment)
 
 
