@@ -1,0 +1,23 @@
+{
+  "schema": "sister.haproxy-rpm-provenance/1.0.0",
+  "package": "sister-haproxy-lab",
+  "version": "3.2.22",
+  "scope": "SEC-03V candidate laboratory only",
+  "upstream_url": "https://www.haproxy.org/download/3.2/src/haproxy-3.2.22.tar.gz",
+  "upstream_sha256": "afca3a26d573df53d0e1fc475dcd743ec5875e038e1476c80e871d70228ca2da",
+  "spec_revision": null,
+  "spec_sha256": null,
+  "build_environment": null,
+  "builder": null,
+  "build_host": null,
+  "build_timestamp_utc": null,
+  "signing_key_fingerprint": null,
+  "public_key_sha256": null,
+  "srpm": null,
+  "srpm_sha256": null,
+  "rpm": null,
+  "rpm_sha256": null,
+  "rpm_signature": null,
+  "installation_manager": "dnf",
+  "installation_transaction_id": null
+}

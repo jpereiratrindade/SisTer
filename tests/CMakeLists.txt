@@ -70,6 +70,12 @@ add_test(
         ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/sec03v_env_preflight_test.py)
 
+add_test(
+    NAME haproxy_packaging_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/haproxy_packaging_test.py)
+
 foreach(gateway_test IN ITEMS
         gateway_protocol_test.py
         gateway_header_sanitization_test.py
