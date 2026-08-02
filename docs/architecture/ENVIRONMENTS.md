@@ -48,7 +48,7 @@ Os servidores HTTP também usam binds e portas diferentes por padrão:
 
 | Ambiente | Bind | Porta HTTP |
 | --- | --- | --- |
-| `dev` | `0.0.0.0` | `8000` |
+| `dev` | `127.0.0.1` | `8000` |
 | `test` | `127.0.0.1` | `8001` |
 
 As portas podem ser adaptadas ao host por `SISTER_DEV_DB_PORT`,
@@ -60,8 +60,9 @@ SISTER_DEV_DB_PORT=55440 ./scripts/run_all.sh dev
 ```
 
 Os binds podem ser ajustados explicitamente por `SISTER_DEV_BIND_HOST` e
-`SISTER_TEST_BIND_HOST`. A exposição de desenvolvimento em `0.0.0.0` permite
-acesso pela rede local; ela não autoriza publicação direta na internet.
+`SISTER_TEST_BIND_HOST`, mas o listener TCP de desenvolvimento/teste aceita
+somente endereços IPv4 de loopback. Acesso por outro equipamento deve passar
+por uma fronteira de laboratório governada, não por wildcard no `sisterd`.
 
 ## Criar o worktree de teste
 

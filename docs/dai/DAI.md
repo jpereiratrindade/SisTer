@@ -45,6 +45,17 @@
 - Impediment: a promocao de dados curados para o catalogo territorial do SisTer
   ainda requer endpoint e teste de aceitacao especificos.
 
+## 2026-08-02 - Quarentena também no bind de desenvolvimento
+
+- Decision: o listener TCP de desenvolvimento e teste do `sisterd` aceita
+  somente loopback IPv4; `0.0.0.0` deixa de ser o padrão de desenvolvimento.
+- Decision: acesso por outro equipamento deve atravessar uma fronteira de
+  laboratório governada, sem publicar diretamente o listener do `sisterd`.
+- Action: substituir a reserva `0.0.0.0:8000` por `127.0.0.1:8000` e sanitizar
+  variáveis `SISTER_*` herdadas nos testes negativos.
+- Supersedes: a decisão de bind do `sisterd` em desenvolvimento registrada em
+  2026-07-28; a decisão do Sister-Clima em `0.0.0.0:8501` não é alterada.
+
 ## 2026-07-28 - Ponto de entrada e bind por ambiente
 
 - Decision: o SisTer é o ponto de entrada do ecossistema integrado; projetos

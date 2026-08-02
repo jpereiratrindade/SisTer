@@ -112,6 +112,18 @@ ISO-01 encerra em laboratório como `LAB_PROVEN_WITH_RESTRICTIONS`. A brecha
 estrutural do listener TCP produtivo foi removida, mas a prova de identidades
 reais e do ciclo completo do systemd é obrigatória no ambiente candidato.
 
+## Achado posterior ISO-01-T01
+
+Uma execução de `run_all.sh` revelou que o teste negativo de bootstrap herdava
+`SISTER_BIND_HOST=0.0.0.0` do shell e introduzia duas violações simultâneas. O
+runtime falhou corretamente na proibição TCP antes da proibição de bootstrap;
+ISO-01 não foi reaberto.
+
+O teste agora remove toda variável `SISTER_*` herdada e cada caso declara sua
+única violação intencional. O ambiente de desenvolvimento também passou a usar
+`127.0.0.1` por padrão. Classificação: isolamento de teste; severidade média
+para governança e baixa para segurança do runtime.
+
 ```text
 ISO-01 → SEC-03V → revisão/merge controlado → v0.2.8
 ```

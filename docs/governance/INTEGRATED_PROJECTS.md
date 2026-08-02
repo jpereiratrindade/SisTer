@@ -42,7 +42,7 @@ funcionando quando os repositorios forem clonados separadamente.
 
 | Projeto | Recurso | Desenvolvimento | Teste |
 | --- | --- | --- | --- |
-| SisTer | HTTP | `0.0.0.0:8000` | `127.0.0.1:8001` |
+| SisTer | HTTP | `127.0.0.1:8000` | `127.0.0.1:8001` |
 | SisTer | PostgreSQL | 55434 | 55435 |
 | SisTer-Campo | API HTTP local | `127.0.0.1:8013` | - |
 | SisTer-Campo | PostgreSQL | 55438 | - |
