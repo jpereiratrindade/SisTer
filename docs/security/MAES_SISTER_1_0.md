@@ -6,8 +6,8 @@
 
 **Referência normativa:** EFE-SisTer/1.2
 
-**Escopo inicial:** `sisterd`, controles SEC-00 a SEC-02M e ameaças que
-governam a identidade interna assinada
+**Escopo inicial:** `sisterd`, controles SEC-00 a SEC-02M e perfil SEC-03A da
+fronteira HTTP especializada
 
 **Data de revisão:** 1 de agosto de 2026
 
@@ -30,6 +30,7 @@ evidências registram execuções; nenhum deles substitui este modelo.
 | `CONTROLLED_BASELINE` | controle publicado e sustentado pela baseline indicada |
 | `PARTIALLY_CONTROLLED` | há controles efetivos, mas parte relevante do cenário permanece residual |
 | `VALIDATION_PENDING` | capacidade não publicada; candidato posterior aguarda gate formal |
+| `PROFILE_DEFINED` | requisito e teste são executáveis, mas o controle ainda não foi implantado nem validado em processo |
 
 ## Registro inicial
 
@@ -39,15 +40,19 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Superfície:** configuração de bind, bootstrap e proxies legados.
 - **Cenário:** produção inicia em endereço público ou habilita transporte legado.
 - **Controles:** loopback obrigatório, bootstrap HTTP proibido e proxies
-  HTTP/WebSocket com falha fechada em produção.
+  HTTP/WebSocket com falha fechada em produção; SEC-03A define porta externa,
+  upstream fixo, validação offline e rollback sem reabrir o `sisterd`.
 - **Testes:** `tests/sisterd_transport_quarantine_test.py` e
-  `tests/sisterd_systemd_unit_test.py`.
+  `tests/sisterd_systemd_unit_test.py`; perfil em
+  `tests/gateway_security_profile_test.py`.
 - **Evidências:** ADR-0015, baseline `v0.2.5` e
-  `docs/evidence/alpha/security.md`.
-- **Risco residual:** erro operacional fora da configuração governada e ausência
-  do gateway definitivo; não autoriza exposição direta.
+  `docs/evidence/alpha/security.md`; ADR-0020 e perfil SEC-03A ainda não são
+  evidência de implantação.
+- **Risco residual:** o gateway ainda não está implantado; erro operacional fora
+  da configuração governada não autoriza exposição direta.
 - **Owner:** manutenção do `sisterd` e operação de plataforma.
-- **Estado:** `CONTROLLED_BASELINE`.
+- **Estado:** `CONTROLLED_BASELINE` para a quarentena do `sisterd`;
+  `PROFILE_DEFINED` para o subcontrole de gateway.
 
 ### TH-AUTHZ-01 — Rota sem autorização ou autorização excessiva
 
@@ -99,6 +104,25 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Owner:** manutenção de transporte interno do `sisterd`.
 - **Estado:** `CONTROLLED_BASELINE` em `v0.2.6`.
 
+### TH-HTTP-02 — Interpretação HTTP divergente na fronteira
+
+- **Ativo afetado:** integridade de roteamento, autorização e enquadramento das
+  requisições.
+- **Superfície:** parser externo do gateway e parser interno do `sisterd`.
+- **Cenário:** `Content-Length`, `Transfer-Encoding`, whitespace, Host ou método
+  recebem interpretações diferentes e permitem smuggling ou desvio de política.
+- **Controles definidos:** HAProxy em modo HTTP estrito; HTTP/1.1 único; CL
+  duplicado, TE, CL+TE e whitespace ambíguo rejeitados; Host e métodos em
+  allowlist.
+- **Testes definidos:** matriz diferencial de framing, Host, método e protocolo
+  em SEC-03V; mutações inseguras do perfil já falham no pipeline.
+- **Evidências:** ADR-0020, `docs/security/GATEWAY_SECURITY_PROFILE.md` e
+  `ops/gateway/security-profile.json`; evidência de processo pendente SEC-03V.
+- **Risco residual:** nenhum controle externo está implantado ou comparado ao
+  parser do `sisterd`.
+- **Owner:** manutenção do gateway e transporte do `sisterd`.
+- **Estado:** `PROFILE_DEFINED`.
+
 ### TH-HTTP-03 — Exaustão de recursos HTTP
 
 - **Ativo afetado:** workers, memória, conexões, descritores e disponibilidade.
@@ -106,14 +130,35 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Cenário:** corpo grande, requisição lenta ou cardinalidade de chaves esgota
   recursos.
 - **Controles:** tamanho máximo de corpo, fila e workers limitados, timeouts de
-  socket, buckets limitados, expiração e LRU.
+  socket, buckets limitados, expiração e LRU; SEC-03A define limites de borda,
+  deadlines absolutos, conexões e taxas multidimensionais.
 - **Testes:** `tests/security_hardening_tests.cpp` e
-  `tests/sisterd_http_hardening_test.py`.
-- **Evidências:** ADR-0019 e `docs/evidence/security/SEC-01C-01D.md`.
+  `tests/sisterd_http_hardening_test.py`; perfil em
+  `tests/gateway_security_profile_test.py`.
+- **Evidências:** ADR-0019, `docs/evidence/security/SEC-01C-01D.md`, ADR-0020 e
+  perfil SEC-03A; carga externa permanece pendente SEC-03V.
 - **Risco residual:** timeouts de socket não contêm Slowloris integralmente;
   deadlines absolutos, taxa mínima e quotas de borda pertencem ao SEC-03.
 - **Owner:** manutenção do `sisterd`; operação do gateway para o residual.
 - **Estado:** `PARTIALLY_CONTROLLED`.
+
+### TH-HTTP-04 — Headers externos tratados como autoridade
+
+- **Ativo afetado:** identidade, origem observada e correlação de auditoria.
+- **Superfície:** headers recebidos pelo gateway e encaminhados ao `sisterd`.
+- **Cenário:** cliente escolhe `X-Sister-*`, `Forwarded`, `X-Forwarded-*` ou
+  `X-Request-ID` e influencia autorização, contenção ou logs.
+- **Controles definidos:** remover todas as ocorrências externas, reconstruir
+  somente origem, host, protocolo e ID autorizados, e manter `X-Sister-*` sem
+  reconstrução.
+- **Testes definidos:** matriz de headers forjados e correlação ponta a ponta;
+  perfil rejeita qualquer confiança em valor fornecido pelo cliente.
+- **Evidências:** ADR-0020 e perfil SEC-03A; evidência de processo pendente
+  SEC-03V.
+- **Risco residual:** o isolamento do upstream e a confiança condicionada ainda
+  não foram implementados; o `sisterd` continua gerando seu próprio ID.
+- **Owner:** manutenção do gateway e do `sisterd`.
+- **Estado:** `PROFILE_DEFINED`.
 
 ### TH-CXX-02 — Exceção encerra worker ou processo
 
@@ -158,13 +203,62 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Cenário:** conexão persistente ocupa worker ou permanece sem limites
   adequados.
 - **Controles:** proxy proibido com falha fechada em produção e permitido apenas
-  por habilitação explícita no laboratório.
-- **Testes:** `tests/sisterd_transport_quarantine_test.py`.
-- **Evidências:** ADR-0015 e baseline `v0.2.5`.
+  por habilitação explícita no laboratório; SEC-03A nega todo `Upgrade` e
+  WebSocket na borda.
+- **Testes:** `tests/sisterd_transport_quarantine_test.py` e perfil mutado em
+  `tests/gateway_security_profile_test.py`; handshake real pendente SEC-03V.
+- **Evidências:** ADR-0015, baseline `v0.2.5`, ADR-0020 e perfil SEC-03A.
 - **Risco residual:** código legado ainda existe para caracterização em
   laboratório; WebSocket definitivo, quotas e prazos pertencem ao SEC-03.
 - **Owner:** arquitetura de transporte e operação do gateway.
 - **Estado:** `PARTIALLY_CONTROLLED`.
+
+### TH-PROXY-01 — Destino upstream controlável
+
+- **Ativo afetado:** serviços locais, metadados e fronteiras entre subsistemas.
+- **Superfície:** seleção do backend pelo gateway.
+- **Cenário:** Host, caminho, header ou resolução fornecida pelo cliente altera
+  o destino e transforma a borda em proxy aberto ou SSRF.
+- **Controles definidos:** único servidor literal `127.0.0.1:8000`, sem
+  descoberta dinâmica, `set-dst`, resolver ou acesso direto ao Nexo.
+- **Testes definidos:** manipulação de Host, caminho, headers e destino, além de
+  tentativa de acesso direto ao upstream.
+- **Evidências:** ADR-0020 e perfil SEC-03A; isolamento real pendente SEC-03B/V.
+- **Risco residual:** regra de host/cgroup ainda não implantada.
+- **Owner:** operação de plataforma e manutenção do gateway.
+- **Estado:** `PROFILE_DEFINED`.
+
+### TH-PROXY-02 — Upstream retém ou devolve recursos sem limite
+
+- **Ativo afetado:** conexões, memória e disponibilidade da borda.
+- **Superfície:** fila, conexão, resposta e falha do `sisterd`.
+- **Cenário:** upstream lento, indisponível ou excessivo retém recursos ou
+  produz resposta sem limite.
+- **Controles definidos:** prazos de fila, conexão e resposta; limite de 16 MiB;
+  destino único; falha externa fechada.
+- **Testes definidos:** upstream lento, ausente, fila saturada e resposta grande.
+- **Evidências:** ADR-0020 e perfil SEC-03A; execução pendente SEC-03V.
+- **Risco residual:** alta disponibilidade e streaming não pertencem à primeira
+  baseline.
+- **Owner:** manutenção do gateway e do `sisterd`.
+- **Estado:** `PROFILE_DEFINED`.
+
+### TH-AUD-01 — Correlação forjada ou log com segredo
+
+- **Ativo afetado:** evidência operacional, credenciais e material criptográfico.
+- **Superfície:** access log, métricas e `request_id` entre componentes.
+- **Cenário:** cliente escolhe o ID, campos sensíveis aparecem em logs ou eventos
+  não podem ser correlacionados.
+- **Controles definidos:** ID hexadecimal novo na borda, campos estruturados,
+  lista explícita de campos proibidos e métricas por regra de bloqueio.
+- **Testes definidos:** busca por cookie, autorização, corpo, query, asserção e
+  chave; correlação gateway–`sisterd`–Nexo–PostgreSQL.
+- **Evidências:** ADR-0020 e perfil SEC-03A; retenção, integridade e execução
+  pendentes SEC-03V.
+- **Risco residual:** o ID único ainda não atravessa o processo real e os logs
+  não possuem política operacional de retenção.
+- **Owner:** operação de observabilidade e manutenção dos serviços.
+- **Estado:** `PROFILE_DEFINED`.
 
 ## Controles não executados
 
@@ -187,7 +281,10 @@ O trabalho corrente mantém no máximo dois cartões simultâneos:
 | Concluído com restrição | `SEC-02V` — identidade interna read-only e shadow |
 | Concluído na baseline | `SEC-02M` — flag própria e política exata em `v0.2.7` |
 | Backlog bloqueante antes de escrita | `SEC-02R` — replay persistente ou garantia transacional equivalente |
-| Backlog imediato | `SEC-03` — gateway especializado |
+| Concluído como perfil, não implantado | `SEC-03A` — ADR-0020 e perfil executável |
+| Pronto | `SEC-03B` — gateway mínimo em laboratório |
+| Backlog imediato | `SEC-03C` — contenção de abuso na borda |
+| Validação | `SEC-03V` — matriz negativa e evidência de processo |
 | Backlog seguinte | `FED-01` — registro persistente de sistemas |
 
 Perda de controle, validade ou evidência pode regredir maturidade, suspender a
@@ -200,7 +297,8 @@ A Coordenação do Projeto SisTer aprova os owners e estados acima para a
 
 - Slowloris, deadlines absolutos e quotas de borda permanecem em
   `TH-HTTP-03`, desde que o `sisterd` continue restrito a loopback e sem papel de
-  servidor HTTP público até SEC-03.
+  servidor HTTP público até SEC-03V. SEC-03A define o controle, mas não reduz
+  esse risco sem implantação e teste.
 - A contenção de login usa o endereço diretamente observado; nenhuma confiança
   em origem encaminhada existe antes do gateway governado.
 - O proxy WebSocket legado permanece fisicamente presente apenas para
@@ -216,4 +314,5 @@ A aceitação não autoriza outra rota, capacidade de escrita, integração Comp
 exposição externa ou uso do `sisterd` como servidor HTTP público. SEC-02M
 garante que tais pedidos falham antes da emissão e da conexão upstream. Esta
 aprovação publica uma baseline interna de controles; não declara prontidão para
-produção externa.
+produção externa. Da mesma forma, `PROFILE_DEFINED` em SEC-03A não equivale a
+`CONTROLLED_BASELINE`: somente SEC-03B/C/V podem sustentar essa transição.

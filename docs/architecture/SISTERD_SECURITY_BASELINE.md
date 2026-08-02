@@ -106,8 +106,9 @@ backup e rollback.
 
 1. **SEC-02R:** tornar a proteção contra replay persistente ou transacional
    antes de qualquer capacidade de escrita.
-2. **SEC-03:** gateway especializado, contenção de abuso e adaptadores
-   conformantes para Nexo e Clima.
+2. **SEC-03B/C/V:** materializar e validar o gateway HAProxy conforme a
+   ADR-0020 e o perfil SEC-03A; Clima, WebSocket e expansão funcional continuam
+   fora dessa baseline.
 3. Eliminação definitiva do cookie na fronteira interna e remoção física dos
    proxies legados.
 4. Persistência transacional e governança completas de auditoria, políticas e

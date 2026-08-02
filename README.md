@@ -82,6 +82,11 @@ posterior e o SEC-02M converteu os limites aprovados em configuração e rota
 executáveis para a `v0.2.7`. Consulte o
 [alinhamento normativo](docs/architecture/EFE_SISTER_1_2_ALIGNMENT.md).
 
+SEC-03A define o gateway especializado como HAProxy Community 3.2 LTS e fixa
+um [perfil executável da fronteira](docs/security/GATEWAY_SECURITY_PROFILE.md).
+Esse perfil ainda não representa implantação nem autoriza exposição externa:
+SEC-03B, SEC-03C e SEC-03V continuam obrigatórios antes da `v0.2.8`.
+
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:
 
