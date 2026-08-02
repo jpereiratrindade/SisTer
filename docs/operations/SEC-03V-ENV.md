@@ -41,6 +41,13 @@ Antes de alterar o host:
 O wrapper Podman de `.run/gateway/haproxy-3.2.22` é suficiente para testes de
 laboratório, mas não é um pacote candidato para `/usr/local/sbin`.
 
+No Fedora 44 Workstation, a origem aprovada para este laboratório é o RPM local
+`sister-haproxy-lab`, produzido e assinado pelo procedimento versionado em
+[`packaging/haproxy/README.md`](../../packaging/haproxy/README.md). A instalação
+usa DNF com verificação da chave dedicada e `localpkg_gpgcheck=1`; não há
+`rpm-ostree` neste host. Build e assinatura não autorizam a instalação nem a
+ativação do serviço sem a revisão operacional de HAPROXY-RPM-01.
+
 ## Contas e grupos
 
 As identidades canônicas são:
