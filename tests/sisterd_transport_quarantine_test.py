@@ -1,17 +1,8 @@
 #!/usr/bin/env python3
-import http.client
 import os
-import socket
 import subprocess
 import sys
 import tempfile
-import time
-
-
-def reserve_port():
-    with socket.socket() as listener:
-        listener.bind(("127.0.0.1", 0))
-        return listener.getsockname()[1]
 
 
 def run_to_exit(executable, web_root, overrides):
@@ -19,7 +10,9 @@ def run_to_exit(executable, web_root, overrides):
     environment.update(
         {
             "SISTER_ENV": "production",
-            "SISTER_BIND_HOST": "127.0.0.1",
+            "SISTER_LISTENER_MODE": "systemd-unix",
+            "SISTER_ACTIVATED_SOCKET_PATH": "/run/sister/sisterd.sock",
+            "SISTER_WEB_ROOT": web_root,
             "SISTER_ENABLE_HTTP_BOOTSTRAP": "false",
             "SISTER_ENABLE_LEGACY_PROXY": "false",
             "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
@@ -30,7 +23,7 @@ def run_to_exit(executable, web_root, overrides):
     with tempfile.TemporaryDirectory(prefix="sisterd-transport-test-") as temporary:
         environment["SISTER_AUTH_FILE"] = os.path.join(temporary, "auth.tsv")
         return subprocess.run(
-            [executable, str(reserve_port()), web_root],
+            [executable],
             env=environment,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.PIPE,
@@ -46,82 +39,8 @@ def assert_rejected(executable, web_root, overrides, expected):
     assert expected in result.stderr, result.stderr
 
 
-def assert_safe_production_starts(executable, web_root):
-    port = reserve_port()
-    environment = os.environ.copy()
-    environment.update(
-        {
-            "SISTER_ENV": "production",
-            "SISTER_BIND_HOST": "127.0.0.1",
-            "SISTER_ENABLE_HTTP_BOOTSTRAP": "false",
-            "SISTER_ENABLE_LEGACY_PROXY": "false",
-            "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
-            "SISTER_DATABASE_URL": "",
-        }
-    )
-    with tempfile.TemporaryDirectory(prefix="sisterd-transport-test-") as temporary:
-        environment["SISTER_AUTH_FILE"] = os.path.join(temporary, "auth.tsv")
-        process = subprocess.Popen(
-            [executable, str(port), web_root],
-            env=environment,
-            stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
-            text=True,
-        )
-        try:
-            deadline = time.monotonic() + 5
-            while time.monotonic() < deadline:
-                if process.poll() is not None:
-                    raise AssertionError(process.stderr.read())
-                try:
-                    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=0.2)
-                    connection.request("GET", "/api/health")
-                    response = connection.getresponse()
-                    response.read()
-                    connection.close()
-                    if response.status == 200:
-                        break
-                except OSError:
-                    time.sleep(0.05)
-            else:
-                raise AssertionError("safe production configuration did not start")
-
-            for path in ("/integrations/clima/", "/integrations/nexo/"):
-                connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
-                connection.request("GET", path)
-                response = connection.getresponse()
-                response.read()
-                connection.close()
-                assert response.status == 404, (path, response.status)
-
-            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
-            connection.request("GET", "/api/auth/bootstrap")
-            response = connection.getresponse()
-            body = response.read()
-            connection.close()
-            assert response.status == 200, response.status
-            assert body == b'{"open":false,"http_enabled":false}', body
-
-            connection = http.client.HTTPConnection("127.0.0.1", port, timeout=1)
-            connection.request(
-                "POST", "/api/auth/register", body=b"{}",
-                headers={"Content-Type": "application/json"})
-            response = connection.getresponse()
-            response.read()
-            connection.close()
-            assert response.status == 403, response.status
-        finally:
-            process.terminate()
-            try:
-                process.wait(timeout=5)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
-
-
 def main():
     executable, web_root = sys.argv[1:3]
-    loopback_error = "production sisterd must bind to an IPv4 loopback address"
     assert_rejected(executable, web_root, {"SISTER_ENV": "developmnt"}, "invalid SISTER_ENV")
     assert_rejected(
         executable,
@@ -129,8 +48,15 @@ def main():
         {"SISTER_ENABLE_HTTP_BOOTSTRAP": "true"},
         "HTTP administrator bootstrap is forbidden in production",
     )
-    assert_rejected(executable, web_root, {"SISTER_BIND_HOST": "0.0.0.0"}, loopback_error)
-    assert_rejected(executable, web_root, {"SISTER_BIND_HOST": "192.0.2.10"}, loopback_error)
+    assert_rejected(
+        executable, web_root, {"SISTER_BIND_HOST": "127.0.0.1"},
+        "production TCP listener configuration is forbidden")
+    assert_rejected(
+        executable, web_root, {"SISTER_PORT": "8000"},
+        "production TCP listener configuration is forbidden")
+    assert_rejected(
+        executable, web_root, {"SISTER_LISTENER_MODE": "tcp-loopback"},
+        "requires the systemd-activated Unix listener")
     assert_rejected(
         executable,
         web_root,
@@ -143,7 +69,9 @@ def main():
         {"SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "true"},
         "legacy WebSocket proxy is forbidden in production",
     )
-    assert_safe_production_starts(executable, web_root)
+    assert_rejected(
+        executable, web_root, {},
+        "missing socket activation variable")
     print("sisterd_transport_quarantine_tests ok")
 
 

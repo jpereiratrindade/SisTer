@@ -125,7 +125,17 @@ add_test(
     COMMAND
         ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_systemd_unit_test.py
-        ${CMAKE_SOURCE_DIR}/ops/systemd/sisterd.service)
+        ${CMAKE_SOURCE_DIR}/ops/systemd/sisterd.service
+        ${CMAKE_SOURCE_DIR}/ops/systemd/sisterd.socket
+        ${CMAKE_SOURCE_DIR}/ops/tmpfiles.d/sister.conf)
+
+add_test(
+    NAME sisterd_unix_listener_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_unix_listener_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)
 
 add_test(
     NAME sisterd_maturity_api_tests
