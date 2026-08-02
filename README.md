@@ -88,8 +88,9 @@ Esse perfil ainda não representa implantação nem autoriza exposição externa
 SEC-03B foi encerrado como `LAB_PROVEN_WITH_RESTRICTIONS` por decisão explícita:
 normalização segura de `Content-Length`, remoção de Upgrade isolado e exceção
 restrita para Host idêntico duplicado. A
-[evidência SEC-03B](docs/evidence/security/SEC-03B.md) autoriza iniciar SEC-03C;
-SEC-03C e SEC-03V continuam obrigatórios antes da `v0.2.8`.
+[evidência SEC-03C](docs/evidence/security/SEC-03C.md) encerra a contenção de
+abuso em laboratório com restrições e autoriza iniciar ISO-01. ISO-01 e SEC-03V
+continuam obrigatórios antes de merge controlado ou `v0.2.8`.
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:

@@ -7,7 +7,7 @@ Contratos iniciais:
 - `gateway_security_profile.schema.json`: perfil executável 1.1 da fronteira;
   SEC-03B está provado com restrições, mas a instância normativa em
   `ops/gateway/security-profile.json` não representa implantação antes de
-  SEC-03C/V.
+  ISO-01/SEC-03V após o fechamento restrito de SEC-03C.
 - `subsystem/1.0.0/`: contrato comum `sister.subsystem/1.0.0` para
   manifestos, saúde, prontidão, capacidades, identidade interna, erros,
   auditoria e superfície técnica de subsistemas.

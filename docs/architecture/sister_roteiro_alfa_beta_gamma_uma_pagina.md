@@ -28,7 +28,7 @@ interna Ed25519 somente para operação interna, read-only e shadow; SEC-02M
 separou o cliente Nexo do proxy legado e restringiu a emissão a uma rota exata.
 Esse escopo forma a `v0.2.7`. Escrita depende de SEC-02R e produção externa
 permanece bloqueada. SEC-03A definiu ADR-0020 e o perfil executável da borda;
-SEC-03B foi encerrado com restrições; SEC-03C/V continuam necessários antes da
+SEC-03C foi encerrado com restrições; ISO-01/SEC-03V continuam necessários antes da
 `v0.2.8`.
 
 Consulte a [baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md)

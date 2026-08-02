@@ -132,14 +132,13 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Controles:** tamanho máximo de corpo, fila e workers limitados, timeouts de
   socket, buckets limitados, expiração e LRU; SEC-03A define limites de borda,
   deadlines absolutos, conexões e taxas multidimensionais.
-- **Testes:** `tests/security_hardening_tests.cpp` e
-  `tests/sisterd_http_hardening_test.py`; perfil em
-  `tests/gateway_security_profile_test.py`.
+- **Testes:** `tests/security_hardening_tests.cpp`,
+  `tests/sisterd_http_hardening_test.py`, perfil executável e laboratórios
+  `gateway_abuse_test.py`/`gateway_slow_client_test.py`.
 - **Evidências:** ADR-0019, `docs/evidence/security/SEC-01C-01D.md`, ADR-0020 e
-  perfil SEC-03A; carga externa permanece pendente SEC-03V.
-- **Risco residual:** timeouts de socket não contêm Slowloris integralmente;
-  deadlines absolutos e quotas de borda pertencem ao SEC-03; o mecanismo de
-  taxa mínima permanece explicitamente não comprovado para SEC-03B.
+  `docs/evidence/security/SEC-03C.md`; carga externa permanece pendente SEC-03V.
+- **Risco residual:** deadline absoluto integral do corpo e taxa mínima exata
+  permanecem não comprovados; limites ainda não foram calibrados sob carga real.
 - **Owner:** manutenção do `sisterd`; operação do gateway para o residual.
 - **Estado:** `PARTIALLY_CONTROLLED`.
 
@@ -224,7 +223,7 @@ evidências registram execuções; nenhum deles substitui este modelo.
   descoberta dinâmica, `set-dst`, resolver ou acesso direto ao Nexo.
 - **Testes definidos:** manipulação de Host, caminho, headers e destino, além de
   tentativa de acesso direto ao upstream.
-- **Evidências:** ADR-0020 e perfil SEC-03A; isolamento real pendente SEC-03B/V.
+- **Evidências:** ADR-0020 e perfil SEC-03A; isolamento real pendente ISO-01/SEC-03V.
 - **Risco residual:** regra de host/cgroup ainda não implantada.
 - **Owner:** operação de plataforma e manutenção do gateway.
 - **Estado:** `PROFILE_DEFINED`.
@@ -238,12 +237,13 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Controles definidos:** prazos de fila, conexão e resposta; alvo de limite de
   16 MiB; destino único; falha externa fechada.
 - **Testes definidos:** upstream lento, ausente, fila saturada e resposta grande.
-- **Evidências:** ADR-0020 e perfil SEC-03A; execução pendente SEC-03V.
+- **Evidências:** ADR-0020, perfil e laboratório SEC-03C para ausência,
+  lentidão, saturação e recuperação; resposta grande permanece em SEC-03V.
 - **Risco residual:** o mecanismo simples para interromper resposta em 16 MiB
   ainda não foi comprovado; alta disponibilidade e streaming não pertencem à
   primeira baseline.
 - **Owner:** manutenção do gateway e do `sisterd`.
-- **Estado:** `PROFILE_DEFINED`.
+- **Estado:** `PARTIALLY_CONTROLLED`.
 
 ### TH-AUD-01 — Correlação forjada ou log com segredo
 
@@ -255,12 +255,12 @@ evidências registram execuções; nenhum deles substitui este modelo.
   lista explícita de campos proibidos e métricas por regra de bloqueio.
 - **Testes definidos:** busca por cookie, autorização, corpo, query, asserção e
   chave; correlação gateway–`sisterd`–Nexo–PostgreSQL.
-- **Evidências:** ADR-0020 e perfil SEC-03A; retenção, integridade e execução
-  pendentes SEC-03V.
+- **Evidências:** ADR-0020 e SEC-03C provam sanitização e bloqueios; retenção,
+  integridade e correlação ponta a ponta permanecem pendentes SEC-03V.
 - **Risco residual:** o ID único ainda não atravessa o processo real e os logs
   não possuem política operacional de retenção.
 - **Owner:** operação de observabilidade e manutenção dos serviços.
-- **Estado:** `PROFILE_DEFINED`.
+- **Estado:** `PARTIALLY_CONTROLLED`.
 
 ## Controles não executados
 
@@ -285,7 +285,8 @@ O trabalho corrente mantém no máximo dois cartões simultâneos:
 | Backlog bloqueante antes de escrita | `SEC-02R` — replay persistente ou garantia transacional equivalente |
 | Concluído como perfil, não implantado | `SEC-03A` — ADR-0020 e perfil executável |
 | Concluído com restrições | `SEC-03B` — normalizações resolvidas; Host idêntico duplicado aceito como divergência governada |
-| Pronto | `SEC-03C` — contenção de abuso na borda |
+| Concluído com restrições | `SEC-03C` — contenção de abuso e recursos na borda |
+| Próximo bloqueante | `ISO-01` — isolamento local do upstream |
 | Validação | `SEC-03V` — matriz negativa e evidência de processo |
 | Backlog seguinte | `FED-01` — registro persistente de sistemas |
 
@@ -302,7 +303,8 @@ A Coordenação do Projeto SisTer aprova os owners e estados acima para a
   servidor HTTP público até SEC-03V. SEC-03A define o controle, mas não reduz
   esse risco sem implantação e teste. SEC-03B comprova a fronteira mínima em
   loopback e aceita de modo restrito a divergência de Host idêntico duplicado,
-  com revisão obrigatória em SEC-03V.
+  com revisão obrigatória em SEC-03V. SEC-03C comprova quotas, timeouts, fila e
+  logs no laboratório, mantendo o deadline absoluto do corpo como parcial.
 - A contenção de login usa o endereço diretamente observado; nenhuma confiança
   em origem encaminhada existe antes do gateway governado.
 - O proxy WebSocket legado permanece fisicamente presente apenas para
@@ -319,5 +321,5 @@ exposição externa ou uso do `sisterd` como servidor HTTP público. SEC-02M
 garante que tais pedidos falham antes da emissão e da conexão upstream. Esta
 aprovação publica uma baseline interna de controles; não declara prontidão para
 produção externa. Da mesma forma, `PROFILE_DEFINED` em SEC-03A não equivale a
-`CONTROLLED_BASELINE`: somente SEC-03C/V podem sustentar essa transição após o
-fechamento restrito de SEC-03B.
+`CONTROLLED_BASELINE`: SEC-03C encerrou o laboratório com restrições, mas
+ISO-01 e SEC-03V ainda são necessários antes dessa transição.

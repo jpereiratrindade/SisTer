@@ -1,10 +1,10 @@
 # Perfil executável de segurança da fronteira HTTP
 
-**Identificador:** `sister.gateway-security-profile/1.1.0`
+**Identificador:** `sister.gateway-security-profile/1.2.0`
 
-**Gate:** SEC-03C
+**Gate:** SEC-03C encerrado; próximo gate ISO-01
 
-**Estado:** SEC-03B encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`; ainda não implantado
+**Estado:** SEC-03C encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`; ainda não implantado
 
 **Decisão:** [ADR-0020](../adr/ADR-0020-specialized-http-gateway.md)
 
@@ -38,9 +38,11 @@ protocolo ou gate de segurança exige revisão do MAES e nova decisão de risco.
 | Corpo | 1 MiB global; 64 KiB em `/api/auth/*` |
 | Taxa mínima recebida | alvo de 1 KiB/s; mecanismo ainda não comprovado |
 | Resposta upstream | alvo de 16 MiB; mecanismo ainda não comprovado |
-| Headers/corpo | deadlines absolutos de 5 s/10 s |
+| Headers/corpo | headers em 5 s; corpo interrompido contido por inatividade em 15 s |
 | Conexões | 1024 globais; 32 por origem |
-| Rate limiting | global, origem, rota e login |
+| Upstream/fila | 32 conexões; 64 entradas por até 2 s |
+| Rate limiting | 1000/10 s global; 120/60 s por origem; 60/60 s por origem+rota; 10/60 s no login |
+| Stick tables | capacidades explícitas, expiração, expulsão e métricas por socket privado |
 | HSTS | desligado até gate operacional próprio |
 
 ## Matriz executável de realizabilidade
@@ -53,6 +55,7 @@ protocolo ou gate de segurança exige revisão do MAES e nova decisão de risco.
   `PROVEN_BY_STRIPPING`: resultado reproduzido no laboratório;
 - `ACCEPTED_LAB_DIVERGENCE`: divergência literal aceita com owner, escopo,
   risco e condição de reabertura;
+- `PARTIALLY_PROVEN`: contenção observada sem comprovar a forma exata integral;
 - `DEFERRED_TO_SEC-03V` e `SEC-03C_PENDING`: controle preservado em gate futuro;
 - `MECHANISM_UNPROVEN`: nenhum mecanismo simples foi aceito e o controle não
   pode ser declarado implementado.
@@ -75,6 +78,23 @@ restrita sem reinterpretar divergência como conformidade.
 A exceção de Host é reaberta por múltiplos hosts, certificados, backends,
 destino dinâmico ou mudança de linha/representação HTTP. SEC-03V é o gate de
 revisão. A resolução autoriza SEC-03C, mas não merge, release ou exposição.
+
+## Resolução do laboratório SEC-03C
+
+Os quatro limitadores independentes, conexões por origem, concorrência do
+upstream, fila e tabelas limitadas foram comprovados. `429` inclui
+`Retry-After` e não alcança o upstream; `503`/`504` são controlados; o retorno do
+upstream restaura o serviço sem reiniciar o gateway. Logs estruturados expõem
+tempos de fila e upstream, regra e resultado do limitador sem query ou segredos.
+
+Handshake, headers, keep-alive e corpo interrompido não retêm recursos
+indefinidamente. O corpo, porém, está limitado por inatividade depois dos
+headers, não por deadline absoluto integral; esse aspecto é
+`PARTIALLY_PROVEN`. Taxa mínima de 1 KiB/s e resposta máxima de 16 MiB continuam
+`MECHANISM_UNPROVEN`. Veja a [evidência SEC-03C](../evidence/security/SEC-03C.md).
+
+SEC-03C autoriza somente iniciar ISO-01. `main`, `VERSION`, tags, release e
+exposição externa permanecem bloqueados até SEC-03V.
 
 ## Política de confiança
 

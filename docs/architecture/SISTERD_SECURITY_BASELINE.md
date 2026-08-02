@@ -106,8 +106,8 @@ backup e rollback.
 
 1. **SEC-02R:** tornar a proteção contra replay persistente ou transacional
    antes de qualquer capacidade de escrita.
-2. **SEC-03C/V:** após o fechamento restrito de SEC-03B, implementar contenção,
-   executar o E2E governado com Nexo/PostgreSQL, revisar a exceção de Host e
+2. **ISO-01/SEC-03V:** após o fechamento restrito de SEC-03C, isolar localmente
+   o upstream, executar o E2E governado com Nexo/PostgreSQL, revisar a exceção de Host e
    concluir a validação formal; Clima, WebSocket e expansão funcional continuam
    fora desta baseline.
 3. Eliminação definitiva do cookie na fronteira interna e remoção física dos

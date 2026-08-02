@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita — SEC-03B encerrado com restrições; implantação bloqueada até SEC-03C/V
+Aceita — SEC-03C encerrado com restrições; implantação bloqueada até ISO-01/SEC-03V
 
 ## Contexto
 
@@ -170,7 +170,7 @@ HAProxy direta. SEC-03B começa pela seguinte matriz:
 | resposta até 16 MiB | mecanismo ainda não aceito | `MECHANISM_UNPROVEN` |
 | request ID com 32 hex | `unique-id-format` e `unique-id-header` | `LAB_PROOF_REQUIRED` |
 | remoção de `X-Sister-*` | regras de remoção de headers | `LAB_PROOF_REQUIRED` |
-| rate limiting | stick tables e contadores | `NATIVE_DOCUMENTED` |
+| rate limiting | stick tables e contadores | `PROVEN` em SEC-03C |
 
 Lua, plugins e módulos de terceiros permanecem proibidos. Se um requisito não
 puder ser realizado nativamente e de forma simples, o laboratório registra a
@@ -215,7 +215,9 @@ legado, abre `8000` externamente ou reduz TLS/limites.
 - **SEC-03A:** ADR, perfil, esquema, validador e matriz de ameaças.
 - **SEC-03B:** concluído no laboratório com a resolução SEC-03B-R e exceção de
   Host restrita.
-- **SEC-03C:** deadlines, conexões, rate limiting e métricas de abuso.
+- **SEC-03C:** concluído em laboratório com limites, falhas controladas e logs
+  sanitizados; deadline absoluto do corpo permanece parcial.
+- **ISO-01:** isolamento local do upstream por usuário/cgroup.
 - **SEC-03V:** matriz negativa, composição gateway/Nexo/PostgreSQL, revisão da
   exceção de Host, evidência e decisão de risco.
 

@@ -1,10 +1,10 @@
-# HAProxy de laboratório — SEC-03B
+# HAProxy de laboratório — SEC-03B/03C
 
 Este diretório contém somente fontes versionadas. Configuração renderizada,
 certificados, chaves, PID e logs pertencem a `.run/gateway/`, que é ignorado
 pelo Git.
 
-O template materializa apenas a primeira fatia de SEC-03B:
+O template materializa a fronteira validada nos laboratórios SEC-03B/03C:
 
 - listener `127.0.0.1:8443`, TLS 1.3 e HTTP/1.1;
 - SNI estrito, Host/porta exatos, absolute-form recusado e métodos em allowlist;
@@ -15,9 +15,12 @@ O template materializa apenas a primeira fatia de SEC-03B:
 - limites declarados de corpo;
 - remoção dos headers externos governados e criação de novo request ID;
 - health check do `sisterd`.
+- limites independentes global, por origem, rota e login;
+- conexões, concorrência upstream, fila e stick tables limitadas;
+- falhas JSON controladas e log estruturado sem query ou segredos.
 
-Não contém rate limiting, isolamento por usuário/cgroup, confiança do `sisterd`
-nos headers, limite de resposta ou taxa mínima. Lua, plugins, resolvers,
+Não contém isolamento por usuário/cgroup, confiança do `sisterd` nos headers,
+limite de resposta ou taxa mínima. Lua, plugins, resolvers,
 destinos dinâmicos e backends controlados pelo cliente são proibidos.
 
 Renderização e validação:
@@ -48,6 +51,9 @@ SEC-03B está encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`: `Content-Length`
 idêntico é normalizado com segurança, campos Upgrade isolados são removidos e
 Host idêntico duplicado permanece `ACCEPTED_LAB_DIVERGENCE` sob autoridade
 canônica única. Isso autoriza SEC-03C, não implantação ou exposição.
+
+SEC-03C também está encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`. Sua evidência
+autoriza iniciar ISO-01, mas não merge, implantação, release, tag ou exposição.
 
 O binário deve pertencer à linha 3.2 e ser 3.2.22 ou posterior. O renderizador
 recusa caminhos relativos, permissões excessivas, interface pública, porta 443
