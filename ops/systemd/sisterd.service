@@ -1,6 +1,7 @@
 [Unit]
 Description=Servidor SisTer (Produção)
-After=network.target postgresql.service
+Requires=sisterd.socket
+After=sisterd.socket network.target postgresql.service
 
 [Service]
 Type=simple
@@ -16,8 +17,8 @@ EnvironmentFile=/etc/sister/sister.env
 
 # Variáveis de ambiente de configuração geral (sem credenciais)
 Environment=SISTER_ENV=production
-Environment=SISTER_BIND_HOST=127.0.0.1
-Environment=SISTER_PORT=8000
+Environment=SISTER_LISTENER_MODE=systemd-unix
+Environment=SISTER_ACTIVATED_SOCKET_PATH=/run/sister/sisterd.sock
 Environment=SISTER_COOKIE_SECURE=true
 Environment=SISTER_ENABLE_HTTP_BOOTSTRAP=false
 Environment=SISTER_ENABLE_LEGACY_PROXY=false
@@ -30,7 +31,7 @@ StateDirectory=sister
 StateDirectoryMode=0700
 
 # Comando que inicia o sistema
-ExecStart=/opt/sister/build/apps/sisterd/sisterd 8000 web
+ExecStart=/opt/sister/build/apps/sisterd/sisterd
 
 # Regras de reinício automático
 Restart=always

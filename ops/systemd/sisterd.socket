@@ -1,0 +1,18 @@
+[Unit]
+Description=Socket interno do plano de controle SisTer
+Before=sisterd.service
+
+[Socket]
+ListenStream=/run/sister/sisterd.sock
+FileDescriptorName=sisterd-http
+Accept=no
+Backlog=256
+SocketUser=sister
+SocketGroup=haproxy
+SocketMode=0660
+DirectoryMode=0750
+RemoveOnStop=yes
+Service=sisterd.service
+
+[Install]
+WantedBy=sockets.target

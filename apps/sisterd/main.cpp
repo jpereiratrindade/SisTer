@@ -7,6 +7,7 @@
 #include "identity/key_provider.hpp"
 #include "integrations/nexo_client.hpp"
 #include "runtime/connection_thread_pool.hpp"
+#include "runtime/listener.hpp"
 #include "security/login_rate_limiter.hpp"
 
 #include <arpa/inet.h>
@@ -16,6 +17,7 @@
 #include <poll.h>
 #include <sys/select.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <unistd.h>
 
 #include <algorithm>
@@ -72,6 +74,8 @@ struct ServerConfig {
     std::filesystem::path webRoot = "web";
     std::filesystem::path canonicalWebRoot;
     std::string bindHost = "127.0.0.1";
+    bool activatedUnixListener = false;
+    std::filesystem::path activatedSocketPath = "/run/sister/sisterd.sock";
     std::filesystem::path authFile = ".run/auth-users.tsv";
     std::filesystem::path maturityRoot = ".run/maturity";
     std::string databaseUrl;
@@ -230,9 +234,35 @@ ServerConfig loadConfig(int argc, char** argv) {
         throw std::runtime_error("invalid SISTER_ENV: " + environmentName);
     }
 
-    const auto configuredPort = environment("SISTER_PORT").value_or("8000");
-    config.port = parseInteger<int>(configuredPort, 1, 65535, "SISTER_PORT");
-    if (argc >= 2) config.port = parseInteger<int>(argv[1], 1, 65535, "port argument");
+    const std::string listenerMode = lowercase(environment("SISTER_LISTENER_MODE").value_or(
+        config.production ? "systemd-unix" : "tcp-loopback"));
+    if (listenerMode == "systemd-unix") {
+        config.activatedUnixListener = true;
+    } else if (listenerMode == "tcp-loopback") {
+        config.activatedUnixListener = false;
+    } else {
+        throw std::runtime_error("invalid SISTER_LISTENER_MODE: " + listenerMode);
+    }
+    config.activatedSocketPath = environment("SISTER_ACTIVATED_SOCKET_PATH")
+        .value_or("/run/sister/sisterd.sock");
+
+    if (config.production) {
+        if (!config.activatedUnixListener) {
+            throw std::runtime_error("production sisterd requires the systemd-activated Unix listener");
+        }
+        if (config.activatedSocketPath != "/run/sister/sisterd.sock") {
+            throw std::runtime_error("production sisterd requires /run/sister/sisterd.sock");
+        }
+        if (environment("SISTER_BIND_HOST") || environment("SISTER_PORT") || argc >= 2) {
+            throw std::runtime_error("production TCP listener configuration is forbidden");
+        }
+    } else if (!config.activatedUnixListener) {
+        const auto configuredPort = environment("SISTER_PORT").value_or("8000");
+        config.port = parseInteger<int>(configuredPort, 1, 65535, "SISTER_PORT");
+        if (argc >= 2) config.port = parseInteger<int>(argv[1], 1, 65535, "port argument");
+    } else if (argc >= 2) {
+        throw std::runtime_error("port argument cannot be combined with an activated Unix listener");
+    }
 
     config.webRoot = environment("SISTER_WEB_ROOT").value_or("web");
     if (argc >= 3) config.webRoot = argv[2];
@@ -259,9 +289,12 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.nexoSignedIntegrationEnabled = parseBool(
         environment("SISTER_ENABLE_NEXO_SIGNED_INTEGRATION").value_or("false"), false);
 
-    if (config.production && !isIpv4Loopback(config.bindHost)) {
-        throw std::runtime_error(
-            "production sisterd must bind to an IPv4 loopback address; expose only the gateway");
+    const auto tcpFallback = environment("SISTER_ALLOW_TCP_FALLBACK");
+    if (tcpFallback && parseBool(*tcpFallback, false)) {
+        throw std::runtime_error("TCP listener fallback is forbidden");
+    }
+    if (!config.activatedUnixListener && !isIpv4Loopback(config.bindHost)) {
+        throw std::runtime_error("TCP listener requires an IPv4 loopback address");
     }
     if (config.production && config.httpBootstrapEnabled) {
         throw std::runtime_error(
@@ -2247,43 +2280,26 @@ int main(int argc, char** argv) {
     std::signal(SIGINT, handleSignal);
     std::signal(SIGTERM, handleSignal);
 
+    sisterd::runtime::Listener acquiredListener;
+    try {
+        acquiredListener = config.activatedUnixListener
+            ? sisterd::runtime::acquireActivatedUnixListener(
+                config.activatedSocketPath.string(), config.production)
+            : sisterd::runtime::createTcpLoopbackListener(
+                config.bindHost, config.port, config.queueLimit);
+    } catch (const std::exception& ex) {
+        std::cerr << "listener error: " << ex.what() << '\n';
+        return 1;
+    }
+    UniqueFd server(acquiredListener.fd);
+
     AppState state(config.authFile, config.databaseUrl);
     sisterd::security::LoginRateLimiter rateLimiter;
 
-    UniqueFd server(socket(AF_INET, SOCK_STREAM, 0));
-    if (!server) {
-        std::cerr << "socket failed: " << std::strerror(errno) << '\n';
-        return 1;
-    }
-
-    int opt = 1;
-    setsockopt(server.get(), SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt));
-#ifdef SO_REUSEPORT
-    setsockopt(server.get(), SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt));
-#endif
-
-    sockaddr_in address{};
-    address.sin_family = AF_INET;
-    if (inet_pton(AF_INET, config.bindHost.c_str(), &address.sin_addr) != 1) {
-        std::cerr << "invalid IPv4 bind host: " << config.bindHost << '\n';
-        return 1;
-    }
-    address.sin_port = htons(static_cast<uint16_t>(config.port));
-
-    if (bind(server.get(), reinterpret_cast<sockaddr*>(&address), sizeof(address)) < 0) {
-        std::cerr << "bind failed: " << std::strerror(errno) << '\n';
-        return 1;
-    }
-
-    if (listen(server.get(), static_cast<int>(config.queueLimit)) < 0) {
-        std::cerr << "listen failed: " << std::strerror(errno) << '\n';
-        return 1;
-    }
-
     {
         std::lock_guard lock(gLogMutex);
-        std::cerr << "level=info sisterd listening on http://"
-                  << config.bindHost << ':' << config.port
+        std::cerr << "level=info sisterd listening on "
+                  << acquiredListener.description
                   << " web_root=" << config.canonicalWebRoot.string()
                   << " workers=" << config.workerThreads
                   << " env=" << (config.production ? "production" : "development")
@@ -2322,7 +2338,7 @@ int main(int argc, char** argv) {
         }
         if (ready == 0) continue;
 
-        sockaddr_in clientAddress{};
+        sockaddr_storage clientAddress{};
         socklen_t clientLength = sizeof(clientAddress);
         const int clientFd = accept(
             server.get(), reinterpret_cast<sockaddr*>(&clientAddress), &clientLength);
@@ -2332,12 +2348,25 @@ int main(int argc, char** argv) {
             break;
         }
 
-        char peerBuf[INET_ADDRSTRLEN] = {};
-        inet_ntop(AF_INET, &clientAddress.sin_addr, peerBuf, sizeof(peerBuf));
-        const std::string peer = std::string(peerBuf) + ':' +
-            std::to_string(ntohs(clientAddress.sin_port));
+        std::string peer;
+        std::string remoteAddress;
+        if (acquiredListener.unixSocket) {
+            peer = "unix-gateway";
+            remoteAddress = "unix-gateway";
+        } else {
+            const auto* ipv4 = reinterpret_cast<const sockaddr_in*>(&clientAddress);
+            char peerBuf[INET_ADDRSTRLEN] = {};
+            if (clientAddress.ss_family != AF_INET ||
+                inet_ntop(AF_INET, &ipv4->sin_addr, peerBuf, sizeof(peerBuf)) == nullptr) {
+                close(clientFd);
+                std::cerr << "level=warn detail=\"connection rejected: unexpected peer family\"\n";
+                continue;
+            }
+            remoteAddress = peerBuf;
+            peer = remoteAddress + ':' + std::to_string(ntohs(ipv4->sin_port));
+        }
 
-        if (!pool.submit({clientFd, peer, peerBuf})) {
+        if (!pool.submit({clientFd, peer, remoteAddress})) {
             close(clientFd);
             std::lock_guard lock(gLogMutex);
             std::cerr << "level=warn detail=\"connection rejected: queue full\" peer=\"" << peer << "\"\n";

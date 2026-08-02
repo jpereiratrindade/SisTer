@@ -31,12 +31,19 @@ export SISTER_DATABASE_URL="${SISTER_DATABASE_URL:-postgresql://sister:sister@lo
 # Check if migrate.sh supports 'production', if not just run goose directly or adjust the script
 ./scripts/db/migrate.sh production || echo "Migration script may not support production environment natively yet. Check scripts/lib/sister_env.sh."
 
-# 4. Restart the systemd service
-echo "==> Restarting systemd service..."
+# 4. Install the governed socket-activation units and restart the service
+echo "==> Installing systemd socket activation..."
 # Use sudo if the script isn't running as root
 if command -v systemctl >/dev/null 2>&1; then
-  sudo systemctl restart sisterd
+  sudo install -o root -g root -m 0644 ops/systemd/sisterd.service /etc/systemd/system/sisterd.service
+  sudo install -o root -g root -m 0644 ops/systemd/sisterd.socket /etc/systemd/system/sisterd.socket
+  sudo install -o root -g root -m 0644 ops/tmpfiles.d/sister.conf /etc/tmpfiles.d/sister.conf
+  sudo systemd-tmpfiles --create /etc/tmpfiles.d/sister.conf
+  sudo systemctl daemon-reload
+  sudo systemctl enable --now sisterd.socket
+  sudo systemctl try-restart sisterd.service
   echo "==> Checking service status..."
+  sudo systemctl status sisterd.socket --no-pager || true
   sudo systemctl status sisterd --no-pager || true
 else
   echo "Warning: systemctl not found. Service not restarted."

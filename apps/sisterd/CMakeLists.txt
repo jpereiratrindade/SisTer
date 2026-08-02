@@ -13,6 +13,7 @@ add_executable(
     identity/internal_assertion.cpp
     integrations/nexo_client.cpp
     runtime/connection_thread_pool.cpp
+    runtime/listener.cpp
     security/login_rate_limiter.cpp
 )
 
