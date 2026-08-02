@@ -15,6 +15,11 @@ PROFILE_PATH = ROOT / "ops/gateway/security-profile.json"
 TEMPLATE_PATH = ROOT / "ops/gateway/haproxy/haproxy.cfg.in"
 RUN_ROOT = ROOT / ".run/gateway"
 DEFAULT_OUTPUT = RUN_ROOT / "haproxy.cfg"
+CANDIDATE_CONFIG = Path("/etc/sister/gateway/haproxy.cfg")
+CANDIDATE_TLS_PEM = Path("/etc/sister/gateway/tls.pem")
+CANDIDATE_ERROR_ROOT = Path("/etc/sister/gateway/errors")
+CANDIDATE_STATS_SOCKET = Path("/run/sister-gateway/haproxy.sock")
+CANDIDATE_UPSTREAM_SOCKET = Path("/run/sister/sisterd.sock")
 
 sys.path.insert(0, str(ROOT / "scripts"))
 from validate_gateway_security_profile import load_json, validate_profile  # noqa: E402
@@ -54,12 +59,12 @@ def require_inside_run_root(path, name):
         raise RenderError(f"{name} must remain inside {run_root}")
 
 
-def require_private_file(path, name):
+def require_private_file(path, name, maximum_mode=0o600):
     if path.is_symlink() or not path.is_file():
         raise RenderError(f"{name} must be a regular non-symlink file")
     permissions = stat.S_IMODE(path.stat().st_mode)
-    if permissions & 0o077:
-        raise RenderError(f"{name} permissions must be 0600 or stricter")
+    if permissions & ~maximum_mode:
+        raise RenderError(f"{name} permissions must be {maximum_mode:04o} or stricter")
 
 
 def haproxy_version(binary):
@@ -80,7 +85,7 @@ def haproxy_version(binary):
     return f"{major}.{minor}.{patch}"
 
 
-def checked_environment(environment):
+def checked_environment(environment, scope="lab"):
     required = {
         "GATEWAY_TLS_PEM",
         "GATEWAY_ALLOWED_HOST",
@@ -109,23 +114,35 @@ def checked_environment(environment):
         "GATEWAY_STATS_SOCKET": str((RUN_ROOT / "haproxy.sock").resolve()),
     }
     if values["GATEWAY_LISTEN_ADDRESS"] != "127.0.0.1":
-        raise RenderError("laboratory listener must be 127.0.0.1")
+        raise RenderError(f"{scope} listener must be 127.0.0.1")
     if values["GATEWAY_LISTEN_PORT"] != "8443":
-        raise RenderError("laboratory listener port must be 8443")
+        raise RenderError(f"{scope} listener port must be 8443")
     upstream_socket = require_absolute_safe_path(
         values["GATEWAY_UPSTREAM_SOCKET"], "GATEWAY_UPSTREAM_SOCKET")
-    require_inside_run_root(upstream_socket, "GATEWAY_UPSTREAM_SOCKET")
-    if upstream_socket != (RUN_ROOT / "sisterd.sock").resolve():
-        raise RenderError("laboratory upstream must use the governed runtime Unix socket")
+    if scope == "lab":
+        require_inside_run_root(upstream_socket, "GATEWAY_UPSTREAM_SOCKET")
+        if upstream_socket != (RUN_ROOT / "sisterd.sock").resolve():
+            raise RenderError("laboratory upstream must use the governed runtime Unix socket")
+    elif upstream_socket != CANDIDATE_UPSTREAM_SOCKET:
+        raise RenderError("candidate upstream must use /run/sister/sisterd.sock")
     allowed_host = values["GATEWAY_ALLOWED_HOST"]
     if not HOST.fullmatch(allowed_host) or "*" in allowed_host or not allowed_host.endswith(".test"):
-        raise RenderError("laboratory Host must be one exact DNS name under .test")
+        raise RenderError(f"{scope} Host must be one exact DNS name under .test")
     if values["GATEWAY_CANONICAL_HOST"] != allowed_host:
-        raise RenderError("canonical and allowed laboratory Host must match")
+        raise RenderError(f"canonical and allowed {scope} Host must match")
 
     pem = require_absolute_safe_path(values["GATEWAY_TLS_PEM"], "GATEWAY_TLS_PEM", must_exist=True)
-    require_inside_run_root(pem, "GATEWAY_TLS_PEM")
-    require_private_file(pem, "GATEWAY_TLS_PEM")
+    if scope == "lab":
+        require_inside_run_root(pem, "GATEWAY_TLS_PEM")
+        require_private_file(pem, "GATEWAY_TLS_PEM")
+    else:
+        if pem != CANDIDATE_TLS_PEM:
+            raise RenderError("candidate TLS PEM must be /etc/sister/gateway/tls.pem")
+        require_private_file(pem, "GATEWAY_TLS_PEM", 0o640)
+        if not CANDIDATE_ERROR_ROOT.is_dir():
+            raise RenderError("candidate error root must be /etc/sister/gateway/errors")
+        values["GATEWAY_ERROR_ROOT"] = str(CANDIDATE_ERROR_ROOT)
+        values["GATEWAY_STATS_SOCKET"] = str(CANDIDATE_STATS_SOCKET)
     binary = require_absolute_safe_path(
         environment["GATEWAY_HAPROXY_BIN"],
         "GATEWAY_HAPROXY_BIN",
@@ -170,10 +187,16 @@ def render(template, values):
     return rendered
 
 
-def write_private_atomic(output, content):
-    require_inside_run_root(output, "output")
-    output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    os.chmod(output.parent, 0o700)
+def write_private_atomic(output, content, scope="lab"):
+    if scope == "lab":
+        require_inside_run_root(output, "output")
+    elif output != CANDIDATE_CONFIG:
+        raise RenderError("candidate output must be /etc/sister/gateway/haproxy.cfg")
+    if scope == "lab":
+        output.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+        os.chmod(output.parent, 0o700)
+    elif not output.parent.is_dir():
+        raise RenderError("candidate configuration directory must already exist")
     descriptor, temporary_name = tempfile.mkstemp(prefix="haproxy.cfg.", dir=output.parent)
     temporary = Path(temporary_name)
     try:
@@ -188,10 +211,11 @@ def write_private_atomic(output, content):
 
 
 def parse_arguments():
-    parser = argparse.ArgumentParser(description="Render the governed SEC-03B/03C HAProxy lab configuration")
+    parser = argparse.ArgumentParser(description="Render a governed SisTer HAProxy configuration")
     parser.add_argument("--profile", type=Path, default=PROFILE_PATH)
     parser.add_argument("--template", type=Path, default=TEMPLATE_PATH)
-    parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--scope", choices=("lab", "candidate"), default="lab")
+    parser.add_argument("--output", type=Path)
     return parser.parse_args()
 
 
@@ -200,12 +224,13 @@ def main():
     try:
         profile_path = require_absolute_safe_path(str(arguments.profile.resolve()), "profile", must_exist=True)
         template_path = require_absolute_safe_path(str(arguments.template.resolve()), "template", must_exist=True)
-        output = require_absolute_safe_path(str(arguments.output.resolve()), "output")
+        default_output = DEFAULT_OUTPUT if arguments.scope == "lab" else CANDIDATE_CONFIG
+        output = require_absolute_safe_path(str((arguments.output or default_output).resolve()), "output")
         validate_governed_profile(profile_path)
-        values = checked_environment(os.environ)
+        values = checked_environment(os.environ, arguments.scope)
         template = template_path.read_text(encoding="utf-8")
         rendered = render(template, values)
-        write_private_atomic(output, rendered)
+        write_private_atomic(output, rendered, arguments.scope)
     except (OSError, RenderError, json.JSONDecodeError, subprocess.TimeoutExpired) as exc:
         print(f"gateway configuration render failed: {exc}", file=sys.stderr)
         return 1

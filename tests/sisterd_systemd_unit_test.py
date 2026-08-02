@@ -32,6 +32,8 @@ def main():
     assert not missing, f"missing hardened systemd settings: {missing}"
     assert "SISTER_BIND_HOST" not in document
     assert "SISTER_PORT" not in document
+    assert "EnvironmentFile=/etc/sister/sister.env" in document
+    assert "Environment=SISTER_ENABLE_NEXO_SIGNED_INTEGRATION" not in document
     assert "ExecStart=/opt/sister/build/apps/sisterd/sisterd\n" in document
 
     socket_document = socket_unit.read_text(encoding="utf-8")

@@ -58,6 +58,18 @@ add_test(
         ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/gateway_config_render_test.py)
 
+add_test(
+    NAME gateway_candidate_config_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/gateway_candidate_config_test.py)
+
+add_test(
+    NAME sec03v_env_preflight_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sec03v_env_preflight_test.py)
+
 foreach(gateway_test IN ITEMS
         gateway_protocol_test.py
         gateway_header_sanitization_test.py
