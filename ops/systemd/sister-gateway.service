@@ -1,0 +1,45 @@
+[Unit]
+Description=Gateway HTTP especializado do SisTer
+Requires=sisterd.socket
+After=sisterd.socket network.target
+ConditionFileIsExecutable=/usr/local/sbin/haproxy-3.2.22
+
+[Service]
+Type=notify
+User=sister-gateway
+Group=sister-gateway
+SupplementaryGroups=haproxy
+RuntimeDirectory=sister-gateway
+RuntimeDirectoryMode=0750
+ExecStartPre=/usr/local/sbin/haproxy-3.2.22 -c -q -f /etc/sister/gateway/haproxy.cfg
+ExecStart=/usr/local/sbin/haproxy-3.2.22 -Ws -f /etc/sister/gateway/haproxy.cfg -p /run/sister-gateway/haproxy.pid
+ExecReload=/usr/local/sbin/haproxy-3.2.22 -c -q -f /etc/sister/gateway/haproxy.cfg
+ExecReload=/bin/kill -USR2 $MAINPID
+KillMode=mixed
+Restart=on-failure
+RestartSec=2
+
+NoNewPrivileges=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectSystem=strict
+ProtectHome=yes
+ProtectClock=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectKernelLogs=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictNamespaces=yes
+RestrictRealtime=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+RemoveIPC=yes
+CapabilityBoundingSet=
+AmbientCapabilities=
+RestrictAddressFamilies=AF_INET AF_UNIX
+SystemCallArchitectures=native
+UMask=0027
+
+[Install]
+WantedBy=multi-user.target

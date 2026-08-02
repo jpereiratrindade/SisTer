@@ -142,6 +142,13 @@ add_test(
         ${CMAKE_SOURCE_DIR}/ops/tmpfiles.d/sister.conf)
 
 add_test(
+    NAME sister_gateway_systemd_unit_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sister_gateway_systemd_unit_test.py
+        ${CMAKE_SOURCE_DIR}/ops/systemd/sister-gateway.service)
+
+add_test(
     NAME sisterd_unix_listener_tests
     COMMAND
         ${Python3_EXECUTABLE}

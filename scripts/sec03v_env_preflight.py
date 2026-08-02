@@ -53,6 +53,15 @@ def execute(command: list[str], timeout: int = 10) -> subprocess.CompletedProces
     )
 
 
+def privileged_execution_check() -> Check:
+    return Check(
+        "execution.privileged",
+        "PASS" if os.geteuid() == 0 else "BLOCKED",
+        "preflight is running with administrative read access"
+        if os.geteuid() == 0 else "final preflight must run as root",
+    )
+
+
 def file_identity(path: Path) -> tuple[str, str, int, int]:
     metadata = path.lstat()
     return (
@@ -188,6 +197,74 @@ def systemd_state(name: str, state: str) -> Check:
     return Check(f"unit.{name}.{state}", "PASS", f"unit is {state}")
 
 
+def gateway_runtime_check(binary: Path) -> list[Check]:
+    try:
+        result = execute([
+            "systemctl", "show", "sister-gateway.service", "--no-pager",
+            "-p", "MainPID", "-p", "User", "-p", "Group",
+            "-p", "SupplementaryGroups", "-p", "ExecStart",
+        ])
+    except (OSError, subprocess.TimeoutExpired):
+        result = None
+    values = {}
+    if result and result.returncode == 0:
+        for line in result.stdout.splitlines():
+            if "=" in line:
+                name, value = line.split("=", 1)
+                values[name] = value
+    try:
+        pid = int(values.get("MainPID", "0"))
+    except ValueError:
+        pid = 0
+    declared = (
+        values.get("User") == "sister-gateway"
+        and values.get("Group") == "sister-gateway"
+        and "haproxy" in values.get("SupplementaryGroups", "").split()
+        and str(binary) in values.get("ExecStart", "")
+        and "/etc/sister/gateway/haproxy.cfg" in values.get("ExecStart", "")
+        and pid > 0
+    )
+    checks = [Check(
+        "gateway.runtime.identity", "PASS" if declared else "BLOCKED",
+        "active systemd process has the governed identity and command"
+        if declared else "gateway systemd identity, command, or PID is invalid",
+    )]
+    if pid > 0 and os.geteuid() == 0:
+        try:
+            executable = Path(f"/proc/{pid}/exe").resolve(strict=True)
+            account = pwd.getpwuid(Path(f"/proc/{pid}").stat().st_uid).pw_name
+            process_valid = executable == binary.resolve() and account == "sister-gateway"
+        except (OSError, KeyError):
+            process_valid = False
+        checks.append(Check(
+            "gateway.runtime.process", "PASS" if process_valid else "BLOCKED",
+            "running PID matches the native binary and service account"
+            if process_valid else "running PID does not match the governed executable or account",
+        ))
+    else:
+        checks.append(Check(
+            "gateway.runtime.process", "BLOCKED", "root access and a live gateway PID are required"))
+    return checks
+
+
+def gateway_listener_check() -> Check:
+    try:
+        result = execute(["ss", "-ltnH", "sport = :8443"])
+    except (OSError, subprocess.TimeoutExpired):
+        return Check("gateway.runtime.listener", "BLOCKED", "listener state could not be read")
+    listeners = []
+    for line in result.stdout.splitlines():
+        columns = line.split()
+        if len(columns) >= 4:
+            listeners.append(columns[3])
+    valid = listeners == ["127.0.0.1:8443"]
+    return Check(
+        "gateway.runtime.listener", "PASS" if valid else "BLOCKED",
+        "gateway listens exclusively on 127.0.0.1:8443"
+        if valid else "gateway listener is absent, duplicated, or not restricted to loopback",
+    )
+
+
 def environment_check() -> list[Check]:
     path = Path("/etc/sister/sister.env")
     checks = [governed_file("config.sister", path, "root", "root", 0o600)]
@@ -214,6 +291,27 @@ def environment_check() -> list[Check]:
     if not valid:
         detail = "required variables are missing or violate the candidate contract"
     return checks + [Check("config.sister.contract", "PASS" if valid else "BLOCKED", detail)]
+
+
+def identity_key_pair_check(
+    private_key: Path = Path("/etc/sister/identity-private.pem"),
+    public_key: Path = Path("/etc/sister/identity-public.pem"),
+) -> Check:
+    if os.geteuid() != 0 and private_key == Path("/etc/sister/identity-private.pem"):
+        return Check("identity.key_pair", "BLOCKED", "root access is required to compare the key pair")
+    try:
+        derived = execute(["openssl", "pkey", "-in", str(private_key), "-pubout"])
+        configured = execute(["openssl", "pkey", "-pubin", "-in", str(public_key), "-pubout"])
+        valid = (
+            derived.returncode == 0 and configured.returncode == 0
+            and derived.stdout.strip() == configured.stdout.strip()
+        )
+    except (OSError, subprocess.TimeoutExpired):
+        valid = False
+    return Check(
+        "identity.key_pair", "PASS" if valid else "BLOCKED",
+        "Ed25519 public key matches the private key" if valid else "identity key pair is inconsistent",
+    )
 
 
 def socket_checks() -> list[Check]:
@@ -255,6 +353,37 @@ def haproxy_checks(binary: Path) -> list[Check]:
         is_native_binary = False
     if not is_native_binary:
         return [Check("gateway.binary", "BLOCKED", "candidate requires a native HAProxy executable")]
+    checks.append(governed_file("gateway.binary.file", binary, "root", "root", 0o755))
+    try:
+        owner = execute(["rpm", "-qf", str(binary)])
+        package = owner.stdout.strip() if owner.returncode == 0 else ""
+        signature = execute([
+            "rpm", "-q", "--qf", "RSA=%{RSAHEADER:pgpsig}\\nDSA=%{DSAHEADER:pgpsig}\\n",
+            package,
+        ]) if package else None
+        verified = execute(["rpm", "-V", package]) if package else None
+        signed = bool(
+            signature and signature.returncode == 0
+            and any(
+                line.startswith(("RSA=", "DSA=")) and not line.endswith("(none)")
+                for line in signature.stdout.splitlines()
+            )
+        )
+        signature_identity = next((
+            line.split("=", 1)[1]
+            for line in signature.stdout.splitlines()
+            if line.startswith(("RSA=", "DSA=")) and not line.endswith("(none)")
+        ), "") if signature else ""
+        package_valid = bool(verified and verified.returncode == 0 and not verified.stdout.strip())
+    except (OSError, subprocess.TimeoutExpired):
+        package = ""
+        signed = False
+        package_valid = False
+    checks.append(Check(
+        "gateway.binary.provenance", "PASS" if signed and package_valid else "BLOCKED",
+        f"signed RPM {package} owns the unmodified executable ({signature_identity})"
+        if signed and package_valid else "executable must belong to a signed, unmodified RPM",
+    ))
     try:
         version = execute([str(binary), "-vv"]).stdout
     except (OSError, subprocess.TimeoutExpired):
@@ -295,6 +424,40 @@ def haproxy_checks(binary: Path) -> list[Check]:
     return checks
 
 
+def gateway_tls_runtime_check(
+    ca_file: Path = Path("/etc/sister/gateway/ca.crt"),
+) -> Check:
+    identity = governed_file("gateway.ca", ca_file, "root", "root", 0o644)
+    if identity.status != "PASS":
+        return identity
+    request = (
+        "GET /api/health HTTP/1.1\r\nHost: sister-gateway.test:8443\r\n"
+        "Connection: close\r\n\r\n"
+    )
+    try:
+        result = subprocess.run(
+            [
+                "openssl", "s_client", "-connect", "127.0.0.1:8443",
+                "-servername", "sister-gateway.test", "-tls1_3",
+                "-verify_return_error", "-CAfile", str(ca_file), "-quiet",
+            ],
+            input=request,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.STDOUT,
+            text=True,
+            timeout=10,
+            check=False,
+        )
+        valid = result.returncode == 0 and "HTTP/1.1 200" in result.stdout
+    except (OSError, subprocess.TimeoutExpired):
+        valid = False
+    return Check(
+        "gateway.runtime.tls_health", "PASS" if valid else "BLOCKED",
+        "TLS 1.3 gateway health path reached sisterd" if valid
+        else "verified TLS 1.3 health request did not succeed",
+    )
+
+
 def nexo_check() -> Check:
     try:
         with urllib.request.urlopen("http://127.0.0.1:8015/api/health", timeout=2) as response:
@@ -312,8 +475,9 @@ def nexo_check() -> Check:
 
 def worktree_check(path: Path, name: str) -> Check:
     try:
-        result = execute(["git", "-C", str(path), "status", "--porcelain"])
-        revision = execute(["git", "-C", str(path), "rev-parse", "HEAD"])
+        git = ["git", "-c", f"safe.directory={path.resolve()}", "-C", str(path)]
+        result = execute(git + ["status", "--porcelain"])
+        revision = execute(git + ["rev-parse", "HEAD"])
     except (OSError, subprocess.TimeoutExpired):
         return Check(f"revision.{name}", "BLOCKED", "Git state could not be read")
     valid = result.returncode == 0 and not result.stdout.strip() and revision.returncode == 0
@@ -351,6 +515,7 @@ def main() -> int:
     arguments = parser.parse_args()
 
     checks = [
+        privileged_execution_check(),
         worktree_check(ROOT, "sister"),
         worktree_check(arguments.nexo_root, "nexo"),
         account_check("sister", "sister"),
@@ -361,6 +526,7 @@ def main() -> int:
         installed_revision_check(),
         installed_unit_check("sisterd.socket"),
         installed_unit_check("sisterd.service"),
+        installed_unit_check("sister-gateway.service"),
         installed_file_check(
             "tmpfiles.sister.content",
             ROOT / "ops/tmpfiles.d/sister.conf",
@@ -368,6 +534,8 @@ def main() -> int:
         ),
         systemd_state("sisterd.socket", "enabled"),
         systemd_state("sisterd.socket", "active"),
+        systemd_state("sister-gateway.service", "enabled"),
+        systemd_state("sister-gateway.service", "active"),
     ]
     checks.extend(environment_check())
     checks.extend([
@@ -380,9 +548,13 @@ def main() -> int:
             "root", "root", 0o644,
         ),
     ])
+    checks.append(identity_key_pair_check())
     checks.extend(socket_checks())
     checks.append(no_tcp_listener())
     checks.extend(haproxy_checks(arguments.haproxy_bin))
+    checks.extend(gateway_runtime_check(arguments.haproxy_bin))
+    checks.append(gateway_listener_check())
+    checks.append(gateway_tls_runtime_check())
     checks.append(nexo_check())
 
     write_report(arguments.report, checks)
