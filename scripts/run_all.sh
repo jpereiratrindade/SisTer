@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
       cat <<'USAGE'
 Usage:
   ./scripts/run_all.sh [dev|test] [port]
-  ./scripts/run_all.sh --profile dev-core|dev-ecosystem|test-core|sec-03v [port]
+  ./scripts/run_all.sh --profile dev-core|dev-ecosystem|dev-ecosystem-strict|test-core|sec-03v [port]
                        [--update-subsystems]
 USAGE
       exit 0
@@ -54,7 +54,7 @@ fi
 
 PROFILE_OUTPUT="$(python3 scripts/resolve_run_profile.py --profile "$PROFILE")" || exit 3
 mapfile -t PROFILE_DATA <<<"$PROFILE_OUTPUT"
-[[ ${#PROFILE_DATA[@]} -eq 7 ]] || { echo "run_all: invalid resolved profile" >&2; exit 3; }
+[[ ${#PROFILE_DATA[@]} -eq 8 ]] || { echo "run_all: invalid resolved profile" >&2; exit 3; }
 ENV_NAME="${PROFILE_DATA[0]}"
 PROFILE_PORT="${PROFILE_DATA[1]}"
 PROFILE_SCOPE="${PROFILE_DATA[2]}"
@@ -62,9 +62,15 @@ GATEWAY_POLICY="${PROFILE_DATA[3]}"
 SUBSYSTEM_SELECTION="${PROFILE_DATA[4]}"
 SUBSYSTEM_PROJECTS="${PROFILE_DATA[5]}"
 SUBSYSTEM_REQUIRED="${PROFILE_DATA[6]}"
+SUBSYSTEM_FAILURE_POLICY="${PROFILE_DATA[7]}"
 [[ "$SUBSYSTEM_PROJECTS" == "-" ]] && SUBSYSTEM_PROJECTS=""
 [[ "$SUBSYSTEM_REQUIRED" == "-" ]] && SUBSYSTEM_REQUIRED=""
 PORT="${LEGACY_PORT:-$PROFILE_PORT}"
+
+if [[ $UPDATE_SUBSYSTEMS -eq 1 && "$SUBSYSTEM_SELECTION" == "none" ]]; then
+  echo "run_all: --update-subsystems requires a profile that selects subsystems" >&2
+  exit 3
+fi
 
 if [[ "$GATEWAY_POLICY" == "required" ]]; then
   if [[ -z "${GATEWAY_HAPROXY_BIN:-}" || "${GATEWAY_HAPROXY_BIN:0:1}" != "/" || ! -x "$GATEWAY_HAPROXY_BIN" ]]; then
@@ -90,13 +96,13 @@ sister_assert_environment_worktree "$ENV_NAME" "$ROOT_DIR"
 ./scripts/db/migrate.sh "$ENV_NAME"
 ./scripts/db/check.sh "$ENV_NAME"
 ./scripts/run_quality.sh
-./scripts/app/serve.sh "$ENV_NAME" "$PORT"
+./scripts/app/serve.sh "$ENV_NAME" "$PORT" --no-build
 ./scripts/app/smoke.sh "$PORT"
 
 SUBSYSTEM_REPORT="$ROOT_DIR/.run/maturity/subsystems.json"
 rm -f "$SUBSYSTEM_REPORT"
 SUBSYSTEM_CODE=0
-if [[ "$SUBSYSTEM_SELECTION" != "none" && "${SISTER_ENSURE_SUBSYSTEMS:-1}" != "0" ]]; then
+if [[ "$SUBSYSTEM_SELECTION" != "none" ]]; then
   SUBSYSTEM_ARGS=(--report "$SUBSYSTEM_REPORT")
   if [[ "$SUBSYSTEM_SELECTION" == "listed" ]]; then
     IFS=',' read -r -a PROJECTS <<<"$SUBSYSTEM_PROJECTS"
@@ -109,6 +115,9 @@ if [[ "$SUBSYSTEM_SELECTION" != "none" && "${SISTER_ENSURE_SUBSYSTEMS:-1}" != "0
     for project in "${REQUIRED_PROJECTS[@]}"; do
       SUBSYSTEM_ARGS+=(--require "$project")
     done
+  fi
+  if [[ "$SUBSYSTEM_FAILURE_POLICY" == "block" ]]; then
+    SUBSYSTEM_ARGS+=(--strict)
   fi
   if [[ $UPDATE_SUBSYSTEMS -eq 1 ]]; then
     SUBSYSTEM_ARGS+=(--refresh-changed)

@@ -45,13 +45,18 @@ def load_profiles():
         if profile["gate_closure_authorized"] is not False:
             raise ValueError(f"run profile cannot authorize gate closure: {name}")
         subsystems = profile["subsystems"]
-        if not isinstance(subsystems, dict) or set(subsystems) != {"selection", "projects", "required"}:
+        if not isinstance(subsystems, dict) or set(subsystems) != {
+            "selection", "projects", "required", "failure_policy"
+        }:
             raise ValueError(f"invalid subsystem policy in run profile: {name}")
         selection = subsystems["selection"]
         projects = subsystems["projects"]
         required = subsystems["required"]
+        failure_policy = subsystems["failure_policy"]
         if selection not in {"none", "all", "listed"}:
             raise ValueError(f"invalid subsystem selection in run profile: {name}")
+        if failure_policy not in {"warn", "block"}:
+            raise ValueError(f"invalid subsystem failure policy in run profile: {name}")
         if not all(
             isinstance(values, list)
             and len(values) == len(set(values))
@@ -70,6 +75,7 @@ def load_profiles():
         if profile["scope"] == "sec-03v-prerequisites" and (
             profile["gateway_dynamic_tests"] != "required"
             or required != ["sister_nexo"]
+            or failure_policy != "block"
         ):
             raise ValueError("SEC-03V prerequisites must require HAProxy and sister_nexo")
     return profiles
@@ -96,6 +102,7 @@ def main():
         subsystems["selection"],
         ",".join(subsystems["projects"]) or "-",
         ",".join(subsystems["required"]) or "-",
+        subsystems["failure_policy"],
     ]
     print("\n".join(values))
     return 0

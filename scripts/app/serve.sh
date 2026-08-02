@@ -8,9 +8,24 @@ cd "$ROOT_DIR"
 source scripts/lib/sister_env.sh
 sister_load_env "$ENV_NAME"
 PORT="${2:-$SISTER_APP_PORT}"
+BUILD_MODE="${3:-build}"
 
-cmake -S . -B build
-cmake --build build --target sisterd
+case "$BUILD_MODE" in
+  build)
+    cmake -S . -B build
+    cmake --build build --target sisterd
+    ;;
+  --no-build)
+    if [[ ! -x ./build/apps/sisterd/sisterd ]]; then
+      echo "sisterd tested artifact is missing; run the quality build first" >&2
+      exit 1
+    fi
+    ;;
+  *)
+    echo "serve.sh: expected build or --no-build, got $BUILD_MODE" >&2
+    exit 3
+    ;;
+esac
 
 mkdir -p .run
 scripts/app/stop.sh "$ENV_NAME" >/dev/null || true
@@ -26,8 +41,13 @@ fi
 PID="$!"
 echo "$PID" > "$PID_FILE"
 
+READY=0
 for _ in $(seq 1 20); do
   if curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1; then
+    READY=1
+    break
+  fi
+  if ! kill -0 "$PID" >/dev/null 2>&1; then
     break
   fi
   sleep 0.5
@@ -35,6 +55,12 @@ done
 
 if ! kill -0 "$PID" >/dev/null 2>&1; then
   echo "sisterd failed to start. Log:" >&2
+  cat "$LOG_FILE" >&2
+  exit 1
+fi
+if [[ $READY -ne 1 ]]; then
+  echo "sisterd remained alive but did not become ready. Log:" >&2
+  ./scripts/app/stop.sh "$ENV_NAME" >/dev/null || true
   cat "$LOG_FILE" >&2
   exit 1
 fi

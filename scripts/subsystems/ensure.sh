@@ -8,8 +8,5 @@ if [[ $# -gt 0 ]]; then
 fi
 
 args=(--environment "$ENV_NAME")
-if [[ "${SISTER_SUBSYSTEMS_STRICT:-0}" == "1" ]]; then
-  args+=(--strict)
-fi
 
 exec python3 "$ROOT_DIR/scripts/subsystems/ensure.py" "${args[@]}" "$@"

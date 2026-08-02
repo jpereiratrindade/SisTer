@@ -8,6 +8,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 QUALITY_REPORT = ROOT / ".run" / "maturity" / "quality.json"
+RUN_REPORT = ROOT / ".run" / "maturity" / "run-all-status.json"
 
 
 def main():
@@ -34,21 +35,22 @@ def main():
     else:
         overall = "PASS"
 
-    quality["result"] = overall
-    quality["execution"] = {
+    run_status = {
+        "schema": "sister.run-all-status/1.0.0",
+        "result": overall,
         "profile": args.profile,
-        "core_quality": "PASS",
-        "sisterd_readiness": "READY",
-        "core_smoke": "PASS",
+        "quality": {"result": "PASS", "report": ".run/maturity/quality.json"},
+        "database": "READY",
+        "sisterd": "READY",
+        "smoke": "PASS",
         "subsystems": subsystem_state,
         "components": components,
-        "overall": overall,
         "gate_closure_authorized": False,
         "updated_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
     }
-    temporary = QUALITY_REPORT.with_suffix(".json.tmp")
-    temporary.write_text(json.dumps(quality, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
-    temporary.replace(QUALITY_REPORT)
+    temporary = RUN_REPORT.with_suffix(".json.tmp")
+    temporary.write_text(json.dumps(run_status, ensure_ascii=True, indent=2) + "\n", encoding="utf-8")
+    temporary.replace(RUN_REPORT)
 
     print("\nSisTer execution summary")
     print(f"  Profile:              {args.profile}")

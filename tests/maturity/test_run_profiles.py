@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import sys
+import subprocess
 import unittest
 
 
@@ -24,6 +25,30 @@ class RunProfileTests(unittest.TestCase):
         self.assertEqual("required", profile["gateway_dynamic_tests"])
         self.assertEqual(["sister_nexo"], profile["subsystems"]["required"])
         self.assertFalse(profile["gate_closure_authorized"])
+
+    def test_strict_ecosystem_blocks_any_failure(self) -> None:
+        profile = PROFILES.load_profiles()["dev-ecosystem-strict"]
+        self.assertEqual("all", profile["subsystems"]["selection"])
+        self.assertEqual("block", profile["subsystems"]["failure_policy"])
+
+    def test_environment_summary_redacts_database_credentials(self) -> None:
+        completed = subprocess.run(
+            [
+                "bash",
+                "-c",
+                "source scripts/lib/sister_env.sh; "
+                "export SISTER_DATABASE_URL='postgresql://user:unique-secret@localhost/db'; "
+                "export SISTER_ENV=dev COMPOSE_PROJECT_NAME=x SISTER_DB_CONTAINER=x "
+                "SISTER_DB_PORT=1 SISTER_DB_VOLUME=x SISTER_APP_PORT=2 "
+                "SISTER_BIND_HOST=127.0.0.1; sister_print_env",
+            ],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=True,
+        )
+        self.assertNotIn("unique-secret", completed.stdout)
+        self.assertIn("credentials redacted", completed.stdout)
 
 
 if __name__ == "__main__":
