@@ -40,9 +40,9 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
 4. SEC-03A define HAProxy 3.2 LTS, a fronteira de responsabilidades e o perfil
    executável. SEC-03B encerrou a prova em loopback com normalizações seguras e
    uma divergência de Host restrita e governada. SEC-03C encerrou a contenção em
-   laboratório. ISO-01 removeu o listener TCP produtivo; SEC-03V continua
-   responsável pela composição E2E e validação. Nenhuma etapa autoriza transformar
-   o `sisterd` em servidor HTTP público.
+   laboratório. ISO-01 removeu o listener TCP produtivo; SEC-03V comprovou a
+   composição E2E no ambiente candidato. Nenhuma etapa autoriza transformar o
+   `sisterd` em servidor HTTP público.
 
 ## Rastreabilidade imediata
 

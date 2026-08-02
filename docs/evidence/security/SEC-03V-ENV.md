@@ -3,7 +3,7 @@
 **Data:** 2026-08-02  
 **Host:** Fedora 44 Workstation  
 **Estado:** `READY`  
-**Próximo gate autorizado:** execução de `SEC-03V` sem skips  
+**Próximo gate:** revisão e promoção controlada após `SEC-03V`
 **Merge, MAES aprovado e tag `v0.2.8`:** não autorizados
 
 ## Baseline avaliada
@@ -30,7 +30,10 @@ BLOCKED  0
 SHA-256  b4e3a2782b18ef96e2a9a9acc167439f1b31c74f08c6ff7042b13aa6e7c569f0
 ```
 
-O original sanitizado está preservado no host em
+O preflight final do gate integral está preservado no host em
+`/var/lib/sister-sec03v-env/sec03v-env-preflight-sec03v.json`, com SHA-256
+`b1206a16475c0fd3c5c6f3cb4ddd8b9dfcbb7e3e77806ccb03c854db02ae6d20`.
+O original sanitizado do ambiente está preservado no host em
 `/var/lib/sister-sec03v-env/sec03v-env-preflight.json`, `root:root 0600`. Uma
 cópia de trabalho com o mesmo digest foi revisada sem encontrar valores de
 configuração ou segredos.
@@ -66,8 +69,8 @@ configuração ou segredos.
 
 As três correções foram exercitadas no host, passaram em `26/26` testes do
 núcleo e foram publicadas na branch `sec-03v-env`. Os sete testes dinâmicos do
-gateway continuaram `SKIP` nessa execução de qualidade porque pertencem ao gate
-seguinte; eles não foram usados para declarar `SEC-03V` aprovado.
+gateway foram executados posteriormente no gate `SEC-03V`, com `7/7 PASS` e
+nenhum `SKIP`; o resultado integral está em [`SEC-03V.md`](./SEC-03V.md).
 
 ## Riscos residuais e limites
 
@@ -82,7 +85,8 @@ seguinte; eles não foram usados para declarar `SEC-03V` aprovado.
 
 ## Decisão
 
-`SEC-03V-ENV-B` está concluído e `SEC-03V-ENV` está `READY`. A única promoção
-autorizada por esta evidência é iniciar `SEC-03V` no ambiente preservado, sem
-skips. Merge coordenado, atualização do MAES como aprovado e criação da
-`v0.2.8` continuam condicionados ao resultado desse gate.
+`SEC-03V-ENV-B` está concluído e `SEC-03V-ENV` está `READY`. O gate integral
+`SEC-03V` foi executado sem skips e possui evidência própria. Merge coordenado,
+atualização do MAES como baseline promovida e criação da `v0.2.8` continuam
+dependentes de revisão e decisão explícita; esta evidência não autoriza
+exposição externa.

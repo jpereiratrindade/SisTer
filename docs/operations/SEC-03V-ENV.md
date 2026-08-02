@@ -7,14 +7,14 @@
 reversível
 
 **Evidência:** [`SEC-03V-ENV.md`](../evidence/security/SEC-03V-ENV.md), com
-`42/42 PASS` e relatório sanitizado SHA-256
-`b4e3a2782b18ef96e2a9a9acc167439f1b31c74f08c6ff7042b13aa6e7c569f0`.
+`42/42 PASS`; o gate integral está em
+[`SEC-03V.md`](../evidence/security/SEC-03V.md).
 
 ## Limite da entrega
 
-Este cartão materializa as contas, arquivos, unidades e permissões que o
-`SEC-03V` avaliará. Ele não fecha o gate, não autoriza exposição externa, não
-altera tags e não habilita escrita. O perfil continua restrito a ambiente
+Este cartão materializa as contas, arquivos, unidades e permissões avaliados
+por `SEC-03V`. O gate foi aprovado no laboratório candidato, mas isso não
+autoriza exposição externa, alteração de tags ou escrita. O perfil continua restrito a ambiente
 interno, loopback, HTTP/1.1, read-only e shadow.
 
 O relatório executável é produzido por:
@@ -168,7 +168,8 @@ upstream único em `/run/sister/sisterd.sock`. Ele recusa saída fora de
      --report /var/lib/sister-sec03v-env/sec03v-env-preflight.json
    ```
 
-10. somente com `READY`, iniciar a matriz SEC-03V sem skips.
+10. somente com `READY`, iniciar a matriz SEC-03V sem skips; registrar a
+    evidência integral e revisar a promoção separadamente.
 
 O preflight final confirma que o processo ativo corresponde ao binário nativo,
 executa como `sister-gateway`, pertence ao grupo suplementar `haproxy`, escuta
@@ -204,7 +205,6 @@ TCP, proxy legado, WebSocket ou TLS enfraquecido são proibidos.
 
 ## Critério de saída
 
-`SEC-03V-ENV` termina somente quando todos os controles do relatório estiverem
-`PASS`, o resultado for `READY` e segurança/arquitetura revisar a evidência. A
-partir daí o ambiente pode executar `SEC-03V`; ele ainda não pode receber tag
-ou declaração de prontidão produtiva.
+`SEC-03V-ENV` terminou com todos os controles `PASS` e resultado `READY`.
+`SEC-03V` também possui evidência integral sem skips. O ambiente continua sem
+tag e sem declaração de prontidão produtiva até revisão e promoção governadas.

@@ -23,6 +23,17 @@ relaciona ameaças aplicáveis, ativos, superfícies, controles, testes,
 evidências, riscos residuais, responsáveis e estado. ADRs explicam decisões e
 evidências registram execuções; nenhum deles substitui este modelo.
 
+## Atualização pós-SEC-03V — 2 de agosto de 2026
+
+O ambiente candidato privilegiado foi aprovado no gate `SEC-03V`: preflight
+`42/42 PASS`, matriz dinâmica `7/7 PASS` sem skips, HAProxy nativo assinado,
+socket Unix governado, TLS de laboratório em loopback e composição com Nexo e
+PostgreSQL. A evidência é [`SEC-03V.md`](../evidence/security/SEC-03V.md).
+
+Esta atualização não promove a baseline para produção nem cria tag. Merge,
+`v0.2.8`, exposição externa e qualquer escrita continuam sujeitos a revisão e
+decisão de promoção separadas.
+
 ## Estados
 
 | Estado | Significado |
@@ -288,7 +299,7 @@ O trabalho corrente mantém no máximo dois cartões simultâneos:
 | Concluído com restrições | `SEC-03B` — normalizações resolvidas; Host idêntico duplicado aceito como divergência governada |
 | Concluído com restrições | `SEC-03C` — contenção de abuso e recursos na borda |
 | Concluído com restrições | `ISO-01` — isolamento local do upstream |
-| Validação | `SEC-03V` — matriz negativa e evidência de processo |
+| Concluído com restrições | `SEC-03V` — matriz negativa e evidência de processo no candidato |
 | Backlog seguinte | `FED-01` — registro persistente de sistemas |
 
 Perda de controle, validade ou evidência pode regredir maturidade, suspender a
@@ -306,8 +317,8 @@ A Coordenação do Projeto SisTer aprova os owners e estados acima para a
   loopback e aceita de modo restrito a divergência de Host idêntico duplicado,
   com revisão obrigatória em SEC-03V. SEC-03C comprova quotas, timeouts, fila e
   logs no laboratório, mantendo o deadline absoluto do corpo como parcial.
-  ISO-01 elimina o listener TCP produtivo, mas ainda exige prova das identidades
-  reais e do ciclo systemd no ambiente candidato.
+  ISO-01 elimina o listener TCP produtivo; SEC-03V comprovou as identidades reais
+  e o ciclo systemd no ambiente candidato.
 - A contenção de login usa o endereço diretamente observado; nenhuma confiança
   em origem encaminhada existe antes do gateway governado.
 - O proxy WebSocket legado permanece fisicamente presente apenas para
@@ -323,6 +334,5 @@ A aceitação não autoriza outra rota, capacidade de escrita, integração Comp
 exposição externa ou uso do `sisterd` como servidor HTTP público. SEC-02M
 garante que tais pedidos falham antes da emissão e da conexão upstream. Esta
 aprovação publica uma baseline interna de controles; não declara prontidão para
-produção externa. Da mesma forma, `PROFILE_DEFINED` em SEC-03A não equivale a
-`CONTROLLED_BASELINE`: SEC-03C encerrou o laboratório com restrições, mas
-SEC-03V ainda é necessário antes dessa transição.
+produção externa. `PROFILE_DEFINED` em SEC-03A descreve o perfil, enquanto
+SEC-03V comprova sua execução no candidato com os riscos residuais acima.

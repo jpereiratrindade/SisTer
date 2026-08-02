@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita — ISO-01 encerrado com restrições; implantação bloqueada até SEC-03V
+Aceita — ISO-01 e SEC-03V comprovados no laboratório candidato; promoção governada pendente
 
 ## Contexto
 
@@ -220,11 +220,13 @@ legado, abre `8000` externamente ou reduz TLS/limites.
 - **ISO-01:** concluído com socket Unix ativado e permissões governadas;
   identidades reais e ciclo PID 1 permanecem para o ambiente candidato.
 - **SEC-03V:** matriz negativa, composição gateway/Nexo/PostgreSQL, revisão da
-  exceção de Host, evidência e decisão de risco.
+  exceção de Host, evidência e decisão de risco — concluído no candidato,
+  conforme [`SEC-03V.md`](../evidence/security/SEC-03V.md).
 
 Nenhuma release ou exposição externa é autorizada por esta ADR isoladamente.
-A `v0.2.8` só pode ser considerada depois de SEC-03V. SEC-02R continua
-obrigatório antes de qualquer escrita, e WebSocket requer decisão e gate próprios.
+A `v0.2.8` pode ser considerada após revisão da evidência e promoção governada.
+SEC-02R continua obrigatório antes de qualquer escrita, e WebSocket requer
+decisão e gate próprios.
 
 ## Consequências
 

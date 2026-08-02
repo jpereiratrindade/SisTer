@@ -2,9 +2,9 @@
 
 **Identificador:** `sister.gateway-security-profile/1.3.0`
 
-**Gate:** ISO-01 encerrado; próximo gate SEC-03V
+**Gate:** ISO-01 e SEC-03V encerrados no laboratório candidato
 
-**Estado:** ISO-01 encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`; ainda não implantado
+**Estado:** `SEC-03V PASS` no laboratório candidato, com restrições de promoção
 
 **Decisão:** [ADR-0020](../adr/ADR-0020-specialized-http-gateway.md)
 
@@ -94,10 +94,11 @@ headers, não por deadline absoluto integral; esse aspecto é
 `MECHANISM_UNPROVEN`. Veja a [evidência SEC-03C](../evidence/security/SEC-03C.md).
 
 ISO-01 substituiu o backend TCP pelo socket Unix ativado e encerrou como
-`LAB_PROVEN_WITH_RESTRICTIONS`. Contas e grupos reais, ciclo sob PID 1 e SELinux
-permanecem para o ambiente candidato; veja a
-[evidência ISO-01](../evidence/security/ISO-01.md). `main`, `VERSION`, tags,
-release e exposição externa permanecem bloqueados até SEC-03V.
+`LAB_PROVEN_WITH_RESTRICTIONS`. O ambiente candidato confirmou contas, grupos,
+ciclo sob PID 1, SELinux, HAProxy nativo e Nexo; veja as evidências
+[ISO-01](../evidence/security/ISO-01.md) e [SEC-03V](../evidence/security/SEC-03V.md).
+`main`, `VERSION`, tags, release e exposição externa permanecem dependentes de
+promoção governada.
 
 ## Política de confiança
 
@@ -127,10 +128,9 @@ comportamento atual.
 | `TH-CONF-01` | validação offline e falha fechada | config, certificado e upstream inválidos | erro operacional antes do gate | operação de plataforma |
 | `TH-AUD-01` | log sanitizado e ID gerado na borda | correlação ponta a ponta e busca por segredos | retenção e integridade ainda pendentes | observabilidade |
 
-O estado de todas essas fichas é `PROFILE_DEFINED`, não
-`CONTROLLED_BASELINE`. `docs/evidence/security/SEC-03V.md` será criado somente
-quando os testes forem executados; a referência identifica o artefato futuro e
-não declara sua existência atual.
+As fichas foram exercitadas no gate `SEC-03V`; a matriz e seus limites
+residuais estão registrados em `docs/evidence/security/SEC-03V.md`. O resultado
+é uma baseline de laboratório, não uma autorização de exposição produtiva.
 
 ## Rollback verificável
 

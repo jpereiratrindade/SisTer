@@ -109,8 +109,9 @@ normalização segura de `Content-Length`, remoção de Upgrade isolado e exceç
 restrita para Host idêntico duplicado. A
 [evidência SEC-03C](docs/evidence/security/SEC-03C.md) encerra a contenção de
 abuso em laboratório. A [evidência ISO-01](docs/evidence/security/ISO-01.md)
-remove o listener TCP produtivo e autoriza iniciar SEC-03V. Esse gate continua
-obrigatório antes de merge controlado ou `v0.2.8`.
+removeu o listener TCP produtivo. O gate `SEC-03V` foi executado sem skips no
+ambiente candidato; consulte a [evidência integral](docs/evidence/security/SEC-03V.md).
+Merge controlado e `v0.2.8` ainda exigem promoção governada.
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:
