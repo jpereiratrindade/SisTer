@@ -169,7 +169,7 @@ upstream único em `/run/sister/sisterd.sock`. Ele recusa saída fora de
 O preflight final confirma que o processo ativo corresponde ao binário nativo,
 executa como `sister-gateway`, pertence ao grupo suplementar `haproxy`, escuta
 somente em `127.0.0.1:8443`, completa TLS 1.3 com a CA candidata e alcança o
-health check do `sisterd`. Também deriva a chave pública da chave privada e
+health check do `sisterd` com PostgreSQL no estado `connected`. Também deriva a chave pública da chave privada e
 compara o par sem registrar seu conteúdo.
 
 `sisterd.service` é ativado sob demanda pelo socket e não precisa ser habilitado

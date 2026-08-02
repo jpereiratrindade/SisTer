@@ -13,6 +13,7 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from sec03v_env_preflight import (  # noqa: E402
     Check,
+    healthy_sisterd_response,
     identity_key_pair_check,
     parse_environment,
     service_read_access_check,
@@ -83,6 +84,14 @@ def main():
             "test.service_traversal", "account-that-does-not-exist", temporary)
         assert service_traversal.status == "BLOCKED"
         assert "service access" in service_traversal.detail or "cannot" in service_traversal.detail
+
+        healthy = (
+            "verify return:1\nHTTP/1.1 200 OK\r\nContent-Type: application/json\r\n\r\n"
+            '{"status":"ok","service":"sisterd","database":"connected"}'
+        )
+        assert healthy_sisterd_response(healthy)
+        assert not healthy_sisterd_response(healthy.replace("connected", "not_connected"))
+        assert not healthy_sisterd_response(healthy.replace("200 OK", "503 Unavailable"))
     finally:
         shutil.rmtree(temporary)
 

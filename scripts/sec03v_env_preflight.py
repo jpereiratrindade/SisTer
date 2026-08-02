@@ -480,13 +480,34 @@ def gateway_tls_runtime_check(
             timeout=10,
             check=False,
         )
-        valid = result.returncode == 0 and "HTTP/1.1 200" in result.stdout
+        valid = result.returncode == 0 and healthy_sisterd_response(result.stdout)
     except (OSError, subprocess.TimeoutExpired):
         valid = False
     return Check(
         "gateway.runtime.tls_health", "PASS" if valid else "BLOCKED",
-        "TLS 1.3 gateway health path reached sisterd" if valid
-        else "verified TLS 1.3 health request did not succeed",
+        "TLS 1.3 gateway health path reached sisterd with its database connected" if valid
+        else "verified TLS 1.3 health request or sisterd database readiness did not succeed",
+    )
+
+
+def healthy_sisterd_response(output: str) -> bool:
+    status = output.find("HTTP/1.1 200")
+    if status < 0:
+        return False
+    response = output[status:]
+    separator = "\r\n\r\n" if "\r\n\r\n" in response else "\n\n"
+    _, found, body = response.partition(separator)
+    if not found:
+        return False
+    try:
+        payload, _ = json.JSONDecoder().raw_decode(body.lstrip())
+    except (json.JSONDecodeError, TypeError):
+        return False
+    return (
+        isinstance(payload, dict)
+        and payload.get("status") == "ok"
+        and payload.get("service") == "sisterd"
+        and payload.get("database") == "connected"
     )
 
 
