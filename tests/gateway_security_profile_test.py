@@ -45,6 +45,10 @@ def main():
         ("gates.write_capabilities_authorized", True),
         ("realizability.laboratory_resolution.merge_authorized", True),
         ("realizability.laboratory_resolution.external_exposure_authorized", True),
+        ("realizability.sec_03c_resolution.merge_authorized", True),
+        ("resource_limits.upstream_concurrent_maximum", 256),
+        ("resource_limits.backend_queue_maximum", 4096),
+        ("resource_limits.stick_tables.origin_rate.capacity", 0),
     )
     for path, replacement in unsafe_mutations:
         errors = validate_profile(mutate(profile, path, replacement), schema)

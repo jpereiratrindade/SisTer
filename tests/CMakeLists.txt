@@ -61,7 +61,10 @@ add_test(
 foreach(gateway_test IN ITEMS
         gateway_protocol_test.py
         gateway_header_sanitization_test.py
-        gateway_failure_test.py)
+        gateway_failure_test.py
+        gateway_abuse_test.py
+        gateway_slow_client_test.py
+        gateway_upstream_resilience_test.py)
     get_filename_component(gateway_test_name ${gateway_test} NAME_WE)
     add_test(
         NAME ${gateway_test_name}s

@@ -44,6 +44,10 @@ def lab_environment():
 
 def prepare_runtime():
     environment = lab_environment()
+    try:
+        (RUN_DIR / "haproxy.sock").unlink()
+    except FileNotFoundError:
+        pass
     subprocess.run(
         [str(ROOT / "scripts/create_gateway_lab_certificate.sh"), HOST],
         cwd=ROOT,
@@ -78,25 +82,43 @@ def tls_context(*, maximum=None, alpn=("http/1.1",)):
     return context
 
 
-def tls_exchange(request, *, context=None, server_hostname=HOST):
+def connect_tls(*, context=None, server_hostname=HOST, source_address=None, timeout=4):
     context = context or tls_context()
-    with socket.create_connection(("127.0.0.1", 8443), timeout=4) as raw:
-        with context.wrap_socket(raw, server_hostname=server_hostname) as connection:
-            connection.settimeout(4)
-            connection.sendall(request)
-            response = bytearray()
-            while True:
-                try:
-                    chunk = connection.recv(65536)
-                except (ConnectionResetError, ssl.SSLError):
-                    break
-                if not chunk:
-                    break
-                response.extend(chunk)
-            return bytes(response), connection.version(), connection.selected_alpn_protocol()
+    raw = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    raw.settimeout(timeout)
+    try:
+        if source_address:
+            raw.bind((source_address, 0))
+        raw.connect(("127.0.0.1", 8443))
+        connection = context.wrap_socket(raw, server_hostname=server_hostname)
+        connection.settimeout(timeout)
+        return connection
+    except BaseException:
+        raw.close()
+        raise
 
 
-def request(method="GET", path="/api/health", headers=None, body=b""):
+def tls_exchange(request, *, context=None, server_hostname=HOST, source_address=None, timeout=4):
+    with connect_tls(
+        context=context,
+        server_hostname=server_hostname,
+        source_address=source_address,
+        timeout=timeout,
+    ) as connection:
+        connection.sendall(request)
+        response = bytearray()
+        while True:
+            try:
+                chunk = connection.recv(65536)
+            except (ConnectionResetError, ssl.SSLError):
+                break
+            if not chunk:
+                break
+            response.extend(chunk)
+        return bytes(response), connection.version(), connection.selected_alpn_protocol()
+
+
+def request(method="GET", path="/api/health", headers=None, body=b"", *, source_address=None, timeout=4):
     supplied = list(headers or [])
     names = {name.lower() for name, _ in supplied}
     if "host" not in names:
@@ -106,13 +128,56 @@ def request(method="GET", path="/api/health", headers=None, body=b""):
     supplied.append(("Connection", "close"))
     head = f"{method} {path} HTTP/1.1\r\n".encode("ascii")
     head += b"".join(f"{name}: {value}\r\n".encode("iso-8859-1") for name, value in supplied)
-    return tls_exchange(head + b"\r\n" + body)[0]
+    return tls_exchange(head + b"\r\n" + body, source_address=source_address, timeout=timeout)[0]
 
 
 def status(response):
     if not response.startswith(b"HTTP/1.1 "):
         raise AssertionError(response[:200])
     return int(response.split(b" ", 2)[1])
+
+
+def response_header(response, name):
+    expected = name.lower().encode("ascii") + b":"
+    for line in response.split(b"\r\n")[1:]:
+        if line.lower().startswith(expected):
+            return line.split(b":", 1)[1].strip().decode("ascii")
+    return None
+
+
+def stats_command(command):
+    path = RUN_DIR / "haproxy.sock"
+    deadline = time.monotonic() + 4
+    while not path.exists() and time.monotonic() < deadline:
+        time.sleep(0.05)
+    with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as client:
+        client.settimeout(4)
+        client.connect(str(path))
+        client.sendall(command.rstrip().encode("ascii") + b"\n")
+        client.shutdown(socket.SHUT_WR)
+        chunks = []
+        while True:
+            chunk = client.recv(65536)
+            if not chunk:
+                break
+            chunks.append(chunk)
+    return b"".join(chunks).decode("utf-8", errors="replace")
+
+
+def clear_stick_tables():
+    for table in (
+        "sister_connection_by_origin",
+        "sister_rate_global",
+        "sister_rate_origin",
+        "sister_rate_origin_route",
+        "sister_rate_login",
+    ):
+        stats_command(f"clear table {table}")
+
+
+def read_gateway_log():
+    path = RUN_DIR / "haproxy-test.log"
+    return path.read_text(encoding="utf-8") if path.exists() else ""
 
 
 def wait_for_tls(process, expected_status=None):
@@ -134,25 +199,31 @@ def wait_for_tls(process, expected_status=None):
 @contextlib.contextmanager
 def running_haproxy(*, expect_backend=False):
     environment = prepare_runtime()
-    process = subprocess.Popen(
-        [environment["GATEWAY_HAPROXY_BIN"], "-Ws", "-f", str(RUN_DIR / "haproxy.cfg")],
-        cwd=ROOT,
-        env=environment,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT,
-        text=True,
-    )
-    try:
-        wait_for_tls(process, 200 if expect_backend else None)
-        yield process
-    finally:
-        if process.poll() is None:
-            process.send_signal(signal.SIGTERM)
+    log_path = RUN_DIR / "haproxy-test.log"
+    with log_path.open("w", encoding="utf-8") as log:
+        process = subprocess.Popen(
+            [environment["GATEWAY_HAPROXY_BIN"], "-Ws", "-f", str(RUN_DIR / "haproxy.cfg")],
+            cwd=ROOT,
+            env=environment,
+            stdout=log,
+            stderr=subprocess.STDOUT,
+            text=True,
+        )
+        try:
+            wait_for_tls(process, 200 if expect_backend else None)
+            yield process
+        finally:
+            if process.poll() is None:
+                process.send_signal(signal.SIGTERM)
+                try:
+                    process.wait(timeout=8)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
             try:
-                process.wait(timeout=8)
-            except subprocess.TimeoutExpired:
-                process.kill()
-                process.wait(timeout=5)
+                (RUN_DIR / "haproxy.sock").unlink()
+            except FileNotFoundError:
+                pass
 
 
 class CaptureHandler(http.server.BaseHTTPRequestHandler):

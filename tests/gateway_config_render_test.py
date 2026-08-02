@@ -62,6 +62,15 @@ def main():
         assert "http-request set-header Host sister-gateway.test" in rendered
         assert "sister-gateway.test:8443" in rendered
         assert "http-request deny status 400 if HTTP_URL_ABS" in rendered
+        assert "tune.stick-counters 5" in rendered
+        assert "tcp-request connection reject if { sc_conn_cur(0) gt 32 }" in rendered
+        assert rendered.count("http-request track-sc") == 4
+        assert rendered.count("status 429") == 4
+        assert "hdr Retry-After 60" in rendered
+        assert "maxconn 32 maxqueue 64" in rendered
+        assert "stats socket " in rendered and "mode 600 level operator" in rendered
+        assert '"queue_ms":%Tw' in rendered
+        assert '"upstream_ms":%Tr' in rendered
         assert "lua" not in rendered.lower()
         output = temporary / "haproxy.cfg"
         write_private_atomic(output, rendered)
