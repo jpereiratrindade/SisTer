@@ -284,8 +284,8 @@ O trabalho corrente mantém no máximo dois cartões simultâneos:
 | Concluído na baseline | `SEC-02M` — flag própria e política exata em `v0.2.7` |
 | Backlog bloqueante antes de escrita | `SEC-02R` — replay persistente ou garantia transacional equivalente |
 | Concluído como perfil, não implantado | `SEC-03A` — ADR-0020 e perfil executável |
-| Em laboratório, não concluído | `SEC-03B` — controles principais provados; duplicações normalizadas e Upgrade isolado permanecem parciais |
-| Backlog imediato | `SEC-03C` — contenção de abuso na borda |
+| Concluído com restrições | `SEC-03B` — normalizações resolvidas; Host idêntico duplicado aceito como divergência governada |
+| Pronto | `SEC-03C` — contenção de abuso na borda |
 | Validação | `SEC-03V` — matriz negativa e evidência de processo |
 | Backlog seguinte | `FED-01` — registro persistente de sistemas |
 
@@ -300,9 +300,9 @@ A Coordenação do Projeto SisTer aprova os owners e estados acima para a
 - Slowloris, deadlines absolutos e quotas de borda permanecem em
   `TH-HTTP-03`, desde que o `sisterd` continue restrito a loopback e sem papel de
   servidor HTTP público até SEC-03V. SEC-03A define o controle, mas não reduz
-  esse risco sem implantação e teste. SEC-03B já comprova a fronteira mínima
-  em loopback, mas não reduz o risco residual das lacunas registradas em
-  `docs/evidence/security/SEC-03B.md`.
+  esse risco sem implantação e teste. SEC-03B comprova a fronteira mínima em
+  loopback e aceita de modo restrito a divergência de Host idêntico duplicado,
+  com revisão obrigatória em SEC-03V.
 - A contenção de login usa o endereço diretamente observado; nenhuma confiança
   em origem encaminhada existe antes do gateway governado.
 - O proxy WebSocket legado permanece fisicamente presente apenas para
@@ -319,4 +319,5 @@ exposição externa ou uso do `sisterd` como servidor HTTP público. SEC-02M
 garante que tais pedidos falham antes da emissão e da conexão upstream. Esta
 aprovação publica uma baseline interna de controles; não declara prontidão para
 produção externa. Da mesma forma, `PROFILE_DEFINED` em SEC-03A não equivale a
-`CONTROLLED_BASELINE`: somente SEC-03B/C/V podem sustentar essa transição.
+`CONTROLLED_BASELINE`: somente SEC-03C/V podem sustentar essa transição após o
+fechamento restrito de SEC-03B.

@@ -19,7 +19,9 @@ if [[ -z "${haproxy_binary}" || "${haproxy_binary}" != /* || ! -x "${haproxy_bin
 fi
 
 python3 "${repo_root}/scripts/validate_gateway_security_profile.py"
-"${haproxy_binary}" -vv | grep -Eq '^HAProxy version 3\.2\.(2[2-9]|[3-9][0-9]|[1-9][0-9]{2,})([^0-9]|$)'
+haproxy_version_output="$("${haproxy_binary}" -vv)"
+grep -Eq '^HAProxy version 3\.2\.(2[2-9]|[3-9][0-9]|[1-9][0-9]{2,})([^0-9]|$)' \
+  <<<"${haproxy_version_output}"
 "${haproxy_binary}" -c -V -f "${config_path}"
 
 echo "gateway configuration validation ok"

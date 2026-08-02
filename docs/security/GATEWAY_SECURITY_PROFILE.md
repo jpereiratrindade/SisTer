@@ -1,10 +1,10 @@
 # Perfil executável de segurança da fronteira HTTP
 
-**Identificador:** `sister.gateway-security-profile/1.0.0`
+**Identificador:** `sister.gateway-security-profile/1.1.0`
 
-**Gate:** SEC-03A
+**Gate:** SEC-03C
 
-**Estado:** perfil aprovado; ainda não implantado
+**Estado:** SEC-03B encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`; ainda não implantado
 
 **Decisão:** [ADR-0020](../adr/ADR-0020-specialized-http-gateway.md)
 
@@ -31,7 +31,7 @@ protocolo ou gate de segurança exige revisão do MAES e nova decisão de risco.
 | Entrada | `443/tcp`, TLS 1.3, HTTP/1.1, Host exato |
 | HTTP sem TLS | porta 80 fechada |
 | Upstream | único e fixo: `127.0.0.1:8000`, HTTP/1.1 |
-| WebSocket/Upgrade | negado |
+| WebSocket/Upgrade | handshake negado; campos isolados removidos |
 | Headers | externos de identidade, origem e correlação removidos |
 | Request ID | novo valor hexadecimal de 32 caracteres |
 | Headers | 64 campos, 16 KiB agregados, alvo de 8 KiB |
@@ -45,19 +45,36 @@ protocolo ou gate de segurança exige revisão do MAES e nova decisão de risco.
 
 ## Matriz executável de realizabilidade
 
-`ops/gateway/security-profile.json` classifica cada requisito como:
+`ops/gateway/security-profile.json` classifica requisitos e resultados como:
 
 - `NATIVE_DOCUMENTED`: o manual identifica mecanismo nativo, ainda sem prova
   de processo;
-- `LAB_PROOF_REQUIRED`: existe mecanismo candidato, mas formato e comportamento
-  precisam de teste real;
+- `PROVEN`, `PROVEN_BY_SAFE_NORMALIZATION`, `PROVEN_BY_REJECTION` e
+  `PROVEN_BY_STRIPPING`: resultado reproduzido no laboratório;
+- `ACCEPTED_LAB_DIVERGENCE`: divergência literal aceita com owner, escopo,
+  risco e condição de reabertura;
+- `DEFERRED_TO_SEC-03V` e `SEC-03C_PENDING`: controle preservado em gate futuro;
 - `MECHANISM_UNPROVEN`: nenhum mecanismo simples foi aceito e o controle não
   pode ser declarado implementado.
 
 Taxa mínima e limite de resposta começam em `MECHANISM_UNPROVEN`. O validador
 impede promovê-los documentalmente para nativos, habilitar Lua ou admitir
-módulos de terceiros. SEC-03B deve registrar o resultado sem reinterpretar o
-requisito para “ficar verde”.
+módulos de terceiros. SEC-03B-R registrou equivalências seguras e uma exceção
+restrita sem reinterpretar divergência como conformidade.
+
+## Resolução do laboratório SEC-03B-R
+
+- `Content-Length` válido e idêntico é normalizado para um único valor;
+- `Content-Length` inválido ou divergente é rejeitado e não chega ao upstream;
+- handshake Upgrade/WebSocket completo é rejeitado;
+- campos hop-by-hop isolados são removidos antes de HTTP comum seguir;
+- duas linhas Host divergentes são rejeitadas;
+- duas linhas Host idênticas formam `ACCEPTED_LAB_DIVERGENCE` sob autoridade
+  única e canônica.
+
+A exceção de Host é reaberta por múltiplos hosts, certificados, backends,
+destino dinâmico ou mudança de linha/representação HTTP. SEC-03V é o gate de
+revisão. A resolução autoriza SEC-03C, mas não merge, release ou exposição.
 
 ## Política de confiança
 

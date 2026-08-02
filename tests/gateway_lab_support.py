@@ -78,10 +78,10 @@ def tls_context(*, maximum=None, alpn=("http/1.1",)):
     return context
 
 
-def tls_exchange(request, *, context=None):
+def tls_exchange(request, *, context=None, server_hostname=HOST):
     context = context or tls_context()
     with socket.create_connection(("127.0.0.1", 8443), timeout=4) as raw:
-        with context.wrap_socket(raw, server_hostname=HOST) as connection:
+        with context.wrap_socket(raw, server_hostname=server_hostname) as connection:
             connection.settimeout(4)
             connection.sendall(request)
             response = bytearray()

@@ -134,8 +134,11 @@ def validate_governed_profile(profile_path):
         raise RenderError("gateway security profile is invalid: " + errors[0])
     if profile["status"] != "PROFILE_DEFINED":
         raise RenderError("gateway security profile must remain PROFILE_DEFINED")
-    if profile["realizability"]["verification_gate"] != "SEC-03B":
-        raise RenderError("gateway security profile is not ready for SEC-03B")
+    if profile["realizability"]["verification_gate"] != "SEC-03C":
+        raise RenderError("gateway security profile has not closed SEC-03B")
+    resolution = profile["realizability"].get("laboratory_resolution", {})
+    if resolution.get("state") != "LAB_PROVEN_WITH_RESTRICTIONS":
+        raise RenderError("gateway security profile lacks the SEC-03B-R decision")
     if profile["realizability"]["lua_allowed"] or profile["realizability"]["third_party_modules_allowed"]:
         raise RenderError("SEC-03B forbids Lua and third-party modules")
     return profile

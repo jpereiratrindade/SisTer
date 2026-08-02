@@ -4,7 +4,8 @@
 
 **Branch:** `sec-03b-lab`
 
-**Estado:** `LAB_INCOMPLETE`
+**Estado:** `LAB_PROVEN_WITH_RESTRICTIONS`
+
 **Exposição externa:** não autorizada
 
 ## Ambiente observado
@@ -46,22 +47,26 @@ foram executados com o binário 3.2.22 acima e não foram pulados.
 | TLS 1.2 | `PROVEN` | handshake recusado |
 | HTTP/1.1 por ALPN | `PROVEN` | `http/1.1` negociado; cliente apenas `h2` não negociou protocolo |
 | HTTP sem TLS em 8443 | `PROVEN` | nenhuma resposta HTTP em claro |
-| Host canônico, ausente, desconhecido e wildcard | `PROVEN` | `200`, `400`, `403` e `403`, respectivamente |
-| duas linhas Host idênticas | `PARTIALLY_PROVEN` | HAProxy 3.2.22 normalizou as ocorrências antes da ACL e encaminhou a requisição; requisito de rejeição não foi satisfeito |
+| SNI e Host canônicos | `PROVEN` | SNI divergente recusado; Host canônico sem porta ou com `8443` aceito |
+| Host ausente, desconhecido, wildcard ou porta inesperada | `PROVEN` | requisições recusadas antes do upstream |
+| duas linhas Host idênticas | `ACCEPTED_LAB_DIVERGENCE` | HAProxy 3.2.22 normalizou as ocorrências; um único Host canônico chegou ao upstream sob a exceção restrita SEC-03B-R |
+| duas linhas Host divergentes | `PROVEN` | ambas as ordens receberam `400` e não alcançaram o upstream |
+| absolute-form | `PROVEN` | recusado com `400`, independentemente da combinação com Host |
 | métodos permitidos | `PROVEN` | método fora da allowlist recebeu `405` |
 | corpo geral e autenticação | `PROVEN` | limites exatos foram aceitos; limite mais um byte recebeu `413` |
 | mais de 64 unidades de header | `PROVEN` | requisição com 70 headers adicionais recebeu `400` |
 | `Transfer-Encoding` | `PROVEN` | requisição chunked recebeu `400` |
-| duas linhas Content-Length idênticas | `PARTIALLY_PROVEN` | o parser normalizou valores idênticos antes da ACL e encaminhou a requisição; valores conflitantes continuam fechados pelo parser, mas a política exige rejeitar toda duplicação |
+| duas linhas Content-Length idênticas | `PROVEN_BY_SAFE_NORMALIZATION` | duas linhas válidas com valor `5` produziram um único `Content-Length: 5` e corpo íntegro no upstream |
+| Content-Length inválido ou divergente | `PROVEN` | valores divergentes receberam `400` e não alcançaram o upstream |
 | headers `X-Sister-*` | `PROVEN` | ausentes no upstream de captura |
 | origem e correlação externas | `PROVEN` | `Forwarded` removido; `X-Forwarded-*` reconstruídos; ID externo substituído por 32 hex minúsculos |
 | cookie na fronteira gateway/sisterd | `PROVEN` | preservado até o `sisterd`; nenhum endpoint de depuração foi criado |
-| handshake WebSocket completo | `PROVEN` | `Upgrade: websocket` com `Connection: Upgrade` recebeu `400` e não chegou ao upstream |
-| headers de Upgrade isolados | `PARTIALLY_PROVEN` | HAProxy retirou os campos hop-by-hop e encaminhou sem handshake; o upstream não recebeu Upgrade, mas o status explícito de rejeição não foi produzido |
+| handshake WebSocket completo | `PROVEN_BY_REJECTION` | `Upgrade: websocket` com `Connection: Upgrade` recebeu `400` e não chegou ao upstream |
+| headers de Upgrade isolados | `PROVEN_BY_STRIPPING` | HAProxy retirou `Upgrade` e `Connection`; a requisição seguiu apenas como HTTP comum |
 | sisterd indisponível | `PROVEN` | gateway retornou `503` controlado |
 | PEM ausente ou permissivo | `PROVEN` | renderizador bloqueou o início |
 | sisterd real e quarentena funcional | `PROVEN` | `/api/health` passou; Clima permaneceu `404`; Nexo sem identidade não ganhou acesso |
-| gateway → sisterd → Nexo → PostgreSQL | `BLOCKED` | não havia configuração de identidade privada e sessão de teste aprovada para executar o E2E sem alterar credenciais ou dados operacionais |
+| gateway → sisterd → Nexo → PostgreSQL | `DEFERRED_TO_SEC-03V` | composição permanece obrigatória com identidade efêmera e ambiente integrado governado |
 
 ## Controles deliberadamente não verdes
 
@@ -74,15 +79,25 @@ foram executados com o binário 3.2.22 acima e não foram pulados.
 | isolamento local por usuário/cgroup | `NOT_IMPLEMENTED` |
 | confiança do sisterd em headers do gateway | `DISABLED` |
 
-## Decisão
+## Resolução SEC-03B-R
 
-SEC-03B não está encerrado. O laboratório prova a maior parte da fronteira
-mínima, mas não permite classificar como `PROVEN` a rejeição de ocorrências
-idênticas de `Host` e `Content-Length`, nem o status de bloqueio para campos de
-Upgrade isolados. Não será introduzido Lua, plugin ou módulo para esconder essas
-lacunas. Antes de SEC-03C, a equipe deve decidir por um mecanismo nativo simples,
-reformular a política com justificativa de normalização ou manter o gate
-bloqueado.
+SEC-03B está encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`. A decisão adota a
+regra de enquadramento do [RFC 9112](https://www.rfc-editor.org/rfc/rfc9112.html):
+valores `Content-Length` válidos e idênticos podem ser reduzidos a um valor
+efetivo; valores inválidos ou divergentes permanecem erro irrecuperável. Campos
+isolados de Upgrade são neutralizados por remoção, enquanto o handshake completo
+é rejeitado.
+
+A duplicação idêntica de `Host` permanece `ACCEPTED_LAB_DIVERGENCE`, pois o RFC
+9112 exige rejeitar mais de uma linha Host e o HAProxy a normaliza antes das
+ACLs. O owner é **gateway and transport maintainers**. A aceitação vale somente
+com um SNI/certificado, um Host exato, um upstream literal e reconstrução do Host
+canônico. Múltiplos hosts, certificados, backends, destino dinâmico ou troca da
+linha/representação HTTP reabrem o gate. SEC-03V deve reavaliar o risco.
+
+Esta resolução autoriza iniciar SEC-03C. Não autoriza merge em `main`, release,
+tag ou exposição externa. O E2E completo com Nexo foi transferido, não removido,
+para SEC-03V.
 
 A tag `v0.2.7` e `VERSION` permanecem imutáveis. Nenhum listener público,
 certificado institucional, WebSocket, Clima ou confiança em headers foi

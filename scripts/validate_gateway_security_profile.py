@@ -59,7 +59,8 @@ def validate_profile(profile, schema):
             "version_verified_on", "official_release_index", "lts_eol", "plugins",
         },
         "realizability": {
-            "verification_gate", "policy", "lua_allowed", "third_party_modules_allowed", "requirements",
+            "verification_gate", "policy", "lua_allowed", "third_party_modules_allowed",
+            "requirements", "laboratory_resolution",
         },
         "deployment": {
             "service_manager", "package_signature_required", "runtime_user", "config_owner",
@@ -73,13 +74,14 @@ def validate_profile(profile, schema):
         },
         "tls": {
             "required", "minimum_version", "maximum_version", "cipher_suites",
-            "certificate_source", "exact_hostname_required", "expired_certificate_action",
+            "certificate_source", "exact_hostname_required", "sni_action", "expired_certificate_action",
             "renewal_requires_validation_and_reload", "hsts_enabled",
         },
         "http": {
             "downstream_protocols", "upstream_protocol", "allowed_methods", "host_allowlist_source",
             "host_allowlist_minimum_entries", "host_wildcards_allowed",
-            "missing_or_duplicate_host_action", "websocket_enabled", "upgrade_enabled",
+            "missing_or_duplicate_host_action", "absolute_form_action",
+            "unexpected_host_port_action", "websocket_enabled", "upgrade_enabled",
             "maximum_request_target_bytes", "maximum_header_count", "maximum_header_bytes",
             "maximum_body_bytes", "authentication_maximum_body_bytes",
             "maximum_upstream_response_bytes", "minimum_request_receive_rate_bytes_per_second",
@@ -96,7 +98,9 @@ def validate_profile(profile, schema):
             "strip_exact", "strip_prefixes", "rebuild", "client_supplied_identity_trusted",
             "client_supplied_origin_trusted", "client_supplied_request_id_trusted",
         },
-        "headers.rebuild": {"X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Request-ID"},
+        "headers.rebuild": {
+            "X-Forwarded-For", "X-Forwarded-Host", "X-Forwarded-Proto", "X-Request-ID", "Host",
+        },
         "rate_limits": {
             "global", "per_origin", "per_origin_route", "login_per_origin",
             "internal_sisterd_limiter_retained", "rejection_status", "retry_after_required",
@@ -127,12 +131,12 @@ def validate_profile(profile, schema):
     expect(
         schema,
         "$id",
-        "https://sister.local/contracts/gateway-security-profile/1.0.0",
+        "https://sister.local/contracts/gateway-security-profile/1.1.0",
         errors,
     )
 
     expect(profile, "contract_id", "sister.gateway-security-profile", errors)
-    expect(profile, "contract_version", "1.0.0", errors)
+    expect(profile, "contract_version", "1.1.0", errors)
     expect(profile, "status", "PROFILE_DEFINED", errors)
     expect(profile, "technology.product", "haproxy", errors)
     expect(profile, "technology.edition", "community", errors)
@@ -148,21 +152,29 @@ def validate_profile(profile, schema):
     if not match or int(match.group(1)) != 22:
         errors.append("technology.initial_validated_floor must match the currently verified HAProxy 3.2.22 release")
 
-    expect(profile, "realizability.verification_gate", "SEC-03B", errors)
+    expect(profile, "realizability.verification_gate", "SEC-03C", errors)
     expect(profile, "realizability.policy", "native_simple_or_record_residual_risk", errors)
     expect(profile, "realizability.lua_allowed", False, errors)
     expect(profile, "realizability.third_party_modules_allowed", False, errors)
     required_realizability = {
-        "tls_1_3": "NATIVE_DOCUMENTED",
-        "http_1_1_only": "LAB_PROOF_REQUIRED",
+        "tls_1_3": "PROVEN",
+        "http_1_1_only": "PROVEN",
         "absolute_header_deadline": "NATIVE_DOCUMENTED",
-        "header_limits": "LAB_PROOF_REQUIRED",
-        "request_body_limit": "LAB_PROOF_REQUIRED",
+        "header_limits": "PROVEN",
+        "request_body_limit": "PROVEN",
         "minimum_receive_rate": "MECHANISM_UNPROVEN",
         "upstream_response_limit": "MECHANISM_UNPROVEN",
-        "request_id_lower_hex_32": "LAB_PROOF_REQUIRED",
-        "strip_x_sister_prefix": "LAB_PROOF_REQUIRED",
-        "multidimensional_rate_limiting": "NATIVE_DOCUMENTED",
+        "request_id_lower_hex_32": "PROVEN",
+        "strip_x_sister_prefix": "PROVEN",
+        "multidimensional_rate_limiting": "SEC-03C_PENDING",
+        "canonical_host_authority": "PROVEN",
+        "duplicate_identical_host": "ACCEPTED_LAB_DIVERGENCE",
+        "duplicate_divergent_host": "PROVEN",
+        "duplicate_content_length": "PROVEN_BY_SAFE_NORMALIZATION",
+        "complete_websocket_upgrade": "PROVEN_BY_REJECTION",
+        "isolated_upgrade_fields": "PROVEN_BY_STRIPPING",
+        "full_nexo_composition": "DEFERRED_TO_SEC-03V",
+        "local_upstream_isolation": "NOT_IMPLEMENTED",
     }
     requirements = value(profile, "realizability.requirements", errors)
     if isinstance(requirements, list):
@@ -178,9 +190,53 @@ def validate_profile(profile, schema):
             if not isinstance(requirement.get("mechanism"), str) or not requirement["mechanism"].strip():
                 errors.append(f"realizability requirement {requirement_id} needs a mechanism statement")
         if observed != required_realizability:
-            errors.append("realizability states must preserve documented, lab-pending and unproven controls")
+            errors.append("realizability states must preserve the approved SEC-03B-R resolution")
     else:
         errors.append("realizability.requirements must be a list")
+
+    resolution = value(profile, "realizability.laboratory_resolution", errors)
+    resolution_keys = {
+        "decision_id", "state", "decided_on", "evidence", "authorizes_next_gate",
+        "merge_authorized", "release_authorized", "external_exposure_authorized", "host_exception",
+    }
+    if isinstance(resolution, dict):
+        if set(resolution) != resolution_keys:
+            errors.append("laboratory resolution fields must preserve the SEC-03B-R decision")
+        for field, expected in {
+            "decision_id": "SEC-03B-R",
+            "state": "LAB_PROVEN_WITH_RESTRICTIONS",
+            "decided_on": "2026-08-01",
+            "evidence": "docs/evidence/security/SEC-03B.md",
+            "authorizes_next_gate": "SEC-03C",
+            "merge_authorized": False,
+            "release_authorized": False,
+            "external_exposure_authorized": False,
+        }.items():
+            if resolution.get(field) != expected:
+                errors.append(f"realizability.laboratory_resolution.{field} must be {expected!r}")
+        exception = resolution.get("host_exception")
+        exception_keys = {
+            "state", "owner", "justification", "scope", "residual_risk", "review_gate",
+            "reopen_conditions",
+        }
+        if not isinstance(exception, dict) or set(exception) != exception_keys:
+            errors.append("host exception must contain owner, scope, risk and review conditions")
+        else:
+            if exception.get("state") != "ACCEPTED_LAB_DIVERGENCE":
+                errors.append("identical duplicate Host must remain an accepted divergence, not proven")
+            if exception.get("owner") != "gateway and transport maintainers":
+                errors.append("Host divergence must retain its accountable owner")
+            if exception.get("review_gate") != "SEC-03V":
+                errors.append("Host divergence must be reviewed at SEC-03V")
+            for field in ("justification", "residual_risk"):
+                if not isinstance(exception.get(field), str) or not exception[field].strip():
+                    errors.append(f"Host divergence requires {field}")
+            for field in ("scope", "reopen_conditions"):
+                entries = exception.get(field)
+                if not isinstance(entries, list) or not entries or len(entries) != len(set(entries)):
+                    errors.append(f"Host divergence requires unique non-empty {field}")
+    else:
+        errors.append("realizability.laboratory_resolution must be an object")
 
     for path, expected in {
         "deployment.service_manager": "systemd",
@@ -207,6 +263,7 @@ def validate_profile(profile, schema):
         "tls.maximum_version": "TLSv1.3",
         "tls.certificate_source": "approved_ca",
         "tls.exact_hostname_required": True,
+        "tls.sni_action": "reject_unknown_or_missing",
         "tls.expired_certificate_action": "fail_closed",
         "tls.renewal_requires_validation_and_reload": True,
         "tls.hsts_enabled": False,
@@ -214,7 +271,9 @@ def validate_profile(profile, schema):
         "http.host_allowlist_source": "deployment_inventory",
         "http.host_allowlist_minimum_entries": 1,
         "http.host_wildcards_allowed": False,
-        "http.missing_or_duplicate_host_action": "reject",
+        "http.missing_or_duplicate_host_action": "reject_missing_or_divergent_accept_identical_under_exception",
+        "http.absolute_form_action": "reject",
+        "http.unexpected_host_port_action": "reject",
         "http.websocket_enabled": False,
         "http.upgrade_enabled": False,
         "http.maximum_request_target_bytes": 8192,
@@ -224,7 +283,7 @@ def validate_profile(profile, schema):
         "http.authentication_maximum_body_bytes": 65536,
         "http.maximum_upstream_response_bytes": 16777216,
         "http.minimum_request_receive_rate_bytes_per_second": 1024,
-        "http.duplicate_content_length_action": "reject",
+        "http.duplicate_content_length_action": "normalize_identical_reject_invalid_or_divergent",
         "http.transfer_encoding_action": "reject",
         "http.content_length_and_transfer_encoding_action": "reject",
         "http.ambiguous_whitespace_action": "reject",
@@ -254,7 +313,7 @@ def validate_profile(profile, schema):
         "rollback.offline_validation_before_reload": True,
         "rollback.external_and_internal_health_required": True,
         "rollback.allowed_failure_mode": "external_unavailable",
-        "gates.current": "SEC-03A",
+        "gates.current": "SEC-03C",
         "gates.external_production_authorized": False,
         "gates.functional_scope_expansion_authorized": False,
         "gates.write_capabilities_authorized": False,
@@ -296,6 +355,7 @@ def validate_profile(profile, schema):
             "X-Forwarded-Host": "canonical_allowed_host",
             "X-Forwarded-Proto": "https",
             "X-Request-ID": "generated_lower_hex_32",
+            "Host": "canonical_allowed_host",
         },
         errors,
     )

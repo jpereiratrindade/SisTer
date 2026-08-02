@@ -1,6 +1,6 @@
 {
   "contract_id": "sister.gateway-security-profile",
-  "contract_version": "1.0.0",
+  "contract_version": "1.1.0",
   "status": "PROFILE_DEFINED",
   "technology": {
     "product": "haproxy",
@@ -14,7 +14,7 @@
     "plugins": []
   },
   "realizability": {
-    "verification_gate": "SEC-03B",
+    "verification_gate": "SEC-03C",
     "policy": "native_simple_or_record_residual_risk",
     "lua_allowed": false,
     "third_party_modules_allowed": false,
@@ -22,12 +22,12 @@
       {
         "id": "tls_1_3",
         "mechanism": "bind TLS version controls",
-        "state": "NATIVE_DOCUMENTED"
+        "state": "PROVEN"
       },
       {
         "id": "http_1_1_only",
         "mechanism": "bind ALPN and protocol configuration",
-        "state": "LAB_PROOF_REQUIRED"
+        "state": "PROVEN"
       },
       {
         "id": "absolute_header_deadline",
@@ -37,12 +37,12 @@
       {
         "id": "header_limits",
         "mechanism": "tune.http.maxhdr and buffer sizing",
-        "state": "LAB_PROOF_REQUIRED"
+        "state": "PROVEN"
       },
       {
         "id": "request_body_limit",
         "mechanism": "Content-Length ACL and real request tests",
-        "state": "LAB_PROOF_REQUIRED"
+        "state": "PROVEN"
       },
       {
         "id": "minimum_receive_rate",
@@ -57,19 +57,89 @@
       {
         "id": "request_id_lower_hex_32",
         "mechanism": "unique-id-format and unique-id-header",
-        "state": "LAB_PROOF_REQUIRED"
+        "state": "PROVEN"
       },
       {
         "id": "strip_x_sister_prefix",
         "mechanism": "request header deletion rules",
-        "state": "LAB_PROOF_REQUIRED"
+        "state": "PROVEN"
       },
       {
         "id": "multidimensional_rate_limiting",
         "mechanism": "stick tables and tracked counters",
-        "state": "NATIVE_DOCUMENTED"
+        "state": "SEC-03C_PENDING"
+      },
+      {
+        "id": "canonical_host_authority",
+        "mechanism": "strict SNI, exact Host allowlist, rejected absolute-form and canonical upstream Host",
+        "state": "PROVEN"
+      },
+      {
+        "id": "duplicate_identical_host",
+        "mechanism": "HAProxy HTX normalization plus single canonical upstream authority under restricted topology",
+        "state": "ACCEPTED_LAB_DIVERGENCE"
+      },
+      {
+        "id": "duplicate_divergent_host",
+        "mechanism": "HAProxy HTTP parser rejects divergent Host field lines before upstream",
+        "state": "PROVEN"
+      },
+      {
+        "id": "duplicate_content_length",
+        "mechanism": "safe normalization of equal valid values and parser rejection of invalid or divergent values",
+        "state": "PROVEN_BY_SAFE_NORMALIZATION"
+      },
+      {
+        "id": "complete_websocket_upgrade",
+        "mechanism": "HAProxy HTTP parser rejects the complete Upgrade handshake before upstream",
+        "state": "PROVEN_BY_REJECTION"
+      },
+      {
+        "id": "isolated_upgrade_fields",
+        "mechanism": "HAProxy strips isolated hop-by-hop fields before forwarding ordinary HTTP",
+        "state": "PROVEN_BY_STRIPPING"
+      },
+      {
+        "id": "full_nexo_composition",
+        "mechanism": "controlled end-to-end environment with ephemeral governed identities",
+        "state": "DEFERRED_TO_SEC-03V"
+      },
+      {
+        "id": "local_upstream_isolation",
+        "mechanism": "dedicated user or cgroup host control not present in the laboratory",
+        "state": "NOT_IMPLEMENTED"
       }
-    ]
+    ],
+    "laboratory_resolution": {
+      "decision_id": "SEC-03B-R",
+      "state": "LAB_PROVEN_WITH_RESTRICTIONS",
+      "decided_on": "2026-08-01",
+      "evidence": "docs/evidence/security/SEC-03B.md",
+      "authorizes_next_gate": "SEC-03C",
+      "merge_authorized": false,
+      "release_authorized": false,
+      "external_exposure_authorized": false,
+      "host_exception": {
+        "state": "ACCEPTED_LAB_DIVERGENCE",
+        "owner": "gateway and transport maintainers",
+        "justification": "HAProxy 3.2.22 normalizes identical Host field lines before ACL evaluation while the effective authority remains canonical and cannot select a destination",
+        "scope": [
+          "one exact SNI and certificate",
+          "one allowed Host with only the laboratory port optional",
+          "one literal loopback upstream",
+          "canonical Host rebuilt before upstream"
+        ],
+        "residual_risk": "the laboratory baseline does not literally conform to RFC 9112 rejection of every request containing more than one Host field line",
+        "review_gate": "SEC-03V",
+        "reopen_conditions": [
+          "multiple allowed hosts",
+          "multiple certificates or SNI routes",
+          "dynamic backend selection",
+          "non-literal upstream",
+          "change of HAProxy branch or HTTP representation"
+        ]
+      }
+    }
   },
   "deployment": {
     "service_manager": "systemd",
@@ -105,6 +175,7 @@
     ],
     "certificate_source": "approved_ca",
     "exact_hostname_required": true,
+    "sni_action": "reject_unknown_or_missing",
     "expired_certificate_action": "fail_closed",
     "renewal_requires_validation_and_reload": true,
     "hsts_enabled": false
@@ -116,7 +187,9 @@
     "host_allowlist_source": "deployment_inventory",
     "host_allowlist_minimum_entries": 1,
     "host_wildcards_allowed": false,
-    "missing_or_duplicate_host_action": "reject",
+    "missing_or_duplicate_host_action": "reject_missing_or_divergent_accept_identical_under_exception",
+    "absolute_form_action": "reject",
+    "unexpected_host_port_action": "reject",
     "websocket_enabled": false,
     "upgrade_enabled": false,
     "maximum_request_target_bytes": 8192,
@@ -126,7 +199,7 @@
     "authentication_maximum_body_bytes": 65536,
     "maximum_upstream_response_bytes": 16777216,
     "minimum_request_receive_rate_bytes_per_second": 1024,
-    "duplicate_content_length_action": "reject",
+    "duplicate_content_length_action": "normalize_identical_reject_invalid_or_divergent",
     "transfer_encoding_action": "reject",
     "content_length_and_transfer_encoding_action": "reject",
     "ambiguous_whitespace_action": "reject",
@@ -158,7 +231,8 @@
       "X-Forwarded-For": "observed_source_address",
       "X-Forwarded-Host": "canonical_allowed_host",
       "X-Forwarded-Proto": "https",
-      "X-Request-ID": "generated_lower_hex_32"
+      "X-Request-ID": "generated_lower_hex_32",
+      "Host": "canonical_allowed_host"
     },
     "client_supplied_identity_trusted": false,
     "client_supplied_origin_trusted": false,
@@ -220,7 +294,7 @@
     ]
   },
   "gates": {
-    "current": "SEC-03A",
+    "current": "SEC-03C",
     "required_before_release": ["SEC-03B", "SEC-03C", "SEC-03V"],
     "external_production_authorized": false,
     "functional_scope_expansion_authorized": false,
@@ -235,7 +309,7 @@
       "control": "strict HTTP normalization and unambiguous framing",
       "test": "differential malformed framing matrix",
       "evidence": "SEC-03V_PENDING",
-      "residual_risk": "gateway configuration is not implemented",
+      "residual_risk": "identical duplicate Host lines are an accepted restricted divergence until SEC-03V",
       "owner": "gateway and transport maintainers",
       "state": "PROFILE_DEFINED"
     },
@@ -262,7 +336,7 @@
       "control": "deny Upgrade and WebSocket",
       "test": "WebSocket handshake rejection",
       "evidence": "SEC-03V_PENDING",
-      "residual_risk": "legacy laboratory code remains present",
+      "residual_risk": "isolated hop-by-hop fields are stripped rather than rejected with a dedicated status",
       "owner": "transport architecture",
       "state": "PROFILE_DEFINED"
     },

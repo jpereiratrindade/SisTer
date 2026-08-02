@@ -4,9 +4,10 @@ Esta pasta e a fonte de verdade dos contratos de integracao do SisTer.
 
 Contratos iniciais:
 
-- `gateway_security_profile.schema.json`: perfil executável de SEC-03A; a
-  instância normativa em `ops/gateway/security-profile.json` não representa
-  implantação antes de SEC-03B/C/V.
+- `gateway_security_profile.schema.json`: perfil executável 1.1 da fronteira;
+  SEC-03B está provado com restrições, mas a instância normativa em
+  `ops/gateway/security-profile.json` não representa implantação antes de
+  SEC-03C/V.
 - `subsystem/1.0.0/`: contrato comum `sister.subsystem/1.0.0` para
   manifestos, saúde, prontidão, capacidades, identidade interna, erros,
   auditoria e superfície técnica de subsistemas.

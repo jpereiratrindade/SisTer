@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita para SEC-03A — perfil definido; implantação bloqueada até SEC-03B/C/V
+Aceita — SEC-03B encerrado com restrições; implantação bloqueada até SEC-03C/V
 
 ## Contexto
 
@@ -46,6 +46,7 @@ Referências oficiais consultadas em 1 de agosto de 2026:
 - [ciclo e suporte das versões HAProxy](https://www.haproxy.org/);
 - [manual de configuração HAProxy 3.2](https://docs.haproxy.org/3.2/configuration.html);
 - [guia de gestão HAProxy 3.2](https://docs.haproxy.org/3.2/management.html).
+- [RFC 9112 — HTTP/1.1](https://www.rfc-editor.org/rfc/rfc9112.html).
 
 Na data da decisão, o índice e o manual oficiais já identificam `3.2.22`. Uma
 referência anterior a `3.2.21` é um snapshot ultrapassado e não reduz o piso.
@@ -107,8 +108,9 @@ Nexo, não administra acordos e não persiste dados do SisTer.
   subdomínios, renovação e rollback sustentáveis.
 - Downstream inicial aceita somente HTTP/1.1. HTTP/2, HTTP/3, `Upgrade` e
   WebSocket permanecem desabilitados.
-- `Host` usa allowlist exata, sem wildcard. Host ausente, duplicado ou
-  desconhecido é rejeitado antes do upstream.
+- `Host` usa allowlist exata, sem wildcard. Host ausente, desconhecido,
+  divergente, com porta inesperada ou em absolute-form é rejeitado. Duplicação
+  idêntica segue exclusivamente a exceção SEC-03B-R e chega canônica ao upstream.
 
 ## Headers e correlação
 
@@ -126,8 +128,9 @@ Forwarded
 Reconstrói somente `X-Forwarded-For` a partir do endereço observado,
 `X-Forwarded-Host` a partir do host canônico, `X-Forwarded-Proto=https` e um
 novo `X-Request-ID`. O ID tem 32 caracteres hexadecimais minúsculos e nunca usa
-valor do cliente. O `sisterd` só poderá confiar nesse ID depois que SEC-03B
-implementar e provar a restrição do upstream; até lá, continua gerando o seu.
+valor do cliente. O `sisterd` só poderá confiar nesse ID depois que um gate
+posterior implementar e provar o isolamento local do upstream; até lá, continua
+gerando o seu.
 SEC-03V deve demonstrar uma única correlação gateway–`sisterd`–Nexo–PostgreSQL.
 
 `Cookie` é encaminhado apenas ao `sisterd`, onde representa a sessão humana.
@@ -142,13 +145,14 @@ valores iniciais e o artefato executável. Entre os invariantes:
 - apenas `GET`, `HEAD`, `POST`, `PUT`, `PATCH` e `DELETE`;
 - alvo até 8 KiB, no máximo 64 headers e 16 KiB agregados de headers;
 - corpo global até 1 MiB, com limite de 64 KiB para autenticação;
-- `Content-Length` duplicado, `Transfer-Encoding` não permitido ou a presença
-  simultânea dos dois são rejeitados;
+- `Content-Length` válido e idêntico pode ser normalizado para um único valor;
+  valores inválidos ou divergentes, `Transfer-Encoding` e a presença simultânea
+  de ambos são rejeitados;
 - prazo absoluto de 5 s para headers e alvo de 10 s para corpo; conexão, fila,
   cliente, servidor e keep-alive possuem timeouts explícitos;
 - limites global, por origem, por rota e específico para login;
 - alvo de taxa mínima recebida de 1 KiB/s e de resposta upstream máxima de
-  16 MiB, ambos condicionados à prova de mecanismo nativo simples em SEC-03B.
+  16 MiB, ambos ainda `MECHANISM_UNPROVEN` e sem artifícios de extensão.
 
 ## Gate de realizabilidade
 
@@ -176,6 +180,20 @@ apenas para tornar o perfil aparentemente conforme.
 O limitador interno do `sisterd` permanece como defesa em profundidade. O
 gateway não converte `X-Forwarded-For` em autoridade funcional.
 
+## Resolução SEC-03B-R
+
+O laboratório encerrou SEC-03B como `LAB_PROVEN_WITH_RESTRICTIONS`. A
+normalização segura de `Content-Length` idêntico é aceita conforme RFC 9112;
+campos isolados de Upgrade são removidos e o handshake completo é rejeitado.
+
+O RFC 9112 exige `400` para múltiplas linhas Host. HAProxy 3.2.22 normaliza
+linhas idênticas antes das ACLs, portanto esse caso é
+`ACCEPTED_LAB_DIVERGENCE`, não conformidade literal. A aceitação depende de SNI
+estrito, Host e porta exatos, absolute-form recusado, upstream literal e Host
+canônico reconstruído. O owner é `gateway and transport maintainers`; SEC-03V
+revisa o risco. Qualquer expansão para múltiplas autoridades ou destinos reabre
+SEC-03B.
+
 ## Logs e observabilidade
 
 Logs estruturados registram timestamp, evento, resultado, origem observada,
@@ -195,10 +213,11 @@ legado, abre `8000` externamente ou reduz TLS/limites.
 ## Gates
 
 - **SEC-03A:** ADR, perfil, esquema, validador e matriz de ameaças.
-- **SEC-03B:** matriz de realizabilidade e configuração HAProxy mínima em
-  laboratório, TLS, Host, headers, ID, limites comprováveis e logs.
+- **SEC-03B:** concluído no laboratório com a resolução SEC-03B-R e exceção de
+  Host restrita.
 - **SEC-03C:** deadlines, conexões, rate limiting e métricas de abuso.
-- **SEC-03V:** matriz negativa, integração Nexo, evidência e decisão de risco.
+- **SEC-03V:** matriz negativa, composição gateway/Nexo/PostgreSQL, revisão da
+  exceção de Host, evidência e decisão de risco.
 
 Nenhuma release ou exposição externa é autorizada por esta ADR isoladamente.
 A `v0.2.8` só pode ser considerada depois de SEC-03V. SEC-02R continua

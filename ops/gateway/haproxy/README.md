@@ -7,7 +7,7 @@ pelo Git.
 O template materializa apenas a primeira fatia de SEC-03B:
 
 - listener `127.0.0.1:8443`, TLS 1.3 e HTTP/1.1;
-- Host único e métodos em allowlist;
+- SNI estrito, Host/porta exatos, absolute-form recusado e métodos em allowlist;
 - destino literal `127.0.0.1:8000`;
 - regras de rejeição para `Transfer-Encoding`, `Content-Length` duplicado,
   Upgrade e WebSocket, sujeitas aos resultados de normalização documentados em
@@ -44,9 +44,10 @@ O certificado é assinado por uma CA efêmera local. Os testes usam
 `.run/gateway/ca-lab.crt` para validar a cadeia e o SAN; `curl -k` não faz
 parte dos critérios de aceitação. O processo escuta somente em loopback.
 
-O laboratório não está promovido: HAProxy 3.2.22 normalizou duplicações
-idênticas e alguns campos hop-by-hop antes das ACLs. Esses resultados são
-`PARTIALLY_PROVEN` e mantêm SEC-03B aberto.
+SEC-03B está encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`: `Content-Length`
+idêntico é normalizado com segurança, campos Upgrade isolados são removidos e
+Host idêntico duplicado permanece `ACCEPTED_LAB_DIVERGENCE` sob autoridade
+canônica única. Isso autoriza SEC-03C, não implantação ou exposição.
 
 O binário deve pertencer à linha 3.2 e ser 3.2.22 ou posterior. O renderizador
 recusa caminhos relativos, permissões excessivas, interface pública, porta 443

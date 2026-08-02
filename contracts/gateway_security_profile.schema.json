@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sister.local/contracts/gateway-security-profile/1.0.0",
+  "$id": "https://sister.local/contracts/gateway-security-profile/1.1.0",
   "title": "SisTer gateway security profile",
   "type": "object",
   "additionalProperties": false,
@@ -23,7 +23,7 @@
   ],
   "properties": {
     "contract_id": {"const": "sister.gateway-security-profile"},
-    "contract_version": {"const": "1.0.0"},
+    "contract_version": {"const": "1.1.0"},
     "status": {"const": "PROFILE_DEFINED"},
     "technology": {
       "type": "object",
@@ -41,7 +41,7 @@
         "plugins": {"type": "array", "maxItems": 0}
       }
     },
-    "realizability": {"$ref": "#/$defs/object"},
+    "realizability": {"$ref": "#/$defs/realizability"},
     "deployment": {"$ref": "#/$defs/object"},
     "network": {"$ref": "#/$defs/object"},
     "tls": {"$ref": "#/$defs/object"},
@@ -72,6 +72,75 @@
     }
   },
   "$defs": {
+    "outcome_state": {
+      "enum": [
+        "NATIVE_DOCUMENTED",
+        "PROVEN",
+        "PROVEN_BY_SAFE_NORMALIZATION",
+        "PROVEN_BY_REJECTION",
+        "PROVEN_BY_STRIPPING",
+        "ACCEPTED_LAB_DIVERGENCE",
+        "DEFERRED_TO_SEC-03V",
+        "SEC-03C_PENDING",
+        "MECHANISM_UNPROVEN",
+        "NOT_IMPLEMENTED"
+      ]
+    },
+    "realizability": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verification_gate", "policy", "lua_allowed", "third_party_modules_allowed", "requirements", "laboratory_resolution"],
+      "properties": {
+        "verification_gate": {"const": "SEC-03C"},
+        "policy": {"const": "native_simple_or_record_residual_risk"},
+        "lua_allowed": {"const": false},
+        "third_party_modules_allowed": {"const": false},
+        "requirements": {
+          "type": "array",
+          "minItems": 18,
+          "uniqueItems": true,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["id", "mechanism", "state"],
+            "properties": {
+              "id": {"type": "string", "pattern": "^[a-z0-9_]+$"},
+              "mechanism": {"type": "string", "minLength": 1},
+              "state": {"$ref": "#/$defs/outcome_state"}
+            }
+          }
+        },
+        "laboratory_resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["decision_id", "state", "decided_on", "evidence", "authorizes_next_gate", "merge_authorized", "release_authorized", "external_exposure_authorized", "host_exception"],
+          "properties": {
+            "decision_id": {"const": "SEC-03B-R"},
+            "state": {"const": "LAB_PROVEN_WITH_RESTRICTIONS"},
+            "decided_on": {"type": "string", "format": "date"},
+            "evidence": {"const": "docs/evidence/security/SEC-03B.md"},
+            "authorizes_next_gate": {"const": "SEC-03C"},
+            "merge_authorized": {"const": false},
+            "release_authorized": {"const": false},
+            "external_exposure_authorized": {"const": false},
+            "host_exception": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["state", "owner", "justification", "scope", "residual_risk", "review_gate", "reopen_conditions"],
+              "properties": {
+                "state": {"const": "ACCEPTED_LAB_DIVERGENCE"},
+                "owner": {"type": "string", "minLength": 1},
+                "justification": {"type": "string", "minLength": 1},
+                "scope": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+                "residual_risk": {"type": "string", "minLength": 1},
+                "review_gate": {"const": "SEC-03V"},
+                "reopen_conditions": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}}
+              }
+            }
+          }
+        }
+      }
+    },
     "object": {
       "type": "object",
       "minProperties": 1

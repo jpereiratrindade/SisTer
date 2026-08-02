@@ -24,6 +24,15 @@ def main():
         assert version == "TLSv1.3", version
         assert alpn == "http/1.1", alpn
 
+        wrong_sni = tls_context()
+        wrong_sni.check_hostname = False
+        try:
+            tls_exchange(b"", context=wrong_sni, server_hostname="unknown.test")
+        except (ssl.SSLError, ConnectionResetError, OSError):
+            pass
+        else:
+            raise AssertionError("an unknown SNI was accepted")
+
         tls12 = tls_context(maximum=ssl.TLSVersion.TLSv1_2)
         try:
             tls_exchange(b"", context=tls12)
@@ -53,12 +62,47 @@ def main():
         missing_host = tls_exchange(b"GET /api/health HTTP/1.1\r\nConnection: close\r\n\r\n")[0]
         assert status(missing_host) == 400
         duplicate_host = tls_exchange(
-            b"GET /api/health HTTP/1.1\r\nHost: sister-gateway.test\r\n"
+            b"GET /authority-host-identical HTTP/1.1\r\nHost: sister-gateway.test\r\n"
             b"Host: sister-gateway.test\r\nConnection: close\r\n\r\n"
         )[0]
         # HAProxy 3.2.22 normalizes two identical Host lines into one HTX field
-        # before the ACL. Preserve the observed gap as explicit lab evidence.
+        # before the ACL. SEC-03B-R accepts this restricted divergence only when
+        # the upstream authority is rebuilt to the single canonical Host.
         assert status(duplicate_host) == 200
+        duplicate_host_records = [record for record in records if record[1] == "/authority-host-identical"]
+        assert len(duplicate_host_records) == 1
+        effective_hosts = [
+            value for name, value in duplicate_host_records[0][2] if name.lower() == "host"
+        ]
+        assert effective_hosts == ["sister-gateway.test"], effective_hosts
+
+        for first_host, second_host in (
+            ("sister-gateway.test", "unknown.test"),
+            ("unknown.test", "sister-gateway.test"),
+        ):
+            divergent_host = tls_exchange(
+                b"GET /authority-host-divergent HTTP/1.1\r\n"
+                + f"Host: {first_host}\r\nHost: {second_host}\r\n".encode("ascii")
+                + b"Connection: close\r\n\r\n"
+            )[0]
+            assert status(divergent_host) == 400
+        assert not any(record[1] == "/authority-host-divergent" for record in records)
+
+        assert status(request(headers=[("Host", "sister-gateway.test:9443")])) == 403
+        assert status(request(headers=[("Host", "sister-gateway.test:8443")])) == 200
+
+        absolute_unknown = tls_exchange(
+            b"GET https://unknown.test/authority-absolute HTTP/1.1\r\n"
+            b"Host: sister-gateway.test\r\nConnection: close\r\n\r\n"
+        )[0]
+        assert status(absolute_unknown) == 400
+        absolute_canonical = tls_exchange(
+            b"GET https://sister-gateway.test/authority-absolute HTTP/1.1\r\n"
+            b"Host: unknown.test\r\nConnection: close\r\n\r\n"
+        )[0]
+        assert status(absolute_canonical) == 400
+        absolute_records = [record for record in records if record[1] == "/authority-absolute"]
+        assert not absolute_records
         assert status(request(headers=[("Host", "*.sister-gateway.test")])) == 403
         assert status(request(method="OPTIONS")) == 405
 
@@ -79,16 +123,26 @@ def main():
             )
         ) == 413
         duplicate_length = tls_exchange(
-            b"POST /upload HTTP/1.1\r\nHost: sister-gateway.test\r\n"
-            b"Content-Length: 0\r\nContent-Length: 0\r\nConnection: close\r\n\r\n"
+            b"POST /framing-identical HTTP/1.1\r\nHost: sister-gateway.test\r\n"
+            b"Content-Length: 5\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello"
         )[0]
-        # Identical Content-Length lines are likewise normalized before ACLs.
+        # RFC 9112 permits equal valid values to become one effective length.
         assert status(duplicate_length) == 200
+        identical_length_records = [record for record in records if record[1] == "/framing-identical"]
+        assert len(identical_length_records) == 1
+        effective_lengths = [
+            value
+            for name, value in identical_length_records[0][2]
+            if name.lower() == "content-length"
+        ]
+        assert effective_lengths == ["5"], effective_lengths
+        assert identical_length_records[0][3] == b"hello"
         conflicting_length = tls_exchange(
-            b"POST /upload HTTP/1.1\r\nHost: sister-gateway.test\r\n"
+            b"POST /framing-conflicting HTTP/1.1\r\nHost: sister-gateway.test\r\n"
             b"Content-Length: 0\r\nContent-Length: 1\r\nConnection: close\r\n\r\n"
         )[0]
         assert status(conflicting_length) == 400
+        assert not any(record[1] == "/framing-conflicting" for record in records)
         chunked = tls_exchange(
             b"POST /upload HTTP/1.1\r\nHost: sister-gateway.test\r\n"
             b"Transfer-Encoding: chunked\r\nConnection: close\r\n\r\n0\r\n\r\n"
@@ -119,6 +173,12 @@ def main():
             # the complete handshake is rejected by HAProxy's HTTP parser.
             assert status(response) == observed_status
         assert not any(record[1] == "/ws-complete" for record in records)
+        for stripped_path in ("/ws-upgrade", "/ws-connection"):
+            stripped_records = [record for record in records if record[1] == stripped_path]
+            assert len(stripped_records) == 1
+            effective_names = {name.lower() for name, _ in stripped_records[0][2]}
+            assert "upgrade" not in effective_names
+            assert "connection" not in effective_names
     print("gateway_protocol_tests ok")
 
 

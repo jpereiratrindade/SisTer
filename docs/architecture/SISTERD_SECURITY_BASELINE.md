@@ -106,10 +106,10 @@ backup e rollback.
 
 1. **SEC-02R:** tornar a proteção contra replay persistente ou transacional
    antes de qualquer capacidade de escrita.
-2. **SEC-03B/C/V:** fechar as lacunas do laboratório HAProxy registradas em
-   `docs/evidence/security/SEC-03B.md`, implementar contenção e executar a
-   validação formal; Clima, WebSocket e expansão funcional continuam fora desta
-   baseline.
+2. **SEC-03C/V:** após o fechamento restrito de SEC-03B, implementar contenção,
+   executar o E2E governado com Nexo/PostgreSQL, revisar a exceção de Host e
+   concluir a validação formal; Clima, WebSocket e expansão funcional continuam
+   fora desta baseline.
 3. Eliminação definitiva do cookie na fronteira interna e remoção física dos
    proxies legados.
 4. Persistência transacional e governança completas de auditoria, políticas e

@@ -58,6 +58,10 @@ def main():
         assert "server sisterd 127.0.0.1:8000 check" in rendered
         assert "http-request del-header X-Sister- -m beg" in rendered
         assert "alpn http/1.1" in rendered
+        assert "strict-sni" in rendered
+        assert "http-request set-header Host sister-gateway.test" in rendered
+        assert "sister-gateway.test:8443" in rendered
+        assert "http-request deny status 400 if HTTP_URL_ABS" in rendered
         assert "lua" not in rendered.lower()
         output = temporary / "haproxy.cfg"
         write_private_atomic(output, rendered)

@@ -35,6 +35,7 @@ def main():
         ("tls.minimum_version", "TLSv1.2"),
         ("http.host_wildcards_allowed", True),
         ("http.missing_or_duplicate_host_action", "forward"),
+        ("http.absolute_form_action", "forward"),
         ("http.websocket_enabled", True),
         ("http.maximum_body_bytes", 16777216),
         ("http.minimum_request_receive_rate_bytes_per_second", 0),
@@ -42,6 +43,8 @@ def main():
         ("headers.client_supplied_request_id_trusted", True),
         ("gates.external_production_authorized", True),
         ("gates.write_capabilities_authorized", True),
+        ("realizability.laboratory_resolution.merge_authorized", True),
+        ("realizability.laboratory_resolution.external_exposure_authorized", True),
     )
     for path, replacement in unsafe_mutations:
         errors = validate_profile(mutate(profile, path, replacement), schema)
@@ -66,6 +69,10 @@ def main():
     false_native_claim = copy.deepcopy(profile)
     false_native_claim["realizability"]["requirements"][5]["state"] = "NATIVE_DOCUMENTED"
     assert validate_profile(false_native_claim, schema)
+
+    false_host_conformance = copy.deepcopy(profile)
+    false_host_conformance["realizability"]["laboratory_resolution"]["host_exception"]["state"] = "PROVEN"
+    assert validate_profile(false_host_conformance, schema)
 
     print("gateway_security_profile_tests ok")
 
