@@ -2,6 +2,10 @@
 set -euo pipefail
 
 ENV_NAME="${1:-dev}"
+if [[ ! "$ENV_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
+  echo "serve.sh: invalid environment name" >&2
+  exit 3
+fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 cd "$ROOT_DIR"
 
@@ -28,7 +32,7 @@ case "$BUILD_MODE" in
 esac
 
 mkdir -p .run
-scripts/app/stop.sh "$ENV_NAME" >/dev/null || true
+scripts/app/stop.sh "$ENV_NAME" >/dev/null
 
 LOG_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.log"
 PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
@@ -39,7 +43,15 @@ else
   SISTER_ENV="$ENV_NAME" SISTER_DATABASE_URL="$SISTER_DATABASE_URL" nohup ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
 fi
 PID="$!"
-echo "$PID" > "$PID_FILE"
+if ! python3 scripts/app/process_identity.py record \
+  --pid-file "$PID_FILE" \
+  --pid "$PID" \
+  --environment "$ENV_NAME" \
+  --executable "$ROOT_DIR/build/apps/sisterd/sisterd"; then
+  kill -- "$PID" >/dev/null 2>&1 || true
+  wait "$PID" >/dev/null 2>&1 || true
+  exit 3
+fi
 
 READY=0
 for _ in $(seq 1 20); do
@@ -55,12 +67,13 @@ done
 
 if ! kill -0 "$PID" >/dev/null 2>&1; then
   echo "sisterd failed to start. Log:" >&2
+  scripts/app/stop.sh "$ENV_NAME" >/dev/null
   cat "$LOG_FILE" >&2
   exit 1
 fi
 if [[ $READY -ne 1 ]]; then
   echo "sisterd remained alive but did not become ready. Log:" >&2
-  ./scripts/app/stop.sh "$ENV_NAME" >/dev/null || true
+  ./scripts/app/stop.sh "$ENV_NAME" >/dev/null
   cat "$LOG_FILE" >&2
   exit 1
 fi

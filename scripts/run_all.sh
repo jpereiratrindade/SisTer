@@ -90,7 +90,7 @@ sister_load_env "$ENV_NAME"
 sister_assert_environment_worktree "$ENV_NAME" "$ROOT_DIR"
 
 # A suíte de isolamento deve observar somente os processos que ela própria cria.
-./scripts/app/stop.sh "$ENV_NAME" >/dev/null || true
+./scripts/app/stop.sh "$ENV_NAME" >/dev/null
 
 ./scripts/db/up.sh "$ENV_NAME"
 ./scripts/db/migrate.sh "$ENV_NAME"
