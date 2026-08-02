@@ -4,7 +4,14 @@ import http.server
 import threading
 import time
 
-from gateway_lab_support import request, running_haproxy, skip_or_fail, status
+from gateway_lab_support import (
+    ThreadingUnixHTTPServer,
+    UPSTREAM_SOCKET,
+    request,
+    running_haproxy,
+    skip_or_fail,
+    status,
+)
 
 
 class ControlledHandler(http.server.BaseHTTPRequestHandler):
@@ -34,7 +41,11 @@ class ControlledHandler(http.server.BaseHTTPRequestHandler):
 @contextlib.contextmanager
 def controlled_upstream():
     ControlledHandler.hold.clear()
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 8000), ControlledHandler)
+    try:
+        UPSTREAM_SOCKET.unlink()
+    except FileNotFoundError:
+        pass
+    server = ThreadingUnixHTTPServer(str(UPSTREAM_SOCKET), ControlledHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -44,6 +55,10 @@ def controlled_upstream():
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
+        try:
+            UPSTREAM_SOCKET.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def wait_for_recovery():

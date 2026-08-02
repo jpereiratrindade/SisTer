@@ -5,6 +5,7 @@ import os
 from pathlib import Path
 import signal
 import socket
+import socketserver
 import ssl
 import subprocess
 import threading
@@ -14,6 +15,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 RUN_DIR = ROOT / ".run/gateway"
 HOST = "sister-gateway.test"
+UPSTREAM_SOCKET = RUN_DIR / "sisterd.sock"
 
 
 class LabUnavailable(RuntimeError):
@@ -258,10 +260,23 @@ class CaptureHandler(http.server.BaseHTTPRequestHandler):
         pass
 
 
+class ThreadingUnixHTTPServer(http.server.ThreadingHTTPServer):
+    address_family = socket.AF_UNIX
+
+    def server_bind(self):
+        socketserver.TCPServer.server_bind(self)
+        self.server_name = "localhost"
+        self.server_port = 0
+
+
 @contextlib.contextmanager
 def capture_upstream():
     CaptureHandler.records = []
-    server = http.server.ThreadingHTTPServer(("127.0.0.1", 8000), CaptureHandler)
+    try:
+        UPSTREAM_SOCKET.unlink()
+    except FileNotFoundError:
+        pass
+    server = ThreadingUnixHTTPServer(str(UPSTREAM_SOCKET), CaptureHandler)
     thread = threading.Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
@@ -270,6 +285,10 @@ def capture_upstream():
         server.shutdown()
         server.server_close()
         thread.join(timeout=3)
+        try:
+            UPSTREAM_SOCKET.unlink()
+        except FileNotFoundError:
+            pass
 
 
 def skip_or_fail(main):

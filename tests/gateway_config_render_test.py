@@ -55,7 +55,7 @@ def main():
         rendered = render(TEMPLATE_PATH.read_text(encoding="utf-8"), values)
         assert "@@" not in rendered
         assert "bind 127.0.0.1:8443" in rendered
-        assert "server sisterd 127.0.0.1:8000 check" in rendered
+        assert f"server sisterd unix@{ROOT}/.run/gateway/sisterd.sock check" in rendered
         assert "http-request del-header X-Sister- -m beg" in rendered
         assert "alpn http/1.1" in rendered
         assert "strict-sni" in rendered
@@ -79,8 +79,9 @@ def main():
         unsafe_cases = (
             ("GATEWAY_LISTEN_ADDRESS", "0.0.0.0", "listener must be 127.0.0.1"),
             ("GATEWAY_LISTEN_PORT", "443", "port must be 8443"),
-            ("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.2", "upstream must be 127.0.0.1:8000"),
-            ("GATEWAY_UPSTREAM_PORT", "9000", "upstream must be 127.0.0.1:8000"),
+            ("GATEWAY_UPSTREAM_SOCKET", "/tmp/sisterd.sock", "must remain inside"),
+            ("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.1", "TCP upstream configuration is forbidden"),
+            ("GATEWAY_UPSTREAM_PORT", "8000", "TCP upstream configuration is forbidden"),
             ("GATEWAY_ALLOWED_HOST", "*.test", "one exact DNS name"),
             ("GATEWAY_CANONICAL_HOST", "other.test", "must match"),
         )
