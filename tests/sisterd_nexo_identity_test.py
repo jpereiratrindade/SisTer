@@ -43,7 +43,16 @@ def wait_for_server(port, process):
     raise AssertionError("sisterd did not become ready")
 
 
-def start_sisterd(executable, web_root, port, nexo_port, auth_file, key_file=None):
+def start_sisterd(
+    executable,
+    web_root,
+    port,
+    nexo_port,
+    auth_file,
+    key_file=None,
+    signed_integration=True,
+    wait_until_ready=True,
+):
     environment = os.environ.copy()
     environment.update(
         {
@@ -53,7 +62,7 @@ def start_sisterd(executable, web_root, port, nexo_port, auth_file, key_file=Non
             "SISTER_NEXO_PORT": str(nexo_port),
             "SISTER_COOKIE_SECURE": "false",
             "SISTER_DATABASE_URL": "",
-            "SISTER_ENABLE_LEGACY_PROXY": "true",
+            "SISTER_ENABLE_LEGACY_PROXY": "false",
             "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
             "SISTER_INTERNAL_IDENTITY_KEY_ID": "identity-2026-08",
             "SISTER_INTERNAL_IDENTITY_TTL_SECONDS": "60",
@@ -61,6 +70,11 @@ def start_sisterd(executable, web_root, port, nexo_port, auth_file, key_file=Non
     )
     environment.pop("SISTER_INTERNAL_PROXY_TOKEN", None)
     environment.pop("SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE", None)
+    environment.pop("SISTER_ENABLE_NEXO_SIGNED_INTEGRATION", None)
+    if signed_integration is not None:
+        environment["SISTER_ENABLE_NEXO_SIGNED_INTEGRATION"] = (
+            "true" if signed_integration else "false"
+        )
     if key_file is not None:
         environment["SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE"] = str(key_file)
     process = subprocess.Popen(
@@ -70,7 +84,8 @@ def start_sisterd(executable, web_root, port, nexo_port, auth_file, key_file=Non
         stderr=subprocess.PIPE,
         text=True,
     )
-    wait_for_server(port, process)
+    if wait_until_ready:
+        wait_for_server(port, process)
     return process
 
 
@@ -113,6 +128,19 @@ def call_nexo(port, cookie):
             "Accept": "application/json",
         },
     )
+    response = connection.getresponse()
+    payload = response.read()
+    status = response.status
+    connection.close()
+    return status, payload
+
+
+def call_route(port, cookie, method, path, body=None):
+    connection = http.client.HTTPConnection("127.0.0.1", port, timeout=3)
+    headers = {"Cookie": cookie, "Accept": "application/json"}
+    if body is not None:
+        headers["Content-Type"] = "application/json"
+    connection.request(method, path, body=body, headers=headers)
     response = connection.getresponse()
     payload = response.read()
     status = response.status
@@ -223,8 +251,77 @@ def main():
         finally:
             stop_sisterd(process)
         stderr = process.stderr.read()
+        assert "nexo_signed_integration=enabled" in stderr
+        assert "nexo_signed_mode=read_only_shadow" in stderr
         assert assertion not in stderr
         assert PRIVATE_KEY.decode() not in stderr
+
+        denied_captured = []
+        denied_ready = threading.Event()
+        denied_mock = threading.Thread(
+            target=run_mock_nexo,
+            args=(nexo_port, denied_captured, denied_ready),
+            daemon=True,
+        )
+        denied_mock.start()
+        assert denied_ready.wait(timeout=2)
+        denied_port = reserve_port()
+        denied_process = start_sisterd(
+            executable,
+            web_root,
+            denied_port,
+            nexo_port,
+            temporary_path / "denied-auth.tsv",
+            key_file,
+        )
+        try:
+            cookie = register(denied_port, "exact-route@test.invalid")
+            denied_requests = (
+                ("POST", "/integrations/nexo/projects", "{}"),
+                ("GET", "/integrations/nexo/projects/other", None),
+                ("GET", "/integrations/nexo/compras/", None),
+                ("GET", "/integrations/nexo/", None),
+            )
+            for method, path, body in denied_requests:
+                status, _ = call_route(denied_port, cookie, method, path, body)
+                assert status == 404, (method, path, status)
+            status, _ = call_route(denied_port, cookie, "GET", "/integrations/clima")
+            assert status == 404, status
+            denied_mock.join(timeout=4)
+            assert not denied_captured, "denied routes must not connect to Nexo"
+        finally:
+            stop_sisterd(denied_process)
+
+        disabled_port = reserve_port()
+        disabled_nexo_port = reserve_port()
+        disabled_captured = []
+        disabled_ready = threading.Event()
+        disabled_mock = threading.Thread(
+            target=run_mock_nexo,
+            args=(disabled_nexo_port, disabled_captured, disabled_ready),
+            daemon=True,
+        )
+        disabled_mock.start()
+        assert disabled_ready.wait(timeout=2)
+        disabled_process = start_sisterd(
+            executable,
+            web_root,
+            disabled_port,
+            disabled_nexo_port,
+            temporary_path / "disabled-auth.tsv",
+            key_file,
+            signed_integration=None,
+        )
+        try:
+            cookie = register(disabled_port, "disabled-default@test.invalid")
+            status, _ = call_nexo(disabled_port, cookie)
+            assert status == 404, status
+            disabled_mock.join(timeout=4)
+            assert not disabled_captured, "disabled-by-default integration must not connect to Nexo"
+        finally:
+            stop_sisterd(disabled_process)
+        disabled_stderr = disabled_process.stderr.read()
+        assert "nexo_signed_integration=disabled" in disabled_stderr
 
         missing_key_port = reserve_port()
         unused_nexo_port = reserve_port()
@@ -243,15 +340,14 @@ def main():
             missing_key_port,
             unused_nexo_port,
             temporary_path / "missing-auth.tsv",
+            wait_until_ready=False,
         )
-        try:
-            cookie = register(missing_key_port, "missing-key@test.invalid")
-            status, _ = call_nexo(missing_key_port, cookie)
-            assert status == 502
-            time.sleep(0.2)
-            assert not unexpected, "key configuration failure must prevent the upstream request"
-        finally:
-            stop_sisterd(process)
+        assert process.wait(timeout=5) != 0
+        missing_stderr = process.stderr.read()
+        assert "configuration error" in missing_stderr
+        assert "private key path must be absolute" in missing_stderr
+        missing_mock.join(timeout=4)
+        assert not unexpected, "invalid crypto configuration must fail before listening"
 
     print("sisterd_nexo_identity_tests ok")
 
