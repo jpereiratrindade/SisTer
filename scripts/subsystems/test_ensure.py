@@ -5,6 +5,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import socket
 import sys
+import tempfile
 import threading
 import unittest
 
@@ -71,6 +72,48 @@ class HealthResultTests(unittest.TestCase):
             port = candidate.getsockname()[1]
         result = ENSURE.health_result(self.project(port))
         self.assertEqual("unavailable", result.state)
+
+
+class SubsystemReportTests(unittest.TestCase):
+    def result(self, component: str, required: bool, status: str) -> dict:
+        return {
+            "component": component,
+            "required": required,
+            "status": status,
+            "phase": "health",
+            "exit_code": None,
+            "elapsed_seconds": 0.1,
+            "log": None,
+            "started_by_run": False,
+            "detail": "test",
+        }
+
+    def test_optional_failure_is_degraded(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            report = Path(temporary) / "subsystems.json"
+            state = ENSURE.write_report(
+                report,
+                "dev",
+                [self.result("optional", False, "DEGRADED")],
+            )
+            self.assertEqual("DEGRADED", state)
+            self.assertEqual("DEGRADED", json.loads(report.read_text())["result"])
+
+    def test_required_failure_is_blocked(self) -> None:
+        state = ENSURE.write_report(
+            None,
+            "dev",
+            [self.result("required", True, "DEGRADED")],
+        )
+        self.assertEqual("BLOCKED", state)
+
+    def test_healthy_selection_is_ready(self) -> None:
+        state = ENSURE.write_report(
+            None,
+            "dev",
+            [self.result("ready", True, "READY")],
+        )
+        self.assertEqual("READY", state)
 
 
 if __name__ == "__main__":

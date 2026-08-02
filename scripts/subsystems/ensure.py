@@ -10,6 +10,7 @@ import hashlib
 import json
 import os
 from pathlib import Path
+import re
 import socket
 import ssl
 import subprocess
@@ -169,6 +170,7 @@ def start_project(
 
     RUN_DIR.mkdir(parents=True, exist_ok=True)
     log_path = RUN_DIR / f"{project_id}.log"
+    displayed_log = log_path.relative_to(ROOT)
     pid_path = RUN_DIR / f"{project_id}.pid"
     with log_path.open("ab", buffering=0) as output:
         output.write(
@@ -192,32 +194,92 @@ def start_project(
         return_code = process.poll()
         if return_code not in (None, 0):
             pid_path.unlink(missing_ok=True)
-            return False, f"inicialização terminou com código {return_code}; log {log_path}"
+            return False, f"inicialização terminou com código {return_code}; log {displayed_log}"
         if wait_for_command:
             if return_code == 0:
                 pid_path.unlink(missing_ok=True)
                 if health_result(project).state == "healthy":
-                    return True, f"atualizado pelo SisTer; log {log_path}"
-                return False, f"comando terminou, mas a saúde não foi confirmada; log {log_path}"
+                    return True, f"atualizado pelo SisTer; log {displayed_log}"
+                return False, f"comando terminou, mas a saúde não foi confirmada; log {displayed_log}"
         elif health_result(project).state == "healthy":
             if return_code is not None:
                 pid_path.unlink(missing_ok=True)
-            return True, f"iniciado pelo SisTer; log {log_path}"
+            return True, f"iniciado pelo SisTer; log {displayed_log}"
         elapsed = int(time.monotonic() - started_at)
         if elapsed >= next_progress:
             log(
                 f"{project_id}: aguardando prontidão há {elapsed}s; "
-                f"acompanhe {log_path}"
+                f"acompanhe {displayed_log}"
             )
             next_progress += 10
         time.sleep(1)
 
     if process.poll() is not None:
         pid_path.unlink(missing_ok=True)
-    return False, f"não ficou saudável dentro do prazo; log {log_path}"
+    return False, f"não ficou saudável dentro do prazo; log {displayed_log}"
 
 
-def ensure(environment: str, selected: set[str], strict: bool) -> int:
+def component_result(
+    project_id: str,
+    required: bool,
+    status: str,
+    phase: str,
+    detail: str,
+    started_at: float,
+    started_by_run: bool,
+) -> dict[str, Any]:
+    exit_match = re.search(r"código (\d+)", detail)
+    log_path = RUN_DIR / f"{project_id}.log"
+    return {
+        "component": project_id,
+        "required": required,
+        "status": status,
+        "phase": phase,
+        "exit_code": int(exit_match.group(1)) if exit_match else None,
+        "elapsed_seconds": round(time.monotonic() - started_at, 3),
+        "log": str(log_path.relative_to(ROOT)) if log_path.exists() else None,
+        "started_by_run": started_by_run,
+        "detail": detail,
+    }
+
+
+def write_report(
+    path: Path | None,
+    environment: str,
+    results: list[dict[str, Any]],
+) -> str:
+    failed = [result for result in results if result["status"] == "DEGRADED"]
+    if any(result["required"] for result in failed):
+        state = "BLOCKED"
+    elif failed:
+        state = "DEGRADED"
+    else:
+        state = "READY"
+    if path is not None:
+        payload = {
+            "schema": "sister.subsystem-run/1.0.0",
+            "environment": environment,
+            "result": state,
+            "components": results,
+        }
+        path.parent.mkdir(parents=True, exist_ok=True)
+        temporary = path.with_suffix(path.suffix + ".tmp")
+        temporary.write_text(
+            json.dumps(payload, ensure_ascii=True, indent=2) + "\n",
+            encoding="utf-8",
+        )
+        temporary.replace(path)
+    return state
+
+
+def ensure(
+    environment: str,
+    selected: set[str],
+    required_by_profile: set[str],
+    strict: bool,
+    refresh_changed: bool,
+    report_path: Path | None,
+) -> int:
     projects = governed_projects(environment)
     if selected:
         projects = [project for project in projects if project["id"] in selected]
@@ -226,40 +288,62 @@ def ensure(environment: str, selected: set[str], strict: bool) -> int:
             raise RuntimeError(f"projetos não governados para {environment}: {', '.join(sorted(missing))}")
     if not projects:
         log(f"nenhum subsistema governado para o ambiente {environment}")
+        write_report(report_path, environment, [])
         return 0
 
-    failures: list[tuple[str, bool]] = []
+    results: list[dict[str, Any]] = []
     healthy_count = 0
     for project in projects:
         project_id = project["id"]
-        repository = repository_path(project)
-        digest = source_digest(project, repository)
+        required = bool(project["orchestration"]["required"] or strict or project_id in required_by_profile)
+        started_at = time.monotonic()
+        try:
+            repository = repository_path(project)
+            start_argv(project, repository)
+            digest = source_digest(project, repository)
+        except (OSError, RuntimeError, ValueError) as error:
+            detail = str(error)
+            log(f"{project_id}: falhou no preflight — {detail}")
+            results.append(component_result(
+                project_id, required, "DEGRADED", "preflight", detail, started_at, False
+            ))
+            continue
         health = health_result(project)
         if health.state == "healthy":
             if digest is not None and digest != recorded_digest(project_id):
-                log(f"{project_id}: saudável, mas as fontes mudaram; atualizando")
-                try:
-                    success, detail = start_project(project, wait_for_command=True)
-                except (OSError, RuntimeError, ValueError) as error:
-                    success, detail = False, str(error)
-                log(f"{project_id}: {'saudável' if success else 'falhou'} — {detail}")
-                if success:
-                    record_digest(project_id, digest)
-                    healthy_count += 1
-                else:
-                    failures.append(
-                        (project_id, project["orchestration"]["required"])
-                    )
-                continue
+                if refresh_changed:
+                    log(f"{project_id}: saudável, mas as fontes mudaram; atualização explícita solicitada")
+                    try:
+                        success, detail = start_project(project, wait_for_command=True)
+                    except (OSError, RuntimeError, ValueError) as error:
+                        success, detail = False, str(error)
+                    log(f"{project_id}: {'saudável' if success else 'falhou'} — {detail}")
+                    results.append(component_result(
+                        project_id,
+                        required,
+                        "READY" if success else "DEGRADED",
+                        "refresh",
+                        detail,
+                        started_at,
+                        True,
+                    ))
+                    if success:
+                        record_digest(project_id, digest)
+                        healthy_count += 1
+                    continue
+                log(f"{project_id}: saudável; fontes mudaram, atualização não solicitada")
             healthy_count += 1
             log(f"{project_id}: saudável — já estava em execução")
+            results.append(component_result(
+                project_id, required, "READY", "health", health.detail, started_at, False
+            ))
             continue
         if health.state == "occupied":
-            log(
-                f"{project_id}: falhou — porta ocupada, mas a sonda de saúde "
-                f"não confirmou o serviço ({health.detail})"
-            )
-            failures.append((project_id, project["orchestration"]["required"]))
+            detail = f"porta ocupada sem saúde confirmada: {health.detail}"
+            log(f"{project_id}: falhou — {detail}")
+            results.append(component_result(
+                project_id, required, "DEGRADED", "health", detail, started_at, False
+            ))
             continue
         log(f"{project_id}: indisponível; iniciando pelo contrato local")
         try:
@@ -267,27 +351,37 @@ def ensure(environment: str, selected: set[str], strict: bool) -> int:
         except (OSError, RuntimeError, ValueError) as error:
             success, detail = False, str(error)
         log(f"{project_id}: {'saudável' if success else 'falhou'} — {detail}")
-        if not success:
-            failures.append((project_id, project["orchestration"]["required"]))
-        else:
+        results.append(component_result(
+            project_id,
+            required,
+            "READY" if success else "DEGRADED",
+            "startup",
+            detail,
+            started_at,
+            True,
+        ))
+        if success:
             record_digest(project_id, digest)
             healthy_count += 1
 
-    required_failures = [project_id for project_id, required in failures if required]
+    failures = [result for result in results if result["status"] == "DEGRADED"]
+    required_failures = [result for result in failures if result["required"]]
     if failures:
-        log("degradação: " + ", ".join(project_id for project_id, _ in failures))
+        log("degradação: " + ", ".join(result["component"] for result in failures))
     else:
         log(f"{healthy_count} subsistema(s) governado(s) saudável(is)")
-    if strict and failures:
-        return 1
-    return 1 if required_failures else 0
+    write_report(report_path, environment, results)
+    return 2 if required_failures else 0
 
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--environment", default="dev")
     parser.add_argument("--project", action="append", default=[])
+    parser.add_argument("--require", action="append", default=[])
     parser.add_argument("--strict", action="store_true")
+    parser.add_argument("--refresh-changed", action="store_true")
+    parser.add_argument("--report", type=Path)
     parser.add_argument(
         "--check",
         action="store_true",
@@ -315,7 +409,14 @@ def main() -> int:
     RUN_DIR.mkdir(parents=True, exist_ok=True)
     with (RUN_DIR / "ensure.lock").open("w", encoding="utf-8") as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        return ensure(args.environment, selected, args.strict)
+        return ensure(
+            args.environment,
+            selected,
+            set(args.require),
+            args.strict,
+            args.refresh_changed,
+            args.report,
+        )
 
 
 if __name__ == "__main__":
@@ -323,4 +424,4 @@ if __name__ == "__main__":
         raise SystemExit(main())
     except (KeyError, TypeError, ValueError, RuntimeError) as error:
         print(f"[subsistemas] erro de configuração: {error}", file=sys.stderr)
-        raise SystemExit(2)
+        raise SystemExit(3)
