@@ -47,6 +47,12 @@ add_test(NAME sisterd_security_hardening_tests COMMAND sisterd_security_hardenin
 
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 add_test(
+    NAME gateway_security_profile_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/gateway_security_profile_test.py)
+
+add_test(
     NAME sisterctl_bootstrap_tests
     COMMAND
         ${Python3_EXECUTABLE}

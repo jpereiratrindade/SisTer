@@ -39,6 +39,12 @@ REQUIRED = [
     "examples/sister_campo_manifest_example.json",
     "docs/governance/SISTER_NEXO.md",
     "docs/governance/NEXO_COMPRAS.md",
+    "docs/adr/ADR-0020-specialized-http-gateway.md",
+    "docs/security/GATEWAY_SECURITY_PROFILE.md",
+    "contracts/gateway_security_profile.schema.json",
+    "ops/gateway/security-profile.json",
+    "scripts/validate_gateway_security_profile.py",
+    "tests/gateway_security_profile_test.py",
 ]
 
 missing = [path for path in REQUIRED if not (ROOT / path).exists()]

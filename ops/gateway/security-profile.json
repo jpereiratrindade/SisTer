@@ -1,0 +1,245 @@
+{
+  "contract_id": "sister.gateway-security-profile",
+  "contract_version": "1.0.0",
+  "status": "PROFILE_DEFINED",
+  "technology": {
+    "product": "haproxy",
+    "edition": "community",
+    "approved_branch": "3.2",
+    "minimum_version": "3.2.22",
+    "lts_eol": "2030-Q2",
+    "plugins": []
+  },
+  "deployment": {
+    "service_manager": "systemd",
+    "package_signature_required": true,
+    "runtime_user": "sister-gateway",
+    "config_owner": "root:sister-gateway",
+    "config_mode": "0640",
+    "private_key_max_mode": "0640",
+    "sisterd_user": "sister",
+    "identity_key_visible_to_gateway": false,
+    "offline_config_validation_required": true
+  },
+  "network": {
+    "external_https_port": 443,
+    "external_http_port_action": "closed",
+    "upstream_host": "127.0.0.1",
+    "upstream_port": 8000,
+    "upstream_protocol": "HTTP/1.1",
+    "upstream_dynamic_destination": false,
+    "upstream_access_scope": "gateway_user_or_cgroup_only",
+    "sisterd_bind": "127.0.0.1",
+    "legacy_proxy_enabled": false,
+    "legacy_websocket_proxy_enabled": false
+  },
+  "tls": {
+    "required": true,
+    "minimum_version": "TLSv1.3",
+    "maximum_version": "TLSv1.3",
+    "cipher_suites": [
+      "TLS_AES_256_GCM_SHA384",
+      "TLS_CHACHA20_POLY1305_SHA256",
+      "TLS_AES_128_GCM_SHA256"
+    ],
+    "certificate_source": "approved_ca",
+    "exact_hostname_required": true,
+    "expired_certificate_action": "fail_closed",
+    "renewal_requires_validation_and_reload": true,
+    "hsts_enabled": false
+  },
+  "http": {
+    "downstream_protocols": ["HTTP/1.1"],
+    "upstream_protocol": "HTTP/1.1",
+    "allowed_methods": ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"],
+    "host_allowlist_source": "deployment_inventory",
+    "host_allowlist_minimum_entries": 1,
+    "host_wildcards_allowed": false,
+    "missing_or_duplicate_host_action": "reject",
+    "websocket_enabled": false,
+    "upgrade_enabled": false,
+    "maximum_request_target_bytes": 8192,
+    "maximum_header_count": 64,
+    "maximum_header_bytes": 16384,
+    "maximum_body_bytes": 1048576,
+    "authentication_maximum_body_bytes": 65536,
+    "maximum_upstream_response_bytes": 16777216,
+    "minimum_request_receive_rate_bytes_per_second": 1024,
+    "duplicate_content_length_action": "reject",
+    "transfer_encoding_action": "reject",
+    "content_length_and_transfer_encoding_action": "reject",
+    "ambiguous_whitespace_action": "reject",
+    "timeouts_seconds": {
+      "tls_handshake": 5,
+      "request_headers_absolute": 5,
+      "request_body_absolute": 10,
+      "client_idle": 30,
+      "http_keep_alive": 2,
+      "upstream_connect": 2,
+      "upstream_queue": 2,
+      "upstream_response": 15
+    },
+    "connections": {
+      "global_maximum": 1024,
+      "per_origin_maximum": 32
+    }
+  },
+  "headers": {
+    "strip_exact": [
+      "X-Forwarded-For",
+      "X-Forwarded-Host",
+      "X-Forwarded-Proto",
+      "X-Request-ID",
+      "Forwarded"
+    ],
+    "strip_prefixes": ["X-Sister-"],
+    "rebuild": {
+      "X-Forwarded-For": "observed_source_address",
+      "X-Forwarded-Host": "canonical_allowed_host",
+      "X-Forwarded-Proto": "https",
+      "X-Request-ID": "generated_lower_hex_32"
+    },
+    "client_supplied_identity_trusted": false,
+    "client_supplied_origin_trusted": false,
+    "client_supplied_request_id_trusted": false
+  },
+  "rate_limits": {
+    "global": {"requests": 1000, "window_seconds": 10},
+    "per_origin": {"requests": 120, "window_seconds": 60},
+    "per_origin_route": {"requests": 60, "window_seconds": 60},
+    "login_per_origin": {"requests": 10, "window_seconds": 60},
+    "internal_sisterd_limiter_retained": true,
+    "rejection_status": 429,
+    "retry_after_required": true
+  },
+  "observability": {
+    "structured_logs_required": true,
+    "request_id_format": "^[0-9a-f]{32}$",
+    "log_fields": [
+      "timestamp",
+      "event",
+      "result",
+      "observed_source",
+      "canonical_host",
+      "method",
+      "path_without_query",
+      "status",
+      "duration_ms",
+      "bytes_in",
+      "bytes_out",
+      "request_id",
+      "blocking_rule"
+    ],
+    "forbidden_log_fields": [
+      "authorization",
+      "cookie",
+      "set-cookie",
+      "request_body",
+      "query_string",
+      "sister_assertion",
+      "private_key",
+      "x-sister-*"
+    ],
+    "block_metrics_required": true,
+    "end_to_end_correlation_required": true
+  },
+  "rollback": {
+    "preserve_previous_package": true,
+    "preserve_previous_config": true,
+    "preserve_previous_certificate": true,
+    "offline_validation_before_reload": true,
+    "external_and_internal_health_required": true,
+    "allowed_failure_mode": "external_unavailable",
+    "forbidden_fallbacks": [
+      "public_sisterd_bind",
+      "direct_port_8000",
+      "legacy_proxy",
+      "weaken_tls",
+      "enable_websocket"
+    ]
+  },
+  "gates": {
+    "current": "SEC-03A",
+    "required_before_release": ["SEC-03B", "SEC-03C", "SEC-03V"],
+    "external_production_authorized": false,
+    "functional_scope_expansion_authorized": false,
+    "write_capabilities_authorized": false,
+    "websocket_authorized": false,
+    "clima_integration_authorized": false,
+    "sec_02r_required_before_write": true
+  },
+  "threats": [
+    {
+      "id": "TH-HTTP-02",
+      "control": "strict HTTP normalization and unambiguous framing",
+      "test": "differential malformed framing matrix",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "gateway configuration is not implemented",
+      "owner": "gateway and transport maintainers",
+      "state": "PROFILE_DEFINED"
+    },
+    {
+      "id": "TH-HTTP-03",
+      "control": "absolute deadlines and bounded connections and payloads",
+      "test": "slow client saturation and oversized payload matrix",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "limits are not calibrated under load",
+      "owner": "gateway operations",
+      "state": "PROFILE_DEFINED"
+    },
+    {
+      "id": "TH-HTTP-04",
+      "control": "strip and rebuild authority-adjacent headers",
+      "test": "forged identity origin and request id matrix",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "sisterd does not yet trust gateway metadata",
+      "owner": "gateway and sisterd maintainers",
+      "state": "PROFILE_DEFINED"
+    },
+    {
+      "id": "TH-WS-01",
+      "control": "deny Upgrade and WebSocket",
+      "test": "WebSocket handshake rejection",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "legacy laboratory code remains present",
+      "owner": "transport architecture",
+      "state": "PROFILE_DEFINED"
+    },
+    {
+      "id": "TH-PROXY-01",
+      "control": "single literal upstream without client-controlled destination",
+      "test": "host destination and path manipulation matrix",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "host-level upstream isolation is not implemented",
+      "owner": "platform operations",
+      "state": "PROFILE_DEFINED"
+    },
+    {
+      "id": "TH-PROXY-02",
+      "control": "bounded queue upstream time and response size",
+      "test": "slow unavailable and oversized upstream matrix",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "high availability and streaming are out of scope",
+      "owner": "gateway and sisterd maintainers",
+      "state": "PROFILE_DEFINED"
+    },
+    {
+      "id": "TH-CONF-01",
+      "control": "offline validation and fail-closed promotion",
+      "test": "invalid config certificate and upstream matrix",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "operational procedure is not implemented",
+      "owner": "platform operations",
+      "state": "PROFILE_DEFINED"
+    },
+    {
+      "id": "TH-AUD-01",
+      "control": "sanitized structured logs and edge-generated correlation",
+      "test": "secret search and end-to-end request id correlation",
+      "evidence": "SEC-03V_PENDING",
+      "residual_risk": "retention and integrity are not implemented",
+      "owner": "observability operations",
+      "state": "PROFILE_DEFINED"
+    }
+  ]
+}

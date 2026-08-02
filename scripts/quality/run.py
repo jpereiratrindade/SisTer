@@ -15,6 +15,7 @@ STEPS = [
     ("ctest", "Testes CTest", ["ctest", "--test-dir", "build", "--output-on-failure"]),
     ("tool-contracts", "Contratos de ferramentas", ["python3", "scripts/validate_tool_contracts.py"]),
     ("governance", "Governança do repositório", ["python3", "scripts/validate_governance_repo.py"]),
+    ("gateway-profile", "Perfil de segurança do gateway", ["python3", "scripts/validate_gateway_security_profile.py"]),
     ("local-resources", "Recursos locais", ["python3", "scripts/validate_local_resources.py"]),
     ("maturity-contracts", "Contratos de maturidade", ["python3", "scripts/maturity/validate-contracts.py"]),
     ("subsystems", "Testes de subsistemas", ["python3", "-m", "unittest", "scripts/subsystems/test_ensure.py"]),
