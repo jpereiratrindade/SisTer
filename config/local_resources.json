@@ -7,7 +7,7 @@
       "repository": "cpp/SisTer",
       "integrates_with_sister": true,
       "resources": [
-        {"kind": "http", "environment": "dev", "host": "0.0.0.0", "port": 8000},
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8000},
         {"kind": "http", "environment": "test", "host": "127.0.0.1", "port": 8001},
         {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55434, "container": "sister-dev-db", "volume": "sister_dev_pgdata"},
         {"kind": "postgresql", "environment": "test", "host": "127.0.0.1", "port": 55435, "container": "sister-test-db", "volume": "sister_test_pgdata"}

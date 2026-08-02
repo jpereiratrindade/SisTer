@@ -22,7 +22,7 @@ sister_load_env() {
       export SISTER_DB_VOLUME="sister_dev_pgdata"
       export SISTER_DATABASE_URL="${SISTER_DEV_DATABASE_URL:-postgresql://sister:${SISTER_DB_PASSWORD}@localhost:${SISTER_DB_PORT}/sister}"
       export SISTER_APP_PORT="${SISTER_DEV_APP_PORT:-8000}"
-      export SISTER_BIND_HOST="${SISTER_DEV_BIND_HOST:-0.0.0.0}"
+      export SISTER_BIND_HOST="${SISTER_DEV_BIND_HOST:-127.0.0.1}"
       ;;
     test)
       export SISTER_ENV="test"
