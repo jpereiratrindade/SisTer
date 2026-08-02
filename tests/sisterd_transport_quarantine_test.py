@@ -5,8 +5,16 @@ import sys
 import tempfile
 
 
+def clean_test_environment():
+    return {
+        name: value
+        for name, value in os.environ.items()
+        if not name.startswith("SISTER_")
+    }
+
+
 def run_to_exit(executable, web_root, overrides):
-    environment = os.environ.copy()
+    environment = clean_test_environment()
     environment.update(
         {
             "SISTER_ENV": "production",
