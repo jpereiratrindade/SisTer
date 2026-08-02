@@ -58,6 +58,7 @@ descritor fechado                → arranque recusado
 descritor sem listen             → arranque recusado
 família/tipo incorreto           → arranque recusado
 nome do descritor incorreto      → arranque recusado
+nome do descritor ausente        → arranque recusado
 caminho diferente                → arranque recusado
 modo TCP em produção             → configuração recusada
 host/porta TCP em produção       → configuração recusada
@@ -91,6 +92,11 @@ como conjunto. A implantação deve ainda confirmar no host candidato:
 - owner/grupo/modo efetivos após boot e restart;
 - remoção efetiva ao parar `sisterd.socket`;
 - comportamento da política SELinux ativa.
+
+A garantia comprovada é que processos locais comuns sem a identidade ou o
+grupo autorizados são impedidos pelo kernel de conectar ao socket produtivo.
+`root`, comprometimento da identidade/grupo autorizado, alteração privilegiada
+das unidades e comprometimento do host permanecem riscos residuais.
 
 ## Regressões preservadas
 

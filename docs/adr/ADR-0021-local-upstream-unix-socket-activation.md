@@ -10,9 +10,10 @@ SEC-00 retirou o `sisterd` da borda externa e SEC-03B/03C materializaram o
 gateway especializado. O backend ainda usava `127.0.0.1:8000`; loopback impede
 acesso remoto, mas não diferencia o gateway de outros processos locais.
 
-ISO-01 deve tornar o gateway o único chamador local autorizado sem fazer o
-`sisterd` confiar automaticamente em headers de origem, autoridade ou
-correlação. Essa confiança continua condicionada a SEC-03V.
+ISO-01 deve impedir que processos locais comuns sem a identidade ou o grupo
+autorizados alcancem o `sisterd`, sem fazê-lo confiar automaticamente em
+headers de origem, autoridade ou correlação. Essa confiança continua
+condicionada a SEC-03V.
 
 ## Decisão
 
@@ -24,9 +25,10 @@ canônico:
 ```
 
 O `systemd` cria o socket antes do processo, com `Accept=no`, e entrega
-exatamente um descritor de escuta. O processo valida `LISTEN_PID`, `LISTEN_FDS`,
-`LISTEN_FDNAMES`, descritor 3, `AF_UNIX`, `SOCK_STREAM`, `SO_ACCEPTCONN` e o
-caminho observado por `getsockname`. Qualquer divergência termina o arranque.
+exatamente um descritor de escuta. O processo exige
+`LISTEN_FDNAMES=sisterd-http` e valida `LISTEN_PID`, `LISTEN_FDS`, descritor 3,
+`AF_UNIX`, `SOCK_STREAM`, `SO_ACCEPTCONN` e o caminho observado por
+`getsockname`. Ausência ou divergência termina o arranque.
 
 ```text
 HAProxy (grupo haproxy)
@@ -87,6 +89,10 @@ O laboratório não possui as contas reais `sister`/`haproxy` nem executou a
 unidade como PID 1; owner/grupo, `RemoveOnStop` e separação entre identidades
 foram validados estruturalmente e por permissões simuladas. SELinux específico
 e o E2E Nexo/PostgreSQL pertencem aos gates operacionais seguintes.
+
+O controle não pretende bloquear `root`, processos executando sob uma identidade
+autorizada, alteração privilegiada das unidades ou comprometimento do host.
+Esses cenários permanecem riscos residuais explícitos.
 
 ISO-01 não autoriza merge, tag, release ou exposição externa. O próximo gate é
 SEC-03V.
