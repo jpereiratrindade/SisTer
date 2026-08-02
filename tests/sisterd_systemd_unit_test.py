@@ -50,9 +50,9 @@ def main():
     missing_socket = sorted(socket_required - configured_socket)
     assert not missing_socket, f"missing socket isolation settings: {missing_socket}"
     assert "ListenStream=127.0.0.1" not in socket_document
-    assert tmpfiles.read_text(encoding="utf-8").splitlines()[-1] == (
-        "d /run/sister 0750 root haproxy - -"
-    )
+    tmpfiles_document = tmpfiles.read_text(encoding="utf-8")
+    assert "d /run/sister 0750 root haproxy - -" in tmpfiles_document
+    assert "a+ /run/sister - - - - u:sister:--x" in tmpfiles_document
 
     analyzer = shutil.which("systemd-analyze")
     if analyzer:

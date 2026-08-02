@@ -152,7 +152,8 @@ upstream único em `/run/sister/sisterd.sock`. Ele recusa saída fora de
 3. executar `systemd-tmpfiles` para o arquivo versionado;
 4. executar `systemctl daemon-reload`;
 5. habilitar e iniciar apenas `sisterd.socket`;
-6. validar `/run/sister` como `root:haproxy 0750`;
+6. validar `/run/sister` como `root:haproxy 0750`, com ACL de travessia
+   `u:sister:--x` e sem leitura, listagem ou escrita adicional;
 7. validar o socket como `sister:haproxy 0660`;
 8. instalar, habilitar e iniciar `sister-gateway.service`;
 9. executar novamente o preflight como root, preservando o relatório:

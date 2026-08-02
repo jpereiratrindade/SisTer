@@ -41,9 +41,11 @@ sisterd (usuário sister)
 
 O diretório `/run/sister` é criado por `systemd-tmpfiles` como
 `root:haproxy 0750`. O usuário do serviço não pode substituir o caminho; o
-grupo do gateway pode atravessar o diretório e conectar, mas não remover o
-socket. A instalação deve validar que usuários interativos não pertencem ao
-grupo `haproxy`.
+contrato acrescenta somente a ACL `u:sister:--x`, necessária para que o
+processo valide com `lstat()` o pathname do descritor recebido. Essa ACL não
+permite listar, criar, remover ou substituir entradas. O grupo do gateway pode
+atravessar o diretório e conectar, mas não remover o socket. A instalação deve
+validar que usuários interativos não pertencem ao grupo `haproxy`.
 
 ## Política por ambiente
 

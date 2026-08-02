@@ -329,10 +329,27 @@ def service_read_access_check(control: str, account: str, path: Path) -> Check:
     )
 
 
+def service_traverse_access_check(control: str, account: str, path: Path) -> Check:
+    if os.geteuid() != 0:
+        return Check(control, "BLOCKED", "root access is required to test service access")
+    try:
+        result = execute(["runuser", "--user", account, "--", "test", "-x", str(path)])
+        valid = result.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        valid = False
+    return Check(
+        control, "PASS" if valid else "BLOCKED",
+        f"{account} can traverse the governed directory"
+        if valid else f"{account} cannot traverse the governed directory",
+    )
+
+
 def socket_checks() -> list[Check]:
     checks = [
         governed_file("runtime.directory", Path("/run/sister"), "root", "haproxy", 0o750, file_type="directory")
     ]
+    checks.append(service_traverse_access_check(
+        "runtime.directory.service_access", "sister", Path("/run/sister")))
     path = Path("/run/sister/sisterd.sock")
     try:
         owner, group, mode, raw_mode = file_identity(path)
