@@ -9,6 +9,7 @@
     "contract_version",
     "status",
     "technology",
+    "realizability",
     "deployment",
     "network",
     "tls",
@@ -27,16 +28,20 @@
     "technology": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["product", "edition", "approved_branch", "minimum_version", "lts_eol", "plugins"],
+      "required": ["product", "edition", "approved_branch", "initial_validated_floor", "patch_policy", "version_verified_on", "official_release_index", "lts_eol", "plugins"],
       "properties": {
         "product": {"const": "haproxy"},
         "edition": {"const": "community"},
         "approved_branch": {"const": "3.2"},
-        "minimum_version": {"type": "string", "pattern": "^3\\.2\\.[0-9]+$"},
+        "initial_validated_floor": {"type": "string", "pattern": "^3\\.2\\.[0-9]+$"},
+        "patch_policy": {"const": "latest_maintained_patch_at_or_above_floor"},
+        "version_verified_on": {"type": "string", "format": "date"},
+        "official_release_index": {"const": "https://www.haproxy.org/"},
         "lts_eol": {"const": "2030-Q2"},
         "plugins": {"type": "array", "maxItems": 0}
       }
     },
+    "realizability": {"$ref": "#/$defs/object"},
     "deployment": {"$ref": "#/$defs/object"},
     "network": {"$ref": "#/$defs/object"},
     "tls": {"$ref": "#/$defs/object"},

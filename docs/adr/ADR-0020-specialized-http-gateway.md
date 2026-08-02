@@ -18,12 +18,12 @@ fronteira trata `TH-HTTP-02/03/04`, `TH-WS-01`, `TH-PROXY-01/02`,
 
 ## Decisão de produto
 
-Adotar **HAProxy Community 3.2 LTS**, inicialmente na versão **3.2.22 ou patch
-posterior da mesma linha 3.2**, instalado como pacote do sistema e operado por
-`systemd`. A linha 3.2 é LTS até 2030-Q2; o patch mínimo acompanha correções de
-segurança e deve aumentar quando a linha publicar atualização. Troca para 3.4
-LTS ou outra linha exige requalificação do perfil e SEC-03V, não apenas mudança
-de pacote.
+Adotar **HAProxy Community 3.2 LTS**, instalado como pacote do sistema e operado
+por `systemd`. A linha permitida é **3.2.x**, o piso inicial validado é
+**3.2.22** e a política exige o patch mantido mais recente disponível nessa
+linha, nunca abaixo do piso. A linha 3.2 é LTS até 2030-Q2. Troca para 3.4 LTS
+ou outra linha exige requalificação do perfil e SEC-03V, não apenas mudança de
+pacote.
 
 A escolha se baseia em garantias necessárias à fronteira:
 
@@ -46,6 +46,9 @@ Referências oficiais consultadas em 1 de agosto de 2026:
 - [ciclo e suporte das versões HAProxy](https://www.haproxy.org/);
 - [manual de configuração HAProxy 3.2](https://docs.haproxy.org/3.2/configuration.html);
 - [guia de gestão HAProxy 3.2](https://docs.haproxy.org/3.2/management.html).
+
+Na data da decisão, o índice e o manual oficiais já identificam `3.2.22`. Uma
+referência anterior a `3.2.21` é um snapshot ultrapassado e não reduz o piso.
 
 ## Fronteira e responsabilidades
 
@@ -141,11 +144,34 @@ valores iniciais e o artefato executável. Entre os invariantes:
 - corpo global até 1 MiB, com limite de 64 KiB para autenticação;
 - `Content-Length` duplicado, `Transfer-Encoding` não permitido ou a presença
   simultânea dos dois são rejeitados;
-- prazo absoluto de 5 s para headers e 10 s para corpo; conexão, fila, cliente,
-  servidor e keep-alive possuem timeouts explícitos; taxa recebida abaixo de
-  1 KiB/s é encerrada;
+- prazo absoluto de 5 s para headers e alvo de 10 s para corpo; conexão, fila,
+  cliente, servidor e keep-alive possuem timeouts explícitos;
 - limites global, por origem, por rota e específico para login;
-- resposta upstream acima de 16 MiB é interrompida e registrada sem conteúdo.
+- alvo de taxa mínima recebida de 1 KiB/s e de resposta upstream máxima de
+  16 MiB, ambos condicionados à prova de mecanismo nativo simples em SEC-03B.
+
+## Gate de realizabilidade
+
+SEC-03A define requisitos, não presume que toda garantia possui uma diretiva
+HAProxy direta. SEC-03B começa pela seguinte matriz:
+
+| Requisito | Mecanismo candidato | Estado antes do laboratório |
+|---|---|---|
+| TLS 1.3 | controles TLS de `bind` | `NATIVE_DOCUMENTED` |
+| HTTP/1.1 único | ALPN e protocolos de `bind` | `LAB_PROOF_REQUIRED` |
+| deadline absoluto de headers | `timeout http-request` | `NATIVE_DOCUMENTED` |
+| limite de headers | `tune.http.maxhdr` e buffers | `LAB_PROOF_REQUIRED` |
+| corpo de 1 MiB | ACL de `Content-Length` e testes reais | `LAB_PROOF_REQUIRED` |
+| taxa mínima de 1 KiB/s | mecanismo ainda não aceito | `MECHANISM_UNPROVEN` |
+| resposta até 16 MiB | mecanismo ainda não aceito | `MECHANISM_UNPROVEN` |
+| request ID com 32 hex | `unique-id-format` e `unique-id-header` | `LAB_PROOF_REQUIRED` |
+| remoção de `X-Sister-*` | regras de remoção de headers | `LAB_PROOF_REQUIRED` |
+| rate limiting | stick tables e contadores | `NATIVE_DOCUMENTED` |
+
+Lua, plugins e módulos de terceiros permanecem proibidos. Se um requisito não
+puder ser realizado nativamente e de forma simples, o laboratório registra a
+limitação, realoca o controle ou mantém o risco residual; não cria extensão
+apenas para tornar o perfil aparentemente conforme.
 
 O limitador interno do `sisterd` permanece como defesa em profundidade. O
 gateway não converte `X-Forwarded-For` em autoridade funcional.
@@ -169,8 +195,8 @@ legado, abre `8000` externamente ou reduz TLS/limites.
 ## Gates
 
 - **SEC-03A:** ADR, perfil, esquema, validador e matriz de ameaças.
-- **SEC-03B:** configuração HAProxy mínima em laboratório, TLS, Host, headers,
-  ID, limites e logs.
+- **SEC-03B:** matriz de realizabilidade e configuração HAProxy mínima em
+  laboratório, TLS, Host, headers, ID, limites comprováveis e logs.
 - **SEC-03C:** deadlines, conexões, rate limiting e métricas de abuso.
 - **SEC-03V:** matriz negativa, integração Nexo, evidência e decisão de risco.
 

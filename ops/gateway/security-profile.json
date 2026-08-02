@@ -6,9 +6,70 @@
     "product": "haproxy",
     "edition": "community",
     "approved_branch": "3.2",
-    "minimum_version": "3.2.22",
+    "initial_validated_floor": "3.2.22",
+    "patch_policy": "latest_maintained_patch_at_or_above_floor",
+    "version_verified_on": "2026-08-01",
+    "official_release_index": "https://www.haproxy.org/",
     "lts_eol": "2030-Q2",
     "plugins": []
+  },
+  "realizability": {
+    "verification_gate": "SEC-03B",
+    "policy": "native_simple_or_record_residual_risk",
+    "lua_allowed": false,
+    "third_party_modules_allowed": false,
+    "requirements": [
+      {
+        "id": "tls_1_3",
+        "mechanism": "bind TLS version controls",
+        "state": "NATIVE_DOCUMENTED"
+      },
+      {
+        "id": "http_1_1_only",
+        "mechanism": "bind ALPN and protocol configuration",
+        "state": "LAB_PROOF_REQUIRED"
+      },
+      {
+        "id": "absolute_header_deadline",
+        "mechanism": "timeout http-request",
+        "state": "NATIVE_DOCUMENTED"
+      },
+      {
+        "id": "header_limits",
+        "mechanism": "tune.http.maxhdr and buffer sizing",
+        "state": "LAB_PROOF_REQUIRED"
+      },
+      {
+        "id": "request_body_limit",
+        "mechanism": "Content-Length ACL and real request tests",
+        "state": "LAB_PROOF_REQUIRED"
+      },
+      {
+        "id": "minimum_receive_rate",
+        "mechanism": "none accepted until a native simple mechanism is proven",
+        "state": "MECHANISM_UNPROVEN"
+      },
+      {
+        "id": "upstream_response_limit",
+        "mechanism": "none accepted until a native simple mechanism is proven",
+        "state": "MECHANISM_UNPROVEN"
+      },
+      {
+        "id": "request_id_lower_hex_32",
+        "mechanism": "unique-id-format and unique-id-header",
+        "state": "LAB_PROOF_REQUIRED"
+      },
+      {
+        "id": "strip_x_sister_prefix",
+        "mechanism": "request header deletion rules",
+        "state": "LAB_PROOF_REQUIRED"
+      },
+      {
+        "id": "multidimensional_rate_limiting",
+        "mechanism": "stick tables and tracked counters",
+        "state": "NATIVE_DOCUMENTED"
+      }
+    ]
   },
   "deployment": {
     "service_manager": "systemd",

@@ -27,7 +27,8 @@ def main():
     assert not validate_profile(profile, schema)
 
     unsafe_mutations = (
-        ("technology.minimum_version", "3.2.11"),
+        ("technology.initial_validated_floor", "3.2.11"),
+        ("technology.initial_validated_floor", "3.2.99"),
         ("deployment.identity_key_visible_to_gateway", True),
         ("network.upstream_host", "client-controlled.example"),
         ("network.upstream_dynamic_destination", True),
@@ -61,6 +62,10 @@ def main():
     unknown_control = copy.deepcopy(profile)
     unknown_control["http"]["trust_everything"] = True
     assert validate_profile(unknown_control, schema)
+
+    false_native_claim = copy.deepcopy(profile)
+    false_native_claim["realizability"]["requirements"][5]["state"] = "NATIVE_DOCUMENTED"
+    assert validate_profile(false_native_claim, schema)
 
     print("gateway_security_profile_tests ok")
 

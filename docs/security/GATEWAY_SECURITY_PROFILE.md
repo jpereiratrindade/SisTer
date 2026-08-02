@@ -26,7 +26,7 @@ protocolo ou gate de segurança exige revisão do MAES e nova decisão de risco.
 
 | Dimensão | Baseline SEC-03 |
 |---|---|
-| Produto | HAProxy Community 3.2 LTS, mínimo 3.2.22 na linha 3.2 |
+| Produto | HAProxy Community; linha 3.2.x, piso validado 3.2.22 e patch mantido mais recente |
 | Processo | `sister-gateway`, configuração `root:sister-gateway` |
 | Entrada | `443/tcp`, TLS 1.3, HTTP/1.1, Host exato |
 | HTTP sem TLS | porta 80 fechada |
@@ -36,12 +36,28 @@ protocolo ou gate de segurança exige revisão do MAES e nova decisão de risco.
 | Request ID | novo valor hexadecimal de 32 caracteres |
 | Headers | 64 campos, 16 KiB agregados, alvo de 8 KiB |
 | Corpo | 1 MiB global; 64 KiB em `/api/auth/*` |
-| Taxa mínima recebida | 1 KiB/s, além dos deadlines absolutos |
-| Resposta upstream | 16 MiB |
+| Taxa mínima recebida | alvo de 1 KiB/s; mecanismo ainda não comprovado |
+| Resposta upstream | alvo de 16 MiB; mecanismo ainda não comprovado |
 | Headers/corpo | deadlines absolutos de 5 s/10 s |
 | Conexões | 1024 globais; 32 por origem |
 | Rate limiting | global, origem, rota e login |
 | HSTS | desligado até gate operacional próprio |
+
+## Matriz executável de realizabilidade
+
+`ops/gateway/security-profile.json` classifica cada requisito como:
+
+- `NATIVE_DOCUMENTED`: o manual identifica mecanismo nativo, ainda sem prova
+  de processo;
+- `LAB_PROOF_REQUIRED`: existe mecanismo candidato, mas formato e comportamento
+  precisam de teste real;
+- `MECHANISM_UNPROVEN`: nenhum mecanismo simples foi aceito e o controle não
+  pode ser declarado implementado.
+
+Taxa mínima e limite de resposta começam em `MECHANISM_UNPROVEN`. O validador
+impede promovê-los documentalmente para nativos, habilitar Lua ou admitir
+módulos de terceiros. SEC-03B deve registrar o resultado sem reinterpretar o
+requisito para “ficar verde”.
 
 ## Política de confiança
 
@@ -97,6 +113,7 @@ WebSocket.
 ## Critério de saída de SEC-03A
 
 SEC-03A termina quando o perfil válido passa no pipeline, mutações inseguras são
-rejeitadas pelos testes, ADR/MAES usam os mesmos identificadores e nenhum
-artefato afirma que o gateway já está implantado. SEC-03B pode então materializar
-uma configuração de laboratório sem ampliar o escopo funcional.
+rejeitadas pelos testes, controles sem mecanismo permanecem explicitamente
+inconclusivos, ADR/MAES usam os mesmos identificadores e nenhum artefato afirma
+que o gateway já está implantado. SEC-03B pode então materializar uma
+configuração de laboratório sem ampliar o escopo funcional.

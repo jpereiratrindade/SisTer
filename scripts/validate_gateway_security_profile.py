@@ -50,11 +50,17 @@ def validate_profile(profile, schema):
 
     expected_objects = {
         "": {
-            "contract_id", "contract_version", "status", "technology", "deployment",
+            "contract_id", "contract_version", "status", "technology", "realizability", "deployment",
             "network", "tls", "http", "headers", "rate_limits", "observability",
             "rollback", "gates", "threats",
         },
-        "technology": {"product", "edition", "approved_branch", "minimum_version", "lts_eol", "plugins"},
+        "technology": {
+            "product", "edition", "approved_branch", "initial_validated_floor", "patch_policy",
+            "version_verified_on", "official_release_index", "lts_eol", "plugins",
+        },
+        "realizability": {
+            "verification_gate", "policy", "lua_allowed", "third_party_modules_allowed", "requirements",
+        },
         "deployment": {
             "service_manager", "package_signature_required", "runtime_user", "config_owner",
             "config_mode", "private_key_max_mode", "sisterd_user",
@@ -131,13 +137,50 @@ def validate_profile(profile, schema):
     expect(profile, "technology.product", "haproxy", errors)
     expect(profile, "technology.edition", "community", errors)
     expect(profile, "technology.approved_branch", "3.2", errors)
+    expect(profile, "technology.patch_policy", "latest_maintained_patch_at_or_above_floor", errors)
+    expect(profile, "technology.version_verified_on", "2026-08-01", errors)
+    expect(profile, "technology.official_release_index", "https://www.haproxy.org/", errors)
     expect(profile, "technology.lts_eol", "2030-Q2", errors)
     expect(profile, "technology.plugins", [], errors)
 
-    minimum_version = value(profile, "technology.minimum_version", errors)
+    minimum_version = value(profile, "technology.initial_validated_floor", errors)
     match = re.fullmatch(r"3\.2\.(\d+)", minimum_version or "")
-    if not match or int(match.group(1)) < 22:
-        errors.append("technology.minimum_version must be HAProxy 3.2.22 or newer in branch 3.2")
+    if not match or int(match.group(1)) != 22:
+        errors.append("technology.initial_validated_floor must match the currently verified HAProxy 3.2.22 release")
+
+    expect(profile, "realizability.verification_gate", "SEC-03B", errors)
+    expect(profile, "realizability.policy", "native_simple_or_record_residual_risk", errors)
+    expect(profile, "realizability.lua_allowed", False, errors)
+    expect(profile, "realizability.third_party_modules_allowed", False, errors)
+    required_realizability = {
+        "tls_1_3": "NATIVE_DOCUMENTED",
+        "http_1_1_only": "LAB_PROOF_REQUIRED",
+        "absolute_header_deadline": "NATIVE_DOCUMENTED",
+        "header_limits": "LAB_PROOF_REQUIRED",
+        "request_body_limit": "LAB_PROOF_REQUIRED",
+        "minimum_receive_rate": "MECHANISM_UNPROVEN",
+        "upstream_response_limit": "MECHANISM_UNPROVEN",
+        "request_id_lower_hex_32": "LAB_PROOF_REQUIRED",
+        "strip_x_sister_prefix": "LAB_PROOF_REQUIRED",
+        "multidimensional_rate_limiting": "NATIVE_DOCUMENTED",
+    }
+    requirements = value(profile, "realizability.requirements", errors)
+    if isinstance(requirements, list):
+        observed = {}
+        for requirement in requirements:
+            if not isinstance(requirement, dict) or set(requirement) != {"id", "mechanism", "state"}:
+                errors.append("each realizability requirement must contain id, mechanism and state")
+                continue
+            requirement_id = requirement.get("id")
+            if requirement_id in observed:
+                errors.append(f"duplicate realizability requirement: {requirement_id}")
+            observed[requirement_id] = requirement.get("state")
+            if not isinstance(requirement.get("mechanism"), str) or not requirement["mechanism"].strip():
+                errors.append(f"realizability requirement {requirement_id} needs a mechanism statement")
+        if observed != required_realizability:
+            errors.append("realizability states must preserve documented, lab-pending and unproven controls")
+    else:
+        errors.append("realizability.requirements must be a list")
 
     for path, expected in {
         "deployment.service_manager": "systemd",

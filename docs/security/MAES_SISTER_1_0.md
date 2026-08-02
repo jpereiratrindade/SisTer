@@ -138,7 +138,8 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Evidências:** ADR-0019, `docs/evidence/security/SEC-01C-01D.md`, ADR-0020 e
   perfil SEC-03A; carga externa permanece pendente SEC-03V.
 - **Risco residual:** timeouts de socket não contêm Slowloris integralmente;
-  deadlines absolutos, taxa mínima e quotas de borda pertencem ao SEC-03.
+  deadlines absolutos e quotas de borda pertencem ao SEC-03; o mecanismo de
+  taxa mínima permanece explicitamente não comprovado para SEC-03B.
 - **Owner:** manutenção do `sisterd`; operação do gateway para o residual.
 - **Estado:** `PARTIALLY_CONTROLLED`.
 
@@ -234,12 +235,13 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Superfície:** fila, conexão, resposta e falha do `sisterd`.
 - **Cenário:** upstream lento, indisponível ou excessivo retém recursos ou
   produz resposta sem limite.
-- **Controles definidos:** prazos de fila, conexão e resposta; limite de 16 MiB;
-  destino único; falha externa fechada.
+- **Controles definidos:** prazos de fila, conexão e resposta; alvo de limite de
+  16 MiB; destino único; falha externa fechada.
 - **Testes definidos:** upstream lento, ausente, fila saturada e resposta grande.
 - **Evidências:** ADR-0020 e perfil SEC-03A; execução pendente SEC-03V.
-- **Risco residual:** alta disponibilidade e streaming não pertencem à primeira
-  baseline.
+- **Risco residual:** o mecanismo simples para interromper resposta em 16 MiB
+  ainda não foi comprovado; alta disponibilidade e streaming não pertencem à
+  primeira baseline.
 - **Owner:** manutenção do gateway e do `sisterd`.
 - **Estado:** `PROFILE_DEFINED`.
 
