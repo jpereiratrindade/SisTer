@@ -37,6 +37,7 @@ quais entregas ainda bloqueiam essa promoção.
 | SEC-01D — rate limiting efetivo | Concluído em `v0.2.6` | limites por IP, identidade, combinação e processo; armazenamento limitado |
 | SEC-02 — identidade interna assinada | Concluído com restrição em `v0.2.7` | somente `GET /integrations/nexo/projects`, interno, read-only e shadow |
 | SEC-02M — incorporação governada | Concluído em `v0.2.7` | flag própria desabilitada por padrão, chave validada no arranque e negação local de qualquer outra rota |
+| ISO-01 — isolamento local | Concluído em laboratório com restrições | produção aceita somente `/run/sister/sisterd.sock` ativado; TCP de entrada e fallback são proibidos |
 
 O alinhamento com a EFE-SisTer/1.2 e sua cadeia
 ameaça–controle–evidência está na
@@ -55,7 +56,8 @@ O registro operacional inicial está no
 
 ```text
 SISTER_ENV=production
-SISTER_BIND_HOST=127.0.0.1
+SISTER_LISTENER_MODE=systemd-unix
+SISTER_ACTIVATED_SOCKET_PATH=/run/sister/sisterd.sock
 SISTER_ENABLE_HTTP_BOOTSTRAP=false
 SISTER_ENABLE_LEGACY_PROXY=false
 SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false
@@ -63,9 +65,10 @@ SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=false
 SISTER_AUTH_FILE=/var/lib/sister/auth-users.tsv
 ```
 
-Uma combinação incompatível falha antes de expor o serviço. O listener continua
-sendo interno: TLS, WebSocket, limites e observabilidade de transporte pertencem
-ao gateway especializado.
+Uma combinação incompatível falha antes de aceitar conexões. `SISTER_PORT`,
+`SISTER_BIND_HOST`, argumento de porta e fallback TCP são proibidos em
+produção. TLS, WebSocket, limites e observabilidade de transporte pertencem ao
+gateway especializado.
 
 ## Bootstrap operacional
 
@@ -106,8 +109,8 @@ backup e rollback.
 
 1. **SEC-02R:** tornar a proteção contra replay persistente ou transacional
    antes de qualquer capacidade de escrita.
-2. **ISO-01/SEC-03V:** após o fechamento restrito de SEC-03C, isolar localmente
-   o upstream, executar o E2E governado com Nexo/PostgreSQL, revisar a exceção de Host e
+2. **SEC-03V:** após o fechamento restrito de ISO-01, executar o E2E governado
+   com Nexo/PostgreSQL, validar identidades/permissões reais, revisar a exceção de Host e
    concluir a validação formal; Clima, WebSocket e expansão funcional continuam
    fora desta baseline.
 3. Eliminação definitiva do cookie na fronteira interna e remoção física dos

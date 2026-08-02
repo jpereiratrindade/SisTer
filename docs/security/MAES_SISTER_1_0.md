@@ -219,14 +219,15 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Superfície:** seleção do backend pelo gateway.
 - **Cenário:** Host, caminho, header ou resolução fornecida pelo cliente altera
   o destino e transforma a borda em proxy aberto ou SSRF.
-- **Controles definidos:** único servidor literal `127.0.0.1:8000`, sem
-  descoberta dinâmica, `set-dst`, resolver ou acesso direto ao Nexo.
+- **Controles definidos:** único socket literal `/run/sister/sisterd.sock`, sem
+  listener TCP, descoberta dinâmica, `set-dst`, resolver ou acesso direto ao Nexo.
 - **Testes definidos:** manipulação de Host, caminho, headers e destino, além de
   tentativa de acesso direto ao upstream.
-- **Evidências:** ADR-0020 e perfil SEC-03A; isolamento real pendente ISO-01/SEC-03V.
-- **Risco residual:** regra de host/cgroup ainda não implantada.
+- **Evidências:** ADR-0020/0021, perfil e `docs/evidence/security/ISO-01.md`.
+- **Risco residual:** contas/grupos reais, SELinux e ciclo PID 1 ainda precisam
+  ser comprovados no ambiente candidato em SEC-03V.
 - **Owner:** operação de plataforma e manutenção do gateway.
-- **Estado:** `PROFILE_DEFINED`.
+- **Estado:** `PARTIALLY_CONTROLLED`.
 
 ### TH-PROXY-02 — Upstream retém ou devolve recursos sem limite
 
@@ -286,7 +287,7 @@ O trabalho corrente mantém no máximo dois cartões simultâneos:
 | Concluído como perfil, não implantado | `SEC-03A` — ADR-0020 e perfil executável |
 | Concluído com restrições | `SEC-03B` — normalizações resolvidas; Host idêntico duplicado aceito como divergência governada |
 | Concluído com restrições | `SEC-03C` — contenção de abuso e recursos na borda |
-| Próximo bloqueante | `ISO-01` — isolamento local do upstream |
+| Concluído com restrições | `ISO-01` — isolamento local do upstream |
 | Validação | `SEC-03V` — matriz negativa e evidência de processo |
 | Backlog seguinte | `FED-01` — registro persistente de sistemas |
 
@@ -299,12 +300,14 @@ A Coordenação do Projeto SisTer aprova os owners e estados acima para a
 `v0.2.7`, com aceitação restrita dos seguintes riscos residuais:
 
 - Slowloris, deadlines absolutos e quotas de borda permanecem em
-  `TH-HTTP-03`, desde que o `sisterd` continue restrito a loopback e sem papel de
+  `TH-HTTP-03`, desde que o `sisterd` continue restrito ao socket Unix e sem papel de
   servidor HTTP público até SEC-03V. SEC-03A define o controle, mas não reduz
   esse risco sem implantação e teste. SEC-03B comprova a fronteira mínima em
   loopback e aceita de modo restrito a divergência de Host idêntico duplicado,
   com revisão obrigatória em SEC-03V. SEC-03C comprova quotas, timeouts, fila e
   logs no laboratório, mantendo o deadline absoluto do corpo como parcial.
+  ISO-01 elimina o listener TCP produtivo, mas ainda exige prova das identidades
+  reais e do ciclo systemd no ambiente candidato.
 - A contenção de login usa o endereço diretamente observado; nenhuma confiança
   em origem encaminhada existe antes do gateway governado.
 - O proxy WebSocket legado permanece fisicamente presente apenas para
@@ -322,4 +325,4 @@ garante que tais pedidos falham antes da emissão e da conexão upstream. Esta
 aprovação publica uma baseline interna de controles; não declara prontidão para
 produção externa. Da mesma forma, `PROFILE_DEFINED` em SEC-03A não equivale a
 `CONTROLLED_BASELINE`: SEC-03C encerrou o laboratório com restrições, mas
-ISO-01 e SEC-03V ainda são necessários antes dessa transição.
+SEC-03V ainda é necessário antes dessa transição.

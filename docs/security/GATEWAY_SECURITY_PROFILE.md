@@ -1,10 +1,10 @@
 # Perfil executável de segurança da fronteira HTTP
 
-**Identificador:** `sister.gateway-security-profile/1.2.0`
+**Identificador:** `sister.gateway-security-profile/1.3.0`
 
-**Gate:** SEC-03C encerrado; próximo gate ISO-01
+**Gate:** ISO-01 encerrado; próximo gate SEC-03V
 
-**Estado:** SEC-03C encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`; ainda não implantado
+**Estado:** ISO-01 encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`; ainda não implantado
 
 **Decisão:** [ADR-0020](../adr/ADR-0020-specialized-http-gateway.md)
 
@@ -30,7 +30,7 @@ protocolo ou gate de segurança exige revisão do MAES e nova decisão de risco.
 | Processo | `sister-gateway`, configuração `root:sister-gateway` |
 | Entrada | `443/tcp`, TLS 1.3, HTTP/1.1, Host exato |
 | HTTP sem TLS | porta 80 fechada |
-| Upstream | único e fixo: `127.0.0.1:8000`, HTTP/1.1 |
+| Upstream | único e fixo: `unix@/run/sister/sisterd.sock`, HTTP/1.1 |
 | WebSocket/Upgrade | handshake negado; campos isolados removidos |
 | Headers | externos de identidade, origem e correlação removidos |
 | Request ID | novo valor hexadecimal de 32 caracteres |
@@ -93,19 +93,22 @@ headers, não por deadline absoluto integral; esse aspecto é
 `PARTIALLY_PROVEN`. Taxa mínima de 1 KiB/s e resposta máxima de 16 MiB continuam
 `MECHANISM_UNPROVEN`. Veja a [evidência SEC-03C](../evidence/security/SEC-03C.md).
 
-SEC-03C autoriza somente iniciar ISO-01. `main`, `VERSION`, tags, release e
-exposição externa permanecem bloqueados até SEC-03V.
+ISO-01 substituiu o backend TCP pelo socket Unix ativado e encerrou como
+`LAB_PROVEN_WITH_RESTRICTIONS`. Contas e grupos reais, ciclo sob PID 1 e SELinux
+permanecem para o ambiente candidato; veja a
+[evidência ISO-01](../evidence/security/ISO-01.md). `main`, `VERSION`, tags,
+release e exposição externa permanecem bloqueados até SEC-03V.
 
 ## Política de confiança
 
-O endereço TCP visto pelo `sisterd` será o gateway. A origem reconstruída é
-metadado de transporte, não identidade e não capacidade. A confiança em
+O peer Unix visto pelo `sisterd` representa o caminho local do gateway. A
+origem reconstruída continua sendo metadado, não identidade nem capacidade. A confiança em
 `X-Forwarded-*` e `X-Request-ID` depende conjuntamente de:
 
 1. remoção de todo valor externo;
 2. reconstrução pelo gateway;
 3. upstream estático;
-4. restrição do host para que somente o gateway alcance `127.0.0.1:8000`;
+4. socket Unix `0660`, grupo exclusivo do gateway e diretório runtime `0750`;
 5. teste negativo que tente acesso local e externo direto.
 
 Sem qualquer uma dessas provas, o `sisterd` deve ignorar os headers e manter o

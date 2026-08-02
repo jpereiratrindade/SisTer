@@ -55,8 +55,10 @@ em seu próprio repositório, mas nenhum deles inicia o SisTer.
 O `sisterd` é um plano de controle interno, não uma borda HTTP pública. Em
 produção ele deve ficar atrás de um gateway/reverse proxy especializado, que
 termina TLS e trata HTTP, WebSocket, limites e observabilidade. O processo
-recusa bind fora de loopback e recusa os proxies legados. Consulte a
-[ADR-0015](docs/adr/ADR-0015-sisterd-transport-quarantine.md).
+exige o socket Unix ativado pelo systemd, recusa qualquer listener TCP e recusa
+os proxies legados. Consulte as ADRs
+[0015](docs/adr/ADR-0015-sisterd-transport-quarantine.md) e
+[0021](docs/adr/ADR-0021-local-upstream-unix-socket-activation.md).
 
 A baseline `v0.2.5` concluiu SEC-00, SEC-01, SEC-01A e SEC-01B: quarentena de
 transporte, autorização por capacidades sem fallback de papel e bootstrap
@@ -89,13 +91,15 @@ SEC-03B foi encerrado como `LAB_PROVEN_WITH_RESTRICTIONS` por decisão explícit
 normalização segura de `Content-Length`, remoção de Upgrade isolado e exceção
 restrita para Host idêntico duplicado. A
 [evidência SEC-03C](docs/evidence/security/SEC-03C.md) encerra a contenção de
-abuso em laboratório com restrições e autoriza iniciar ISO-01. ISO-01 e SEC-03V
-continuam obrigatórios antes de merge controlado ou `v0.2.8`.
+abuso em laboratório. A [evidência ISO-01](docs/evidence/security/ISO-01.md)
+remove o listener TCP produtivo e autoriza iniciar SEC-03V. Esse gate continua
+obrigatório antes de merge controlado ou `v0.2.8`.
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:
 
-- **Template do Serviço:** Copie `ops/systemd/sisterd.service` para `/etc/systemd/system/sisterd.service`.
+- **Unidades:** Instale `ops/systemd/sisterd.service` e `sisterd.socket`, além de
+  `ops/tmpfiles.d/sister.conf`; habilite `sisterd.socket`.
 - **Credenciais:** Copie `.env.production.example` para `/etc/sister/sister.env` (proteja com `chmod 600`).
 - **Deploy:** O script `scripts/app/deploy.sh` centraliza os passos de build (Release), migrações e restart do serviço, dispensando containers de banco embutidos que o modo `dev` exige.
 
@@ -218,11 +222,11 @@ As senhas sao derivadas com PBKDF2-HMAC-SHA256 e sal aleatorio. As identidades
 persistem em `.run/auth-users.tsv`, com permissao exclusiva do usuario do
 processo. As sessões persistem em `.run/auth-users.tsv.sessions` somente pelo
 hash SHA-256 do token, nunca pelo token bruto, e expiram em oito horas.
-Para usar outro caminho ou configurar o servidor:
+Para usar outro caminho no desenvolvimento com TCP loopback explícito:
 
 ```bash
 SISTER_AUTH_FILE=/caminho/protegido/auth-users.tsv \
-SISTER_ENV=production \
+SISTER_ENV=development \
 SISTER_WORKERS=4 \
 SISTER_BIND_HOST=127.0.0.1 \
 SISTER_ENABLE_HTTP_BOOTSTRAP=false \
@@ -231,6 +235,9 @@ SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false \
 SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=false \
   ./build/apps/sisterd/sisterd 8000 web
 ```
+
+Produção não aceita esse comando: recebe o socket Unix exclusivamente por
+`sisterd.socket`, conforme ADR-0021.
 
 O `sisterd` suporta diversas variáveis de ambiente para configuração avançada:
 - `SISTER_ENV`: Define o ambiente (`development` ou `production`, padrão `production`).

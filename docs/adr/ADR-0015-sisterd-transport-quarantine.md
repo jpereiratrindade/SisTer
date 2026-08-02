@@ -1,8 +1,12 @@
 # ADR-0015: Quarentena de transporte do sisterd
 
+> A quarentena inicial por loopback foi endurecida pela
+> [ADR-0021](./ADR-0021-local-upstream-unix-socket-activation.md): produção não
+> mantém mais listener TCP de entrada.
+
 ## Status
 
-Aceita — SEC-00 concluído na baseline `v0.2.5`
+Aceita historicamente — transporte produtivo de entrada substituído pela ADR-0021
 
 ## Contexto
 

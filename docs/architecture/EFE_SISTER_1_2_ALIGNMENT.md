@@ -40,8 +40,8 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
 4. SEC-03A define HAProxy 3.2 LTS, a fronteira de responsabilidades e o perfil
    executável. SEC-03B encerrou a prova em loopback com normalizações seguras e
    uma divergência de Host restrita e governada. SEC-03C encerrou a contenção em
-   laboratório; ISO-01 e SEC-03V continuam responsáveis pelo isolamento,
-   composição E2E e validação. Nenhuma etapa autoriza transformar
+   laboratório. ISO-01 removeu o listener TCP produtivo; SEC-03V continua
+   responsável pela composição E2E e validação. Nenhuma etapa autoriza transformar
    o `sisterd` em servidor HTTP público.
 
 ## Rastreabilidade imediata
@@ -51,7 +51,7 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
 | SEC-01C | `TH-HTTP-01`, `TH-HTTP-03`, `TH-CXX-01`, `TH-CXX-02` | parsing estrito, limites, barreira por job e suíte hostil em `docs/evidence/security/SEC-01C-01D.md` | publicação imutável da `v0.2.6` |
 | SEC-01D | `TH-AUTH-01`, `TH-HTTP-03`, `TH-AUD-01` | limites multidimensionais, armazenamento limitado, `429`, métricas e testes concorrentes | publicação imutável da `v0.2.6` |
 | SEC-02 | `TH-IDENT-01`, `TH-AUTHZ-01`, `TH-AUD-01` | publicado na `v0.2.7` para uma rota exata, leitura interna e shadow; `TH-IDENT-01` parcial pelo replay após reinício e operação manual de chaves | SEC-02R antes de escrita; SEC-03 antes de exposição externa |
-| SEC-03 | `TH-HTTP-02`, `TH-HTTP-03`, `TH-HTTP-04`, `TH-WS-01`, `TH-PROXY-01`, `TH-PROXY-02`, `TH-CONF-01`, `TH-AUD-01` | SEC-03C em `LAB_PROVEN_WITH_RESTRICTIONS`: contenção e observabilidade provadas; corpo absoluto parcial; Host duplicado em divergência aceita | executar ISO-01 e revisar risco/composição E2E em SEC-03V |
+| SEC-03 | `TH-HTTP-02`, `TH-HTTP-03`, `TH-HTTP-04`, `TH-WS-01`, `TH-PROXY-01`, `TH-PROXY-02`, `TH-CONF-01`, `TH-AUD-01` | ISO-01 em `LAB_PROVEN_WITH_RESTRICTIONS`: entrada Unix exclusiva; identidades reais pendentes; Host duplicado em divergência aceita | revisar permissões, risco e composição E2E em SEC-03V |
 
 ## Regra de promoção
 

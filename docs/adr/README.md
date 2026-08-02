@@ -20,3 +20,4 @@
 - [ADR-0018 - Identidade interna assinada entre sisterd e subsistemas](./ADR-0018-signed-internal-identity.md)
 - [ADR-0019 - Robustez HTTP e contenção interna de tentativas de login](./ADR-0019-http-robustness-and-login-rate-limiting.md)
 - [ADR-0020 - Gateway especializado e fronteira HTTP externa](./ADR-0020-specialized-http-gateway.md)
+- [ADR-0021 - Isolamento local por socket Unix ativado](./ADR-0021-local-upstream-unix-socket-activation.md)

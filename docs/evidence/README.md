@@ -25,4 +25,5 @@ existe e contém `status: approved` ou `status: aprovado`.
 - [SEC-02M — promoção governada e política exata](./security/SEC-02M.md)
 - [SEC-03B — gateway mínimo em laboratório](./security/SEC-03B.md)
 - [SEC-03C — contenção de abuso e recursos](./security/SEC-03C.md)
+- [ISO-01 — isolamento local do upstream](./security/ISO-01.md)
 - [MAES-SisTer/1.0](../security/MAES_SISTER_1_0.md)

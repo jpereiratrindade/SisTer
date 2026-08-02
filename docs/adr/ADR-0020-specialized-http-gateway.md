@@ -2,7 +2,7 @@
 
 ## Status
 
-Aceita — SEC-03C encerrado com restrições; implantação bloqueada até ISO-01/SEC-03V
+Aceita — ISO-01 encerrado com restrições; implantação bloqueada até SEC-03V
 
 ## Contexto
 
@@ -63,7 +63,7 @@ HAProxy (usuário sister-gateway)
   ├── remove origem, identidade e correlação externas
   ├── cria request_id e headers autorizados
   └── destino fixo, sem descoberta dinâmica
-        │ HTTP/1.1 / 127.0.0.1:8000
+        │ HTTP/1.1 / unix@/run/sister/sisterd.sock
         ▼
 sisterd (usuário sister)
   ├── autenticação e autorização funcional
@@ -92,8 +92,8 @@ Nexo, não administra acordos e não persiste dados do SisTer.
   reload. Atualização de patch é aplicada primeiro em laboratório; advisories
   críticos podem abreviar a janela, mas não dispensam validação sintática e
   smoke test.
-- Acesso ao upstream de loopback é restringido no host ao usuário/cgroup do
-  gateway. Loopback isoladamente não satisfaz esse controle.
+- Acesso ao upstream usa o socket Unix governado pela ADR-0021; loopback TCP é
+  proibido em produção.
 
 ## TLS, hosts e protocolos
 
@@ -217,7 +217,8 @@ legado, abre `8000` externamente ou reduz TLS/limites.
   Host restrita.
 - **SEC-03C:** concluído em laboratório com limites, falhas controladas e logs
   sanitizados; deadline absoluto do corpo permanece parcial.
-- **ISO-01:** isolamento local do upstream por usuário/cgroup.
+- **ISO-01:** concluído com socket Unix ativado e permissões governadas;
+  identidades reais e ciclo PID 1 permanecem para o ambiente candidato.
 - **SEC-03V:** matriz negativa, composição gateway/Nexo/PostgreSQL, revisão da
   exceção de Host, evidência e decisão de risco.
 
