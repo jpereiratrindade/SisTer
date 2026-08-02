@@ -22,4 +22,5 @@ existe e contém `status: approved` ou `status: aprovado`.
 
 - [SEC-01C/01D — robustez HTTP e contenção de abuso](./security/SEC-01C-01D.md)
 - [SEC-02V — validação formal da identidade interna](./security/SEC-02V.md)
+- [SEC-02M — promoção governada e política exata](./security/SEC-02M.md)
 - [MAES-SisTer/1.0](../security/MAES_SISTER_1_0.md)

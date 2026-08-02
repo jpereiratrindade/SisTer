@@ -2,7 +2,8 @@
 
 ## Status
 
-Aceita e validada pelo SEC-02V para uso interno, read-only e shadow
+Aceita, validada pelo SEC-02V e incorporada na `v0.2.7` para uso interno,
+read-only e shadow
 
 ## Contexto
 
@@ -52,6 +53,23 @@ O payload segue
 Na primeira fatia, o cliente Nexo usa audiência `sister_nexo`, capacidade
 `nexo.projects.read`, finalidade `research_operations` e TTL padrão de 60
 segundos. O TTL configurável nunca pode exceder 300 segundos.
+
+A ativação usa exclusivamente
+`SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=false` por padrão. Ela não depende de
+`SISTER_ENABLE_LEGACY_PROXY`, não ativa Clima ou WebSocket e exige a
+configuração criptográfica válida antes da abertura do listener.
+
+A única política de emissão desta baseline é:
+
+```text
+GET /integrations/nexo/projects
+→ GET /api/v1/projects
+→ nexo.projects.read
+→ research_operations
+```
+
+Outro método ou caminho sob `/integrations/nexo` recebe `404` antes da criação
+do cliente: nenhuma asserção é emitida e nenhuma conexão é aberta com o Nexo.
 
 A asserção é enviada em:
 
@@ -107,6 +125,9 @@ e deve ser revista antes de ampliar capacidades de escrita.
 ## Invariantes
 
 - Autenticação e autorização ocorrem antes da emissão.
+- A integração assinada permanece desabilitada por padrão e separada do proxy
+  legado.
+- Somente a rota e o método explicitamente aprovados podem produzir asserção.
 - Uma asserção é válida para uma audiência, finalidade e conjunto mínimo de
   capacidades.
 - Cookie e token bruto de sessão nunca atravessam a fronteira Nexo.
@@ -124,6 +145,7 @@ e deve ser revista antes de ampliar capacidades de escrita.
   `GET /api/v1/projects`; a ativação operacional e a distribuição da chave
   pública devem acompanhar o deploy conjunto.
 - O proxy genérico permanece apenas para Clima no laboratório; não é promovido.
+- A rota genérica Nexo e a rota Nexo-Compras não integram esta baseline.
 - SEC-03 continua obrigatório antes de reabrir integrações em produção.
 
 ## Fora de escopo
@@ -134,3 +156,5 @@ e deve ser revista antes de ampliar capacidades de escrita.
 - `IntegrationRun` e proveniência completa;
 - autorização científica complexa por finalidade;
 - serviço central de chaves.
+- operações de escrita; elas dependem de SEC-02R, com proteção de replay
+  persistente ou garantia transacional equivalente.

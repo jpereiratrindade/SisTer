@@ -33,10 +33,10 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
 2. O MAES-SisTer/1.0 é publicado na mesma baseline como registro operacional
    versionado de ativos, fronteiras, ameaças, controles, testes, evidências,
    riscos residuais, responsáveis, estados e datas de revisão.
-3. O candidato SEC-02 é mantido em ciclo de desenvolvimento posterior à
-   `v0.2.6`; esta release não publica nem autoriza a capacidade. Sua conformidade
-   deve ser formalmente avaliada contra a EFE-SisTer/1.2 e o MAES antes de
-   implantação conjunta com o Nexo.
+3. SEC-02V validou o candidato posterior à `v0.2.6`. SEC-02M restringiu sua
+   promoção a uma flag própria e a uma rota exata. A `v0.2.7` publica somente a
+   leitura interna e shadow coordenada com o Nexo; escrita e exposição externa
+   continuam bloqueadas.
 4. SEC-03 permanece posterior ao SEC-02 e responsável pelo gateway
    especializado. Nenhuma etapa autoriza transformar o `sisterd` em servidor
    HTTP público.
@@ -47,7 +47,7 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
 |---|---|---|---|
 | SEC-01C | `TH-HTTP-01`, `TH-HTTP-03`, `TH-CXX-01`, `TH-CXX-02` | parsing estrito, limites, barreira por job e suíte hostil em `docs/evidence/security/SEC-01C-01D.md` | publicação imutável da `v0.2.6` |
 | SEC-01D | `TH-AUTH-01`, `TH-HTTP-03`, `TH-AUD-01` | limites multidimensionais, armazenamento limitado, `429`, métricas e testes concorrentes | publicação imutável da `v0.2.6` |
-| SEC-02 | `TH-IDENT-01`, `TH-AUTHZ-01`, `TH-AUD-01` | validado fora da release para leitura interna e shadow; `TH-IDENT-01` parcial pelo replay após reinício e operação manual de chaves | implantação shadow governada; escrita bloqueada |
+| SEC-02 | `TH-IDENT-01`, `TH-AUTHZ-01`, `TH-AUD-01` | publicado na `v0.2.7` para uma rota exata, leitura interna e shadow; `TH-IDENT-01` parcial pelo replay após reinício e operação manual de chaves | SEC-02R antes de escrita; SEC-03 antes de exposição externa |
 | SEC-03 | `TH-HTTP-02`, `TH-HTTP-03`, `TH-HTTP-04`, `TH-WS-01`, `TH-PROXY-01`, `TH-PROXY-02` | ainda não implementado | ADR do gateway, testes negativos e risco residual |
 
 ## Regra de promoção
@@ -58,7 +58,8 @@ A sequência aprovada é:
 publicar SEC-01C/SEC-01D como v0.2.6 ─┐
                                      ├→ validar formalmente SEC-02 (SEC-02V)
 criar e revisar MAES-SisTer/1.0 ─────┘
-→ implantar SEC-02 de forma controlada
+→ publicar SEC-02 como v0.2.7 com política exata
+→ implantar a leitura shadow de forma controlada
 → implementar e validar SEC-03
 ```
 

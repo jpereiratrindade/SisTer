@@ -43,8 +43,9 @@ identidade originada no SisTer e encaminhada pelo Nexo.
 ## Implementação
 
 1. contrato `nexo-compras.integration/1.0.0`;
-2. rota aninhada `/integrations/nexo/compras/`;
-3. proxy autenticado SisTer–Nexo e proxy contratual Nexo–Compras;
+2. rota aninhada alvo `/integrations/nexo/compras/`, não promovida na `v0.2.7`;
+3. fronteira assinada SisTer–Nexo e proxy contratual Nexo–Compras, sujeito a
+   gate específico antes da ativação;
 4. referências `project_id`, `research_activity_id`, `activity_id` e `need_id`;
 5. PostgreSQL independente do Compras em `55440`;
 6. migração preservada com caminho de rollback.

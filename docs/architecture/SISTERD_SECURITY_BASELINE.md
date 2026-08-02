@@ -1,6 +1,6 @@
 # Baseline de segurança do `sisterd`
 
-**Release de referência:** `v0.2.6`
+**Release de referência:** `v0.2.7`
 
 **Estado:** baseline executável de pré-produção
 
@@ -8,10 +8,10 @@
 
 **Referência normativa corrente:** EFE-SisTer/1.2
 
-> **Ciclo posterior à `v0.2.6`:** o candidato SEC-02 / I-01A contém a primeira
-> asserção interna Ed25519 e o cliente específico do Nexo. Esse código é
-> preservado fora da release. O SEC-02V o aprovou apenas para leitura interna e
-> shadow; a tag `v0.2.6` permanece inalterada.
+> **Promoção posterior à `v0.2.6`:** SEC-02V aprovou a primeira asserção interna
+> Ed25519 apenas para leitura interna e shadow. SEC-02M separou esse cliente do
+> proxy legado e tornou a política exata executável. A `v0.2.7` publica esse
+> escopo sem alterar a tag `v0.2.6`.
 
 Antes da validação de SEC-02, a revisão P0 acrescentou SEC-01C e SEC-01D:
 parser e workers contêm exceções, e o limitador de login passou a ser multinível,
@@ -35,6 +35,8 @@ quais entregas ainda bloqueiam essa promoção.
 | SEC-01B — bootstrap administrativo offline | Concluído | produção proíbe bootstrap HTTP; o comando local cria um único administrador sem sessão |
 | SEC-01C — robustez HTTP e dos workers | Concluído em `v0.2.6` | erro de protocolo não atravessa o worker; exceção inesperada é contida |
 | SEC-01D — rate limiting efetivo | Concluído em `v0.2.6` | limites por IP, identidade, combinação e processo; armazenamento limitado |
+| SEC-02 — identidade interna assinada | Concluído com restrição em `v0.2.7` | somente `GET /integrations/nexo/projects`, interno, read-only e shadow |
+| SEC-02M — incorporação governada | Concluído em `v0.2.7` | flag própria desabilitada por padrão, chave validada no arranque e negação local de qualquer outra rota |
 
 O alinhamento com a EFE-SisTer/1.2 e sua cadeia
 ameaça–controle–evidência está na
@@ -57,6 +59,7 @@ SISTER_BIND_HOST=127.0.0.1
 SISTER_ENABLE_HTTP_BOOTSTRAP=false
 SISTER_ENABLE_LEGACY_PROXY=false
 SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false
+SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=false
 SISTER_AUTH_FILE=/var/lib/sister/auth-users.tsv
 ```
 
@@ -86,8 +89,13 @@ backup e rollback.
   trilha de auditoria governada com retenção e integridade próprias.
 - Recurso e finalidade são registrados, mas a decisão desta baseline avalia a
   capacidade declarada.
-- O proxy legado e o repasse de cookie podem continuar no laboratório somente
-  quando habilitados de forma explícita; são proibidos em produção.
+- O proxy legado e o repasse de cookie do Clima podem continuar no laboratório
+  somente quando habilitados de forma explícita; são proibidos em produção. A
+  integração assinada do Nexo é independente e nunca repassa cookie.
+- Ativar a integração Nexo exige caminho absoluto, arquivo privado restrito e
+  `kid` válido antes do listener; a ativação aparece no diagnóstico de arranque.
+- A única rota publicada é `GET /integrations/nexo/projects`; método ou caminho
+  diferente não emite asserção nem abre conexão upstream.
 - O armazenamento em arquivo ainda não serializa duas execuções locais do
   bootstrap iniciadas exatamente ao mesmo tempo. A operação deve ser única até
   existir bloqueio interprocesso ou criação exclusiva.
@@ -96,9 +104,8 @@ backup e rollback.
 
 ## Próximas entregas bloqueantes
 
-1. Preparar implantação shadow conjunta do SEC-02 sob a restrição registrada em
-   `docs/evidence/security/SEC-02V.md`, incluindo procedimento operacional de
-   chaves; nenhuma capacidade de escrita é autorizada.
+1. **SEC-02R:** tornar a proteção contra replay persistente ou transacional
+   antes de qualquer capacidade de escrita.
 2. **SEC-03:** gateway especializado, contenção de abuso e adaptadores
    conformantes para Nexo e Clima.
 3. Eliminação definitiva do cookie na fronteira interna e remoção física dos

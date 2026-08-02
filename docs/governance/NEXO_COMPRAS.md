@@ -6,7 +6,8 @@
 - `Nexo-Compras`: contexto autônomo integrado ao Nexo;
 - identificador técnico preservado: `sister_compras`;
 - inicialização pelo orquestrador raiz: habilitada como dependência do Nexo;
-- acesso: `/integrations/nexo/compras/`.
+- acesso arquitetural reservado: `/integrations/nexo/compras/`; não publicado
+  pela `v0.2.7`.
 
 ## Relação de domínio
 
@@ -41,7 +42,11 @@ Referências não autorizam acesso direto ao banco de origem. Exclusão ou
 arquivamento em um contexto deve produzir estado contratual, nunca cascata
 entre bancos.
 
-## Implementação da fronteira
+## Implementação arquitetural da fronteira
+
+O fluxo abaixo descreve o alvo Nexo–Compras. A baseline `v0.2.7` do SisTer
+nega `/integrations/nexo/compras/` antes de emitir identidade ou conectar ao
+Nexo; sua promoção exige controle e evidência próprios.
 
 1. o SisTer autentica e encaminha a requisição ao Nexo;
 2. o Nexo encaminha ao Compras somente pela rota interna `/compras/`;

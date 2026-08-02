@@ -23,8 +23,10 @@ SisTer e Compras.
 - contrato: `sister-nexo.integration/1.0.0`;
 - origem local: `http://127.0.0.1:8015`;
 - saúde sanitizada: `/api/health`;
-- acesso: proxy autenticado em `/integrations/nexo/`;
-- contexto Compras: proxy do Nexo em `/integrations/nexo/compras/`;
+- acesso publicado na `v0.2.7`: somente
+  `GET /integrations/nexo/projects` em modo interno, read-only e shadow;
+- contexto Compras: `/integrations/nexo/compras/` não está promovido nesta
+  baseline;
 - PostgreSQL: propriedade exclusiva do Nexo em `127.0.0.1:55439`.
 
 O SisTer não acessa tabelas, credenciais, conversas, anexos, embeddings ou
@@ -48,6 +50,11 @@ só podem referenciar desafios do mesmo projeto. Equipe, autorização,
 informações de compras e vínculos externos são resolvidos pelo projeto
 correlacionado. O SisTer autentica e encaminha a identidade, mas não cria nem
 edita projetos do Nexo.
+
+A integração assinada é habilitada separadamente por
+`SISTER_ENABLE_NEXO_SIGNED_INTEGRATION`. Ela permanece desligada por padrão e
+não ativa o proxy legado, o Clima ou outras rotas do Nexo. Método ou caminho
+fora da política exata é negado sem emissão de asserção e sem conexão upstream.
 
 ## Operação
 

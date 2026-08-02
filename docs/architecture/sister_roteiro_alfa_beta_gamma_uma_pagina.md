@@ -23,11 +23,11 @@ borda de produção, a autorização sensível usa capacidades com negação por
 padrão e o bootstrap produtivo é local, de uso único e sem sessão. Esses itens
 adiantam fundações do roteiro, mas não promovem o conjunto à Beta ou à produção.
 SEC-01C e SEC-01D estão implementados e validados depois da tag `v0.2.5` e
-formam a `v0.2.6`, junto ao MAES-SisTer/1.0. O candidato SEC-02 / I-01A é
-mantido em ciclo posterior, com identidade interna Ed25519 e cliente específico
-do Nexo, e não integra a release. O SEC-02V aprovou somente operação interna,
-read-only e shadow; escrita e produção externa permanecem bloqueadas. SEC-03
-permanece o gate posterior de borda.
+formam a `v0.2.6`, junto ao MAES-SisTer/1.0. O SEC-02V aprovou a identidade
+interna Ed25519 somente para operação interna, read-only e shadow; SEC-02M
+separou o cliente Nexo do proxy legado e restringiu a emissão a uma rota exata.
+Esse escopo forma a `v0.2.7`. Escrita depende de SEC-02R, produção externa
+permanece bloqueada e SEC-03 continua como gate posterior de borda.
 
 Consulte a [baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md)
 e o [alinhamento com a EFE-SisTer/1.2](./EFE_SISTER_1_2_ALIGNMENT.md).

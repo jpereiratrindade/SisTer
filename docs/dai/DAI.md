@@ -26,7 +26,8 @@
 - Decision: a relação contratual é SisTer–Nexo–Nexo-Compras. O SisTer não
   cataloga nem acessa o Compras como subsistema direto.
 - Action: reservar `8016` e `55440`, com banco, container e volume exclusivos.
-- Action: expor o Compras em `/integrations/nexo/compras/` pelo proxy do Nexo.
+- Action: preparar `/integrations/nexo/compras/` no proxy do Nexo; a rota não é
+  autorizada nem publicada pelo SisTer `v0.2.7`.
 - Action: preservar os dados migrados e o volume anterior para rollback.
 
 ## 2026-07-28 - SisTer-Campo federado e canais CampoSync

@@ -2,12 +2,12 @@
 
 **Identificador:** MAES-SisTer/1.0
 
-**Estado:** aprovado e publicado na baseline `v0.2.6`
+**Estado:** aprovado e atualizado na baseline `v0.2.7`
 
 **Referência normativa:** EFE-SisTer/1.2
 
-**Escopo inicial:** `sisterd`, controles SEC-00 a SEC-01D e ameaças que
-governam o candidato posterior SEC-02
+**Escopo inicial:** `sisterd`, controles SEC-00 a SEC-02M e ameaças que
+governam a identidade interna assinada
 
 **Data de revisão:** 1 de agosto de 2026
 
@@ -143,13 +143,13 @@ evidências registram execuções; nenhum deles substitui este modelo.
   contenção de repetição e construção limpa da requisição.
 - **Testes:** emissor, consumidor, matriz HTTP negativa, rotação, reinício e
   ponta a ponta `sisterd`–Nexo–PostgreSQL.
-- **Evidências:** `docs/evidence/security/SEC-02V.md`.
+- **Evidências:** `docs/evidence/security/SEC-02V.md` e
+  `docs/evidence/security/SEC-02M.md`.
 - **Risco residual:** cache de `jti` é local e perdido no reinício; distribuição
-  e rotação de chaves são operacionais e ainda não foram exercitadas em deploy
-  conjunto.
+  e rotação de chaves continuam operacionais.
 - **Owner:** manutenção de identidade do `sisterd` e manutenção do Nexo.
-- **Estado:** `PARTIALLY_CONTROLLED`. Aprovado somente para leitura interna e
-  shadow; `v0.2.6` permanece inalterada e não contém esta capacidade.
+- **Estado:** `PARTIALLY_CONTROLLED` em `v0.2.7`. Aprovado somente para leitura
+  interna e shadow; `v0.2.6` permanece inalterada.
 
 ### TH-WS-01 — Retenção de recursos por WebSocket
 
@@ -185,6 +185,8 @@ O trabalho corrente mantém no máximo dois cartões simultâneos:
 | Concluído na baseline | fechamento de SEC-01C/01D em `v0.2.6` |
 | Concluído na baseline | `SEC-GOV-00` — MAES-SisTer/1.0 |
 | Concluído com restrição | `SEC-02V` — identidade interna read-only e shadow |
+| Concluído na baseline | `SEC-02M` — flag própria e política exata em `v0.2.7` |
+| Backlog bloqueante antes de escrita | `SEC-02R` — replay persistente ou garantia transacional equivalente |
 | Backlog imediato | `SEC-03` — gateway especializado |
 | Backlog seguinte | `FED-01` — registro persistente de sistemas |
 
@@ -194,7 +196,7 @@ capacidade ou bloquear a integração.
 ## Decisão de risco da baseline
 
 A Coordenação do Projeto SisTer aprova os owners e estados acima para a
-`v0.2.6`, com aceitação restrita dos seguintes riscos residuais:
+`v0.2.7`, com aceitação restrita dos seguintes riscos residuais:
 
 - Slowloris, deadlines absolutos e quotas de borda permanecem em
   `TH-HTTP-03`, desde que o `sisterd` continue restrito a loopback e sem papel de
@@ -206,8 +208,12 @@ A Coordenação do Projeto SisTer aprova os owners e estados acima para a
 - A ausência de execução do UBSan limita a evidência sobre comportamento
   indefinido e deve ser sanada antes de gate que exija essa cobertura; não é
   ocultada nem classificada como falha funcional.
+- O cache de replay do Nexo não sobrevive a reinício. Isso é aceito somente
+  porque a política publicada é idempotente e read-only; SEC-02R é obrigatório
+  antes de qualquer escrita.
 
-Não há aceitação de risco que autorize SEC-02 na release. `TH-IDENT-01` continua
-em `VALIDATION_PENDING`, e capacidades de identidade assinada permanecem fora
-da `v0.2.6`. Esta aprovação publica uma baseline interna de controles; não
-declara prontidão para produção externa.
+A aceitação não autoriza outra rota, capacidade de escrita, integração Compras,
+exposição externa ou uso do `sisterd` como servidor HTTP público. SEC-02M
+garante que tais pedidos falham antes da emissão e da conexão upstream. Esta
+aprovação publica uma baseline interna de controles; não declara prontidão para
+produção externa.

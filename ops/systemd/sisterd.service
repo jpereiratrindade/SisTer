@@ -22,6 +22,7 @@ Environment=SISTER_COOKIE_SECURE=true
 Environment=SISTER_ENABLE_HTTP_BOOTSTRAP=false
 Environment=SISTER_ENABLE_LEGACY_PROXY=false
 Environment=SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false
+Environment=SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=false
 Environment=SISTER_AUTH_FILE=/var/lib/sister/auth-users.tsv
 
 # Diretório persistente criado e protegido pelo systemd para o usuário do serviço

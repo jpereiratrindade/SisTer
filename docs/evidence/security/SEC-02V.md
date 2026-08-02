@@ -139,6 +139,8 @@ Riscos residuais:
 
 **SEC-02V aprovado com restrição.** A identidade interna assinada está autorizada
 somente para operação interna, read-only e shadow em `GET /api/v1/projects`.
+O gate posterior [SEC-02M](./SEC-02M.md) torna essa política exata e separada do
+proxy legado para incorporação na `v0.2.7`.
 
 Não estão autorizadas:
 

@@ -58,12 +58,13 @@ termina TLS e trata HTTP, WebSocket, limites e observabilidade. O processo
 recusa bind fora de loopback e recusa os proxies legados. Consulte a
 [ADR-0015](docs/adr/ADR-0015-sisterd-transport-quarantine.md).
 
-A baseline `v0.2.5` conclui SEC-00, SEC-01, SEC-01A e SEC-01B: quarentena de
+A baseline `v0.2.5` concluiu SEC-00, SEC-01, SEC-01A e SEC-01B: quarentena de
 transporte, autorização por capacidades sem fallback de papel e bootstrap
-administrativo offline sem emissão de sessão. A implementação de SEC-02 não
-pertence a essa tag e ainda aguarda validação formal e implantação; gateway e
-gates operacionais também continuam pendentes. Portanto, essa baseline não
-declara o sistema pronto para produção. Consulte a
+administrativo offline sem emissão de sessão. A `v0.2.6` acrescentou SEC-01C e
+SEC-01D sem alterar tags anteriores. A `v0.2.7` incorpora SEC-02 sob autorização
+estrita: uma única leitura interna em modo shadow. Gateway e gates operacionais
+continuam pendentes; nenhuma dessas baselines declara o sistema pronto para
+exposição externa. Consulte a
 [baseline de segurança](docs/architecture/SISTERD_SECURITY_BASELINE.md).
 
 Na revisão posterior, SEC-01C contém exceções do parser e dos workers, enquanto
@@ -75,10 +76,10 @@ confiança formalizada com o gateway. Esses controles são fechados na release
 [ADR-0019](docs/adr/ADR-0019-http-robustness-and-login-rate-limiting.md).
 
 A EFE-SisTer/1.2 é a referência funcional e de engenharia corrente e exige
-segurança orientada por ameaças, controles e evidências. A `v0.2.6` publica o
-MAES-SisTer/1.0 junto ao fechamento de SEC-01C/01D. O candidato SEC-02 é mantido
-em ciclo posterior e será submetido a validação formal antes de sua implantação;
-seu código não integra esta release. Consulte o
+segurança orientada por ameaças, controles e evidências. A `v0.2.6` publicou o
+MAES-SisTer/1.0 junto ao fechamento de SEC-01C/01D. O SEC-02V aprovou o candidato
+posterior e o SEC-02M converteu os limites aprovados em configuração e rota
+executáveis para a `v0.2.7`. Consulte o
 [alinhamento normativo](docs/architecture/EFE_SISTER_1_2_ALIGNMENT.md).
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
@@ -149,7 +150,8 @@ exige `identity.users.manage`, e evidências de maturidade exigem
 `maturity.evidence.read`. Consulte a
 [ADR-0016](docs/adr/ADR-0016-capability-based-authorization.md).
 
-O SEC-02V validou a identidade interna Ed25519 para uma única política:
+O SEC-02V validou e a `v0.2.7` publica a identidade interna Ed25519 para uma
+única política: `GET /integrations/nexo/projects` é encaminhada como
 `GET /api/v1/projects`, com uso interno, read-only e shadow. O cliente não
 encaminha cookie nem identidade externa e o Nexo valida audiência, capacidade,
 finalidade, tempo, assinatura e `jti`. Replay depois de reinício continua como
@@ -216,6 +218,7 @@ SISTER_BIND_HOST=127.0.0.1 \
 SISTER_ENABLE_HTTP_BOOTSTRAP=false \
 SISTER_ENABLE_LEGACY_PROXY=false \
 SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false \
+SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=false \
   ./build/apps/sisterd/sisterd 8000 web
 ```
 
@@ -227,6 +230,9 @@ O `sisterd` suporta diversas variáveis de ambiente para configuração avançad
 - `SISTER_ENABLE_HTTP_BOOTSTRAP`: Cadastro inicial pela API HTTP (padrão `false` em produção; não pode ser habilitado em produção).
 - `SISTER_ENABLE_LEGACY_PROXY`: Proxy HTTP embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY`: Túnel WebSocket embarcado, permitido somente para laboratório (padrão `false`).
+- `SISTER_ENABLE_NEXO_SIGNED_INTEGRATION`: Habilita exclusivamente a leitura
+  shadow assinada de projetos do Nexo (padrão `false`); é independente dos
+  proxies legados e exige a chave e o `kid` válidos antes do listener.
 - `SISTER_NEXO_PORT`: Porta para o serviço de federação Nexo (padrão `8015`).
 - `SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE`: Caminho absoluto da chave privada
   Ed25519 usada nas asserções internas do Nexo; o arquivo deve ser `0600`.
