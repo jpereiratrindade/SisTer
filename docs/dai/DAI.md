@@ -45,6 +45,15 @@
 - Impediment: a promocao de dados curados para o catalogo territorial do SisTer
   ainda requer endpoint e teste de aceitacao especificos.
 
+## 2026-08-02 - Propriedade do processo de desenvolvimento
+
+- Decision: um PID isolado não autoriza sinalização; o registro de processo
+  inclui UID, ambiente, executável e instante de início do kernel.
+- Decision: `stop.sh` falha fechado diante de PID file legado, inseguro,
+  adulterado ou associado a outro processo, usuário ou worktree.
+- Decision: falha de parada bloqueia `serve.sh` e `run_all.sh`; somente ausência
+  comprovada ou encerramento confirmado permite continuar.
+
 ## 2026-08-02 - Resultado composto e perfis do run_all
 
 - Decision: qualidade do núcleo, prontidão do `sisterd` e disponibilidade dos

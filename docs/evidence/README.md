@@ -31,3 +31,4 @@ existe e contém `status: approved` ou `status: aprovado`.
 ## Operação
 
 - [DEV-ORCH-01 — classificação composta do ambiente local](./operations/DEV-ORCH-01.md)
+- [DEV-ORCH-02 — propriedade e encerramento seguro do processo](./operations/DEV-ORCH-02.md)

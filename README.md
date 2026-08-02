@@ -61,6 +61,8 @@ componente exigido pelo perfil produz `BLOCKED` e código `2`. Cada subsistema
 continua podendo ser executado isoladamente, mas nenhum deles inicia o SisTer.
 `quality.json` permanece evidência exclusiva da qualidade da árvore;
 `run-all-status.json` registra banco, prontidão, smoke e ecossistema.
+O ciclo local usa um registro de processo `0600` e somente encerra o PID após
+validar UID, ambiente, executável do worktree e instante de início em `/proc`.
 
 ## Produção
 
