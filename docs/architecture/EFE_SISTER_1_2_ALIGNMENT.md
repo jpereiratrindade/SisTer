@@ -38,9 +38,10 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
    leitura interna e shadow coordenada com o Nexo; escrita e exposição externa
    continuam bloqueadas.
 4. SEC-03A define HAProxy 3.2 LTS, a fronteira de responsabilidades e o perfil
-   executável. SEC-03B/C/V permanecem posteriores e responsáveis por implantação,
-   contenção e evidência. Nenhuma etapa autoriza transformar o `sisterd` em
-   servidor HTTP público.
+   executável. SEC-03B iniciou a prova em loopback e permanece incompleto pelas
+   lacunas documentadas de normalização de headers. SEC-03C/V continuam
+   responsáveis por contenção e validação. Nenhuma etapa autoriza transformar o
+   `sisterd` em servidor HTTP público.
 
 ## Rastreabilidade imediata
 
@@ -49,7 +50,7 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
 | SEC-01C | `TH-HTTP-01`, `TH-HTTP-03`, `TH-CXX-01`, `TH-CXX-02` | parsing estrito, limites, barreira por job e suíte hostil em `docs/evidence/security/SEC-01C-01D.md` | publicação imutável da `v0.2.6` |
 | SEC-01D | `TH-AUTH-01`, `TH-HTTP-03`, `TH-AUD-01` | limites multidimensionais, armazenamento limitado, `429`, métricas e testes concorrentes | publicação imutável da `v0.2.6` |
 | SEC-02 | `TH-IDENT-01`, `TH-AUTHZ-01`, `TH-AUD-01` | publicado na `v0.2.7` para uma rota exata, leitura interna e shadow; `TH-IDENT-01` parcial pelo replay após reinício e operação manual de chaves | SEC-02R antes de escrita; SEC-03 antes de exposição externa |
-| SEC-03 | `TH-HTTP-02`, `TH-HTTP-03`, `TH-HTTP-04`, `TH-WS-01`, `TH-PROXY-01`, `TH-PROXY-02`, `TH-CONF-01`, `TH-AUD-01` | SEC-03A em `PROFILE_DEFINED`: ADR-0020, perfil JSON, validador e mutações negativas; nenhum gateway implantado | SEC-03B/C e validação formal SEC-03V |
+| SEC-03 | `TH-HTTP-02`, `TH-HTTP-03`, `TH-HTTP-04`, `TH-WS-01`, `TH-PROXY-01`, `TH-PROXY-02`, `TH-CONF-01`, `TH-AUD-01` | SEC-03A em `PROFILE_DEFINED`; SEC-03B em laboratório com TLS, upstream, saneamento e falhas provados, mas duplicações normalizadas e Upgrade isolado parciais | fechar lacunas SEC-03B, executar SEC-03C e validar SEC-03V |
 
 ## Regra de promoção
 

@@ -86,6 +86,9 @@ SEC-03A define o gateway especializado como HAProxy Community 3.2 LTS e fixa
 um [perfil executável da fronteira](docs/security/GATEWAY_SECURITY_PROFILE.md).
 Esse perfil ainda não representa implantação nem autoriza exposição externa:
 SEC-03B, SEC-03C e SEC-03V continuam obrigatórios antes da `v0.2.8`.
+O laboratório SEC-03B já possui configuração governada e provas dinâmicas, mas
+permanece aberto por lacunas de normalização de headers registradas na
+[evidência SEC-03B](docs/evidence/security/SEC-03B.md).
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:

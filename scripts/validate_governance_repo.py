@@ -58,6 +58,7 @@ REQUIRED = [
     "tests/gateway_failure_test.py",
     "tests/gateway_lab_test.py",
     "tests/gateway_lab_support.py",
+    "docs/evidence/security/SEC-03B.md",
     "ops/gateway/haproxy/errors/400.http",
     "ops/gateway/haproxy/errors/403.http",
     "ops/gateway/haproxy/errors/405.http",
