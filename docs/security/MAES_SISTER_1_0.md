@@ -138,18 +138,18 @@ evidências registram execuções; nenhum deles substitui este modelo.
 - **Superfície:** fronteira HTTP `sisterd`–Nexo.
 - **Cenário:** cookie humano, header forjado, token sem audiência, assinatura
   inválida ou repetição é aceito pelo consumidor.
-- **Controles planejados:** asserção Ed25519 curta, algoritmo fixo, `kid`,
+- **Controles validados:** asserção Ed25519 curta, algoritmo fixo, `kid`,
   emissor, audiência, capacidade, finalidade, `iat`, `exp`, `jti`, `request_id`,
   contenção de repetição e construção limpa da requisição.
-- **Testes candidatos:** mantidos no ciclo de desenvolvimento posterior à
-  `v0.2.6`; não integram nem constituem evidência desta release.
-- **Evidências:** SEC-02V ainda não executado nem emitido.
+- **Testes:** emissor, consumidor, matriz HTTP negativa, rotação, reinício e
+  ponta a ponta `sisterd`–Nexo–PostgreSQL.
+- **Evidências:** `docs/evidence/security/SEC-02V.md`.
 - **Risco residual:** cache de `jti` é local e perdido no reinício; distribuição
   e rotação de chaves são operacionais e ainda não foram exercitadas em deploy
   conjunto.
 - **Owner:** manutenção de identidade do `sisterd` e manutenção do Nexo.
-- **Estado:** `VALIDATION_PENDING`. A implementação candidata é mantida em ciclo
-  posterior; `v0.2.6` não publica nem autoriza esta capacidade.
+- **Estado:** `PARTIALLY_CONTROLLED`. Aprovado somente para leitura interna e
+  shadow; `v0.2.6` permanece inalterada e não contém esta capacidade.
 
 ### TH-WS-01 — Retenção de recursos por WebSocket
 
@@ -184,7 +184,7 @@ O trabalho corrente mantém no máximo dois cartões simultâneos:
 |---|---|
 | Concluído na baseline | fechamento de SEC-01C/01D em `v0.2.6` |
 | Concluído na baseline | `SEC-GOV-00` — MAES-SisTer/1.0 |
-| Próximo após a release | `SEC-02V` — validação da identidade interna |
+| Concluído com restrição | `SEC-02V` — identidade interna read-only e shadow |
 | Backlog imediato | `SEC-03` — gateway especializado |
 | Backlog seguinte | `FED-01` — registro persistente de sistemas |
 

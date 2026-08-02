@@ -10,7 +10,8 @@
 
 > **Ciclo posterior à `v0.2.6`:** o candidato SEC-02 / I-01A contém a primeira
 > asserção interna Ed25519 e o cliente específico do Nexo. Esse código é
-> preservado fora da release e somente poderá ser publicado depois do SEC-02V.
+> preservado fora da release. O SEC-02V o aprovou apenas para leitura interna e
+> shadow; a tag `v0.2.6` permanece inalterada.
 
 Antes da validação de SEC-02, a revisão P0 acrescentou SEC-01C e SEC-01D:
 parser e workers contêm exceções, e o limitador de login passou a ser multinível,
@@ -95,9 +96,9 @@ backup e rollback.
 
 ## Próximas entregas bloqueantes
 
-1. Executar o cartão SEC-02V contra `TH-IDENT-01`, `TH-AUTHZ-01` e
-   `TH-AUD-01`; somente então autorizar implantação conjunta com o Nexo,
-   distribuição de chave pública e operação de rotação.
+1. Preparar implantação shadow conjunta do SEC-02 sob a restrição registrada em
+   `docs/evidence/security/SEC-02V.md`, incluindo procedimento operacional de
+   chaves; nenhuma capacidade de escrita é autorizada.
 2. **SEC-03:** gateway especializado, contenção de abuso e adaptadores
    conformantes para Nexo e Clima.
 3. Eliminação definitiva do cookie na fronteira interna e remoção física dos

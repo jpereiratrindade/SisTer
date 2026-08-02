@@ -25,8 +25,8 @@ adiantam fundações do roteiro, mas não promovem o conjunto à Beta ou à prod
 SEC-01C e SEC-01D estão implementados e validados depois da tag `v0.2.5` e
 formam a `v0.2.6`, junto ao MAES-SisTer/1.0. O candidato SEC-02 / I-01A é
 mantido em ciclo posterior, com identidade interna Ed25519 e cliente específico
-do Nexo, e não integra a release. Sua publicação e implantação permanecem
-bloqueadas até a validação formal contra a EFE-SisTer/1.2 e o MAES. SEC-03
+do Nexo, e não integra a release. O SEC-02V aprovou somente operação interna,
+read-only e shadow; escrita e produção externa permanecem bloqueadas. SEC-03
 permanece o gate posterior de borda.
 
 Consulte a [baseline de segurança do `sisterd`](./SISTERD_SECURITY_BASELINE.md)

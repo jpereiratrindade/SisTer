@@ -22,7 +22,7 @@ produção:
 | SEC-01B — bootstrap offline | concluído: caminho absoluto, uso único e nenhuma sessão emitida |
 | SEC-01C — robustez HTTP e dos workers | implementado, validado e publicado em `v0.2.6` |
 | SEC-01D — contenção de abuso | implementado, validado e publicado em `v0.2.6` |
-| SEC-02 — identidade interna assinada | candidato preservado após `v0.2.6`; publicação, validação formal e implantação pendentes |
+| SEC-02 — identidade interna assinada | validado após `v0.2.6` para leitura interna e shadow; escrita e produção externa bloqueadas |
 
 O código legado continua presente somente para laboratório e não é um fallback
 de produção. A sequência aprovada é publicar SEC-01C/01D como `v0.2.6`, criar o

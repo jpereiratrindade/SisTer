@@ -149,6 +149,13 @@ exige `identity.users.manage`, e evidências de maturidade exigem
 `maturity.evidence.read`. Consulte a
 [ADR-0016](docs/adr/ADR-0016-capability-based-authorization.md).
 
+O SEC-02V validou a identidade interna Ed25519 para uma única política:
+`GET /api/v1/projects`, com uso interno, read-only e shadow. O cliente não
+encaminha cookie nem identidade externa e o Nexo valida audiência, capacidade,
+finalidade, tempo, assinatura e `jti`. Replay depois de reinício continua como
+risco residual; escrita e produção externa permanecem bloqueadas. Consulte a
+[evidência SEC-02V](docs/evidence/security/SEC-02V.md).
+
 O adaptador Sister-Studio usa TLS verificado e segredo de execução. A
 configuração e a fronteira de dados estão em
 `adapters/sister_studio/README.md`; conteúdo de usuários não é compartilhado
@@ -221,6 +228,11 @@ O `sisterd` suporta diversas variáveis de ambiente para configuração avançad
 - `SISTER_ENABLE_LEGACY_PROXY`: Proxy HTTP embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY`: Túnel WebSocket embarcado, permitido somente para laboratório (padrão `false`).
 - `SISTER_NEXO_PORT`: Porta para o serviço de federação Nexo (padrão `8015`).
+- `SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE`: Caminho absoluto da chave privada
+  Ed25519 usada nas asserções internas do Nexo; o arquivo deve ser `0600`.
+- `SISTER_INTERNAL_IDENTITY_KEY_ID`: Identificador `kid` da chave ativa.
+- `SISTER_INTERNAL_IDENTITY_TTL_SECONDS`: Validade da asserção interna, entre 1
+  e 300 segundos (padrão `60`).
 - `SISTER_COOKIE_SECURE`, `SISTER_HSTS`, `SISTER_REQUIRE_SAME_ORIGIN`: Controles de segurança (ativos por padrão em `production`).
 
 Os dados territoriais (objetos geoespaciais) ainda são demonstrativos. Sistemas,

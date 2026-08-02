@@ -47,7 +47,7 @@ reproduzível, evidência válida, risco residual explícito e autoridade defini
 |---|---|---|---|
 | SEC-01C | `TH-HTTP-01`, `TH-HTTP-03`, `TH-CXX-01`, `TH-CXX-02` | parsing estrito, limites, barreira por job e suíte hostil em `docs/evidence/security/SEC-01C-01D.md` | publicação imutável da `v0.2.6` |
 | SEC-01D | `TH-AUTH-01`, `TH-HTTP-03`, `TH-AUD-01` | limites multidimensionais, armazenamento limitado, `429`, métricas e testes concorrentes | publicação imutável da `v0.2.6` |
-| SEC-02 | `TH-IDENT-01`, `TH-AUTHZ-01`, `TH-AUD-01` | candidato preservado fora da release; nenhum controle SEC-02 é publicado em `v0.2.6` | validação formal e evidência conjunta SisTer–Nexo |
+| SEC-02 | `TH-IDENT-01`, `TH-AUTHZ-01`, `TH-AUD-01` | validado fora da release para leitura interna e shadow; `TH-IDENT-01` parcial pelo replay após reinício e operação manual de chaves | implantação shadow governada; escrita bloqueada |
 | SEC-03 | `TH-HTTP-02`, `TH-HTTP-03`, `TH-HTTP-04`, `TH-WS-01`, `TH-PROXY-01`, `TH-PROXY-02` | ainda não implementado | ADR do gateway, testes negativos e risco residual |
 
 ## Regra de promoção
