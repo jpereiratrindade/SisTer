@@ -4,6 +4,7 @@
 #include "sister_campo_client.hpp"
 #include "api/maturity_routes.hpp"
 #include "http/content_length.hpp"
+#include "identity/key_provider.hpp"
 #include "integrations/nexo_client.hpp"
 #include "runtime/connection_thread_pool.hpp"
 #include "security/login_rate_limiter.hpp"
@@ -81,6 +82,7 @@ struct ServerConfig {
     bool httpBootstrapEnabled = false;
     bool legacyProxyEnabled = false;
     bool legacyWebSocketProxyEnabled = false;
+    bool nexoSignedIntegrationEnabled = false;
     std::size_t workerThreads = 4;
     std::size_t queueLimit = 256;
     int clientTimeoutSeconds = 10;
@@ -254,6 +256,8 @@ ServerConfig loadConfig(int argc, char** argv) {
         environment("SISTER_ENABLE_LEGACY_PROXY").value_or("false"), false);
     config.legacyWebSocketProxyEnabled = parseBool(
         environment("SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY").value_or("false"), false);
+    config.nexoSignedIntegrationEnabled = parseBool(
+        environment("SISTER_ENABLE_NEXO_SIGNED_INTEGRATION").value_or("false"), false);
 
     if (config.production && !isIpv4Loopback(config.bindHost)) {
         throw std::runtime_error(
@@ -299,6 +303,13 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.internalIdentityTtlSeconds = parseInteger<int>(
         environment("SISTER_INTERNAL_IDENTITY_TTL_SECONDS").value_or("60"),
         1, 300, "SISTER_INTERNAL_IDENTITY_TTL_SECONDS");
+
+    if (config.nexoSignedIntegrationEnabled) {
+        sisterd::identity::FileKeyProvider keyProvider(
+            config.internalIdentityPrivateKeyFile,
+            config.internalIdentityKeyId);
+        static_cast<void>(keyProvider.currentSigningKey());
+    }
 
     std::error_code error;
     config.canonicalWebRoot = std::filesystem::weakly_canonical(config.webRoot, error);
@@ -1752,15 +1763,56 @@ void handleClient(
         actor = state.auth.userForToken(sessionToken);
     }
 
-    // --- Nexo reverse proxy ---
-    if (config.legacyProxyEnabled && request.path == "/integrations/nexo") {
+    // --- Signed Nexo integration: one explicit read-only shadow route ---
+    if (request.path == "/integrations/nexo" ||
+        request.path.starts_with("/integrations/nexo/")) {
+        if (!config.nexoSignedIntegrationEnabled ||
+            request.method != "GET" ||
+            request.path != "/integrations/nexo/projects") {
+            sendResponse(clientFd,
+                jsonError(404, "Not Found", "Recurso não encontrado."),
+                config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("warn", requestId, peer, request.method, request.path, 404, elapsed,
+                     "signed Nexo route denied by exact-route policy");
+            return;
+        }
+
         if (!authorizeOrReject(
                 clientFd, actor, "nexo.projects.read", "sister-nexo",
                 "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
-        sendResponse(clientFd, redirectResponse(308, "Permanent Redirect", "/integrations/nexo/"),
-                     config, requestId, isHead);
-        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-        logEvent("info", requestId, peer, request.method, request.path, 308, elapsed);
+        try {
+            const auto accept = request.headers.find("accept");
+            sisterd::integrations::NexoClient nexo({
+                config.nexoPort,
+                config.upstreamTimeoutMilliseconds,
+                config.internalIdentityPrivateKeyFile,
+                config.internalIdentityKeyId,
+                std::chrono::seconds(config.internalIdentityTtlSeconds),
+            });
+            const auto raw = nexo.execute({
+                "GET",
+                "/api/v1/projects",
+                request.query,
+                "",
+                accept == request.headers.end() ? "" : accept->second,
+                "",
+                actor->id,
+                "nexo.projects.read",
+                "research_operations",
+                requestId,
+            });
+            sendAll(clientFd, raw);
+            const auto proxyStatus = statusFromRawHttpResponse(raw);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("info", requestId, peer, request.method, request.path, proxyStatus, elapsed);
+        } catch (const std::exception& ex) {
+            sendResponse(clientFd,
+                jsonError(502, "Bad Gateway", "O SisTer Nexo está temporariamente indisponível."),
+                config, requestId, isHead);
+            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
+            logEvent("warn", requestId, peer, request.method, request.path, 502, elapsed, ex.what());
+        }
         return;
     }
 
@@ -1809,50 +1861,6 @@ void handleClient(
         } catch (const std::exception& ex) {
             sendResponse(clientFd,
                 jsonError(502, "Bad Gateway", "O Sister-Clima está temporariamente indisponível."),
-                config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("warn", requestId, peer, request.method, request.path, 502, elapsed, ex.what());
-        }
-        return;
-    }
-
-    if (config.legacyProxyEnabled && request.path.starts_with("/integrations/nexo/")) {
-        if (!authorizeOrReject(
-                clientFd, actor, "nexo.projects.read", "sister-nexo",
-                "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
-        try {
-            const auto contentType = request.headers.find("content-type");
-            const auto accept = request.headers.find("accept");
-            sisterd::integrations::NexoClient nexo({
-                config.nexoPort,
-                config.upstreamTimeoutMilliseconds,
-                config.internalIdentityPrivateKeyFile,
-                config.internalIdentityKeyId,
-                std::chrono::seconds(config.internalIdentityTtlSeconds),
-            });
-            const auto integrationPath =
-                request.path.substr(std::string_view("/integrations/nexo").size());
-            const auto upstreamPath = "/api/v1" +
-                std::string(integrationPath.empty() ? std::string_view("/") : integrationPath);
-            const auto raw = nexo.execute({
-                request.method,
-                upstreamPath,
-                request.query,
-                contentType == request.headers.end() ? "" : contentType->second,
-                accept == request.headers.end() ? "" : accept->second,
-                request.body,
-                actor->id,
-                "nexo.projects.read",
-                "research_operations",
-                requestId,
-            });
-            sendAll(clientFd, raw);
-            const auto proxyStatus = statusFromRawHttpResponse(raw);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, proxyStatus, elapsed);
-        } catch (const std::exception& ex) {
-            sendResponse(clientFd,
-                jsonError(502, "Bad Gateway", "O SisTer Nexo está temporariamente indisponível."),
                 config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 502, elapsed, ex.what());
@@ -2283,6 +2291,9 @@ int main(int argc, char** argv) {
                   << " legacy_proxy=" << (config.legacyProxyEnabled ? "enabled" : "disabled")
                   << " legacy_websocket_proxy="
                   << (config.legacyWebSocketProxyEnabled ? "enabled" : "disabled")
+                  << " nexo_signed_integration="
+                  << (config.nexoSignedIntegrationEnabled ? "enabled" : "disabled")
+                  << " nexo_signed_mode=read_only_shadow"
                   << '\n';
     }
 
