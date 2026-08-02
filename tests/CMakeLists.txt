@@ -53,6 +53,12 @@ add_test(
         ${CMAKE_CURRENT_SOURCE_DIR}/gateway_security_profile_test.py)
 
 add_test(
+    NAME gateway_config_render_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/gateway_config_render_test.py)
+
+add_test(
     NAME sisterctl_bootstrap_tests
     COMMAND
         ${Python3_EXECUTABLE}

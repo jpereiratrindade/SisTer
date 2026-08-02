@@ -1,0 +1,66 @@
+global
+    log stdout format raw local0
+    maxconn 1024
+    tune.http.maxhdr 64
+    ssl-default-bind-options ssl-min-ver TLSv1.3 ssl-max-ver TLSv1.3
+
+defaults
+    mode http
+    log global
+    option httplog
+    option dontlognull
+    timeout connect 2s
+    timeout client 15s
+    timeout server 15s
+    timeout queue 2s
+    timeout http-request 5s
+    timeout http-keep-alive 2s
+
+frontend sister_gateway_lab
+    bind @@GATEWAY_LISTEN_ADDRESS@@:@@GATEWAY_LISTEN_PORT@@ ssl crt @@GATEWAY_TLS_PEM@@ alpn http/1.1 ssl-min-ver TLSv1.3 ssl-max-ver TLSv1.3
+    mode http
+
+    acl host_count_invalid req.hdr_cnt(host) ne 1
+    acl host_allowed req.hdr(host),lower,field(1,:) -m str @@GATEWAY_ALLOWED_HOST@@
+    http-request deny status 400 if host_count_invalid
+    http-request deny status 403 unless host_allowed
+
+    acl method_allowed method GET HEAD POST PUT PATCH DELETE
+    http-request deny status 405 unless method_allowed
+
+    acl has_upgrade req.hdr(Upgrade) -m found
+    acl asks_connection_upgrade req.hdr(Connection) -m sub -i upgrade
+    http-request deny status 403 if has_upgrade
+    http-request deny status 403 if asks_connection_upgrade
+
+    acl has_transfer_encoding req.hdr_cnt(Transfer-Encoding) gt 0
+    acl duplicate_content_length req.hdr_cnt(Content-Length) gt 1
+    acl body_too_large req.hdr_val(Content-Length) gt 1048576
+    http-request deny status 400 if has_transfer_encoding
+    http-request deny status 400 if duplicate_content_length
+    http-request deny status 413 if body_too_large
+
+    acl authentication_path path_beg /api/auth/
+    acl auth_body_too_large req.hdr_val(Content-Length) gt 65536
+    http-request deny status 413 if authentication_path auth_body_too_large
+
+    http-request del-header X-Sister- -m beg
+    http-request del-header X-Forwarded-For
+    http-request del-header X-Forwarded-Host
+    http-request del-header X-Forwarded-Proto
+    http-request del-header X-Request-ID
+    http-request del-header Forwarded
+
+    http-request set-var(txn.sister_request_id) uuid(4),regsub(-,,g),lower
+    http-request set-header X-Request-ID %[var(txn.sister_request_id)]
+    http-request set-header X-Forwarded-For %[src]
+    http-request set-header X-Forwarded-Host @@GATEWAY_CANONICAL_HOST@@
+    http-request set-header X-Forwarded-Proto https
+
+    default_backend sisterd_internal
+
+backend sisterd_internal
+    mode http
+    option httpchk GET /api/health
+    http-check expect status 200
+    server sisterd @@GATEWAY_UPSTREAM_ADDRESS@@:@@GATEWAY_UPSTREAM_PORT@@ check

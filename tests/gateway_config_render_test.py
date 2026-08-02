@@ -1,0 +1,106 @@
+#!/usr/bin/env python3
+import copy
+import os
+from pathlib import Path
+import shutil
+import stat
+import sys
+import uuid
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "scripts"))
+
+from render_gateway_config import (  # noqa: E402
+    RenderError,
+    TEMPLATE_PATH,
+    checked_environment,
+    render,
+    validate_governed_profile,
+    write_private_atomic,
+)
+
+
+def expect_rejected(environment, fragment):
+    try:
+        checked_environment(environment)
+    except RenderError as exc:
+        assert fragment in str(exc), (fragment, str(exc))
+        return
+    raise AssertionError(f"unsafe environment accepted; expected {fragment!r}")
+
+
+def main():
+    temporary = ROOT / ".run/gateway" / f"render-test-{uuid.uuid4().hex}"
+    temporary.mkdir(mode=0o700, parents=True)
+    try:
+        pem = temporary / "gateway-lab.pem"
+        pem.write_text("test-only-placeholder\n", encoding="utf-8")
+        pem.chmod(0o600)
+        fake_haproxy = temporary / "haproxy"
+        fake_haproxy.write_text(
+            "#!/usr/bin/env sh\nprintf '%s\\n' 'HAProxy version 3.2.22 2026/07/29'\n",
+            encoding="utf-8",
+        )
+        fake_haproxy.chmod(0o700)
+        environment = {
+            "GATEWAY_TLS_PEM": str(pem),
+            "GATEWAY_ALLOWED_HOST": "sister-gateway.test",
+            "GATEWAY_CANONICAL_HOST": "sister-gateway.test",
+            "GATEWAY_HAPROXY_BIN": str(fake_haproxy),
+        }
+
+        validate_governed_profile(ROOT / "ops/gateway/security-profile.json")
+        values = checked_environment(environment)
+        rendered = render(TEMPLATE_PATH.read_text(encoding="utf-8"), values)
+        assert "@@" not in rendered
+        assert "bind 127.0.0.1:8443" in rendered
+        assert "server sisterd 127.0.0.1:8000 check" in rendered
+        assert "http-request del-header X-Sister- -m beg" in rendered
+        assert "alpn http/1.1" in rendered
+        assert "lua" not in rendered.lower()
+        output = temporary / "haproxy.cfg"
+        write_private_atomic(output, rendered)
+        assert stat.S_IMODE(output.stat().st_mode) == 0o640
+
+        unsafe_cases = (
+            ("GATEWAY_LISTEN_ADDRESS", "0.0.0.0", "listener must be 127.0.0.1"),
+            ("GATEWAY_LISTEN_PORT", "443", "port must be 8443"),
+            ("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.2", "upstream must be 127.0.0.1:8000"),
+            ("GATEWAY_UPSTREAM_PORT", "9000", "upstream must be 127.0.0.1:8000"),
+            ("GATEWAY_ALLOWED_HOST", "*.test", "one exact DNS name"),
+            ("GATEWAY_CANONICAL_HOST", "other.test", "must match"),
+        )
+        for name, replacement, fragment in unsafe_cases:
+            changed = copy.deepcopy(environment)
+            changed[name] = replacement
+            expect_rejected(changed, fragment)
+
+        permissive_pem = temporary / "permissive.pem"
+        permissive_pem.write_text("test-only-placeholder\n", encoding="utf-8")
+        permissive_pem.chmod(0o644)
+        changed = copy.deepcopy(environment)
+        changed["GATEWAY_TLS_PEM"] = str(permissive_pem)
+        expect_rejected(changed, "0600 or stricter")
+
+        old_haproxy = temporary / "haproxy-old"
+        old_haproxy.write_text("#!/usr/bin/env sh\necho 'HAProxy version 3.2.21'\n", encoding="utf-8")
+        old_haproxy.chmod(0o700)
+        changed = copy.deepcopy(environment)
+        changed["GATEWAY_HAPROXY_BIN"] = str(old_haproxy)
+        expect_rejected(changed, "3.2.22 or newer")
+
+        try:
+            render(TEMPLATE_PATH.read_text(encoding="utf-8") + "\nlua-load /tmp/unsafe.lua\n", values)
+        except RenderError:
+            pass
+        else:
+            raise AssertionError("Lua directive was accepted")
+    finally:
+        shutil.rmtree(temporary)
+
+    print("gateway_config_render_tests ok")
+
+
+if __name__ == "__main__":
+    main()

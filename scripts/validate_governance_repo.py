@@ -45,6 +45,11 @@ REQUIRED = [
     "ops/gateway/security-profile.json",
     "scripts/validate_gateway_security_profile.py",
     "tests/gateway_security_profile_test.py",
+    "ops/gateway/haproxy/haproxy.cfg.in",
+    "ops/gateway/haproxy/README.md",
+    "scripts/render_gateway_config.py",
+    "scripts/validate_gateway_config.sh",
+    "tests/gateway_config_render_test.py",
 ]
 
 missing = [path for path in REQUIRED if not (ROOT / path).exists()]
