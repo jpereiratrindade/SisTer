@@ -55,6 +55,9 @@ Os perfis separam afirmações que não são equivalentes:
 ./scripts/run_all.sh --profile sec-03v        # pré-requisitos estritos, não fecha o gate
 ```
 
+A preparação privilegiada do host candidato e o preflight fail-closed estão
+descritos em [`docs/operations/SEC-03V-ENV.md`](docs/operations/SEC-03V-ENV.md).
+
 `dev-ecosystem` sobe o núcleo e tenta garantir os subsistemas declarados com
 `ensure-running`. Falha opcional produz `PASS_WITH_DEGRADATION`; falha de um
 componente exigido pelo perfil produz `BLOCKED` e código `2`. Cada subsistema
