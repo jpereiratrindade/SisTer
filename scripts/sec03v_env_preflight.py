@@ -314,6 +314,21 @@ def identity_key_pair_check(
     )
 
 
+def service_read_access_check(control: str, account: str, path: Path) -> Check:
+    if os.geteuid() != 0:
+        return Check(control, "BLOCKED", "root access is required to test service access")
+    try:
+        result = execute(["runuser", "--user", account, "--", "test", "-r", str(path)])
+        valid = result.returncode == 0
+    except (OSError, subprocess.TimeoutExpired):
+        valid = False
+    return Check(
+        control, "PASS" if valid else "BLOCKED",
+        f"{account} can read the governed file"
+        if valid else f"{account} cannot traverse or read the governed file",
+    )
+
+
 def socket_checks() -> list[Check]:
     checks = [
         governed_file("runtime.directory", Path("/run/sister"), "root", "haproxy", 0o750, file_type="directory")
@@ -549,9 +564,27 @@ def main() -> int:
         ),
     ])
     checks.append(identity_key_pair_check())
+    checks.append(service_read_access_check(
+        "identity.private_key.service_access", "sister",
+        Path("/etc/sister/identity-private.pem"),
+    ))
     checks.extend(socket_checks())
     checks.append(no_tcp_listener())
     checks.extend(haproxy_checks(arguments.haproxy_bin))
+    checks.extend([
+        service_read_access_check(
+            "gateway.config.service_access", "sister-gateway",
+            Path("/etc/sister/gateway/haproxy.cfg"),
+        ),
+        service_read_access_check(
+            "gateway.certificate.service_access", "sister-gateway",
+            Path("/etc/sister/gateway/tls.pem"),
+        ),
+        service_read_access_check(
+            "gateway.errors.service_access", "sister-gateway",
+            Path("/etc/sister/gateway/errors/400.http"),
+        ),
+    ])
     checks.extend(gateway_runtime_check(arguments.haproxy_bin))
     checks.append(gateway_listener_check())
     checks.append(gateway_tls_runtime_check())

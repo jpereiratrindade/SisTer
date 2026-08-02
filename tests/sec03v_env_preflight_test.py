@@ -15,6 +15,7 @@ from sec03v_env_preflight import (  # noqa: E402
     Check,
     identity_key_pair_check,
     parse_environment,
+    service_read_access_check,
     write_report,
 )
 
@@ -71,6 +72,11 @@ def main():
             stderr=subprocess.DEVNULL,
         )
         assert identity_key_pair_check(other_private_key, public_key).status == "BLOCKED"
+
+        service_access = service_read_access_check(
+            "test.service_access", "account-that-does-not-exist", public_key)
+        assert service_access.status == "BLOCKED"
+        assert "service access" in service_access.detail or "cannot" in service_access.detail
     finally:
         shutil.rmtree(temporary)
 

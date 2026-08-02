@@ -86,6 +86,21 @@ Os artefatos instalados devem corresponder byte a byte à revisão avaliada:
 | certificado e chave TLS combinados | `/etc/sister/gateway/tls.pem` | `root:sister-gateway 0640` |
 | CA do certificado candidato | `/etc/sister/gateway/ca.crt` | `root:root 0644` |
 
+O diretório `/etc/sister` permanece `root:root 0750`, sem listagem para as
+contas de serviço. ACLs nomeadas concedem somente travessia aos dois processos
+que precisam alcançar arquivos governados abaixo dele:
+
+```bash
+sudo setfacl -m u:sister:--x,u:sister-gateway:--x /etc/sister
+```
+
+`/etc/sister/gateway` permanece `root:sister-gateway 0750`. A ACL do diretório
+pai não concede leitura de `sister.env`, da chave Ed25519 ou do PEM TLS; os
+modos e grupos de cada arquivo continuam decidindo esse acesso. O preflight
+executa verificações de leitura sob as identidades `sister` e
+`sister-gateway`, impedindo aprovação baseada apenas na visão privilegiada de
+`root`.
+
 O arquivo de ambiente parte de `.env.production.example`. Para o candidato,
 `SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=true` e os caminhos canônicos são
 obrigatórios. A URL do banco e o `kid` são definidos pelo operador e não são
