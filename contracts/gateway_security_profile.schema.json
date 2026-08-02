@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://sister.local/contracts/gateway-security-profile/1.2.0",
+  "$id": "https://sister.local/contracts/gateway-security-profile/1.3.0",
   "title": "SisTer gateway security profile",
   "type": "object",
   "additionalProperties": false,
@@ -24,7 +24,7 @@
   ],
   "properties": {
     "contract_id": {"const": "sister.gateway-security-profile"},
-    "contract_version": {"const": "1.2.0"},
+    "contract_version": {"const": "1.3.0"},
     "status": {"const": "PROFILE_DEFINED"},
     "technology": {
       "type": "object",
@@ -92,9 +92,9 @@
     "realizability": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["verification_gate", "policy", "lua_allowed", "third_party_modules_allowed", "requirements", "laboratory_resolution", "sec_03c_resolution"],
+      "required": ["verification_gate", "policy", "lua_allowed", "third_party_modules_allowed", "requirements", "laboratory_resolution", "sec_03c_resolution", "iso_01_resolution"],
       "properties": {
-        "verification_gate": {"const": "SEC-03C"},
+        "verification_gate": {"const": "ISO-01"},
         "policy": {"const": "native_simple_or_record_residual_risk"},
         "lua_allowed": {"const": false},
         "third_party_modules_allowed": {"const": false},
@@ -151,6 +151,20 @@
             "decided_on": {"type": "string", "format": "date"},
             "evidence": {"const": "docs/evidence/security/SEC-03C.md"},
             "next_gate": {"const": "ISO-01"},
+            "merge_authorized": {"const": false},
+            "release_authorized": {"const": false},
+            "external_exposure_authorized": {"const": false}
+          }
+        },
+        "iso_01_resolution": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["state", "decided_on", "evidence", "next_gate", "merge_authorized", "release_authorized", "external_exposure_authorized"],
+          "properties": {
+            "state": {"const": "LAB_PROVEN_WITH_RESTRICTIONS"},
+            "decided_on": {"type": "string", "format": "date"},
+            "evidence": {"const": "docs/evidence/security/ISO-01.md"},
+            "next_gate": {"const": "SEC-03V"},
             "merge_authorized": {"const": false},
             "release_authorized": {"const": false},
             "external_exposure_authorized": {"const": false}

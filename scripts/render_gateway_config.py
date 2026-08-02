@@ -90,6 +90,12 @@ def checked_environment(environment):
     missing = sorted(name for name in required if not environment.get(name))
     if missing:
         raise RenderError("missing environment: " + ", ".join(missing))
+    forbidden_tcp = sorted(
+        name for name in ("GATEWAY_UPSTREAM_ADDRESS", "GATEWAY_UPSTREAM_PORT")
+        if environment.get(name)
+    )
+    if forbidden_tcp:
+        raise RenderError("TCP upstream configuration is forbidden: " + ", ".join(forbidden_tcp))
 
     values = {
         "GATEWAY_TLS_PEM": environment["GATEWAY_TLS_PEM"],
@@ -97,8 +103,8 @@ def checked_environment(environment):
         "GATEWAY_CANONICAL_HOST": environment["GATEWAY_CANONICAL_HOST"].lower(),
         "GATEWAY_LISTEN_ADDRESS": environment.get("GATEWAY_LISTEN_ADDRESS", "127.0.0.1"),
         "GATEWAY_LISTEN_PORT": environment.get("GATEWAY_LISTEN_PORT", "8443"),
-        "GATEWAY_UPSTREAM_ADDRESS": environment.get("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.1"),
-        "GATEWAY_UPSTREAM_PORT": environment.get("GATEWAY_UPSTREAM_PORT", "8000"),
+        "GATEWAY_UPSTREAM_SOCKET": environment.get(
+            "GATEWAY_UPSTREAM_SOCKET", str((RUN_ROOT / "sisterd.sock").resolve())),
         "GATEWAY_ERROR_ROOT": str((ROOT / "ops/gateway/haproxy/errors").resolve()),
         "GATEWAY_STATS_SOCKET": str((RUN_ROOT / "haproxy.sock").resolve()),
     }
@@ -106,8 +112,11 @@ def checked_environment(environment):
         raise RenderError("laboratory listener must be 127.0.0.1")
     if values["GATEWAY_LISTEN_PORT"] != "8443":
         raise RenderError("laboratory listener port must be 8443")
-    if values["GATEWAY_UPSTREAM_ADDRESS"] != "127.0.0.1" or values["GATEWAY_UPSTREAM_PORT"] != "8000":
-        raise RenderError("laboratory upstream must be 127.0.0.1:8000")
+    upstream_socket = require_absolute_safe_path(
+        values["GATEWAY_UPSTREAM_SOCKET"], "GATEWAY_UPSTREAM_SOCKET")
+    require_inside_run_root(upstream_socket, "GATEWAY_UPSTREAM_SOCKET")
+    if upstream_socket != (RUN_ROOT / "sisterd.sock").resolve():
+        raise RenderError("laboratory upstream must use the governed runtime Unix socket")
     allowed_host = values["GATEWAY_ALLOWED_HOST"]
     if not HOST.fullmatch(allowed_host) or "*" in allowed_host or not allowed_host.endswith(".test"):
         raise RenderError("laboratory Host must be one exact DNS name under .test")
@@ -135,8 +144,8 @@ def validate_governed_profile(profile_path):
         raise RenderError("gateway security profile is invalid: " + errors[0])
     if profile["status"] != "PROFILE_DEFINED":
         raise RenderError("gateway security profile must remain PROFILE_DEFINED")
-    if profile["realizability"]["verification_gate"] != "SEC-03C":
-        raise RenderError("gateway security profile has not closed SEC-03B")
+    if profile["realizability"]["verification_gate"] != "ISO-01":
+        raise RenderError("gateway security profile has not entered ISO-01")
     resolution = profile["realizability"].get("laboratory_resolution", {})
     if resolution.get("state") != "LAB_PROVEN_WITH_RESTRICTIONS":
         raise RenderError("gateway security profile lacks the SEC-03B-R decision")
@@ -155,7 +164,7 @@ def render(template, values):
     for forbidden in FORBIDDEN_CONFIG:
         if forbidden.search(rendered):
             raise RenderError("rendered configuration contains a forbidden dynamic or extension directive")
-    expected_server = f"server sisterd {values['GATEWAY_UPSTREAM_ADDRESS']}:{values['GATEWAY_UPSTREAM_PORT']} check maxconn 32 maxqueue 64"
+    expected_server = f"server sisterd unix@{values['GATEWAY_UPSTREAM_SOCKET']} check maxconn 32 maxqueue 64"
     if rendered.count(expected_server) != 1:
         raise RenderError("rendered configuration must contain exactly one fixed sisterd upstream")
     return rendered

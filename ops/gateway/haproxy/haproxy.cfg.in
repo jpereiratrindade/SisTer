@@ -113,7 +113,7 @@ backend sisterd_internal
     option httpchk GET /api/health
     option abortonclose
     http-check expect status 200
-    server sisterd @@GATEWAY_UPSTREAM_ADDRESS@@:@@GATEWAY_UPSTREAM_PORT@@ check maxconn 32 maxqueue 64
+    server sisterd unix@@@GATEWAY_UPSTREAM_SOCKET@@ check maxconn 32 maxqueue 64
 
 backend sister_connection_by_origin
     stick-table type ip size 128 expire 30s store conn_cur

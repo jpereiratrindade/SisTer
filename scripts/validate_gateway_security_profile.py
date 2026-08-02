@@ -60,7 +60,7 @@ def validate_profile(profile, schema):
         },
         "realizability": {
             "verification_gate", "policy", "lua_allowed", "third_party_modules_allowed",
-            "requirements", "laboratory_resolution", "sec_03c_resolution",
+            "requirements", "laboratory_resolution", "sec_03c_resolution", "iso_01_resolution",
         },
         "deployment": {
             "service_manager", "package_signature_required", "runtime_user", "config_owner",
@@ -68,9 +68,11 @@ def validate_profile(profile, schema):
             "identity_key_visible_to_gateway", "offline_config_validation_required",
         },
         "network": {
-            "external_https_port", "external_http_port_action", "upstream_host", "upstream_port",
+            "external_https_port", "external_http_port_action", "upstream_transport",
+            "upstream_socket", "upstream_lab_socket_scope",
             "upstream_protocol", "upstream_dynamic_destination", "upstream_access_scope",
-            "sisterd_bind", "legacy_proxy_enabled", "legacy_websocket_proxy_enabled",
+            "sisterd_inbound_tcp", "socket_activation_required", "legacy_proxy_enabled",
+            "legacy_websocket_proxy_enabled",
         },
         "tls": {
             "required", "minimum_version", "maximum_version", "cipher_suites",
@@ -144,12 +146,12 @@ def validate_profile(profile, schema):
     expect(
         schema,
         "$id",
-        "https://sister.local/contracts/gateway-security-profile/1.2.0",
+        "https://sister.local/contracts/gateway-security-profile/1.3.0",
         errors,
     )
 
     expect(profile, "contract_id", "sister.gateway-security-profile", errors)
-    expect(profile, "contract_version", "1.2.0", errors)
+    expect(profile, "contract_version", "1.3.0", errors)
     expect(profile, "status", "PROFILE_DEFINED", errors)
     expect(profile, "technology.product", "haproxy", errors)
     expect(profile, "technology.edition", "community", errors)
@@ -165,7 +167,7 @@ def validate_profile(profile, schema):
     if not match or int(match.group(1)) != 22:
         errors.append("technology.initial_validated_floor must match the currently verified HAProxy 3.2.22 release")
 
-    expect(profile, "realizability.verification_gate", "SEC-03C", errors)
+    expect(profile, "realizability.verification_gate", "ISO-01", errors)
     expect(profile, "realizability.policy", "native_simple_or_record_residual_risk", errors)
     expect(profile, "realizability.lua_allowed", False, errors)
     expect(profile, "realizability.third_party_modules_allowed", False, errors)
@@ -190,7 +192,7 @@ def validate_profile(profile, schema):
         "complete_websocket_upgrade": "PROVEN_BY_REJECTION",
         "isolated_upgrade_fields": "PROVEN_BY_STRIPPING",
         "full_nexo_composition": "DEFERRED_TO_SEC-03V",
-        "local_upstream_isolation": "NOT_IMPLEMENTED",
+        "local_upstream_isolation": "PARTIALLY_PROVEN",
     }
     requirements = value(profile, "realizability.requirements", errors)
     if isinstance(requirements, list):
@@ -267,6 +269,19 @@ def validate_profile(profile, schema):
     if sec_03c != expected_sec_03c:
         errors.append("realizability.sec_03c_resolution must preserve the restricted laboratory decision")
 
+    iso_01 = value(profile, "realizability.iso_01_resolution", errors)
+    expected_iso_01 = {
+        "state": "LAB_PROVEN_WITH_RESTRICTIONS",
+        "decided_on": "2026-08-02",
+        "evidence": "docs/evidence/security/ISO-01.md",
+        "next_gate": "SEC-03V",
+        "merge_authorized": False,
+        "release_authorized": False,
+        "external_exposure_authorized": False,
+    }
+    if iso_01 != expected_iso_01:
+        errors.append("realizability.iso_01_resolution must preserve the restricted laboratory decision")
+
     for path, expected in {
         "deployment.service_manager": "systemd",
         "deployment.package_signature_required": True,
@@ -279,12 +294,14 @@ def validate_profile(profile, schema):
         "deployment.offline_config_validation_required": True,
         "network.external_https_port": 443,
         "network.external_http_port_action": "closed",
-        "network.upstream_host": "127.0.0.1",
-        "network.upstream_port": 8000,
+        "network.upstream_transport": "unix",
+        "network.upstream_socket": "/run/sister/sisterd.sock",
+        "network.upstream_lab_socket_scope": "private_runtime_directory",
         "network.upstream_protocol": "HTTP/1.1",
         "network.upstream_dynamic_destination": False,
         "network.upstream_access_scope": "gateway_user_or_cgroup_only",
-        "network.sisterd_bind": "127.0.0.1",
+        "network.sisterd_inbound_tcp": False,
+        "network.socket_activation_required": True,
         "network.legacy_proxy_enabled": False,
         "network.legacy_websocket_proxy_enabled": False,
         "tls.required": True,
@@ -358,7 +375,7 @@ def validate_profile(profile, schema):
         "rollback.offline_validation_before_reload": True,
         "rollback.external_and_internal_health_required": True,
         "rollback.allowed_failure_mode": "external_unavailable",
-        "gates.current": "ISO-01",
+        "gates.current": "SEC-03V",
         "gates.external_production_authorized": False,
         "gates.functional_scope_expansion_authorized": False,
         "gates.write_capabilities_authorized": False,
