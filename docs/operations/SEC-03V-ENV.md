@@ -1,11 +1,14 @@
 # SEC-03V-ENV — ambiente candidato privilegiado
 
-**Estado:** `BLOCKED` até aplicação por operador privilegiado e preflight
-`READY`  
+**Estado:** `READY` no host candidato Fedora 44 em 2026-08-02
 **Responsável:** operação/infraestrutura do host  
 **Revisor:** segurança e arquitetura  
 **Resultado esperado:** ambiente candidato reproduzível, verificável e
 reversível
+
+**Evidência:** [`SEC-03V-ENV.md`](../evidence/security/SEC-03V-ENV.md), com
+`42/42 PASS` e relatório sanitizado SHA-256
+`b4e3a2782b18ef96e2a9a9acc167439f1b31c74f08c6ff7042b13aa6e7c569f0`.
 
 ## Limite da entrega
 
@@ -51,8 +54,9 @@ ativação do serviço sem a revisão operacional de HAPROXY-RPM-01.
 HAPROXY-RPM-01 foi concluído no host candidato Fedora 44 pela transação DNF
 `135`. A evidência verificável está em
 [`HAPROXY-RPM-01.json`](../evidence/security/HAPROXY-RPM-01.json). Esse marco
-satisfaz somente a proveniência do executável; SEC-03V-ENV permanece `BLOCKED`
-até a aplicação privilegiada das identidades, configurações e unidades.
+satisfez somente a proveniência do executável; a promoção posterior para
+`READY` exigiu a aplicação privilegiada das identidades, configurações e
+unidades registrada na evidência de SEC-03V-ENV.
 
 ## Contas e grupos
 
