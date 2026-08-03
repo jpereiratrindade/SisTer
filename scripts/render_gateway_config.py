@@ -53,9 +53,23 @@ def require_absolute_safe_path(raw, name, *, must_exist=False, executable=False)
     return path
 
 
-def require_inside_run_root(path, name):
+def lab_run_root(environment):
+    raw = environment.get("GATEWAY_RUN_ROOT")
+    if not raw:
+        return RUN_ROOT.resolve()
+    path = Path(raw)
+    if not path.is_absolute() or not SAFE_PATH.fullmatch(raw):
+        raise RenderError("GATEWAY_RUN_ROOT must be an absolute path without whitespace")
+    resolved = path.resolve()
+    allowed = (ROOT / ".run").resolve()
+    if resolved != allowed and allowed not in resolved.parents:
+        raise RenderError(f"GATEWAY_RUN_ROOT must remain inside {allowed}")
+    return resolved
+
+
+def require_inside_run_root(path, name, run_root=None):
     resolved_parent = path.parent.resolve()
-    run_root = RUN_ROOT.resolve()
+    run_root = (run_root or RUN_ROOT).resolve()
     if resolved_parent != run_root and run_root not in resolved_parent.parents:
         raise RenderError(f"{name} must remain inside {run_root}")
 
@@ -105,6 +119,7 @@ def checked_environment(environment, scope="lab"):
     if forbidden_tcp:
         raise RenderError("TCP upstream configuration is forbidden: " + ", ".join(forbidden_tcp))
 
+    run_root = lab_run_root(environment)
     values = {
         "GATEWAY_TLS_PEM": environment["GATEWAY_TLS_PEM"],
         "GATEWAY_ALLOWED_HOST": environment["GATEWAY_ALLOWED_HOST"].lower(),
@@ -112,9 +127,9 @@ def checked_environment(environment, scope="lab"):
         "GATEWAY_LISTEN_ADDRESS": environment.get("GATEWAY_LISTEN_ADDRESS", "127.0.0.1"),
         "GATEWAY_LISTEN_PORT": environment.get("GATEWAY_LISTEN_PORT", "8443"),
         "GATEWAY_UPSTREAM_SOCKET": environment.get(
-            "GATEWAY_UPSTREAM_SOCKET", str((RUN_ROOT / "sisterd.sock").resolve())),
+            "GATEWAY_UPSTREAM_SOCKET", str((run_root / "sisterd.sock").resolve())),
         "GATEWAY_ERROR_ROOT": str((ROOT / "ops/gateway/haproxy/errors").resolve()),
-        "GATEWAY_STATS_SOCKET": str((RUN_ROOT / "haproxy.sock").resolve()),
+        "GATEWAY_STATS_SOCKET": str((run_root / "haproxy.sock").resolve()),
     }
     try:
         listen_address = ipaddress.ip_address(values["GATEWAY_LISTEN_ADDRESS"])
@@ -137,8 +152,8 @@ def checked_environment(environment, scope="lab"):
     upstream_socket = require_absolute_safe_path(
         values["GATEWAY_UPSTREAM_SOCKET"], "GATEWAY_UPSTREAM_SOCKET")
     if scope in {"lab", "lan-lab"}:
-        require_inside_run_root(upstream_socket, "GATEWAY_UPSTREAM_SOCKET")
-        if upstream_socket != (RUN_ROOT / "sisterd.sock").resolve():
+        require_inside_run_root(upstream_socket, "GATEWAY_UPSTREAM_SOCKET", run_root)
+        if upstream_socket != (run_root / "sisterd.sock").resolve():
             raise RenderError("laboratory upstream must use the governed runtime Unix socket")
     elif upstream_socket != CANDIDATE_UPSTREAM_SOCKET:
         raise RenderError("candidate upstream must use /run/sister/sisterd.sock")
@@ -150,7 +165,7 @@ def checked_environment(environment, scope="lab"):
 
     pem = require_absolute_safe_path(values["GATEWAY_TLS_PEM"], "GATEWAY_TLS_PEM", must_exist=True)
     if scope in {"lab", "lan-lab"}:
-        require_inside_run_root(pem, "GATEWAY_TLS_PEM")
+        require_inside_run_root(pem, "GATEWAY_TLS_PEM", run_root)
         require_private_file(pem, "GATEWAY_TLS_PEM")
     else:
         if pem != CANDIDATE_TLS_PEM:
@@ -204,9 +219,9 @@ def render(template, values):
     return rendered
 
 
-def write_private_atomic(output, content, scope="lab"):
+def write_private_atomic(output, content, scope="lab", run_root=None):
     if scope in {"lab", "lan-lab"}:
-        require_inside_run_root(output, "output")
+        require_inside_run_root(output, "output", run_root)
     elif output != CANDIDATE_CONFIG:
         raise RenderError("candidate output must be /etc/sister/gateway/haproxy.cfg")
     if scope == "lab":
@@ -247,7 +262,7 @@ def main():
         values = checked_environment(os.environ, arguments.scope)
         template = template_path.read_text(encoding="utf-8")
         rendered = render(template, values)
-        write_private_atomic(output, rendered, arguments.scope)
+        write_private_atomic(output, rendered, arguments.scope, lab_run_root(os.environ))
     except (OSError, RenderError, json.JSONDecodeError, subprocess.TimeoutExpired) as exc:
         print(f"gateway configuration render failed: {exc}", file=sys.stderr)
         return 1

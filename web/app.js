@@ -242,6 +242,10 @@ function resolveSystemAccessUrl(system) {
   return url.href.replace(/\/$/, "");
 }
 
+function isReachableStatus(status) {
+  return (status >= 200 && status < 400) || status === 401 || status === 403;
+}
+
 function rerenderSystems() {
   renderSystems(qs("#system-filter")?.value || "");
 }
@@ -790,12 +794,18 @@ async function loadSisterClimaAccess() {
     const response = await fetch("/api/integrations/sister-clima", {cache: "no-store"});
     if (!response.ok) return;
     const payload = await response.json();
-    system.accessUrl = payload.access_url;
+    system.accessUrl = payload.operational_access === false ? null : payload.access_url;
+    if (!system.accessUrl) {
+      system.healthStatus = "offline";
+      system.infra.availability = "indisponível";
+      rerenderSystems();
+      return;
+    }
     try {
       const url = resolveSystemAccessUrl(system);
       if (url) {
-        const hRes = await fetch(url, { method: "GET", mode: "no-cors", cache: "no-store", headers: { "Accept": "application/json" } });
-        system.healthStatus = hRes.status < 500 ? "online" : "offline";
+        const hRes = await fetch(url, { method: "GET", cache: "no-store", headers: { "Accept": "application/json" } });
+        system.healthStatus = isReachableStatus(hRes.status) ? "online" : "offline";
       }
     } catch {
       system.healthStatus = "offline";
@@ -840,8 +850,8 @@ async function checkSystemHealth() {
         continue;
       }
       
-      const response = await fetch(url, { method: "GET", mode: "no-cors", cache: "no-store", headers: { "Accept": "application/json" } });
-      system.healthStatus = response.status < 500 ? "online" : "offline";
+      const response = await fetch(url, { method: "GET", cache: "no-store", headers: { "Accept": "application/json" } });
+      system.healthStatus = isReachableStatus(response.status) ? "online" : "offline";
     } catch {
       system.healthStatus = "offline";
     }

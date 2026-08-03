@@ -79,6 +79,18 @@ def main():
         lan_rendered = render(TEMPLATE_PATH.read_text(encoding="utf-8"), lan_values)
         assert "bind 10.163.80.176:8443" in lan_rendered
         assert f"server sisterd unix@{ROOT}/.run/gateway/sisterd.sock check" in lan_rendered
+        isolated_environment = copy.deepcopy(environment)
+        isolated_root = temporary / "isolated-runtime"
+        isolated_root.mkdir(mode=0o700)
+        isolated_pem = isolated_root / "gateway-lab.pem"
+        isolated_pem.write_text("test-only-placeholder\n", encoding="utf-8")
+        isolated_pem.chmod(0o600)
+        isolated_environment["GATEWAY_RUN_ROOT"] = str(isolated_root)
+        isolated_environment["GATEWAY_TLS_PEM"] = str(isolated_pem)
+        isolated_values = checked_environment(isolated_environment)
+        isolated_rendered = render(TEMPLATE_PATH.read_text(encoding="utf-8"), isolated_values)
+        assert f"server sisterd unix@{isolated_root}/sisterd.sock check" in isolated_rendered
+        assert f"stats socket {isolated_root}/haproxy.sock" in isolated_rendered
         for address in ("127.0.0.1", "0.0.0.0", "192.0.2.10", "not-an-ip"):
             changed = copy.deepcopy(environment)
             changed["GATEWAY_LISTEN_ADDRESS"] = address

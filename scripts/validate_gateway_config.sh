@@ -2,15 +2,23 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-config_path="${1:-${repo_root}/.run/gateway/haproxy.cfg}"
+run_root="${GATEWAY_RUN_ROOT:-${repo_root}/.run/gateway}"
+config_path="${1:-${run_root}/haproxy.cfg}"
 haproxy_binary="${GATEWAY_HAPROXY_BIN:-}"
 
+case "$run_root" in
+  "$repo_root"/.run/*) ;;
+  *)
+    echo "gateway config validation failed: GATEWAY_RUN_ROOT must stay inside .run" >&2
+    exit 1
+    ;;
+esac
 if [[ "${config_path}" != /* ]]; then
   echo "gateway config validation failed: configuration path must be absolute" >&2
   exit 1
 fi
-if [[ "${config_path}" != "${repo_root}/.run/gateway/"* ]] || [[ ! -f "${config_path}" ]]; then
-  echo "gateway config validation failed: configuration must be a file under .run/gateway" >&2
+if [[ "${config_path}" != "${run_root}/"* ]] || [[ ! -f "${config_path}" ]]; then
+  echo "gateway config validation failed: configuration must be a file under ${run_root}" >&2
   exit 1
 fi
 if [[ -z "${haproxy_binary}" || "${haproxy_binary}" != /* || ! -x "${haproxy_binary}" ]]; then

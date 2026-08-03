@@ -1500,7 +1500,7 @@ constexpr std::string_view kFallbackDiagnostics = R"([
   {"service":"PostgreSQL/pgvector","status":"planejado","score":20}
 ])";
 
-ApiPayload routeApi(const std::string& path, AppState& state) {
+ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig& config) {
     if (path == "/api/health") {
         std::lock_guard lock(state.dbMutex);
         const std::string dbStatus = state.db.connected() ? "connected" : "not_connected";
@@ -1531,8 +1531,16 @@ ApiPayload routeApi(const std::string& path, AppState& state) {
         return {true, true, std::string(kFallbackDiagnostics)};
     }
     if (path == "/api/integrations/sister-clima") {
+        const std::string accessUrl = config.legacyProxyEnabled ? R"("/integrations/clima/")" : "null";
+        const std::string operationalAccess = config.legacyProxyEnabled ? "true" : "false";
+        const std::string unavailableReason = config.legacyProxyEnabled
+            ? "null"
+            : R"("legacy_reverse_proxy_disabled")";
         return {true, false,
-            R"({"access_url":"/integrations/clima/","access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":[{"id":"open_meteo","url":"https://open-meteo.com/en/docs"},{"id":"nasa_power","url":"https://power.larc.nasa.gov/"}],"location_service":{"id":"ipwhois","mode":"explicit_action_http_fallback","persistence":"none","url":"https://ipwhois.io/documentation"}})"};
+            R"({"access_url":)" + accessUrl +
+            R"(,"operational_access":)" + operationalAccess +
+            R"(,"unavailable_reason":)" + unavailableReason +
+            R"(,"access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":[{"id":"open_meteo","url":"https://open-meteo.com/en/docs"},{"id":"nasa_power","url":"https://power.larc.nasa.gov/"}],"location_service":{"id":"ipwhois","mode":"explicit_action_http_fallback","persistence":"none","url":"https://ipwhois.io/documentation"}})"};
     }
     if (path == "/api/integrations/sister-studio") {
         return {true, false, sisterd::sisterStudioIntegrationJson()};
@@ -2179,7 +2187,7 @@ void handleClient(
                     requestId, peer, isHead, requestStart)) return;
         }
 
-        const auto payload = routeApi(request.path, state);
+        const auto payload = routeApi(request.path, state, config);
         if (!payload.found) {
             sendResponse(clientFd, jsonError(404, "Not Found", "Recurso não encontrado."),
                          config, requestId, isHead);
