@@ -5,6 +5,9 @@ GATEWAY_ADDRESS="${1:-${GATEWAY_LAN_ADDRESS:-}}"
 CA_FILE="${2:-${GATEWAY_LAN_CA_FILE:-}}"
 GATEWAY_HOST="${GATEWAY_ALLOWED_HOST:-sister-gateway.test}"
 GATEWAY_PORT=8443
+HEALTH_FILE="$(mktemp "${TMPDIR:-/tmp}/sister-gateway-health.XXXXXX")"
+chmod 600 "$HEALTH_FILE"
+trap 'rm -f "$HEALTH_FILE"' EXIT
 
 fail() {
   echo "ERRO: $1" >&2
@@ -16,7 +19,7 @@ fail() {
 [[ -f "$CA_FILE" ]] || fail "CA não encontrada: $CA_FILE"
 
 echo "1/4 Nome local"
-if getent hosts "$GATEWAY_HOST" | awk '{print $1}' | grep -Fxq "$GATEWAY_ADDRESS"; then
+if getent ahostsv4 "$GATEWAY_HOST" | awk '{print $1}' | grep -Fxq "$GATEWAY_ADDRESS"; then
   echo "OK: $GATEWAY_HOST -> $GATEWAY_ADDRESS"
 else
   echo "FALHA: $GATEWAY_HOST não aponta para $GATEWAY_ADDRESS"
@@ -39,7 +42,7 @@ if curl --noproxy '*' --silent --show-error --fail \
     --connect-timeout 3 --max-time 6 \
     --resolve "$GATEWAY_HOST:$GATEWAY_PORT:$GATEWAY_ADDRESS" \
     --cacert "$CA_FILE" \
-    "https://$GATEWAY_HOST:$GATEWAY_PORT/api/health" >/tmp/sister-gateway-health.json; then
+    "https://$GATEWAY_HOST:$GATEWAY_PORT/api/health" >"$HEALTH_FILE"; then
   echo "OK: certificado confiável e SNI/Host aceitos"
 else
   echo "FALHA: TLS ou certificado não foi aceito"
@@ -48,6 +51,6 @@ else
 fi
 
 echo "4/4 Aplicação"
-cat /tmp/sister-gateway-health.json
+cat "$HEALTH_FILE"
 echo
 echo "OK: acesso ao SisTer funcionando"
