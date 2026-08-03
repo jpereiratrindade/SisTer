@@ -33,6 +33,18 @@ export GATEWAY_LAN_ADDRESS=10.163.80.176
 ./scripts/run_gateway_lan_lab.sh
 ```
 
+Para executar ecossistema governado completo, use perfil canônico:
+
+```bash
+export GATEWAY_HAPROXY_BIN=/usr/local/sbin/haproxy-3.2.22
+export GATEWAY_LAN_ADDRESS=10.163.80.176
+./scripts/run_all.sh --profile dev-lan
+```
+
+Nesse perfil, `run_all.sh` registra ownership da execução, mantém núcleo em
+socket Unix e declara `LAN_FEDERATED`. `dev-ecosystem` permanece local e nunca
+publica `8443`.
+
 O script sobe ou reutiliza o banco de teste, aplica migrations, compila o
 `sisterd`, cria uma CA efêmera de sete dias, inicia o `sisterd` com socket
 activation, renderiza o perfil `lan-lab` e valida o HAProxy antes de aceitá-lo.

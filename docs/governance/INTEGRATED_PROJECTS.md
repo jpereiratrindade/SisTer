@@ -72,6 +72,10 @@ deve receber o caminho do repositório.
 
 ## Alocacao atual
 
+Durante validação de referência, somente `sister_reference` possui acesso
+operacional. Demais integrações listadas abaixo são reservas históricas em
+quarentena e não integram perfis oficiais, catálogo vigente ou roteamento.
+
 | Projeto | Recurso | Desenvolvimento | Teste |
 | --- | --- | --- | --- |
 | SisTer | HTTP | `127.0.0.1:8000` | `127.0.0.1:8001` |
@@ -84,15 +88,15 @@ deve receber o caminho do repositório.
 | Nexo-Compras | PostgreSQL | 55440 | - |
 | MorfoCampo (não cadastrado) | HTTPS reservada | 8011 | - |
 | DroneOps (não cadastrado) | HTTPS reservada | 8012 | - |
-| Sister-Studio | HTTPS público | 8443 | - |
+| Sister-Studio | HTTPS interno | 18443 | acesso externo somente pelo gateway SisTer |
 | Sister-Studio Audio | HTTP interno | 18013 | - |
 | Sister-Studio Voz | HTTP interno | 18043 | - |
 | Sister-Studio Vídeo | HTTP interno | 18014 | - |
-| Sister-Studio Certificado | HTTP | 8088 | - |
+| Sister-Studio Certificado | HTTP interno | `127.0.0.1:8088` | - |
 | Sister-Studio PostgreSQL | PostgreSQL | 55433 | - |
 | Radar-Sister (não cadastrado) | HTTP reservado | 8765 | - |
 | Radar-Sister | PostgreSQL | 55432 | - |
-| Sister-Clima | HTTP | 8501 | - |
+| Sister-Clima | HTTP interno | `127.0.0.1:8501` | acesso externo somente pelo SisTer |
 
 O registro tambem inclui projetos locais nao integrados que reservam recursos,
 pois eles podem colidir no mesmo host.

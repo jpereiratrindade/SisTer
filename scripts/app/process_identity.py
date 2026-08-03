@@ -54,13 +54,15 @@ def process_command(pid: int) -> Path:
     return (working_directory / decoded).resolve()
 
 
-def observe(pid: int, expected_executable: Path, environment: str) -> dict:
+def observe(
+    pid: int, expected_executable: Path, environment: str, *, allow_replaced_executable: bool = False
+) -> dict:
     process = Path(f"/proc/{pid}")
     process_stat = process.stat()
     if process_stat.st_uid != os.geteuid():
         raise ValueError("process belongs to a different user")
     actual_executable = Path(os.readlink(process / "exe")).resolve()
-    if actual_executable != expected_executable:
+    if not allow_replaced_executable and actual_executable != expected_executable:
         raise ValueError("process executable does not match sisterd")
     if process_command(pid) != expected_executable:
         raise ValueError("process command line does not match sisterd")
@@ -134,7 +136,7 @@ def validate_process(args: argparse.Namespace) -> int:
     pid = record["pid"]
     if not Path(f"/proc/{pid}").exists():
         return 4
-    observed = observe(pid, expected, args.environment)
+    observed = observe(pid, expected, args.environment, allow_replaced_executable=True)
     if observed != record:
         raise ValueError("PID was reused or process identity changed")
     print(pid)
@@ -150,7 +152,7 @@ def terminate_process(args: argparse.Namespace) -> int:
     except ProcessLookupError:
         return 4
     try:
-        observed = observe(pid, expected, args.environment)
+        observed = observe(pid, expected, args.environment, allow_replaced_executable=True)
         if observed != record:
             raise ValueError("PID was reused or process identity changed")
         signal.pidfd_send_signal(pidfd, signal.SIGTERM)

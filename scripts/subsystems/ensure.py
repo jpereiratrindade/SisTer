@@ -111,6 +111,19 @@ def record_digest(project_id: str, digest: str | None) -> None:
 def health_result(project: dict[str, Any]) -> HealthResult:
     health = project["orchestration"]["health"]
     endpoint = urlparse(health["url"])
+    port_hex = f"{endpoint.port:04X}"
+    for table in (Path("/proc/net/tcp"), Path("/proc/net/tcp6")):
+        try:
+            rows = table.read_text(encoding="ascii").splitlines()[1:]
+        except OSError:
+            rows = []
+        for row in rows:
+            fields = row.split()
+            if len(fields) < 4 or fields[3] != "0A":
+                continue
+            address, port = fields[1].split(":", 1)
+            if port == port_hex and set(address) == {"0"}:
+                return HealthResult("occupied", "listener wildcard viola a fronteira interna")
     try:
         with socket.create_connection((endpoint.hostname, endpoint.port), timeout=1):
             pass
@@ -160,7 +173,7 @@ def health_result(project: dict[str, Any]) -> HealthResult:
 
 def start_project(
     project: dict[str, Any], *, wait_for_command: bool = False
-) -> tuple[bool, str]:
+) -> tuple[bool, str, int | None]:
     project_id = project["id"]
     orchestration = project["orchestration"]
     repository = repository_path(project)
@@ -195,17 +208,17 @@ def start_project(
         return_code = process.poll()
         if return_code not in (None, 0):
             pid_path.unlink(missing_ok=True)
-            return False, f"inicialização terminou com código {return_code}; log {displayed_log}"
+            return False, f"inicialização terminou com código {return_code}; log {displayed_log}", None
         if wait_for_command:
             if return_code == 0:
                 pid_path.unlink(missing_ok=True)
                 if health_result(project).state == "healthy":
-                    return True, f"atualizado pelo SisTer; log {displayed_log}"
-                return False, f"comando terminou, mas a saúde não foi confirmada; log {displayed_log}"
+                    return True, f"atualizado pelo SisTer; log {displayed_log}", process.pid
+                return False, f"comando terminou, mas a saúde não foi confirmada; log {displayed_log}", None
         elif health_result(project).state == "healthy":
             if return_code is not None:
                 pid_path.unlink(missing_ok=True)
-            return True, f"iniciado pelo SisTer; log {displayed_log}"
+            return True, f"iniciado pelo SisTer; log {displayed_log}", process.pid
         elapsed = int(time.monotonic() - started_at)
         if elapsed >= next_progress:
             log(
@@ -217,7 +230,7 @@ def start_project(
 
     if process.poll() is not None:
         pid_path.unlink(missing_ok=True)
-    return False, f"não ficou saudável dentro do prazo; log {displayed_log}"
+    return False, f"não ficou saudável dentro do prazo; log {displayed_log}", None
 
 
 def component_result(
@@ -228,6 +241,7 @@ def component_result(
     detail: str,
     started_at: float,
     started_by_run: bool,
+    process_group: int | None = None,
 ) -> dict[str, Any]:
     exit_match = re.search(r"código (\d+)", detail)
     log_path = RUN_DIR / f"{project_id}.log"
@@ -240,6 +254,7 @@ def component_result(
         "elapsed_seconds": round(time.monotonic() - started_at, 3),
         "log": str(log_path.relative_to(ROOT)) if log_path.exists() else None,
         "started_by_run": started_by_run,
+        "process_group": process_group,
         "detail": detail,
     }
 
@@ -315,9 +330,9 @@ def ensure(
                 if refresh_changed:
                     log(f"{project_id}: saudável, mas as fontes mudaram; atualização explícita solicitada")
                     try:
-                        success, detail = start_project(project, wait_for_command=True)
+                        success, detail, process_group = start_project(project, wait_for_command=True)
                     except (OSError, RuntimeError, ValueError) as error:
-                        success, detail = False, str(error)
+                        success, detail, process_group = False, str(error), None
                     log(f"{project_id}: {'saudável' if success else 'falhou'} — {detail}")
                     results.append(component_result(
                         project_id,
@@ -327,6 +342,7 @@ def ensure(
                         detail,
                         started_at,
                         True,
+                        process_group,
                     ))
                     if success:
                         record_digest(project_id, digest)
@@ -348,9 +364,9 @@ def ensure(
             continue
         log(f"{project_id}: indisponível; iniciando pelo contrato local")
         try:
-            success, detail = start_project(project)
+            success, detail, process_group = start_project(project)
         except (OSError, RuntimeError, ValueError) as error:
-            success, detail = False, str(error)
+            success, detail, process_group = False, str(error), None
         log(f"{project_id}: {'saudável' if success else 'falhou'} — {detail}")
         results.append(component_result(
             project_id,
@@ -360,6 +376,7 @@ def ensure(
             detail,
             started_at,
             True,
+            process_group,
         ))
         if success:
             record_digest(project_id, digest)

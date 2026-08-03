@@ -64,8 +64,17 @@ def main() -> None:
                 fail(f"orchestrated project {project_id} is not integrated")
             if repository is None:
                 fail(f"orchestrated project {project_id} has no repository")
-            if orchestration.get("policy") != "ensure-running":
+            policy = orchestration.get("policy")
+            if policy not in {"ensure-running", "quarantined"}:
                 fail(f"invalid orchestration policy in {project_id}")
+            if policy == "quarantined" and (
+                project.get("integration_state") != "quarantined"
+                or project.get("operational_access") is not False
+                or project.get("quarantine_reason") != "core_reference_validation_in_progress"
+            ):
+                fail(f"quarantined subsystem state is incomplete in {project_id}")
+            if policy == "ensure-running" and project_id != "sister_reference":
+                fail(f"only sister_reference may be an operational validation target: {project_id}")
             if orchestration.get("environment") != "dev":
                 fail(f"orchestration is only allowed for dev in {project_id}")
             if not isinstance(orchestration.get("required"), bool):
@@ -162,6 +171,13 @@ def main() -> None:
                 fail(f"invalid resource in {project_id}")
             if not 1 <= port <= 65535:
                 fail(f"invalid port {port} in {project_id}")
+            if orchestration is not None and host in {"0.0.0.0", "::"}:
+                fail(f"governed subsystem cannot publish a wildcard endpoint: {project_id}:{port}")
+            if orchestration is not None and kind in {"http", "https"}:
+                if host not in {"127.0.0.1", "localhost", "::1"}:
+                    fail(f"governed subsystem endpoint must be internal: {project_id}:{port}")
+                if resource.get("exposure") != "internal":
+                    fail(f"governed subsystem endpoint must declare internal exposure: {project_id}:{port}")
 
             bind_host = "*" if host in {"0.0.0.0", "::"} else host
             endpoint = (bind_host, port)

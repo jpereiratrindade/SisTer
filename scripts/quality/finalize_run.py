@@ -11,11 +11,30 @@ QUALITY_REPORT = ROOT / ".run" / "maturity" / "quality.json"
 RUN_REPORT = ROOT / ".run" / "maturity" / "run-all-status.json"
 
 
+def validate_surface(access_scope, core_transport, gateway_status, public_url):
+    if access_scope == "LAN_FEDERATED":
+        if core_transport != "unix-socket" or gateway_status != "READY" or not public_url:
+            raise ValueError("LAN_FEDERATED requires Unix core, READY gateway and public URL")
+    elif access_scope in {"LOCAL_ONLY", "LOCAL_TEST"}:
+        if core_transport != "loopback-tcp" or gateway_status != "NOT_REQUESTED" or public_url:
+            raise ValueError("local execution cannot publish a gateway")
+    elif access_scope == "SECURITY_VALIDATION":
+        if gateway_status != "VALIDATED" or public_url:
+            raise ValueError("SECURITY_VALIDATION must validate without publishing")
+    else:
+        raise ValueError(f"unknown access scope: {access_scope}")
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile", required=True)
+    parser.add_argument("--access-scope", required=True)
+    parser.add_argument("--core-transport", required=True)
+    parser.add_argument("--gateway-status", required=True)
+    parser.add_argument("--public-url")
     parser.add_argument("--subsystems-report", type=Path)
     args = parser.parse_args()
+    validate_surface(args.access_scope, args.core_transport, args.gateway_status, args.public_url)
 
     quality = json.loads(QUALITY_REPORT.read_text(encoding="utf-8"))
     if quality.get("result") != "PASS":
@@ -28,7 +47,7 @@ def main():
         subsystem_state = subsystem_report["result"]
         components = subsystem_report["components"]
 
-    if subsystem_state == "BLOCKED":
+    if args.gateway_status == "FAIL" or subsystem_state == "BLOCKED":
         overall = "BLOCKED"
     elif subsystem_state == "DEGRADED":
         overall = "PASS_WITH_DEGRADATION"
@@ -39,6 +58,10 @@ def main():
         "schema": "sister.run-all-status/1.0.0",
         "result": overall,
         "profile": args.profile,
+        "access_scope": args.access_scope,
+        "core_transport": args.core_transport,
+        "public_gateway": args.gateway_status,
+        "public_url": args.public_url,
         "quality": {"result": "PASS", "report": ".run/maturity/quality.json"},
         "database": "READY",
         "sisterd": "READY",
@@ -54,6 +77,13 @@ def main():
 
     print("\nSisTer execution summary")
     print(f"  Profile:              {args.profile}")
+    print(f"  Execution scope:      {args.access_scope}")
+    core_endpoint = "internal Unix socket" if args.core_transport == "unix-socket" else "loopback only"
+    print(f"  Core endpoint:        {core_endpoint}")
+    print(f"  Public gateway:       {args.gateway_status}")
+    print(f"  LAN access:           {'ENABLED' if args.access_scope == 'LAN_FEDERATED' and args.gateway_status == 'READY' else 'DISABLED'}")
+    if args.public_url:
+        print(f"  Public URL:           {args.public_url}")
     print("  Core quality:         PASS")
     print("  sisterd readiness:    READY")
     print("  Core smoke:           PASS")

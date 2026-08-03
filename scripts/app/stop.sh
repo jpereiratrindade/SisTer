@@ -2,11 +2,21 @@
 set -euo pipefail
 
 ENV_NAME="${1:-dev}"
+CORE_ONLY=0
+if [[ "${2:-}" == "--core-only" ]]; then
+  CORE_ONLY=1
+elif [[ $# -gt 1 ]]; then
+  echo "stop.sh: expected [environment] [--core-only]" >&2
+  exit 3
+fi
 if [[ ! "$ENV_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
   echo "stop.sh: invalid environment name" >&2
   exit 3
 fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+if [[ $CORE_ONLY -eq 0 && -f "$ROOT_DIR/.run/executions/active-${ENV_NAME}.json" ]]; then
+  exec python3 "$ROOT_DIR/scripts/app/execution_lifecycle.py" stop --environment "$ENV_NAME"
+fi
 PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
 EXECUTABLE="$ROOT_DIR/build/apps/sisterd/sisterd"
 IDENTITY_TOOL="$ROOT_DIR/scripts/app/process_identity.py"

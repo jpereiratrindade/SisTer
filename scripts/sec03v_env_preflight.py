@@ -23,16 +23,12 @@ import urllib.request
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
-from scripts.lib.workspace_paths import (  # noqa: E402
-    repository_env_name,
-    repository_path as resolve_repository_path,
-)
-
 DEFAULT_REPORT = ROOT / ".run/security/sec03v-env-preflight.json"
 NON_INTERACTIVE_SHELLS = {"/bin/false", "/sbin/nologin", "/usr/sbin/nologin"}
 REQUIRED_ENVIRONMENT = {
     "SISTER_DATABASE_URL",
-    "SISTER_ENABLE_NEXO_SIGNED_INTEGRATION",
+    "SISTER_ENABLE_REFERENCE_SUBSYSTEM",
+    "SISTER_INTERNAL_PROXY_TOKEN",
     "SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE",
     "SISTER_INTERNAL_IDENTITY_KEY_ID",
     "SISTER_INTERNAL_IDENTITY_TTL_SECONDS",
@@ -517,18 +513,22 @@ def healthy_sisterd_response(output: str) -> bool:
     )
 
 
-def nexo_check() -> Check:
+def reference_contract_check() -> Check:
     try:
-        with urllib.request.urlopen("http://127.0.0.1:8015/api/health", timeout=2) as response:
-            value = json.load(response)
-        valid = response.status == 200 and value.get("status") == "ok" and (
-            value.get("service") == "sister-nexo" and value.get("database") == "ok"
+        value = json.loads(
+            (ROOT / "reference/sister-reference/manifest.json").read_text(encoding="utf-8")
         )
-    except (OSError, ValueError, urllib.error.URLError):
+        valid = (
+            value.get("schema") == "sister.subsystem.manifest/1.0.0"
+            and value.get("system_id") == "sister_reference"
+            and value.get("contract") == "sister.subsystem/1.0.0"
+            and value.get("production_eligible") is False
+        )
+    except (OSError, ValueError, json.JSONDecodeError):
         valid = False
     return Check(
-        "nexo.readiness", "PASS" if valid else "BLOCKED",
-        "Nexo and PostgreSQL are READY" if valid else "Nexo readiness contract failed",
+        "reference.contract", "PASS" if valid else "BLOCKED",
+        "reference contract is governed" if valid else "reference contract is invalid",
     )
 
 
@@ -542,18 +542,6 @@ def worktree_check(path: Path, name: str) -> Check:
     valid = result.returncode == 0 and not result.stdout.strip() and revision.returncode == 0
     detail = f"clean revision {revision.stdout.strip()}" if valid else "worktree is dirty or unknown"
     return Check(f"revision.{name}", "PASS" if valid else "BLOCKED", detail)
-
-
-def nexo_root_from_registry() -> Path:
-    registry = ROOT / "config/local_resources.json"
-    try:
-        data = json.loads(registry.read_text(encoding="utf-8"))
-        for project in data["projects"]:
-            if project.get("id") == "sister_nexo":
-                return resolve_repository_path(ROOT, project)
-    except (OSError, KeyError, RuntimeError, TypeError, json.JSONDecodeError):
-        pass
-    return ROOT.parent / "sister-nexo"
 
 
 def write_report(path: Path, checks: list[Check]) -> None:
@@ -581,22 +569,13 @@ def write_report(path: Path, checks: list[Check]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--haproxy-bin", type=Path, default=Path("/usr/local/sbin/haproxy-3.2.22"))
-    parser.add_argument(
-        "--nexo-root",
-        type=Path,
-        default=nexo_root_from_registry(),
-        help=(
-            "Nexo worktree; defaults to config/local_resources.json resolution. "
-            f"Can also be controlled with {repository_env_name('sister_nexo')}."
-        ),
-    )
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     arguments = parser.parse_args()
 
     checks = [
         privileged_execution_check(),
         worktree_check(ROOT, "sister"),
-        worktree_check(arguments.nexo_root, "nexo"),
+        reference_contract_check(),
         account_check("sister", "sister"),
         account_check("sister-gateway"),
         gateway_group_check(),
@@ -652,8 +631,6 @@ def main() -> int:
     checks.extend(gateway_runtime_check(arguments.haproxy_bin))
     checks.append(gateway_listener_check())
     checks.append(gateway_tls_runtime_check())
-    checks.append(nexo_check())
-
     write_report(arguments.report, checks)
     result = "READY" if all(check.status == "PASS" for check in checks) else "BLOCKED"
     for check in checks:

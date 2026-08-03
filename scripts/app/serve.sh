@@ -32,15 +32,22 @@ case "$BUILD_MODE" in
 esac
 
 mkdir -p .run
-scripts/app/stop.sh "$ENV_NAME" >/dev/null
+scripts/app/stop.sh "$ENV_NAME" --core-only >/dev/null
 
 LOG_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.log"
 PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
 
+SISTERD_ENV=(
+  SISTER_ENV="$ENV_NAME"
+  SISTER_DATABASE_URL="$SISTER_DATABASE_URL"
+  SISTER_ENABLE_REFERENCE_SUBSYSTEM="${SISTER_ENABLE_REFERENCE_SUBSYSTEM:-false}"
+  SISTER_REFERENCE_PORT="${SISTER_REFERENCE_PORT:-19001}"
+  SISTER_INTERNAL_PROXY_TOKEN="${SISTER_INTERNAL_PROXY_TOKEN:-}"
+)
 if command -v setsid >/dev/null 2>&1; then
-  setsid env SISTER_ENV="$ENV_NAME" SISTER_DATABASE_URL="$SISTER_DATABASE_URL" ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
+  setsid env "${SISTERD_ENV[@]}" ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
 else
-  SISTER_ENV="$ENV_NAME" SISTER_DATABASE_URL="$SISTER_DATABASE_URL" nohup ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
+  env "${SISTERD_ENV[@]}" nohup ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &
 fi
 PID="$!"
 if ! python3 scripts/app/process_identity.py record \
@@ -67,13 +74,13 @@ done
 
 if ! kill -0 "$PID" >/dev/null 2>&1; then
   echo "sisterd failed to start. Log:" >&2
-  scripts/app/stop.sh "$ENV_NAME" >/dev/null
+  scripts/app/stop.sh "$ENV_NAME" --core-only >/dev/null
   cat "$LOG_FILE" >&2
   exit 1
 fi
 if [[ $READY -ne 1 ]]; then
   echo "sisterd remained alive but did not become ready. Log:" >&2
-  ./scripts/app/stop.sh "$ENV_NAME" >/dev/null
+  ./scripts/app/stop.sh "$ENV_NAME" --core-only >/dev/null
   cat "$LOG_FILE" >&2
   exit 1
 fi

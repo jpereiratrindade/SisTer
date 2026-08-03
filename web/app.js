@@ -1,88 +1,29 @@
 const state = {
   systems: [
     {
-      id: "sister_clima",
-      name: "Sister-Clima",
-      version: "2.3.0",
-      owner: "Projeto Resiliência - Embrapa",
-      type: "Climático",
-      status: "Integrado",
-      description: "Monitoramento pluviométrico, indicadores climáticos e camadas espaciais com proveniência das fontes.",
-      contract: "sister-contracts/0.1.0",
-      governanceContract: "sister-clima.governance/1.0.0",
-      accessUrl: null,
-      accessMode: "Identificado · não comercial",
-      accessRestricted: true,
-      dataSummary: "Precipitação diária e indicadores pluviométricos",
-      dataReferences: [
-        {label: "Open-Meteo", url: "https://open-meteo.com/en/docs"},
-        {label: "NASA POWER", url: "https://power.larc.nasa.gov/"}
-      ],
-      publicScope: "Documentação, fontes e metadados de proveniência",
-      restrictedScope: "Resultados revisados e dados derivados para pesquisa pública não comercial",
-      privateScope: "Sessões, autenticação, configuração de rede e logs",
-      domains: ["clima", "precipitacao", "resiliencia", "inteligencia_territorial"],
-      modes: ["local_web", "restricted_web", "scheduled_collection", "offline_dataset"],
-      exports: ["daily_precipitation_csv", "climate_indicators", "spatial_precipitation_layer", "provenance_metadata"],
-      policy: ["usuario_identificado", "uso_nao_comercial", "atribuicao", "proveniencia", "schema", "operador", "referencia_espacial"],
-      infra: {
-        availability: "sob demanda",
-        response: "HTTP",
-        storage: "CSV local",
-        lastCheck: "sem coleta",
-        signal: "ok"
-      }
-    },
-    {
-      id: "sister_studio",
-      name: "Sister-Studio",
-      version: "0.2.1",
-      owner: "Laboratorio SisTer",
-      type: "Criativo",
-      status: "Integrado",
-      description: "Estudio audiovisual conectado por contrato para composicao, voz e video, com dados privados preservados no produtor.",
-      contract: "sister-studio.integration/1.0.0",
-      accessUrl: "https://127.0.0.1:8443",
-      accessMode: "Local",
-      publicScope: "Identidade e versao do sistema",
-      restrictedScope: "Capacidades, formatos e saude sanitizada",
-      privateScope: "Identidade, voz, texto, midia, projetos e auditoria",
-      domains: ["audio", "musica_procedural", "voz", "tts", "video", "midi", "wav", "ogg", "srt", "mp4"],
-      modes: ["local_web", "local_network", "authenticated_api", "isolated_inference"],
-      exports: ["capability_catalog", "supported_format_matrix", "sanitized_service_health"],
-      policy: ["proveniencia", "schema", "minimizacao", "tls", "privacidade"],
-      infra: {
-        availability: "consultando",
-        response: "HTTPS",
-        storage: "não compartilhado",
-        lastCheck: "sob demanda",
-        signal: "ok"
-      }
-    },
-    {
-      id: "sister_nexo",
-      name: "SisTer Nexo",
+      id: "sister_reference",
+      name: "SisTer Reference Subsystem",
       version: "0.1.0",
-      owner: "Projeto Resiliência SAIT",
-      type: "Governança científica",
-      status: "Integrado",
-      description: "Gestão científica, atividades, evidências, publicações e rastreabilidade em um subsistema C++20 autônomo.",
-      contract: "sister-nexo.integration/1.0.0",
-      accessUrl: "/integrations/nexo/",
+      owner: "SisTer Core",
+      type: "Referência controlada",
+      status: "Validação",
+      description: "Implementação mínima e parametrizada usada para provar contratos, identidade, roteamento, falhas e ciclo de vida.",
+      contract: "sister.subsystem/1.0.0",
+      accessUrl: "/integrations/reference/api/identity",
       accessMode: "Proxy autenticado pelo SisTer",
       accessRestricted: true,
-      publicScope: "Identidade do sistema e saúde sanitizada",
-      restrictedScope: "Painel de governança, pesquisa, atividades, evidências e fluxo editorial",
-      privateScope: "Conversas, anexos, embeddings, credenciais e auditoria bruta",
-      domains: ["governanca", "gestao_cientifica", "resiliencia", "rastreabilidade"],
-      modes: ["local_web", "restricted_web", "contract_api"],
-      exports: ["governance_summary", "activity_status", "evidence_references", "publication_status"],
-      policy: ["usuario_identificado", "proveniencia", "schema", "banco_exclusivo", "auditoria"],
+      publicScope: "Identidade, versão e manifesto contratual",
+      restrictedScope: "Whoami e echo mediados pelo núcleo",
+      privateScope: "Token interno, processos e cenários de falha",
+      domains: ["validacao", "contratos", "seguranca", "operacao"],
+      modes: ["healthy", "degraded", "delayed", "controlled_failure"],
+      exports: ["identity", "health", "capabilities", "echo"],
+      policy: ["loopback", "gateway_unico", "identidade_mediada", "fail_closed"],
       infra: {
-        availability: "sob demanda",
+        availability: "governada",
         response: "HTTP",
-        storage: "PostgreSQL/pgvector independente",
-        lastCheck: "sob demanda",
+        storage: "sem persistência",
+        lastCheck: "por execução",
         signal: "ok"
       }
     }
@@ -101,22 +42,10 @@ const state = {
       rule: "Pacote precisa conter origem, contrato, conteudo declarado, data de criacao e checksum."
     },
     {
-      name: "Sister-Clima Governance",
-      version: "1.0.0",
-      required: "Para resultados climáticos",
-      rule: "Usuários identificados, pesquisa pública não comercial, atribuição, proveniência e revisão de mudanças."
-    },
-    {
-      name: "Sister-Studio Integration",
-      version: "1.0.0",
-      required: "Para capacidades criativas",
-      rule: "Somente capacidades e saude sanitizada; conteudo e identidade permanecem no Studio."
-    },
-    {
-      name: "SisTer Nexo Integration",
-      version: "1.0.0",
-      required: "Para governança científica",
-      rule: "Acesso restrito por contrato; banco, anexos, conversas e auditoria bruta permanecem no Nexo."
+      name: "Reference Subsystem",
+      version: "0.1.0",
+      required: "Para validação do núcleo",
+      rule: "Alvo único, parametrizado, interno e mediado pelo SisTer."
     },
     {
       name: "Evidence",
@@ -233,12 +162,6 @@ function resolveAccessUrl(accessUrl) {
 function resolveSystemAccessUrl(system) {
   if (!system.accessUrl) return null;
   const url = new URL(resolveAccessUrl(system.accessUrl));
-  if (system.id === "sister_nexo") {
-    return `${url.href.replace(/\/$/, "")}/`;
-  }
-  if (system.id === "sister_clima" || system.id === "sister_studio") {
-    url.searchParams.set("sister_url", window.location.origin);
-  }
   return url.href.replace(/\/$/, "");
 }
 
@@ -436,9 +359,7 @@ function renderSystems(filter = "") {
         </p>
       `
       : "";
-    const climateSnapshot = system.id === "sister_clima"
-      ? climateSnapshotMarkup()
-      : "";
+    const climateSnapshot = "";
     return `
     <article class="system-card">
       <span class="system-mark" aria-hidden="true">${systemInitials(system.name)}</span>
@@ -517,70 +438,6 @@ function renderEvidence() {
   `).join("");
 }
 
-function integrationErrorDetail(code) {
-  const messages = {
-    integration_configuration_unavailable: "Credencial ou certificado do Studio ainda não foram provisionados.",
-    studio_unavailable: "O gateway do Sister-Studio não respondeu.",
-    studio_identity_not_verified: "A identidade TLS do Sister-Studio não foi validada.",
-    studio_contract_request_failed: "O Studio recusou ou não concluiu a consulta contratual.",
-    studio_contract_invalid: "A resposta não corresponde ao contrato reconhecido.",
-    trust_configuration_failed: "A autoridade certificadora configurada não pôde ser carregada.",
-    tls_initialization_failed: "O cliente TLS do SisTer não pôde ser inicializado."
-  };
-  return messages[code] || "A integração está indisponível sem expor detalhes internos.";
-}
-
-async function loadSisterStudioIntegration() {
-  const title = qs("#studio-connection-title");
-  const detail = qs("#studio-connection-detail");
-  const signal = qs("#studio-signal");
-  title.textContent = "Consultando Sister-Studio…";
-  detail.textContent = "Validando TLS, credencial e versão do contrato.";
-  signal.className = "connection-signal loading";
-  try {
-    const response = await fetch("/api/integrations/sister-studio", {cache: "no-store"});
-    if (!response.ok) throw new Error("request_failed");
-    const payload = await response.json();
-    if (payload.status !== "connected") {
-      title.textContent = payload.status === "not_configured" ? "Integração não configurada" : "Sister-Studio indisponível";
-      detail.textContent = integrationErrorDetail(payload.error_code);
-      signal.className = "connection-signal error";
-      return;
-    }
-
-    const {capabilities, health} = payload;
-    title.textContent = health.status === "ok" ? "Conectado e operacional" : "Conectado com módulos indisponíveis";
-    detail.textContent = "Contrato remoto autenticado e conteúdo pessoal ausente na resposta.";
-    signal.className = `connection-signal ${health.status === "ok" ? "online" : "warning"}`;
-    qs("#studio-contract-version").textContent = `integration/${capabilities.contract_version}`;
-    qs("#studio-system-version").textContent = `${capabilities.system.name} ${capabilities.system.version}`;
-    qs("#studio-checked-at").textContent = new Date(health.checked_at).toLocaleString("pt-BR");
-    qs("#studio-modules").innerHTML = health.modules.map((module) => `
-      <article>
-        <span class="connection-signal ${module.status === "available" ? "online" : "error"}"></span>
-        <div><strong>${escapeHtml(module.id)}</strong><small>${module.status === "available" ? "Disponível" : "Offline"}</small></div>
-      </article>
-    `).join("");
-    qs("#studio-capabilities").innerHTML = capabilities.capabilities.map((capability) => `
-      <article>
-        <div><strong>${escapeHtml(capability.name)}</strong><small>${escapeHtml(capability.id)}</small></div>
-        <span>${capability.outputs.map(escapeHtml).join(" · ")}</span>
-      </article>
-    `).join("");
-
-    const studio = state.systems.find((system) => system.id === "sister_studio");
-    studio.version = capabilities.system.version;
-    studio.status = health.status === "ok" ? "Integrado" : "Degradado";
-    studio.infra.availability = health.status;
-    studio.infra.lastCheck = new Date(health.checked_at).toLocaleTimeString("pt-BR");
-    renderSystems(qs("#system-filter").value);
-  } catch {
-    title.textContent = "Não foi possível consultar a integração";
-    detail.textContent = "Entre novamente como administrador e tente atualizar.";
-    signal.className = "connection-signal error";
-  }
-}
-
 function drawMap() {
   const canvas = qs("#territory-map");
   const ctx = canvas.getContext("2d");
@@ -609,8 +466,7 @@ function drawMap() {
   ctx.stroke();
 
   const plots = [
-    { x: 330, y: 145, w: 190, h: 86, color: "#d5e8f4", label: "Sister-Clima" },
-    { x: 620, y: 145, w: 190, h: 86, color: "#d8d2ef", label: "Sister-Studio" }
+    { x: 455, y: 145, w: 260, h: 86, color: "#d5e8f4", label: "Reference Subsystem" }
   ];
 
   plots.forEach((plot) => {
@@ -778,43 +634,10 @@ function showAuthenticatedIdentity(user) {
   qs("#auth-avatar").hidden = false;
   qs("#auth-name").textContent = user.name;
   qs("#auth-avatar").textContent = systemInitials(user.name);
-  loadSisterClimaAccess();
   if (user.role === "admin") {
     qsa("[data-admin-only]").forEach((item) => {
       item.hidden = false;
     });
-    loadSisterStudioIntegration();
-  }
-}
-
-async function loadSisterClimaAccess() {
-  const system = state.systems.find((item) => item.id === "sister_clima");
-  if (!system) return;
-  try {
-    const response = await fetch("/api/integrations/sister-clima", {cache: "no-store"});
-    if (!response.ok) return;
-    const payload = await response.json();
-    system.accessUrl = payload.operational_access === false ? null : payload.access_url;
-    if (!system.accessUrl) {
-      system.healthStatus = "offline";
-      system.infra.availability = "indisponível";
-      rerenderSystems();
-      return;
-    }
-    try {
-      const url = resolveSystemAccessUrl(system);
-      if (url) {
-        const hRes = await fetch(url, { method: "GET", cache: "no-store", headers: { "Accept": "application/json" } });
-        system.healthStatus = isReachableStatus(hRes.status) ? "online" : "offline";
-      }
-    } catch {
-      system.healthStatus = "offline";
-    }
-    rerenderSystems();
-  } catch {
-    system.accessUrl = null;
-    system.healthStatus = "offline";
-    rerenderSystems();
   }
 }
 

@@ -63,8 +63,7 @@ function evaluatedComponent(status) {
 function componentLabel(id) {
   const labels = {
     "sister-core": "SisTer Core",
-    "sister-clima": "Sister-Clima",
-    "sister-nexo": "SisTer Nexo",
+    "sister-reference": "Subsistema de Referência",
   };
   return labels[id] || id;
 }

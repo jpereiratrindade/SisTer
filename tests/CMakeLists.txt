@@ -107,18 +107,10 @@ add_test(
         $<TARGET_FILE:sisterctl>)
 
 add_test(
-    NAME sisterd_clima_proxy_tests
+    NAME sisterd_reference_integration_tests
     COMMAND
         ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_clima_proxy_test.py
-        $<TARGET_FILE:sisterd>
-        ${CMAKE_SOURCE_DIR}/web)
-
-add_test(
-    NAME sisterd_nexo_identity_tests
-    COMMAND
-        ${Python3_EXECUTABLE}
-        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_nexo_identity_test.py
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_reference_integration_test.py
         $<TARGET_FILE:sisterd>
         ${CMAKE_SOURCE_DIR}/web)
 
