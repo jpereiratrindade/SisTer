@@ -22,3 +22,5 @@
 - [ADR-0020 - Gateway especializado e fronteira HTTP externa](./ADR-0020-specialized-http-gateway.md)
 - [ADR-0021 - Isolamento local por socket Unix ativado](./ADR-0021-local-upstream-unix-socket-activation.md)
 - [ADR-REF-01 - Perfis e autoridade da reflexividade operacional](./ADR-REF-01-reflexivity-profiles-and-authority.md)
+- [ADR-CPP-01 - Abstração eficiente e polimorfismo no núcleo C++](./ADR-CPP-01-efficient-abstraction-and-polymorphism.md)
+- [ADR-VEC-01 - Análise vetorial como capacidade analítica derivada](./ADR-VEC-01-derived-vector-analysis.md)

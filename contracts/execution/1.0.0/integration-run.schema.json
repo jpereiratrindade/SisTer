@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.dev/contracts/execution/1.0.0/integration-run.schema.json",
+  "type": "object",
+  "required": ["run_id", "idempotency_key", "agreement_id", "agreement_version", "participants", "purpose", "capability", "execution_status", "validity_status", "requested_at", "inputs"],
+  "additionalProperties": false,
+  "properties": {
+    "run_id": {"type": "string", "minLength": 1},
+    "idempotency_key": {"type": "string", "minLength": 1},
+    "agreement_id": {"type": "string"},
+    "agreement_version": {"type": "string"},
+    "participants": {"type": "array", "minItems": 2, "items": {"type": "string", "minLength": 1}},
+    "actor": {"type": "string"},
+    "purpose": {"type": "string", "minLength": 1},
+    "capability": {"type": "string", "minLength": 1},
+    "execution_status": {"enum": ["proposed", "authorized", "running", "completed", "failed", "cancelled", "superseded"]},
+    "validity_status": {"enum": ["pending", "valid", "invalid", "superseded"]},
+    "requested_at": {"type": "string", "format": "date-time"},
+    "started_at": {"type": "string", "format": "date-time"},
+    "finished_at": {"type": "string", "format": "date-time"},
+    "inputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/data-reference"}},
+    "outputs": {"type": "array", "items": {"$ref": "#/$defs/data-reference"}},
+    "errors": {"type": "array", "items": {"type": "object", "required": ["code", "message"], "additionalProperties": false, "properties": {"code": {"type": "string"}, "message": {"type": "string"}}}},
+    "evidence_refs": {"type": "array", "items": {"type": "string"}},
+    "retry_of_run_id": {"type": "string", "minLength": 1},
+    "reprocesses_run_id": {"type": "string", "minLength": 1},
+    "supersedes_run_id": {"type": "string", "minLength": 1},
+    "superseded_by_run_id": {"type": "string", "minLength": 1},
+    "supersession_reason": {"type": "string"}
+  },
+  "$defs": {
+    "data-reference": {"type": "object", "required": ["reference_id", "digest", "schema"], "additionalProperties": false, "properties": {"reference_id": {"type": "string"}, "digest": {"type": "string", "pattern": "^sha256:[A-Za-z0-9._:-]+$"}, "schema": {"type": "string"}, "source_system_id": {"type": "string"}}}
+  },
+  "allOf": [
+    {"if": {"properties": {"execution_status": {"const": "running"}}}, "then": {"required": ["started_at"], "not": {"required": ["finished_at"]}}},
+    {"if": {"properties": {"execution_status": {"const": "completed"}}}, "then": {"required": ["started_at", "finished_at", "outputs"], "not": {"required": ["errors"]}}},
+    {"if": {"properties": {"execution_status": {"const": "failed"}}}, "then": {"required": ["finished_at", "errors"]}},
+    {"if": {"properties": {"execution_status": {"const": "superseded"}}}, "then": {"required": ["superseded_by_run_id", "supersession_reason"]}},
+    {"if": {"required": ["retry_of_run_id"]}, "then": {"required": ["run_id"]}},
+    {"if": {"required": ["reprocesses_run_id"]}, "then": {"required": ["run_id"]}}
+  ]
+}

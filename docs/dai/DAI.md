@@ -13,6 +13,34 @@
 - Authority boundary: nenhum efeito operacional ou ação corretiva está
   autorizado.
 
+## 2026-08-02 - Início de EXEC-01
+
+- Decision: `IntegrationRun` é o próximo objeto funcional a ser materializado,
+  antes de `REF-01`.
+- Action: iniciar `WP-EXEC-01` pela validação do contrato
+  `contracts/execution/1.0.0`.
+- Impediment: persistência e serviço dependem de `PROV-01`, `INF-01` e do
+  acordo ativo Nexo–Compras.
+
+## 2026-08-02 - Política de abstração C++
+
+- Decision: o núcleo usará tipos de valor, agregados encapsulados, alternativas
+  fechadas e transições puras; polimorfismo virtual fica restrito às portas
+  externas com benefício demonstrável.
+- Action: aplicar `ADR-CPP-01` em `EXEC-01B/C` antes da implementação do
+  serviço ou da persistência.
+- Authority boundary: esta decisão não autoriza o `AssessmentEngine` nem
+  efeitos operacionais reflexivos.
+
+## 2026-08-02 - Análise vetorial derivada
+
+- Decision: vetores e embeddings são interpretações derivadas; não pertencem
+  ao agregado `IntegrationRun` nem substituem validação determinística.
+- Action: registrar `ADR-VEC-01`; manter `VEC-LAB-01` posterior a
+  `EXEC-01`, `PROV-01` e `INF-01`.
+- Authority boundary: nenhuma análise vetorial produz gate, efeito operacional
+  ou ação automática no piloto.
+
 ## 2026-07-30 - Nexo ampliado para portfólio multiprojeto
 
 - Decision: `nexo_projects` é a fonte de verdade e Aggregate raiz dos projetos
