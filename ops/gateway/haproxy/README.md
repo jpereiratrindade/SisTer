@@ -72,6 +72,15 @@ instale essa CA como autoridade de teste. Libere TCP 8443 somente na rede de
 teste, se o firewall do laptop bloquear a interface. O endereço final é
 `https://sister-gateway.test:8443`.
 
+O login do `lan-lab` usa `.run/gateway/auth-users.tsv` e o bootstrap HTTP fica
+desativado. Antes do primeiro início, crie a conta pelo terminal:
+
+```bash
+./scripts/bootstrap_gateway_lan_admin.sh \
+  "Administrador LAN" admin@example.org
+./scripts/run_gateway_lan_lab.sh
+```
+
 SEC-03B está encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`: `Content-Length`
 idêntico é normalizado com segurança, campos Upgrade isolados são removidos e
 Host idêntico duplicado permanece `ACCEPTED_LAB_DIVERGENCE` sob autoridade

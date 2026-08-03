@@ -57,6 +57,7 @@ REQUIRED = [
     "scripts/run_gateway_lan_lab.sh",
     "scripts/stop_gateway_lan_lab.sh",
     "scripts/check_gateway_lan_access.sh",
+    "scripts/bootstrap_gateway_lan_admin.sh",
     "scripts/app/socket_activation_lab.py",
     "tests/gateway_protocol_test.py",
     "tests/gateway_header_sanitization_test.py",

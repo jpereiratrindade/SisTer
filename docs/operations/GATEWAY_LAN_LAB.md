@@ -39,6 +39,37 @@ activation, renderiza o perfil `lan-lab` e valida o HAProxy antes de aceitá-lo.
 Ele falha se o endereço não for um IPv4 privado ou se houver um processo
 existente registrado pelo ciclo.
 
+## Criar o usuário de teste
+
+O `lan-lab` desativa o cadastro administrativo pela página. Isso é intencional:
+o acesso inicial deve ser criado no terminal, como em produção. Faça isso antes
+de iniciar o gateway pela primeira vez:
+
+```bash
+./scripts/bootstrap_gateway_lan_admin.sh \
+  "Administrador LAN" admin@example.org
+```
+
+Digite a mesma senha nas duas perguntas. A senha não aparece no terminal nem
+fica na linha de comando. Depois inicie o gateway:
+
+```bash
+./scripts/run_gateway_lan_lab.sh
+```
+
+Na página `/login`, use exatamente o e-mail e a senha criados acima. O arquivo
+usado pelo processo é `.run/gateway/auth-users.tsv`; uma conta existente no
+ambiente `dev` não é compartilhada automaticamente com o `lan-lab`.
+
+Se o gateway já estiver rodando, pare-o antes do bootstrap:
+
+```bash
+./scripts/stop_gateway_lan_lab.sh
+```
+
+O comando de bootstrap aceita uma única conta inicial. Depois do primeiro login,
+use a área administrativa **Equipe** para cadastrar outras contas.
+
 ## Acessar no mesmo laptop
 
 O comando de inicialização não altera `/etc/hosts` nem o armazenamento de
