@@ -115,6 +115,12 @@ add_test(
         ${CMAKE_SOURCE_DIR}/web)
 
 add_test(
+    NAME reference_subsystem_contract_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/reference_subsystem_contract_test.py)
+
+add_test(
     NAME sisterd_transport_quarantine_tests
     COMMAND
         ${Python3_EXECUTABLE}

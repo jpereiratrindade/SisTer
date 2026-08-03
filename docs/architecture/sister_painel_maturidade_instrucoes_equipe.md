@@ -188,10 +188,10 @@ Modelo inicial:
           "id": "baseline-integrity",
           "status": "PASS",
           "mandatory": true,
-          "description": "Snapshot permanece íntegro",
+          "description": "Referência normativa permanece conforme ao contrato",
           "detail": "Verificação concluída",
           "evidence": [
-            "labs/sisterd_lab/manifests/target.sha256"
+            "contracts/subsystem/1.0.0/interface.json"
           ]
         }
       ]

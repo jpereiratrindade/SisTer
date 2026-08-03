@@ -1,20 +1,8 @@
 {
-  "system_id": "sister_reference",
-  "system_name": "SisTer Reference Subsystem",
-  "system_version": "0.1.0",
-  "contract_version": "sister-contracts/0.1.0",
-  "type": "reference_subsystem",
-  "domain": ["platform_validation"],
-  "operational_mode": ["local_network", "controlled_test"],
-  "exports": ["identity_observation", "echo_result", "health", "readiness"],
-  "integration_modes": ["mediated_local_api"],
-  "responsible_repository": "SisTer",
-  "data_policy": {
-    "requires_provenance": true,
-    "allows_offline_sync": false,
-    "requires_schema_validation": true
-  },
   "schema": "sister.subsystem.manifest/1.0.0",
+  "system_id": "sister_reference",
+  "name": "SisTer Reference Subsystem",
+  "version": "0.1.0",
   "contract": "sister.subsystem/1.0.0",
   "adapter_version": "1.0.0",
   "mount_path": "/integrations/reference/",
@@ -25,10 +13,12 @@
     "internal_endpoint": "http://127.0.0.1:19001"
   },
   "technical_endpoints": {
-    "manifest": "/_sister/manifest",
-    "health": "/_sister/health",
-    "readiness": "/_sister/ready",
-    "capabilities": "/_sister/capabilities"
+    "manifest": "/manifest",
+    "health": "/health",
+    "readiness": "/ready",
+    "capabilities": "/capabilities",
+    "identity": "/identity",
+    "echo": "/echo"
   },
   "capabilities": [
     "reference.identity.read",

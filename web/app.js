@@ -9,7 +9,7 @@ const state = {
       status: "Validação",
       description: "Implementação mínima e parametrizada usada para provar contratos, identidade, roteamento, falhas e ciclo de vida.",
       contract: "sister.subsystem/1.0.0",
-      accessUrl: "/integrations/reference/api/identity",
+      accessUrl: "/integrations/reference/identity",
       accessMode: "Proxy autenticado pelo SisTer",
       accessRestricted: true,
       publicScope: "Identidade, versão e manifesto contratual",
@@ -36,12 +36,6 @@ const state = {
       rule: "Todo sistema federado declara identidade, dominio, modos operacionais, exports e politica de dados."
     },
     {
-      name: "CampoSync Package",
-      version: "0.1.0",
-      required: "Para ingestao offline",
-      rule: "Pacote precisa conter origem, contrato, conteudo declarado, data de criacao e checksum."
-    },
-    {
       name: "Reference Subsystem",
       version: "0.1.0",
       required: "Para validação do núcleo",
@@ -58,7 +52,7 @@ const state = {
     {
       time: "2026-07-09 22:05",
       source: "SisTer Core",
-      object: "pkg-camposync-001",
+      object: "reference-contract-001",
       kind: "log",
       ref: "audit/validation_report.json",
       status: "schema validado"
@@ -67,7 +61,7 @@ const state = {
   integrationResults: [
     { label: "Manifestos reconhecidos", value: 100 },
     { label: "Proveniencia minima", value: 96 },
-    { label: "Cobertura CampoSync", value: 82 },
+    { label: "Cobertura da API canônica", value: 100 },
     { label: "Prontidao para catalogo", value: 74 }
   ],
   services: [
@@ -78,8 +72,8 @@ const state = {
       score: 100
     },
     {
-      name: "Package Ingest",
-      summary: "Entrada de pacotes CampoSync e validacao de manifesto.",
+      name: "Conformance Runner",
+      summary: "Validação das rotas, identidade, transporte e falhas da referência.",
       status: "em validacao",
       score: 78
     },
@@ -107,11 +101,7 @@ const state = {
       status: "operacional",
       score: 88
     }
-  ],
-  climateSnapshot: {
-    status: "idle",
-    message: ""
-  }
+  ]
 };
 
 const qs = (selector, root = document) => root.querySelector(selector);
@@ -173,164 +163,6 @@ function rerenderSystems() {
   renderSystems(qs("#system-filter")?.value || "");
 }
 
-function climateSnapshotMarkup() {
-  const snapshot = state.climateSnapshot;
-  const browserLocationAvailable = window.isSecureContext && Boolean(navigator.geolocation);
-  if (snapshot.status === "loading") {
-    return `
-      <section class="climate-snapshot climate-snapshot--loading" aria-live="polite">
-        <span class="climate-snapshot-label">Precipitação no local</span>
-        <div class="climate-loading-bar"></div>
-        <small>Obtendo localização autorizada e estimativas…</small>
-      </section>
-    `;
-  }
-  if (snapshot.status === "error") {
-    return `
-      <section class="climate-snapshot climate-snapshot--error" aria-live="polite">
-        <span class="climate-snapshot-label">Precipitação no local</span>
-        <small>${escapeHtml(snapshot.message)}</small>
-        <button type="button" data-climate-location>Tentar novamente</button>
-      </section>
-    `;
-  }
-  if (snapshot.status !== "ready") {
-    return `
-      <section class="climate-snapshot" aria-live="polite">
-        <span class="climate-snapshot-label">Precipitação no local</span>
-        <button type="button" data-climate-location>Usar localização aproximada</button>
-        <small>
-          Somente após o clique; ${browserLocationAvailable
-            ? "localização autorizada pelo navegador"
-            : `localização aproximada por IP via
-              <a href="https://ipwhois.io/documentation" target="_blank" rel="noopener noreferrer">IPWhois</a>`}.
-          Consulta transitória, sem armazenamento no SisTer.
-        </small>
-      </section>
-    `;
-  }
-
-  const values = snapshot.values;
-  const maximum = Math.max(...values, 1);
-  const total = values.reduce((sum, value) => sum + value, 0);
-  const bars = values.map((value, index) => {
-    const height = value > 0 ? Math.max(2, (value / maximum) * 30) : 1;
-    const x = 3 + index * 20;
-    const y = 34 - height;
-    return `
-      <rect x="${x}" y="${y.toFixed(1)}" width="12" height="${height.toFixed(1)}" rx="2">
-        <title>${escapeHtml(snapshot.dates[index])}: ${value.toFixed(1)} mm</title>
-      </rect>
-    `;
-  }).join("");
-
-  return `
-    <section class="climate-snapshot climate-snapshot--ready" aria-live="polite">
-      <div class="climate-snapshot-heading">
-        <span class="climate-snapshot-label">Acumulado estimado · 7 dias</span>
-        <strong>${total.toFixed(1)} mm</strong>
-      </div>
-      <svg viewBox="0 0 140 38" role="img" aria-label="Precipitação diária dos seis dias anteriores e de hoje">
-        <line x1="1" y1="34.5" x2="139" y2="34.5"></line>
-        ${bars}
-      </svg>
-      <div class="climate-snapshot-footer">
-        <small>
-          ${escapeHtml(snapshot.locationLabel)} ·
-          ${snapshot.locationMethod === "aprox. por IP"
-            ? `<a href="https://ipwhois.io/documentation" target="_blank" rel="noopener noreferrer">IPWhois</a>`
-            : "navegador"} ·
-          <a href="https://open-meteo.com/en/docs" target="_blank" rel="noopener noreferrer">Open-Meteo</a>
-        </small>
-        <button type="button" data-climate-location aria-label="Atualizar precipitação local">Atualizar</button>
-      </div>
-    </section>
-  `;
-}
-
-function browserPosition() {
-  return new Promise((resolve, reject) => {
-    navigator.geolocation.getCurrentPosition(resolve, reject, {
-      enableHighAccuracy: false,
-      maximumAge: 900000,
-      timeout: 8000
-    });
-  });
-}
-
-async function approximateAccessLocation() {
-  if (window.isSecureContext && navigator.geolocation) {
-    const position = await browserPosition();
-    const latitude = Number(position.coords.latitude.toFixed(2));
-    const longitude = Number(position.coords.longitude.toFixed(2));
-    return {
-      latitude,
-      longitude,
-      label: `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
-      method: "navegador"
-    };
-  }
-
-  const response = await fetch("https://ipwho.is/", {cache: "no-store"});
-  if (!response.ok) throw new Error("ip_location_unavailable");
-  const payload = await response.json();
-  if (!payload.success || !Number.isFinite(payload.latitude) || !Number.isFinite(payload.longitude)) {
-    throw new Error("ip_location_invalid");
-  }
-  const latitude = Number(payload.latitude.toFixed(2));
-  const longitude = Number(payload.longitude.toFixed(2));
-  const place = [payload.city, payload.region_code].filter(Boolean).join("/");
-  return {
-    latitude,
-    longitude,
-    label: place || `${latitude.toFixed(2)}, ${longitude.toFixed(2)}`,
-    method: "aprox. por IP"
-  };
-}
-
-async function requestLocalPrecipitation() {
-  state.climateSnapshot = {status: "loading", message: ""};
-  rerenderSystems();
-  try {
-    const location = await approximateAccessLocation();
-    const query = new URLSearchParams({
-      latitude: String(location.latitude),
-      longitude: String(location.longitude),
-      daily: "precipitation_sum",
-      past_days: "6",
-      forecast_days: "1",
-      timezone: "auto"
-    });
-    const response = await fetch(`https://api.open-meteo.com/v1/forecast?${query}`, {
-      cache: "no-store"
-    });
-    if (!response.ok) throw new Error("weather_request_failed");
-    const payload = await response.json();
-    const dates = payload.daily?.time;
-    const values = payload.daily?.precipitation_sum;
-    if (!Array.isArray(dates) || !Array.isArray(values) || dates.length !== 7 || values.length !== 7) {
-      throw new Error("weather_response_invalid");
-    }
-    state.climateSnapshot = {
-      status: "ready",
-      dates,
-      values: values.map((value) => Number(value) || 0),
-      latitude: location.latitude,
-      longitude: location.longitude,
-      locationLabel: location.label,
-      locationMethod: location.method
-    };
-  } catch (error) {
-    state.climateSnapshot = {
-      status: "error",
-      message: error.code === 1
-        ? "Localização não autorizada. Nenhum dado foi consultado."
-        : "Não foi possível obter a localização ou a estimativa climática."
-    };
-  }
-  rerenderSystems();
-}
-
 function renderSystems(filter = "") {
   const normalized = filter.trim().toLowerCase();
   const systems = state.systems.filter((system) => {
@@ -359,7 +191,6 @@ function renderSystems(filter = "") {
         </p>
       `
       : "";
-    const climateSnapshot = "";
     return `
     <article class="system-card">
       <span class="system-mark" aria-hidden="true">${systemInitials(system.name)}</span>
@@ -375,7 +206,6 @@ function renderSystems(filter = "") {
       <span class="status-pill" data-status="${statusSlug(system.status)}">${system.status}</span>
       <p class="system-description">${system.description}</p>
       ${dataReference}
-      ${climateSnapshot}
       <div class="system-actions">
         <button class="text-link" type="button" data-system-id="${system.id}">Conhecer sistema →</button>
       </div>

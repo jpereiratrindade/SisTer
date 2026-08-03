@@ -19,6 +19,9 @@ REQUIRED = [
     "contracts/README.md",
     "contracts/integration_agreement.schema.json",
     "contracts/integration_receipt.schema.json",
+    "contracts/subsystem/1.0.0/interface.json",
+    "contracts/subsystem/1.0.0/identity.schema.json",
+    "contracts/subsystem/1.0.0/echo.schema.json",
     "contracts/sister_studio_capabilities.schema.json",
     "contracts/sister_studio_health.schema.json",
     "contracts/sister_clima_governance.schema.json",
@@ -38,6 +41,7 @@ REQUIRED = [
     "adapters/sister_campo/README.md",
     "examples/sister_campo_manifest_example.json",
     "reference/sister-reference/manifest.json",
+    "docs/governance/SUBSYSTEM_CONFORMANCE.md",
     "docs/governance/SISTER_NEXO.md",
     "docs/governance/NEXO_COMPRAS.md",
     "docs/adr/ADR-0020-specialized-http-gateway.md",
@@ -95,6 +99,7 @@ def load_json(path):
 climate_policy = load_json("examples/sister_clima_governance_example.json")
 climate_manifest = load_json("examples/sister_clima_manifest_example.json")
 reference_manifest = load_json("reference/sister-reference/manifest.json")
+subsystem_interface = load_json("contracts/subsystem/1.0.0/interface.json")
 load_json("contracts/sister_clima_governance.schema.json")
 
 policy_errors = []
@@ -104,6 +109,15 @@ if reference_manifest.get("contract") != "sister.subsystem/1.0.0":
     policy_errors.append("reference subsystem contract is invalid")
 if reference_manifest.get("production_eligible") is not False:
     policy_errors.append("reference subsystem must not be production eligible")
+if subsystem_interface.get("contract") != reference_manifest.get("contract"):
+    policy_errors.append("reference subsystem interface and manifest diverge")
+interface_endpoints = {
+    endpoint.get("name"): endpoint.get("path")
+    for endpoint in subsystem_interface.get("endpoints", [])
+    if isinstance(endpoint, dict)
+}
+if reference_manifest.get("technical_endpoints") != interface_endpoints:
+    policy_errors.append("reference subsystem canonical endpoints diverge")
 if climate_policy.get("contract_id") != "sister-clima.governance":
     policy_errors.append("Sister-Clima governance contract id is invalid")
 if climate_policy.get("contract_version") != "1.0.0":

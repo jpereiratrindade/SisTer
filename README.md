@@ -324,7 +324,7 @@ Detalhes: `docs/architecture/ENVIRONMENTS.md`.
 ## Validar um manifesto
 
 ```bash
-./build/apps/sisterctl/sisterctl validate-manifest reference/sister-reference/manifest.json
+python3 tests/reference_subsystem_contract_test.py
 ```
 
 ## Interface

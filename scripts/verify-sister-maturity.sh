@@ -31,7 +31,7 @@ declare -A STAGE_RANK=(
 )
 
 # Caminhos de scripts de evidência. Podem ser sobrescritos por .sister/maturity.conf.
-VERIFY_IDENTICAL="scripts/verify-identical.sh"
+VERIFY_IDENTICAL="scripts/ci/test-reference-contract.sh"
 SMOKE_TEST="scripts/ci/test-smoke.sh"
 UNIT_TEST="scripts/ci/test-unit.sh"
 CONTRACT_TEST="scripts/ci/test-contract.sh"
@@ -441,7 +441,7 @@ EOF
   if [[ ! -f "$root/.sister/maturity.conf" ]]; then
     cat > "$root/.sister/maturity.conf" <<'EOF'
 # Caminhos relativos à raiz do repositório.
-VERIFY_IDENTICAL=scripts/verify-identical.sh
+VERIFY_IDENTICAL=scripts/ci/test-reference-contract.sh
 SMOKE_TEST=scripts/ci/test-smoke.sh
 UNIT_TEST=scripts/ci/test-unit.sh
 CONTRACT_TEST=scripts/ci/test-contract.sh
@@ -495,9 +495,9 @@ run_pre_alpha() {
   check_no_tracked_secrets
 
   run_test_script pre-alpha baseline-integrity yes "$VERIFY_IDENTICAL" \
-    "Snapshot/baseline permanece íntegro"
+    "Referência normativa permanece conforme ao contrato"
   run_test_script pre-alpha smoke-flow yes "$SMOKE_TEST" \
-    "Smoke tests preservam autenticação, Nexo e Clima"
+    "Smoke tests preservam autenticação e fronteira pública"
 
   check_any_match pre-alpha transition-plan yes \
     '(^|/)(docs/.*)?sister.*transi(c|ç)(a|ã)o.*prototipo.*\.(md|tex)$' \

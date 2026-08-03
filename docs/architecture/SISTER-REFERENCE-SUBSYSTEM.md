@@ -8,10 +8,10 @@ comportamento específico de produtos externos.
 ## Contrato mínimo
 
 - identidade e manifesto `sister.subsystem/1.0.0`;
-- health e readiness;
+- `GET /manifest`, `/health`, `/ready` e `/capabilities`;
 - capacidades `reference.identity.read` e `reference.echo.execute`;
-- `GET /api/whoami` para identidade mediada;
-- `POST /api/echo` para percurso funcional completo;
+- `GET /identity` para identidade mediada;
+- `POST /echo` para percurso funcional completo;
 - loopback `127.0.0.1:19001`, sem banco, TLS interno ou frontend.
 
 ## Modos parametrizados

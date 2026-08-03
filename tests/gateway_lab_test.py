@@ -29,7 +29,7 @@ def main():
             wait_for_health(process, UPSTREAM_SOCKET)
             with running_haproxy(expect_backend=True):
                 assert status(request(path="/api/health")) == 200
-                assert status(request(path="/integrations/reference/api/identity")) == 404
+                assert status(request(path="/integrations/reference/identity")) == 404
         finally:
             stop(process)
             listener.close()

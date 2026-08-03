@@ -4,7 +4,7 @@
   stage: pre-alpha
   type: script
   mandatory: true
-  description: Snapshot/baseline permanece íntegro
+  description: Referência normativa permanece conforme ao contrato
   script_ref: baseline.verify
   timeout_seconds: 300
 - schema: sister.engineering.maturity-check/1.0.0
@@ -12,7 +12,7 @@
   stage: pre-alpha
   type: script
   mandatory: true
-  description: Smoke tests preservam autenticação, Nexo e Clima
+  description: Smoke tests preservam autenticação e fronteira pública
   script_ref: ci.test-smoke
   timeout_seconds: 300
 - schema: sister.engineering.maturity-check/1.0.0
