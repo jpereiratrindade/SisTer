@@ -1626,23 +1626,30 @@ void handleClient(
                     clientFd, actor, "reference.identity.read", "sister-reference",
                     "platform_validation", request, config, requestId, peer, isHead, requestStart)) return;
             sendResponse(clientFd,
-                         redirectResponse(308, "Permanent Redirect", "/integrations/reference/api/identity"),
+                         redirectResponse(308, "Permanent Redirect", "/integrations/reference/identity"),
                          config, requestId, isHead);
             return;
         }
 
-        const bool identityRead = request.method == "GET" && (
+        const bool canonicalRead = request.method == "GET" && (
+            request.path == "/integrations/reference/manifest" ||
+            request.path == "/integrations/reference/health" ||
+            request.path == "/integrations/reference/ready" ||
+            request.path == "/integrations/reference/capabilities" ||
+            request.path == "/integrations/reference/identity");
+        const bool compatibilityRead = request.method == "GET" && (
             request.path == "/integrations/reference/api/identity" ||
             request.path == "/integrations/reference/api/whoami" ||
             request.path.starts_with("/integrations/reference/_sister/"));
         const bool echoExecute = request.method == "POST" &&
-            request.path == "/integrations/reference/api/echo";
-        if (!identityRead && !echoExecute) {
+            (request.path == "/integrations/reference/echo" ||
+             request.path == "/integrations/reference/api/echo");
+        if (!canonicalRead && !compatibilityRead && !echoExecute) {
             sendResponse(clientFd, jsonError(404, "Not Found", "Recurso não encontrado."),
                          config, requestId, isHead);
             return;
         }
-        const std::string_view capability = identityRead
+        const std::string_view capability = (canonicalRead || compatibilityRead)
             ? "reference.identity.read" : "reference.echo.execute";
         if (!authorizeOrReject(
                 clientFd, actor, capability, "sister-reference", "platform_validation",

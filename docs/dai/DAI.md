@@ -1,5 +1,18 @@
 # DAI - SisTer
 
+## 2026-08-03 - API canônica e retirada do snapshot sisterd_lab
+
+- Decision: estabilizar `GET /manifest`, `/health`, `/ready`, `/capabilities`,
+  `/identity` e `POST /echo` como API canônica `sister.subsystem/1.0.0`.
+- Decision: tratar caminhos `/_sister/*` e `/api/*` somente como aliases
+  transitórios, sem valor de evidência de conformidade.
+- Decision: remover `labs/sisterd_lab`, pois duplicava o executável e preservava
+  clientes reais já retirados do núcleo.
+- Action: substituir integridade de snapshot por teste executável de conformidade
+  da referência e documentar a máquina de estados até `AUTHORIZED`.
+- Evidence: `reference_subsystem_contract_tests` e
+  `sisterd_reference_integration_tests` aprovados.
+
 ## 2026-08-03 - Subsistema de referência como alvo normativo
 
 - Decision: suspender integração operacional dos subsistemas reais e marcar

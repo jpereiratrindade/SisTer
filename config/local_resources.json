@@ -25,7 +25,7 @@
         "required": true,
         "health": {
           "url": "http://127.0.0.1:19001/api/health",
-          "expected_json": {"status": "ok", "service": "sister-reference"}
+          "expected_json": {"status": "ok", "system_id": "sister_reference"}
         },
         "start": {
           "argv": ["./scripts/run.sh"],

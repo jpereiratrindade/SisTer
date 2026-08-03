@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from datetime import datetime, timezone
+import hashlib
 import hmac
 import json
 import os
@@ -13,10 +15,12 @@ import time
 
 
 ROOT = Path(__file__).resolve().parent
-MANIFEST = json.loads((ROOT / "manifest.json").read_text(encoding="utf-8"))
+MANIFEST_BYTES = (ROOT / "manifest.json").read_bytes()
+MANIFEST = json.loads(MANIFEST_BYTES)
+MANIFEST_DIGEST = "sha256:" + hashlib.sha256(MANIFEST_BYTES).hexdigest()
 HOST = "127.0.0.1"
-PORT = integer_port = int(os.environ.get("SISTER_REFERENCE_PORT", "19001"))
-if not 1024 <= integer_port <= 65535:
+PORT = int(os.environ.get("SISTER_REFERENCE_PORT", "19001"))
+if not 1024 <= PORT <= 65535:
     raise SystemExit("invalid SISTER_REFERENCE_PORT")
 MODES = {
     "healthy", "degraded", "unavailable", "delayed", "invalid-response",
@@ -62,6 +66,10 @@ class Handler(BaseHTTPRequestHandler):
         supplied = self.headers.get("X-Sister-Proxy-Token", "")
         return hmac.compare_digest(supplied, PROXY_TOKEN)
 
+    @staticmethod
+    def now() -> str:
+        return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+
     def controlled_failure(self) -> bool:
         if DELAY_MS or MODE == "delayed":
             time.sleep(max(DELAY_MS, 1_000 if MODE == "delayed" else 0) / 1000)
@@ -79,29 +87,53 @@ class Handler(BaseHTTPRequestHandler):
         return False
 
     def do_GET(self) -> None:
-        if self.path in {"/api/health", "/_sister/health"}:
+        if self.path in {"/health", "/api/health", "/_sister/health"}:
             if MODE == "unavailable":
                 self.close_connection = True
                 return
             status = "degraded" if MODE == "degraded" else "ok"
-            self.response(200, {"status": status, "service": "sister-reference", "mode": MODE})
+            self.response(200, {
+                "schema": "sister.subsystem.health/1.0.0",
+                "system_id": "sister_reference",
+                "status": status,
+                "checked_at": self.now(),
+            })
             return
-        if self.path == "/_sister/ready":
-            self.response(200 if MODE == "healthy" else 503, {"ready": MODE == "healthy"})
+        if self.path in {"/ready", "/_sister/ready"}:
+            ready = MODE == "healthy"
+            self.response(200 if ready else 503, {
+                "schema": "sister.subsystem.readiness/1.0.0",
+                "system_id": "sister_reference",
+                "status": "ready" if ready else "not_ready",
+                "contract_version": "1.0.0",
+                "manifest_digest": MANIFEST_DIGEST,
+                "dependencies": {},
+                "degraded_capabilities": [],
+            })
             return
-        if self.path in {"/_sister/manifest", "/api/identity"}:
+        if self.path in {"/manifest", "/_sister/manifest", "/api/identity"}:
             self.response(200, MANIFEST)
             return
-        if self.path == "/_sister/capabilities":
-            self.response(200, {"capabilities": MANIFEST["capabilities"]})
+        if self.path in {"/capabilities", "/_sister/capabilities"}:
+            self.response(200, {
+                "schema": "sister.subsystem.capabilities/1.0.0",
+                "contract": MANIFEST["contract"],
+                "system_id": MANIFEST["system_id"],
+                "generated_at": self.now(),
+                "capabilities": [
+                    {"id": "reference.identity.read", "description": "Read mediated identity", "risk": "low"},
+                    {"id": "reference.echo.execute", "description": "Execute controlled echo", "risk": "low"},
+                ],
+            })
             return
-        if self.path == "/api/whoami":
+        if self.path in {"/identity", "/api/whoami"}:
             if not self.trusted():
                 self.response(401, {"error": "trusted_proxy_required"})
                 return
             if self.controlled_failure():
                 return
             self.response(200, {
+                "schema": "sister.subsystem.identity/1.0.0",
                 "subject": self.headers.get("X-Sister-Subject"),
                 "name": self.headers.get("X-Sister-Name"),
                 "email": self.headers.get("X-Sister-Email"),
@@ -113,7 +145,7 @@ class Handler(BaseHTTPRequestHandler):
         self.response(404, {"error": "not_found"})
 
     def do_POST(self) -> None:
-        if self.path != "/api/echo":
+        if self.path not in {"/echo", "/api/echo"}:
             self.response(404, {"error": "not_found"})
             return
         if not self.trusted():
@@ -131,7 +163,11 @@ class Handler(BaseHTTPRequestHandler):
         except (ValueError, json.JSONDecodeError):
             self.response(400, {"error": "invalid_echo_payload"})
             return
-        self.response(200, {"value": payload["value"], "processed_by": "sister_reference"})
+        self.response(200, {
+            "schema": "sister.subsystem.echo/1.0.0",
+            "value": payload["value"],
+            "processed_by": "sister_reference",
+        })
 
 
 if __name__ == "__main__":

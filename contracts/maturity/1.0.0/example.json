@@ -21,7 +21,7 @@
   },
   "stages": [
     {"id": "pre-alpha", "label": "Pré-Alfa", "state": "blocked", "checks": [
-      {"id": "baseline-integrity", "status": "PASS", "mandatory": true, "description": "Snapshot permanece íntegro", "detail": "Verificação concluída", "evidence": ["labs/sisterd_lab/manifests/target.sha256"]},
+      {"id": "baseline-integrity", "status": "PASS", "mandatory": true, "description": "Referência normativa permanece conforme ao contrato", "detail": "Verificação concluída", "evidence": ["contracts/subsystem/1.0.0/interface.json"]},
       {"id": "smoke-flow", "status": "FAIL", "mandatory": true, "description": "Smoke tests aprovados", "detail": "Script não encontrado", "evidence": []},
       {"id": "git-clean", "status": "WARN", "mandatory": false, "description": "Árvore Git limpa", "detail": "Há alterações locais", "evidence": []}
     ]},

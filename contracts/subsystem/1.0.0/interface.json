@@ -1,0 +1,47 @@
+{
+  "schema": "sister.subsystem.interface/1.0.0",
+  "contract": "sister.subsystem/1.0.0",
+  "transport": {
+    "internal_only": true,
+    "public_listener_prohibited": true,
+    "external_access": "sister_gateway_only"
+  },
+  "endpoints": [
+    {"name": "manifest", "method": "GET", "path": "/manifest", "authentication": "none", "success_status": 200, "response_schema": "manifest.schema.json"},
+    {"name": "health", "method": "GET", "path": "/health", "authentication": "none", "success_status": 200, "response_schema": "health.schema.json"},
+    {"name": "readiness", "method": "GET", "path": "/ready", "authentication": "none", "success_status": 200, "response_schema": "readiness.schema.json"},
+    {"name": "capabilities", "method": "GET", "path": "/capabilities", "authentication": "none", "success_status": 200, "response_schema": "capabilities.schema.json"},
+    {"name": "identity", "method": "GET", "path": "/identity", "authentication": "sister_internal_proxy", "success_status": 200, "response_schema": "identity.schema.json"},
+    {"name": "echo", "method": "POST", "path": "/echo", "authentication": "sister_internal_proxy", "success_status": 200, "response_schema": "echo.schema.json"}
+  ],
+  "required_headers": {
+    "proxy_authentication": "X-Sister-Proxy-Token",
+    "identity": [
+      "X-Sister-Subject",
+      "X-Sister-Name",
+      "X-Sister-Email",
+      "X-Sister-Role",
+      "X-Request-ID"
+    ]
+  },
+  "failure_contract": {
+    "unauthenticated_internal_operation": 401,
+    "unknown_route": 404,
+    "invalid_payload": 400,
+    "unready": 503,
+    "gateway_upstream_failure": 502
+  },
+  "compatibility_aliases": {
+    "normative": false,
+    "paths": [
+      "/api/health",
+      "/_sister/health",
+      "/_sister/ready",
+      "/_sister/manifest",
+      "/_sister/capabilities",
+      "/api/identity",
+      "/api/whoami",
+      "/api/echo"
+    ]
+  }
+}

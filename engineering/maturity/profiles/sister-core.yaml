@@ -11,7 +11,7 @@ scripts:
   ci.test-smoke:
     path: scripts/app/smoke.sh
   baseline.verify:
-    path: labs/sisterd_lab/scripts/verify-identical.sh
+    path: scripts/ci/test-reference-contract.sh
 check_suites:
   - "engineering/maturity/checks/common/repository.yaml"
   - "engineering/maturity/checks/common/security-baseline.yaml"

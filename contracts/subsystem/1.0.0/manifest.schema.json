@@ -45,12 +45,14 @@
     "technical_endpoints": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["manifest", "health", "readiness", "capabilities"],
+      "required": ["manifest", "health", "readiness", "capabilities", "identity", "echo"],
       "properties": {
-        "manifest": {"const": "/_sister/manifest"},
-        "health": {"const": "/_sister/health"},
-        "readiness": {"const": "/_sister/ready"},
-        "capabilities": {"const": "/_sister/capabilities"}
+        "manifest": {"const": "/manifest"},
+        "health": {"const": "/health"},
+        "readiness": {"const": "/ready"},
+        "capabilities": {"const": "/capabilities"},
+        "identity": {"const": "/identity"},
+        "echo": {"const": "/echo"}
       }
     },
     "capabilities": {

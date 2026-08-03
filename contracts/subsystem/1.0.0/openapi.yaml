@@ -3,7 +3,7 @@ info:
   title: SisTer Subsystem Technical Surface
   version: 1.0.0
 paths:
-  /_sister/manifest:
+  /manifest:
     get:
       summary: Return the approved subsystem manifest.
       responses:
@@ -13,7 +13,7 @@ paths:
             application/json:
               schema:
                 $ref: "./manifest.schema.json"
-  /_sister/health:
+  /health:
     get:
       summary: Return sanitized process health.
       responses:
@@ -23,7 +23,7 @@ paths:
             application/json:
               schema:
                 $ref: "./health.schema.json"
-  /_sister/ready:
+  /ready:
     get:
       summary: Return sanitized readiness for useful traffic.
       responses:
@@ -33,7 +33,7 @@ paths:
             application/json:
               schema:
                 $ref: "./readiness.schema.json"
-  /_sister/capabilities:
+  /capabilities:
     get:
       summary: Return implemented subsystem capabilities.
       responses:
@@ -43,3 +43,39 @@ paths:
             application/json:
               schema:
                 $ref: "./capabilities.schema.json"
+  /identity:
+    get:
+      summary: Return identity reconstructed by the SisTer trusted proxy.
+      security:
+        - sisterInternalProxy: []
+      responses:
+        "200":
+          description: Mediated identity
+          content:
+            application/json:
+              schema:
+                $ref: "./identity.schema.json"
+        "401":
+          description: Trusted proxy authentication required
+  /echo:
+    post:
+      summary: Execute the canonical functional round trip.
+      security:
+        - sisterInternalProxy: []
+      responses:
+        "200":
+          description: Echo result
+          content:
+            application/json:
+              schema:
+                $ref: "./echo.schema.json"
+        "400":
+          description: Invalid payload
+        "401":
+          description: Trusted proxy authentication required
+components:
+  securitySchemes:
+    sisterInternalProxy:
+      type: apiKey
+      in: header
+      name: X-Sister-Proxy-Token

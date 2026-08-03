@@ -18,6 +18,12 @@ validação. Ele implementa o contrato mínimo `sister.subsystem/1.0.0`, escuta
 somente em `127.0.0.1:19001`, não possui persistência nem gateway e aceita
 identidade funcional somente quando mediada pelo `sisterd` com token interno.
 
+A API normativa usa `/manifest`, `/health`, `/ready`, `/capabilities`,
+`/identity` e `/echo`. O descritor executável é
+`contracts/subsystem/1.0.0/interface.json`; a referência canônica é
+`reference/sister-reference`. Snapshots duplicados do executável não constituem
+mais laboratório válido.
+
 Integrações reais ficam em estado `quarantined`, com
 `operational_access: false`. Elas não são iniciadas, roteadas, apresentadas no
 catálogo vigente nem usadas como evidência de maturidade do núcleo. ADRs,

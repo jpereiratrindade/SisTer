@@ -24,6 +24,8 @@ class SubsystemContractTests(unittest.TestCase):
             "manifest.schema.json",
             "capabilities.schema.json",
             "identity-claims.schema.json",
+            "identity.schema.json",
+            "echo.schema.json",
             "health.schema.json",
             "readiness.schema.json",
             "error.schema.json",
@@ -33,22 +35,16 @@ class SubsystemContractTests(unittest.TestCase):
         ):
             self.assertTrue((CONTRACT / name).is_file(), name)
 
-    def test_clima_and_nexo_share_manifest_contract(self):
+    def test_reference_implements_manifest_contract(self):
         validator = self.validator("manifest.schema.json")
-        manifests = [self.load(EXAMPLES / "clima-manifest.json"), self.load(EXAMPLES / "nexo-manifest.json")]
-        for manifest in manifests:
-            validator.validate(manifest)
-            self.assertEqual("sister.subsystem/1.0.0", manifest["contract"])
-            self.assertTrue(manifest["mount_path"].startswith("/integrations/"))
-            self.assertEqual("/_sister/health", manifest["technical_endpoints"]["health"])
-        self.assertNotEqual(manifests[0]["system_id"], manifests[1]["system_id"])
+        manifest = self.load(ROOT / "reference/sister-reference/manifest.json")
+        validator.validate(manifest)
+        self.assertEqual("sister.subsystem/1.0.0", manifest["contract"])
+        self.assertEqual("/integrations/reference/", manifest["mount_path"])
+        self.assertEqual("/health", manifest["technical_endpoints"]["health"])
 
     def test_examples_validate_against_their_schemas(self):
         pairs = (
-            ("capabilities.schema.json", "clima-capabilities.json"),
-            ("capabilities.schema.json", "nexo-capabilities.json"),
-            ("health.schema.json", "clima-health.json"),
-            ("readiness.schema.json", "clima-readiness.json"),
             ("error.schema.json", "error.json"),
             ("audit-event.schema.json", "audit-event.json"),
             ("identity-claims.schema.json", "identity-claims.json"),
@@ -59,9 +55,9 @@ class SubsystemContractTests(unittest.TestCase):
 
     def test_openapi_references_contract_schemas(self):
         source = (CONTRACT / "openapi.yaml").read_text(encoding="utf-8")
-        for name in ("manifest.schema.json", "health.schema.json", "readiness.schema.json", "capabilities.schema.json"):
+        for name in ("manifest.schema.json", "health.schema.json", "readiness.schema.json", "capabilities.schema.json", "identity.schema.json", "echo.schema.json"):
             self.assertIn(name, source)
-        for path in ("/_sister/manifest", "/_sister/health", "/_sister/ready", "/_sister/capabilities"):
+        for path in ("/manifest", "/health", "/ready", "/capabilities", "/identity", "/echo"):
             self.assertIn(path, source)
 
 

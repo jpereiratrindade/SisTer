@@ -829,7 +829,6 @@ h1 {
     "mark identity status"
     "mark description description"
     ". data-reference data-reference"
-    ". climate-snapshot climate-snapshot"
     ". actions actions";
   gap: 7px 12px;
   min-height: 150px;
@@ -946,104 +945,6 @@ h1 {
 .system-data-reference a:focus-visible {
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-.climate-snapshot {
-  display: grid;
-  grid-area: climate-snapshot;
-  gap: 5px;
-  min-height: 62px;
-  padding: 8px 10px;
-  border: 1px solid #d8e8ee;
-  border-radius: 8px;
-  background: linear-gradient(135deg, #f2f8fb, #eef8f7);
-  color: #60758a;
-}
-
-.climate-snapshot-label {
-  color: var(--navy);
-  font-size: .65rem;
-  font-weight: 850;
-}
-
-.climate-snapshot button {
-  justify-self: start;
-  padding: 0;
-  border: 0;
-  background: transparent;
-  color: var(--teal);
-  font-size: .67rem;
-  font-weight: 850;
-  text-decoration: underline;
-  text-underline-offset: 2px;
-  cursor: pointer;
-}
-
-.climate-snapshot small {
-  color: #718399;
-  font-size: .59rem;
-  line-height: 1.35;
-}
-
-.climate-snapshot small a {
-  color: #527b94;
-  font-weight: 800;
-}
-
-.climate-snapshot-heading,
-.climate-snapshot-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.climate-snapshot-heading strong {
-  color: var(--blue);
-  font-size: .8rem;
-}
-
-.climate-snapshot svg {
-  width: 100%;
-  height: 38px;
-  overflow: visible;
-}
-
-.climate-snapshot svg line {
-  stroke: #cadbe4;
-  stroke-width: 1;
-}
-
-.climate-snapshot svg rect {
-  fill: var(--blue);
-  opacity: .82;
-}
-
-.climate-snapshot--error {
-  border-color: #ecd9c5;
-  background: #fff9f1;
-}
-
-.climate-loading-bar {
-  height: 7px;
-  overflow: hidden;
-  border-radius: 999px;
-  background: #dce8ee;
-}
-
-.climate-loading-bar::after {
-  display: block;
-  width: 42%;
-  height: 100%;
-  border-radius: inherit;
-  background: linear-gradient(90deg, var(--blue), var(--teal-light));
-  content: "";
-  animation: climate-loading 1.1s ease-in-out infinite alternate;
-}
-
-@keyframes climate-loading {
-  from { transform: translateX(-10%); }
-  to { transform: translateX(150%); }
 }
 
 .system-actions {
@@ -1247,7 +1148,7 @@ canvas {
   font-size: .78rem;
 }
 
-.studio-connection { padding: 22px; }
+.reference-connection { padding: 22px; }
 .connection-heading { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 13px; }
 .connection-heading h3 { margin-top: 3px; font-size: 1.05rem; }
 .connection-heading p { margin: 4px 0 0; color: var(--muted); font-size: .75rem; }
@@ -1259,15 +1160,15 @@ canvas {
 .connection-facts article { padding: 12px; border-radius: 8px; background: var(--soft); }
 .connection-facts span { display: block; color: var(--muted); font-size: .58rem; font-weight: 850; text-transform: uppercase; letter-spacing: .05em; }
 .connection-facts strong { display: block; margin-top: 5px; color: var(--navy); font-size: .76rem; }
-.studio-integration-grid { display: grid; grid-template-columns: .72fr 1.28fr; gap: 16px; margin-top: 16px; }
+.reference-integration-grid { display: grid; grid-template-columns: .72fr 1.28fr; gap: 16px; margin-top: 16px; }
 .module-status-list,.capability-contract-list { display: grid; gap: 9px; }
 .module-status-list article,.capability-contract-list article { display: flex; align-items: center; gap: 12px; padding: 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--soft); }
 .module-status-list div,.capability-contract-list div { display: flex; min-width: 0; flex: 1; flex-direction: column; }
 .module-status-list strong,.capability-contract-list strong { color: var(--navy); font-size: .78rem; }
 .module-status-list small,.capability-contract-list small { color: var(--muted); font-size: .63rem; }
 .capability-contract-list article > span { color: var(--teal); font-size: .68rem; font-weight: 800; text-align: right; }
-.studio-privacy { display: flex; align-items: center; gap: 28px; margin-top: 16px; border-left: 4px solid var(--teal); }
-.studio-privacy > div { flex: 0 0 190px; }.studio-privacy p { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.55; }
+.reference-boundary { display: flex; align-items: center; gap: 28px; margin-top: 16px; border-left: 4px solid var(--teal); }
+.reference-boundary > div { flex: 0 0 190px; }.reference-boundary p { margin: 0; color: var(--muted); font-size: .76rem; line-height: 1.55; }
 
 .service-status {
   display: flex;
@@ -1633,7 +1534,7 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
-  .studio-integration-grid {
+  .reference-integration-grid {
     grid-template-columns: 1fr;
   }
 
@@ -1711,7 +1612,6 @@ tr:last-child td {
       "mark status"
       "description description"
       "data-reference data-reference"
-      "climate-snapshot climate-snapshot"
       "actions actions";
   }
 
@@ -1736,7 +1636,7 @@ tr:last-child td {
     grid-template-columns: 1fr;
   }
 
-  .studio-privacy {
+  .reference-boundary {
     align-items: flex-start;
     flex-direction: column;
     gap: 10px;

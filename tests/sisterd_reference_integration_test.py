@@ -77,8 +77,11 @@ def main():
         [sys.executable, str(REFERENCE)], env=reference_environment,
         stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
     )
-    wait_for(reference_port, reference)
-    assert request(reference_port, "GET", "/api/whoami")[0] == 401
+    wait_for(reference_port, reference, "/health")
+    for path in ("/manifest", "/health", "/ready", "/capabilities"):
+        assert request(reference_port, "GET", path)[0] == 200, path
+    assert request(reference_port, "GET", "/identity")[0] == 401
+    assert request(reference_port, "POST", "/echo", {"value": "direct"})[0] == 401
 
     with tempfile.TemporaryDirectory(prefix="sister-reference-e2e-") as temporary:
         environment = os.environ.copy()
@@ -106,7 +109,7 @@ def main():
             cookie = headers["Set-Cookie"].split(";", 1)[0]
 
             status, _, payload = request(
-                sister_port, "GET", "/integrations/reference/api/whoami", cookie=cookie,
+                sister_port, "GET", "/integrations/reference/identity", cookie=cookie,
                 headers={"X-Sister-Subject": "forged", "X-Sister-Role": "admin"},
             )
             assert status == 200, (status, payload)
@@ -116,14 +119,23 @@ def main():
             assert identity["origin"] == "sisterd", identity
 
             status, _, payload = request(
-                sister_port, "POST", "/integrations/reference/api/echo",
+                sister_port, "POST", "/integrations/reference/echo",
                 {"value": "teste"}, cookie,
             )
             assert status == 200, (status, payload)
-            assert json.loads(payload) == {"value": "teste", "processed_by": "sister_reference"}
+            assert json.loads(payload) == {
+                "schema": "sister.subsystem.echo/1.0.0",
+                "value": "teste",
+                "processed_by": "sister_reference",
+            }
+
+            for path in ("manifest", "health", "ready", "capabilities"):
+                status, _, _ = request(
+                    sister_port, "GET", f"/integrations/reference/{path}", cookie=cookie)
+                assert status == 200, path
 
             stop(reference)
-            assert request(sister_port, "GET", "/integrations/reference/api/whoami", cookie=cookie)[0] == 502
+            assert request(sister_port, "GET", "/integrations/reference/identity", cookie=cookie)[0] == 502
             assert request(sister_port, "GET", "/api/health")[0] == 200
         finally:
             stop(sisterd)
