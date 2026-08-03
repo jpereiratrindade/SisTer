@@ -1,0 +1,40 @@
+{
+  "schema": "sister.participation-contract/1.0.0",
+  "participation_id": "part-reference-mvp01",
+  "participant_system_id": "sister_reference",
+  "purpose": "Provar participação governada sem semântica científica",
+  "owner": "coordination.mvp01",
+  "state": "proposed",
+  "entry_conditions": "Conformidade técnica e avaliação de participação aprovadas",
+  "suspension_conditions": "Divergência crítica ou perda de conformidade",
+  "exit_conditions": "Revogação humana registrada",
+  "capabilities": [
+    {
+      "capability_id": "reference.transform/1.0.0",
+      "purpose": "Transformação determinística controlada",
+      "input_schema": "sister.reference-input/1.0.0",
+      "output_schema": "sister.reference-output/1.0.0",
+      "preconditions": ["participation.authorized"],
+      "risks": ["invalid_output"],
+      "responsible_role": "reference.operator",
+      "reflexivity_profile": "D2/A1/shadow"
+    }
+  ],
+  "contributions": [
+    {
+      "type_id": "reference.contribution/1.0.0",
+      "purpose": "Resultado tipificado para validação do ciclo",
+      "validity_policy": "valid only for the originating run",
+      "uncertainty_policy": "deterministic",
+      "restrictions": ["no scientific interpretation"]
+    }
+  ],
+  "authority": {
+    "origin": "sister_reference",
+    "production": "sister_reference",
+    "custody": "sisterd",
+    "interpretation": "sge-sister",
+    "decision": "coordination.mvp01",
+    "consumption": "sisterd"
+  }
+}

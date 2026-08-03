@@ -16,11 +16,12 @@ def reserve_port():
         return listener.getsockname()[1]
 
 
-def wait_for_server(port, process):
+def wait_for_server(port, process, server_log):
     deadline = time.monotonic() + 5
     while time.monotonic() < deadline:
         if process.poll() is not None:
-            raise AssertionError(process.stderr.read())
+            server_log.seek(0)
+            raise AssertionError(server_log.read())
         try:
             assert_health(port)
             return
@@ -91,17 +92,18 @@ def main():
             "SISTER_CLIENT_TIMEOUT_SECONDS": "2",
         }
     )
-    with tempfile.TemporaryDirectory(prefix="sister-http-hardening-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sister-http-hardening-") as temporary, \
+            tempfile.TemporaryFile(mode="w+") as server_log:
         environment["SISTER_AUTH_FILE"] = os.path.join(temporary, "auth.tsv")
         process = subprocess.Popen(
             [executable, str(port), web_root],
             env=environment,
             stdout=subprocess.DEVNULL,
-            stderr=subprocess.PIPE,
+            stderr=server_log,
             text=True,
         )
         try:
-            wait_for_server(port, process)
+            wait_for_server(port, process, server_log)
             hostile = [
                 (b"Content-Length: abc\r\n", 400),
                 (b"Content-Length: -1\r\n", 400),

@@ -53,7 +53,8 @@ def wait_for_server(port, process):
 def main():
     executable, web_root, source_root = sys.argv[1:4]
     port = reserve_port()
-    with tempfile.TemporaryDirectory(prefix="sister-maturity-api-") as temporary:
+    with tempfile.TemporaryDirectory(prefix="sister-maturity-api-") as temporary, \
+            tempfile.TemporaryFile(mode="w+") as server_log:
         maturity_root = Path(temporary) / "maturity"
         environment = os.environ.copy()
         environment.update({
@@ -68,7 +69,7 @@ def main():
         environment.pop("SISTER_INTERNAL_PROXY_TOKEN", None)
         process = subprocess.Popen(
             [executable, str(port), web_root], env=environment,
-            stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
+            stdout=subprocess.DEVNULL, stderr=server_log, text=True,
         )
         try:
             wait_for_server(port, process)
@@ -151,7 +152,8 @@ def main():
                 except subprocess.TimeoutExpired:
                     process.kill()
                     process.wait(timeout=5)
-        audit_log = process.stderr.read()
+        server_log.seek(0)
+        audit_log = server_log.read()
         assert "event=authorization" in audit_log
         assert "capability=maturity.evidence.read" in audit_log
         assert "capability=reference.identity.read" in audit_log

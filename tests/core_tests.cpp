@@ -3,6 +3,7 @@
 #include "sister/registry.hpp"
 #include "sister/integration_run.hpp"
 #include "sister/federation.hpp"
+#include "sister/participation.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -162,6 +163,40 @@ int main() {
     governed.capabilities.push_back(governed.capabilities.front());
     expect(std::holds_alternative<sister::FederationError>(governedRegistry.registerSystem(governed)),
         "conflicting or duplicate capability registration should be rejected");
+
+    const sister::participation::CapabilityDefinition referenceCapability{
+        sister::participation::CapabilityId{"reference.transform/1.0.0"},
+        "deterministic transform", "reference-input/1.0.0", "reference-output/1.0.0",
+        {"participation.authorized"}, {"invalid_output"}, "reference.operator", "D2/A1/shadow"
+    };
+    const sister::participation::ContributionDefinition referenceContribution{
+        sister::participation::ContributionTypeId{"reference.contribution/1.0.0"},
+        "typed reference result", "originating run", "deterministic", {"no scientific interpretation"}
+    };
+    const sister::participation::AuthorityAllocation referenceAuthority{
+        "sister_reference", "sister_reference", "sisterd", "sge-sister",
+        "coordination.mvp01", "sisterd"
+    };
+    auto participationDraft = sister::participation::ParticipationContractDraft{
+        sister::participation::ParticipationId{"part-reference-mvp01"}, "sister_reference",
+        "prove governed participation", "coordination.mvp01",
+        "technical and participation assessment", "critical divergence", "human revocation",
+        {referenceCapability}, {referenceContribution}, referenceAuthority
+    };
+    auto participation = sister::participation::proposeParticipation(participationDraft);
+    expect(std::holds_alternative<sister::participation::ParticipationContract>(participation),
+        "valid participation proposal should pass");
+    expect(std::get<sister::participation::ParticipationContract>(participation).state() ==
+        sister::participation::ParticipationState::proposed,
+        "new participation must remain proposed");
+
+    participationDraft.capabilities.push_back(referenceCapability);
+    expect(std::holds_alternative<sister::participation::ParticipationDomainError>(
+        sister::participation::proposeParticipation(participationDraft)), "duplicate capability should fail");
+    participationDraft.capabilities.pop_back();
+    participationDraft.authority.decisionAuthority.clear();
+    expect(std::holds_alternative<sister::participation::ParticipationDomainError>(
+        sister::participation::proposeParticipation(participationDraft)), "incomplete authority should fail");
 
     std::cout << "sister_core_tests ok\n";
     return 0;

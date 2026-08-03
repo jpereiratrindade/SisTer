@@ -1,0 +1,21 @@
+{
+  "schema": "sister.participation-contract/1.0.0",
+  "participation_id": "part-reference-invalid",
+  "participant_system_id": "sister_reference",
+  "purpose": "Contrato inválido",
+  "owner": "sister_reference",
+  "state": "authorized",
+  "entry_conditions": "self authorized",
+  "suspension_conditions": "none",
+  "exit_conditions": "none",
+  "capabilities": [],
+  "contributions": [],
+  "authority": {
+    "origin": "sister_reference",
+    "production": "sister_reference",
+    "custody": "sister_reference",
+    "interpretation": "sister_reference",
+    "decision": "sister_reference",
+    "consumption": "sister_reference"
+  }
+}
