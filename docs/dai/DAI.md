@@ -41,6 +41,17 @@
 - Authority boundary: nenhuma análise vetorial produz gate, efeito operacional
   ou ação automática no piloto.
 
+## 2026-08-02 - EXEC-01B iniciado
+
+- Decision: o núcleo começa pelos tipos de valor e pelo agregado `IntegrationRun`
+  encapsulado, conforme `ADR-CPP-01`.
+- Action: materializar `RunId`, referências tipadas, relações fechadas e fábrica
+  validada antes da máquina de estados ou infraestrutura.
+- Evidence: `sister_core_tests` valida criação válida, estado inicial e rejeição
+  de proposta inválida.
+- Authority boundary: nenhum serviço, banco, JSON, autorização por acordo,
+  análise vetorial ou `AssessmentEngine` entra neste incremento.
+
 ## 2026-07-30 - Nexo ampliado para portfólio multiprojeto
 
 - Decision: `nexo_projects` é a fonte de verdade e Aggregate raiz dos projetos

@@ -1,6 +1,7 @@
 #include "sister/contract.hpp"
 #include "sister/provenance.hpp"
 #include "sister/registry.hpp"
+#include "sister/integration_run.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -54,6 +55,36 @@ int main() {
         "2026-07-09T21:30:00-03:00"
     };
     expect(sister::hasMinimumProvenance(provenance), "minimum provenance should pass");
+
+    auto makeId = [](auto tag, const char* value) {
+        using Tag = decltype(tag);
+        return std::get<sister::Identifier<Tag>>(sister::Identifier<Tag>::fromString(value));
+    };
+    sister::IntegrationRunProposal proposal{
+        makeId(sister::RunIdTag{}, "RUN-001"),
+        makeId(sister::AgreementIdTag{}, "AGR-001"),
+        makeId(sister::IdempotencyKeyTag{}, "KEY-001"),
+        makeId(sister::CorrelationIdTag{}, "COR-001"),
+        {"nexo", "nexo-compras"},
+        "integrar compra ao projeto",
+        "nexo-compras.integration",
+        {{makeId(sister::SchemaIdTag{}, "input/1.0.0"), makeId(sister::DigestTag{}, "sha256:input"), "input-001"}},
+        {}
+    };
+    auto runResult = sister::proposeIntegrationRun(std::move(proposal));
+    expect(std::holds_alternative<sister::IntegrationRun>(runResult), "valid run proposal should pass");
+    const auto& run = std::get<sister::IntegrationRun>(runResult);
+    expect(run.executionStatus() == sister::ExecutionStatus::proposed, "new run should be proposed");
+    expect(run.validityStatus() == sister::ValidityStatus::pending, "new run validity should be pending");
+    expect(run.inputs().size() == 1, "run should preserve input references");
+
+    auto invalid = sister::IntegrationRunProposal{
+        makeId(sister::RunIdTag{}, "RUN-002"), makeId(sister::AgreementIdTag{}, "AGR-001"),
+        makeId(sister::IdempotencyKeyTag{}, "KEY-002"), makeId(sister::CorrelationIdTag{}, "COR-002"),
+        {"nexo"}, "", "", {}, {}
+    };
+    expect(std::holds_alternative<sister::DomainError>(sister::proposeIntegrationRun(std::move(invalid))),
+        "invalid run proposal should be rejected");
 
     std::cout << "sister_core_tests ok\n";
     return 0;

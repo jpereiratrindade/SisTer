@@ -7,7 +7,8 @@ fluxo Nexo–Compras, servindo de objeto para proveniência e avaliação poster
 
 ## Estado
 
-Iniciado — contrato versionado validado; tipos, serviço e persistência ainda não iniciados.
+`EXEC-01A` concluído; `EXEC-01B` em execução — tipos de valor e agregado
+encapsulado materializados no núcleo, sem serviço ou persistência.
 
 ## Entregas
 
@@ -17,6 +18,14 @@ Iniciado — contrato versionado validado; tipos, serviço e persistência ainda
 - idempotência e relações de retry/reprocessamento;
 - persistência mínima e API somente após validação do contrato;
 - evidência reproduzível de criação e reconstrução.
+
+## EXEC-01B atual
+
+- identificadores fortes incompatíveis entre si;
+- `ArtifactReference`, `EvidenceReference` e `ExecutionError`;
+- relações distintas por `std::variant`;
+- `IntegrationRun final` com estado privado e fábrica validada;
+- teste de criação válida e rejeição de proposta inválida.
 
 ## Dependências
 
