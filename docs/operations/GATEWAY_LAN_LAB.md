@@ -174,6 +174,12 @@ O único listener TCP esperado durante o fluxo é `10.163.80.176:8443`. O
 upstream permanece em `.run/gateway/sisterd.sock` e os PIDs/logs ficam no mesmo
 diretório privado.
 
+Quando o gateway foi iniciado por `run_all.sh --profile dev-lan`, o comando de
+parada delega ao manifesto da execução ativa. Assim, encerra gateway, núcleo e
+subsistemas iniciados por aquela execução, enquanto preserva contêineres e
+demais recursos que já existiam antes dela. Sem uma execução `dev-lan` ativa,
+o comando limita-se aos processos registrados em `.run/gateway`.
+
 ## Diferença para produção
 
 `lan-lab` é um perfil de teste de rede. Ele usa `SISTER_ENV=test`, certificado

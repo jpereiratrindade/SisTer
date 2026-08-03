@@ -194,7 +194,14 @@ def stop(args: argparse.Namespace) -> int:
             stopped_groups.append(item["component"])
     owned_processes = payload.get("owned_processes", {})
     if owned_processes.get("gateway") or owned_processes.get("gateway_sisterd"):
-        subprocess.run([str(ROOT / "scripts/stop_gateway_lan_lab.sh")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        environment = os.environ.copy()
+        environment["SISTER_COMPONENT_STOP_ONLY"] = "1"
+        subprocess.run(
+            [str(ROOT / "scripts/stop_gateway_lan_lab.sh")],
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            env=environment,
+        )
         subprocess.run([str(ROOT / "scripts/stop_gateway_lab.sh")], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     subprocess.run([str(ROOT / "scripts/app/stop.sh"), args.environment, "--core-only"])
     current = running_containers()
