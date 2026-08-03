@@ -94,8 +94,9 @@ confiança formalizada com o gateway. Esses controles são fechados na release
 `v0.2.6`; a tag `v0.2.5` permanece imutável. Consulte a
 [ADR-0019](docs/adr/ADR-0019-http-robustness-and-login-rate-limiting.md).
 
-A EFE-SisTer/1.2 é a referência funcional e de engenharia corrente e exige
-segurança orientada por ameaças, controles e evidências. A `v0.2.6` publicou o
+A EFE-SisTer/1.4 é a referência funcional e de engenharia corrente e exige
+segurança orientada por ameaças, controles e evidências. A EFE-SisTer/1.2
+permanece como referência histórica de alinhamento de segurança. A `v0.2.6` publicou o
 MAES-SisTer/1.0 junto ao fechamento de SEC-01C/01D. O SEC-02V aprovou o candidato
 posterior e o SEC-02M converteu os limites aprovados em configuração e rota
 executáveis para a `v0.2.7`. Consulte o
@@ -111,7 +112,10 @@ restrita para Host idêntico duplicado. A
 abuso em laboratório. A [evidência ISO-01](docs/evidence/security/ISO-01.md)
 removeu o listener TCP produtivo. O gate `SEC-03V` foi executado sem skips no
 ambiente candidato; consulte a [evidência integral](docs/evidence/security/SEC-03V.md).
-Merge controlado e `v0.2.8` ainda exigem promoção governada.
+O merge controlado foi consolidado na baseline integrada `v0.2.10`. As tags
+`v0.2.8` e `v0.2.9` preservam, respectivamente, os contratos de reflexividade
+e o contrato `EXEC-01A` como marcos históricos. Consulte o
+[registro de baseline](docs/releases/REL-BASE-01.md).
 
 Para preparar um ambiente candidato a produção (Infrastructure as Code),
 utilize os scripts de deploy e configurações fornecidos:

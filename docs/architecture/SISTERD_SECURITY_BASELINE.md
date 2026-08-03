@@ -6,7 +6,13 @@
 
 **Atualização:** 1 de agosto de 2026
 
-**Referência normativa corrente:** EFE-SisTer/1.2
+**Referência normativa usada no fechamento original:** EFE-SisTer/1.2
+
+**Referência funcional e de engenharia corrente:** EFE-SisTer/1.4
+
+Este documento preserva a fotografia histórica da baseline `v0.2.7`. A
+baseline integrada corrente é `v0.2.10`; ela incorpora este histórico sem
+reclassificar retroativamente as evidências produzidas nas releases anteriores.
 
 > **Promoção posterior à `v0.2.6`:** SEC-02V aprovou a primeira asserção interna
 > Ed25519 apenas para leitura interna e shadow. SEC-02M separou esse cliente do
