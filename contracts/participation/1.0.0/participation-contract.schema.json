@@ -1,0 +1,22 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/participation/1.0.0/participation-contract.schema.json",
+  "title": "ParticipationContract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "participation_id", "participant_system_id", "purpose", "owner", "state", "entry_conditions", "suspension_conditions", "exit_conditions", "capabilities", "contributions", "authority"],
+  "properties": {
+    "schema": {"const": "sister.participation-contract/1.0.0"},
+    "participation_id": {"type": "string", "pattern": "^part-[a-z0-9-]+$"},
+    "participant_system_id": {"const": "sister_reference"},
+    "purpose": {"type": "string", "minLength": 1},
+    "owner": {"type": "string", "minLength": 1},
+    "state": {"const": "proposed"},
+    "entry_conditions": {"type": "string", "minLength": 1},
+    "suspension_conditions": {"type": "string", "minLength": 1},
+    "exit_conditions": {"type": "string", "minLength": 1},
+    "capabilities": {"type": "array", "minItems": 1, "items": {"$ref": "capability-definition.schema.json"}},
+    "contributions": {"type": "array", "minItems": 1, "items": {"$ref": "contribution-definition.schema.json"}},
+    "authority": {"$ref": "authority-allocation.schema.json"}
+  }
+}

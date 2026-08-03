@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/participation/1.0.0/contribution-definition.schema.json",
+  "title": "ContributionDefinition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["type_id", "purpose", "validity_policy", "uncertainty_policy", "restrictions"],
+  "properties": {
+    "type_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+/1\\.0\\.0$"},
+    "purpose": {"type": "string", "minLength": 1},
+    "validity_policy": {"type": "string", "minLength": 1},
+    "uncertainty_policy": {"type": "string", "minLength": 1},
+    "restrictions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true}
+  }
+}

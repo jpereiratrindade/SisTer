@@ -11,6 +11,8 @@ Esta pasta e a fonte de verdade dos contratos de integracao do SisTer.
 - `subsystem/1.0.0/`: contrato comum `sister.subsystem/1.0.0` para
   manifestos, saúde, prontidão, capacidades, identidade interna, erros,
   auditoria e superfície técnica de subsistemas.
+- `participation/1.0.0/`: proposta de participação, capacidades, contribuições
+  e alocação de autoridade do MVP-01; não representa autorização operacional.
 - `system_manifest.schema.json`: declaracao de um sistema federado.
 - `evidence.schema.json`: evidencia vinculada a objeto, sistema e proveniencia.
 - `public_scope.schema.json`: classificacao publico, restrito e privado para dados, evidencias, embeddings e diagnosticos.

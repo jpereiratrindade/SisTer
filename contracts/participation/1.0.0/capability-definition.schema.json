@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/participation/1.0.0/capability-definition.schema.json",
+  "title": "CapabilityDefinition",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["capability_id", "purpose", "input_schema", "output_schema", "preconditions", "risks", "responsible_role", "reflexivity_profile"],
+  "properties": {
+    "capability_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+/1\\.0\\.0$"},
+    "purpose": {"type": "string", "minLength": 1},
+    "input_schema": {"type": "string", "minLength": 1},
+    "output_schema": {"type": "string", "minLength": 1},
+    "preconditions": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "risks": {"type": "array", "items": {"type": "string", "minLength": 1}, "uniqueItems": true},
+    "responsible_role": {"type": "string", "minLength": 1},
+    "reflexivity_profile": {"const": "D2/A1/shadow"}
+  }
+}

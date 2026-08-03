@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/participation/1.0.0/authority-allocation.schema.json",
+  "title": "AuthorityAllocation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["origin", "production", "custody", "interpretation", "decision", "consumption"],
+  "properties": {
+    "origin": {"type": "string", "minLength": 1},
+    "production": {"type": "string", "minLength": 1},
+    "custody": {"type": "string", "minLength": 1},
+    "interpretation": {"type": "string", "minLength": 1},
+    "decision": {"type": "string", "minLength": 1},
+    "consumption": {"type": "string", "minLength": 1}
+  }
+}

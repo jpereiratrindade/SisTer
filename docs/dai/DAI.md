@@ -1,5 +1,17 @@
 # DAI - SisTer
 
+## 2026-08-03 - MVP-01 WP-00A e WP-01
+
+- Decision: congelar o MVP-00 no commit `9fac598`, sem inferir G6 ou produção.
+- Decision: iniciar participação no estado `proposed`; referência não pode
+  autorizar a si própria.
+- Decision: manter os novos tipos no contexto `sister::participation`, evitando
+  colisão com identificadores do registro federativo existente.
+- Evidence: baseline por digest, schemas locais e testes C++/JSON aprovados.
+- Classification: `ParticipationContract` está `TESTADO_EM_MEMORIA`.
+- Authority boundary: persistência, avaliação, autorização e execução continuam
+  fora deste incremento.
+
 ## 2026-08-03 - WP-SGE-CONV-01
 
 - Decision: motores legado e declarativo devem usar os mesmos scripts para
