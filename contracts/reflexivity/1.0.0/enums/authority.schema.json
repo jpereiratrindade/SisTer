@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://sister.dev/contracts/reflexivity/1.0.0/authority.schema.json","type":"string","enum":["A0","A1","A2","A3","A4","A5"]}

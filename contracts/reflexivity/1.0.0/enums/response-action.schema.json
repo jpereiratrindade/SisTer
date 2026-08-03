@@ -1,0 +1,1 @@
+{"$schema":"https://json-schema.org/draft/2020-12/schema","$id":"https://sister.dev/contracts/reflexivity/1.0.0/response-action.schema.json","type":"string","enum":["none","collect_evidence","recommend","request_approval"]}

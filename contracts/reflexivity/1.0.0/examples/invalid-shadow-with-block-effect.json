@@ -1,0 +1,1 @@
+{"assessment_id":"INVALID-BLOCK","execution_id":"RUN-INVALID","profile_id":"RFP-NC-01","reference_snapshot_id":"REFSNAP-NC-EXAMPLE-001","evaluator":{"id":"ASM-REF-01","version":"1.0.0"},"evidence":[],"result":"divergent","severity":"high","gate_effect":"block","proposed_action":"none","operational_effect":"none"}

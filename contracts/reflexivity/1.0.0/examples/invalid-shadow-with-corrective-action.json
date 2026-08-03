@@ -1,0 +1,1 @@
+{"assessment_id":"INVALID-ACTION","execution_id":"RUN-INVALID","profile_id":"RFP-NC-01","reference_snapshot_id":"REFSNAP-NC-EXAMPLE-001","evaluator":{"id":"ASM-REF-01","version":"1.0.0"},"evidence":[],"result":"divergent","severity":"high","gate_effect":"shadow","proposed_action":"request_approval","operational_effect":"none"}

@@ -18,3 +18,4 @@ correspondente com:
 ## Pacotes ativos
 
 - [WP-02 - Contrato comum de subsistema](./WP-02-contrato-comum-subsistema.md)
+- [WP-REF-00 - Contratos centrais da reflexividade](./WP-REF-00-reflexivity-contracts.md)

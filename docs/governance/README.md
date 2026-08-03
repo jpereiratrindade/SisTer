@@ -1,5 +1,11 @@
 # Governanca
 
+## Decisão em vigor antes da codificação
+
+- [Comunicado à equipe — Reflexividade Operacional v1](./COMUNICADO_REFLEXIVIDADE_OPERACIONAL_V1.md)
+
+O SisTer deve nascer amplamente reflexivo, porém apenas seletivamente autocorretivo. Este comunicado fixa o vocabulário, as responsabilidades e as fronteiras de autoridade antes da implementação; não autoriza a implementação integral nem a autocorreção indiscriminada.
+
 O SisTer segue uma base inspirada no modelo do LabGestao:
 
 - ADR para decisoes arquiteturais.

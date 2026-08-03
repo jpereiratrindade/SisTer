@@ -1,0 +1,1 @@
+{"snapshot_id":"REFSNAP-NC-EXAMPLE-001","captured_at":"2026-08-02T12:00:00Z","references":[{"reference_id":"integration_agreement","type":"contract","version":"1.0.0","digest":"sha256:example-agreement","effective_at":"2026-08-01T00:00:00Z","owner":"nexo-compras","location":"contracts/integration_agreement.schema.json"}]}

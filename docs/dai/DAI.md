@@ -1,5 +1,18 @@
 # DAI - SisTer
 
+## 2026-08-02 - ADR-REF-01 aceita para o piloto Nexo–Compras
+
+- Decision: o piloto utilizará `RFP-NC-01` em `D2–D3/A1/shadow`.
+- Action: implementar `WP-REF-00`, começando pelos schemas e exemplos em
+  `contracts/reflexivity/1.0.0` — concluída.
+- Decision: o gate de `WP-REF-00` foi aprovado após validação reproduzível de
+  schemas, referências, exemplos positivos e exemplos negativos.
+- Evidence: `./scripts/contracts/validate-reflexivity.sh` confirma que
+  `D2–D3/A1/shadow` não possui efeito operacional nem ação corretiva.
+- Impediment: `REF-01` depende de `EXEC-01`, `PROV-01`, `INF-01` e `SGE-01`.
+- Authority boundary: nenhum efeito operacional ou ação corretiva está
+  autorizado.
+
 ## 2026-07-30 - Nexo ampliado para portfólio multiprojeto
 
 - Decision: `nexo_projects` é a fonte de verdade e Aggregate raiz dos projetos

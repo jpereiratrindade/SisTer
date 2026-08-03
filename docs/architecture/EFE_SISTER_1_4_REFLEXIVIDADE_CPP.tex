@@ -1,0 +1,1719 @@
+\documentclass[11pt,a4paper,oneside]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{ltablex}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{pdflscape}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{ragged2e}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric}
+
+\geometry{top=2.2cm,bottom=2.2cm,left=2.2cm,right=2.2cm}
+\setstretch{1.08}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist[itemize]{leftmargin=1.45em,itemsep=0.15em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=1.65em,itemsep=0.2em,topsep=0.25em}
+\renewcommand{\arraystretch}{1.18}
+\keepXColumns
+
+\definecolor{sisterblue}{RGB}{28,67,105}
+\definecolor{sisterlightblue}{RGB}{232,241,248}
+\definecolor{sistergray}{RGB}{245,246,247}
+\definecolor{sisterdarkgray}{RGB}{74,83,91}
+\definecolor{sistergreen}{RGB}{33,112,77}
+\definecolor{sisteramber}{RGB}{161,102,0}
+\definecolor{sisterred}{RGB}{155,44,44}
+\definecolor{sisterpurple}{RGB}{93,63,130}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=sisterblue,
+  urlcolor=sisterblue,
+  citecolor=sisterblue,
+  pdftitle={Especificacao Funcional e de Engenharia do SisTer},
+  pdfauthor={Projeto SisTer},
+  pdfsubject={Arquitetura funcional, rastreabilidade e materializacao incremental em codigo}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{sisterdarkgray}{SisTer -- Especificação Funcional e de Engenharia}}
+\fancyhead[R]{\small\textcolor{sisterdarkgray}{EFE-SisTer/1.4}}
+\fancyfoot[C]{\small Página \thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\titleformat{\section}{\Large\bfseries\color{sisterblue}}{\thesection.}{0.55em}{}
+\titleformat{\subsection}{\large\bfseries\color{sisterdarkgray}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{0.45em}{}
+
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+\newtcolorbox{principio}[1][]{
+  colback=sisterlightblue,
+  colframe=sisterblue,
+  boxrule=0.65pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2.2mm,bottom=2.2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{decisao}[1][]{
+  colback=sistergray,
+  colframe=sisterdarkgray,
+  boxrule=0.55pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{alerta}[1][]{
+  colback=red!3,
+  colframe=sisterred,
+  boxrule=0.6pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+
+\newcommand{\statusimpl}{\textcolor{sistergreen}{\textbf{IMPLEMENTADO}}}
+\newcommand{\statusparcial}{\textcolor{sisteramber}{\textbf{PARCIAL}}}
+\newcommand{\statusfallback}{\textcolor{sisterpurple}{\textbf{FALLBACK}}}
+\newcommand{\statusespec}{\textcolor{sisterblue}{\textbf{ESPECIFICADO}}}
+\newcommand{\statusausente}{\textcolor{sisterred}{\textbf{NÃO OBSERVADO}}}
+\newcommand{\statusnv}{\textcolor{sisterdarkgray}{\textbf{NÃO VERIFICÁVEL}}}
+
+\lstdefinestyle{sistercode}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{sistergray},
+  frame=single,
+  rulecolor=\color{sisterdarkgray!35},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  xleftmargin=0.5em,
+  framexleftmargin=0.4em
+}
+\lstset{style=sistercode}
+
+\begin{document}
+
+\begin{titlepage}
+\pagestyle{empty}
+\thispagestyle{empty}
+\vspace*{2.2cm}
+{\color{sisterblue}\rule{\textwidth}{1.2pt}}\\[1.2cm]
+{\Huge\bfseries Especificação Funcional e de Engenharia do SisTer\par}
+\vspace{0.45cm}
+{\Large Do objetivo científico à implementação, reflexividade, evidência e maturidade\par}
+\vspace{1.2cm}
+\begin{principio}[Pergunta governante]
+\centering\Large\textbf{Como o SisTer realiza seu propósito, avalia a própria execução e se reconfigura de modo governado desde a primeira decisão de engenharia até a produção de conhecimento rastreável?}
+\end{principio}
+\vfill
+\begin{tabularx}{\textwidth}{P{4.2cm}Y}
+\toprule
+\textbf{Identificador} & EFE-SisTer/1.4 \\
+\textbf{Status} & Versão revisada para validação; formaliza níveis, perfis, autoridade e materialização C++ da reflexividade operacional \\
+\textbf{Linha de base do código} & Snapshot \texttt{apps.zip}, recebido em 1º de agosto de 2026 \\
+\textbf{Escopo verificado} & \texttt{apps/sisterd} e \texttt{apps/sisterctl} \\
+\textbf{Processo de referência} & Relação Nexo--Compras: dado contratado $\rightarrow$ informação integrada $\rightarrow$ conhecimento tipificado \\
+\textbf{Data} & 2 de agosto de 2026 \\
+\bottomrule
+\end{tabularx}
+\vspace{1.2cm}
+{\color{sisterblue}\rule{\textwidth}{1.2pt}}
+\thispagestyle{empty}
+\end{titlepage}
+\pagestyle{fancy}
+
+\pagenumbering{roman}
+\section*{Controle do documento}
+\addcontentsline{toc}{section}{Controle do documento}
+
+\begin{tabularx}{\textwidth}{P{3.6cm}Y}
+\toprule
+\textbf{Campo} & \textbf{Definição} \\
+\midrule
+Natureza & Especificação técnica de engenharia: normativa no modelo-alvo e descritiva na linha de base verificada. \\
+Autoridade & Documento-mestre de arquitetura funcional, subordinado à finalidade e à ontologia do SisTer e articulador dos planos, contratos, ADRs e perfis de maturidade. \\
+Não substitui & ADRs de decisões específicas; contratos e schemas; manuais operacionais; planos de implantação; evidências produzidas pelo SGE-SisTer. \\
+Deve governar & A relação entre objetivo, função, processo, capacidade, contrato, componente, código, teste, evidência, avaliação reflexiva, ação corretiva e maturidade. \\
+Regra de atualização & Toda mudança que altere função sistêmica, processo finalístico, fronteira, contrato estrutural ou cadeia de rastreabilidade deve atualizar esta especificação ou registrar explicitamente por que não a altera. \\
+\bottomrule
+\end{tabularx}
+
+\subsection*{Histórico de revisão}
+\begin{tabularx}{\textwidth}{P{2.0cm}P{2.6cm}Y}
+\toprule
+\textbf{Versão} & \textbf{Data} & \textbf{Alteração} \\
+\midrule
+1.0 & 01/08/2026 & Especificação inicial. \\
+1.1 & 01/08/2026 & Correção de estados, dependências, ciclos de vida, rastreabilidade, processo Nexo--Compras e roadmap; redução de conteúdo não normativo. \\
+1.2 & 01/08/2026 & Incorporação da engenharia de segurança orientada por ameaças, perfil restrito de transporte, classes iniciais de ameaça, rastreabilidade de controles e ciclo contínuo de resposta a vulnerabilidades. \\
+1.3 & 02/08/2026 & Incorporação do Princípio da Reflexividade Operacional, da função F-11, do processo P-08 e dos artefatos de avaliação e ação corretiva governada. \\
+1.4 & 02/08/2026 & Formalização das profundidades D0--D5, autoridades A0--A5, efeitos de gate, respostas operacionais, \texttt{ReflexivityProfile}, arquitetura C++ e piloto Nexo--Compras em \texttt{shadow}. \\
+\bottomrule
+\end{tabularx}
+
+\subsection*{Fontes consolidadas}
+Esta versão foi construída a partir das fontes e linhas de elaboração disponibilizadas para análise:
+\begin{itemize}
+  \item \texttt{sister\_funcoes\_processos\_atividade\_cientifica(2).tex};
+  \item \texttt{plano\_transicao\_sister\_engenharia\_governada\_revisado(2).md};
+  \item \texttt{plano\_trabalho\_sister\_kanban(2).md};
+  \item \texttt{funcoes\_sistemicas\_sisterd\_sisterctl(1).md};
+  \item snapshot de código \texttt{apps.zip};
+  \item achados reproduzidos de robustez do transporte e avaliação das decisões SEC-00 e SEC-01;
+  \item reflexão arquitetural sobre cibernética, retroalimentação e avaliação da própria execução do SisTer;
+  \item avaliação dos níveis de profundidade, autoridade e efeito operacional da reflexividade, incluindo diretrizes de materialização com C++20/23 e laboratório C++26;
+  \item referências normativas e históricas de segurança listadas no Apêndice~\ref{sec:referencias-seguranca}.
+\end{itemize}
+
+\begin{alerta}[Limite de verificação]
+A linha de base de implementação não constitui auditoria do repositório completo. Foram inspecionados 3.737 linhas distribuídas em \texttt{apps/sisterd} e \texttt{apps/sisterctl}. Contratos, migrations, scripts, biblioteca \texttt{sister/contract.hpp}, interfaces web e testes externos ao arquivo \texttt{apps.zip} são mencionados apenas quando sustentados pelos documentos fornecidos; sua implementação não foi verificada neste snapshot.
+\end{alerta}
+
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Finalidade e tese de engenharia}
+
+\subsection{Finalidade científica}
+\begin{principio}[Definição central]
+\textbf{O SisTer é uma plataforma federativa que articula subsistemas autônomos, governa seus relacionamentos por contratos e transforma ofertas de diferentes domínios em informação integrada e conhecimento contextualizado, preservando autonomia, proveniência, responsabilidade e capacidade de revisão.}
+\end{principio}
+
+O sistema existe para apoiar a caracterização, o monitoramento e a compreensão da resiliência de Sistemas Socioecológicos (SSE), inclusive em Sistemas Agroalimentares de Interesse Territorial (SAIT), sem substituir a autoridade científica e operacional dos domínios participantes.
+
+\subsection{Tese de engenharia}
+\begin{principio}[Regra de materialização]
+Toda implementação governada deve ser justificável como materialização de uma função necessária ao objetivo do SisTer, executada em um processo definido, limitada por contrato e comprovada por testes e evidências.
+\end{principio}
+
+A unidade de evolução é a \textbf{capacidade rastreável}, com finalidade, responsável, condições de uso, critérios de aceitação e evidência.
+
+\subsection{Princípio da Reflexividade Operacional}
+\label{sec:reflexividade-operacional}
+\begin{principio}[Princípio da Reflexividade Operacional]
+\textbf{Toda função relevante do SisTer deve produzir evidências suficientes para que o sistema possa avaliar sua própria execução em relação ao propósito, aos contratos e às políticas vigentes, tornando divergências compreensíveis e ações corretivas governáveis.}
+\end{principio}
+
+Reflexividade operacional não significa consciência, intenção própria ou liberdade para alterar autonomamente o código, os contratos ou os critérios científicos. Significa dotar cada execução relevante de referências explícitas, evidências observáveis e um mecanismo versionado de comparação capaz de responder:
+\begin{itemize}
+  \item o que deveria ter ocorrido e sob qual propósito, contrato, política e revisão;
+  \item o que efetivamente ocorreu, com quais entradas, decisões, transformações e resultados;
+  \item em que medida a execução confirmou, divergiu ou permaneceu inconclusiva diante das referências;
+  \item qual resposta é admissível, quem possui autoridade para autorizá-la e como seu efeito será novamente avaliado.
+\end{itemize}
+
+\begin{lstlisting}
+proposito + contrato + politica + criterio
+-> execucao
+-> evidencias
+-> avaliacao reflexiva
+-> confirmacao | divergencia | inconclusao
+-> decisao autorizada
+-> correcao | reconfiguracao | revisao da referencia
+-> nova execucao e nova avaliacao
+\end{lstlisting}
+
+\begin{decisao}[Limite de autonomia]
+O SisTer possui autonomia para observar, comparar, explicar e recomendar. Somente pode executar ações corretivas quando elas estiverem previamente autorizadas por política, forem proporcionais ao risco, auditáveis e reversíveis. Mudanças estruturais em contratos, critérios científicos, políticas de maturidade ou código exigem decisão humana ou processo formal equivalente.
+\end{decisao}
+
+A confirmação também é resultado relevante: ela sustenta confiança sem transformar ausência de alerta em prova de correção. A inconclusão deve permanecer explícita quando faltarem evidências, referências ou capacidade avaliativa.
+
+
+\subsection{Modelo normativo de aplicação da reflexividade}
+\label{sec:modelo-reflexividade}
+
+A reflexividade não possui um único nível global. Cada capacidade relevante deve declarar um \texttt{ReflexivityProfile} que combine três dimensões independentes:
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=8mm,
+  box/.style={draw=sisterpurple, rounded corners, fill=sisterpurple!8, minimum width=4.4cm, minimum height=12mm, align=center, font=\small\bfseries},
+  arr/.style={-{Latex[length=2.2mm]}, thick, draw=sisterdarkgray}
+]
+\node[box] (d) {Profundidade\\o que é avaliado};
+\node[box, right=of d] (a) {Autoridade\\o que o sistema pode fazer};
+\node[box, right=of a] (g) {Efeito operacional\\como a conclusão afeta o fluxo};
+\draw[arr] (d)--(a); \draw[arr] (a)--(g);
+\end{tikzpicture}
+\end{center}
+
+\begin{decisao}[Regra de composição]
+Profundidade, autoridade e efeito operacional não podem ser inferidos um do outro. Uma avaliação profunda pode permanecer apenas consultiva; uma proteção automática pode ser legítima para uma invariante estrutural simples; e uma divergência não implica necessariamente bloqueio ou correção.
+\end{decisao}
+
+\subsubsection{Reflexividade do SisTer e reflexão da linguagem}
+A \textbf{reflexividade operacional do SisTer} avalia uma execução em relação ao propósito, aos contratos, às políticas e aos critérios aplicáveis. A \textbf{reflexão estática do C++} inspeciona estruturas do programa em tempo de compilação e pode apoiar geração de metadados, schemas, serialização e validação. São conceitos complementares, mas não equivalentes:
+
+\begin{principio}[Distinção obrigatória]
+\textbf{O C++ pode fornecer mecanismos para o sistema observar sua estrutura; somente o modelo funcional, as referências e as evidências permitem ao SisTer avaliar o significado de sua execução.}
+\end{principio}
+
+\subsubsection{Profundidades D0--D5}
+\begin{longtable}{P{1.5cm}P{3.4cm}P{5.0cm}P{5.0cm}}
+\toprule
+\textbf{Nível} & \textbf{Nome} & \textbf{Objeto da avaliação} & \textbf{Aplicação no SisTer} \\
+\midrule
+\endhead
+D0 & Estrutural & Tipos, interfaces, estados e invariantes verificáveis em compilação ou validação local. & Impedir mistura de identificadores, estados impossíveis e contratos internos incompletos. \\
+D1 & Funcional & Resultado de uma função, comando ou operação isolada. & Verificar precondições, pós-condições, erro tipificado, evidência e cancelamento de uma operação. \\
+D2 & Processual & Ciclo completo de uma execução governada. & Avaliar se uma \texttt{IntegrationRun} percorreu estados válidos e produziu resultados e evidências suficientes. \\
+D3 & Relacional & Interação entre participantes autônomos. & Avaliar se capacidades, versões, finalidade, restrições e responsabilidades do acordo foram respeitadas. \\
+D4 & Ecossistêmica & Coerência entre componentes, políticas, dependências e maturidade. & Detectar regressões, conflitos de política, degradação sistêmica e impacto entre capacidades. \\
+D5 & Epistêmica & Adequação dos critérios, métodos ou referências usados para avaliar. & Sinalizar contradições, inconclusões recorrentes ou necessidade de revisão científica/institucional, sem alterar a referência autonomamente. \\
+\bottomrule
+\end{longtable}
+
+Aplicação mínima adotada:
+\begin{itemize}
+  \item D0--D1 em toda capacidade governada;
+  \item D2 em toda execução relevante;
+  \item D3 em todo relacionamento contratado;
+  \item D4 no SGE-SisTer e no plano de controle;
+  \item D5 somente com owner científico ou institucional explícito e sem revisão automática da referência.
+\end{itemize}
+
+\subsubsection{Autoridades A0--A5}
+\begin{longtable}{P{1.5cm}P{3.7cm}P{7.0cm}P{2.8cm}}
+\toprule
+\textbf{Nível} & \textbf{Autoridade} & \textbf{Limite operacional} & \textbf{Modo típico} \\
+\midrule
+\endhead
+A0 & Observar & Produzir eventos, métricas, estados e evidências, sem emitir juízo reflexivo. & \texttt{observe} \\
+A1 & Avaliar & Comparar evidências e referências, produzindo resultado explicável sem alterar o fluxo. & \texttt{shadow} \\
+A2 & Recomendar & Explicar causa, impacto, alternativas, owner e ação admissível, sem autorização implícita. & \texttt{advisory} \\
+A3 & Proteger ou bloquear & Impedir operação incompatível antes de efeitos indevidos, conforme política explícita. & \texttt{enforcing} \\
+A4 & Corrigir dentro de limites & Executar somente ação previamente autorizada, proporcional, auditável, reversível e reavaliada. & \texttt{bounded\_correction} \\
+A5 & Revisar referência & Alterar propósito, contrato, política, critério ou método por decisão humana ou processo formal equivalente. & governança humana \\
+\bottomrule
+\end{longtable}
+
+A5 não constitui autonomia de software. O SisTer pode produzir uma \texttt{ReferenceRevisionProposal}, mas a aprovação pertence ao owner funcional, científico, arquitetural ou institucional da referência.
+
+\subsubsection{Resultado, gate e resposta operacional}
+Três vocabulários devem permanecer separados:
+
+\begin{tabularx}{\textwidth}{P{4.0cm}Y}
+\toprule
+\textbf{Dimensão} & \textbf{Valores mínimos} \\
+\midrule
+Resultado da avaliação & \texttt{confirmed}, \texttt{divergent}, \texttt{inconclusive}, \texttt{not\_applicable}. \\
+Efeito sobre gate/operação & \texttt{shadow}, \texttt{pass}, \texttt{warn}, \texttt{block}. \\
+Resposta operacional & \texttt{none}, \texttt{collect\_evidence}, \texttt{recommend}, \texttt{request\_approval}, \texttt{cancel}, \texttt{retry}, \texttt{isolate}, \texttt{rollback}, \texttt{suspend}, \texttt{reprocess}. \\
+\bottomrule
+\end{tabularx}
+
+Uma avaliação \texttt{divergent} pode gerar apenas \texttt{warn} e recomendação. Outra, diante de invariante crítica e política A3, pode gerar \texttt{block}. O resultado descreve a relação com a referência; o gate determina o efeito; a ação responde ao efeito autorizado.
+
+\subsubsection{Perfil inicial por escopo}
+\begin{longtable}{P{5.0cm}P{2.3cm}P{3.0cm}P{4.4cm}}
+\toprule
+\textbf{Escopo} & \textbf{Profundidade} & \textbf{Autoridade inicial} & \textbf{Destino permitido} \\
+\midrule
+\endhead
+Invariantes internas do C++ & D0--D1 & A3 & Permanecer em A3; falha cedo e explícita. \\
+Execução Nexo--Compras & D2 & A1 & Evoluir para A2/A3 após histórico e critérios aceitos. \\
+Acordo Nexo--Compras & D3 & A1--A2 & Evoluir para A3 em invariantes contratuais objetivas. \\
+Saúde de adaptadores & D1--D2 & A2 & A4 limitado a cancelamento, isolamento e recuperação autorizados. \\
+Maturidade pelo SGE-SisTer & D4 & A1--A2 & A3 para promoção, regressão e publicação governadas. \\
+Correlação e interpretação científica & D3--D5 & A1--A2 & Decisão humana para revisão de método ou significado. \\
+Alteração de contrato, política, método ou código & -- & nenhuma & A5 por processo formal de governança e engenharia. \\
+\bottomrule
+\end{longtable}
+
+\begin{principio}[Diretriz adotada]
+\centering
+\textbf{O SisTer deve nascer amplamente reflexivo, porém apenas seletivamente autocorretivo.}
+\end{principio}
+
+\subsubsection{Decisão para o primeiro piloto}
+O processo Nexo--Compras deve iniciar com profundidade D2--D3, autoridade A1 e efeito \texttt{shadow}. O sistema congela referências, captura evidências, produz \texttt{OperationalAssessment} e explica a conclusão pelo \texttt{sisterctl}, sem bloquear ou corrigir a execução. A passagem a A2, A3 ou A4 depende de evidência histórica, ADR aceita, política explícita, testes de falha e comprovação de reversibilidade.
+
+\subsection{Princípios estruturantes}
+\begin{enumerate}
+  \item \textbf{Autonomia federativa}: cada subsistema preserva domínio, dados de autoridade, regras, banco e responsabilidade.
+  \item \textbf{Contratos nas fronteiras}: integração não decorre de conhecimento informal do código interno.
+  \item \textbf{Convergência sem centralização indevida}: o SisTer relaciona contribuições, mas não absorve os domínios.
+  \item \textbf{Transformação epistemicamente rastreável}: dado, informação e conhecimento possuem critérios distintos e relações reproduzíveis.
+  \item \textbf{Experimentação livre na borda}: hipóteses podem nascer em laboratórios e protótipos.
+  \item \textbf{Evidência obrigatória na promoção}: somente capacidades comprovadas podem integrar, governar ou publicar.
+  \item \textbf{Governança proporcional ao risco}: os controles crescem conforme impacto, criticidade e exposição.
+  \item \textbf{Segurança orientada por ameaças}: capacidades, fronteiras e protocolos devem herdar o conhecimento acumulado sobre riscos aplicáveis e demonstrar seus controles por evidências.
+  \item \textbf{Reflexividade operacional}: toda execução relevante produz evidências e é comparável ao propósito, aos contratos, às políticas e aos critérios vigentes.
+  \item \textbf{Reversibilidade}: maturidade, contrato e conhecimento podem ser suspensos, invalidados, revogados ou reprocessados.
+\end{enumerate}
+
+\section{Vocabulário normativo e hierarquia}
+
+\subsection{Termos fundamentais}
+\begin{longtable}{P{3.2cm}P{5.6cm}P{6.0cm}}
+\toprule
+\textbf{Termo} & \textbf{Pergunta respondida} & \textbf{Definição operacional} \\
+\midrule
+\endhead
+Objetivo & Por que o SisTer existe? & Resultado científico, institucional e social que justifica o sistema. \\
+Função & O que o sistema precisa fazer continuamente? & Responsabilidade sistêmica estável, independente de um componente específico. \\
+Processo & Como funções, atores e artefatos se coordenam ao longo do tempo? & Fluxo governado com gatilho, estados, participantes, entradas, saídas, falhas e evidências. \\
+Capacidade & Há meios para realizar determinada função? & Unidade técnica, organizacional e contratual que pode ser oferecida, autorizada, testada e avaliada. \\
+Serviço & Por qual interface a capacidade é disponibilizada? & API, evento, pacote, comando, consulta, adaptador ou procedimento humano governado. \\
+Componente & Onde a capacidade está implementada? & Unidade de software ou infraestrutura sob responsabilidade definida. \\
+Contrato & Sob quais condições participantes podem interagir? & Identidade, semântica, versão, finalidade, autoridade, restrições, estados e evidências da relação. \\
+Evidência & Como sabemos que uma afirmação operacional é verdadeira? & Registro estruturado, versionado, associável a execução, revisão, ambiente, resultado e artefatos. \\
+Referência de avaliação & Em relação a que a execução será julgada? & Snapshot versionado do propósito, contrato, política, critério de aceitação, risco e contexto aplicáveis à execução. \\
+Avaliação reflexiva & A execução permaneceu coerente com suas referências? & Comparação reproduzível entre evidências observadas e referências vigentes, com resultado, divergências, limitações, responsável e recomendação. \\
+Ação corretiva & O que pode ser feito diante da divergência? & Resposta autorizada, proporcional, auditável e preferencialmente reversível, com escopo, responsável, condição de aplicação e verificação posterior. \\
+Perfil de reflexividade & Qual avaliação e autoridade se aplicam a esta capacidade? & Contrato operacional que declara escopo, profundidade, modo, referências, evidências, avaliador, tolerâncias, efeitos de gate, ações permitidas, owner, reversão, retenção e política de falha. \\
+Profundidade reflexiva & Até que camada a avaliação alcança? & Nível D0--D5 que distingue avaliação estrutural, funcional, processual, relacional, ecossistêmica e epistêmica. \\
+Autoridade reflexiva & O que o sistema está autorizado a fazer? & Nível A0--A5 que distingue observar, avaliar, recomendar, proteger, corrigir dentro de limites e revisar referência por governança humana. \\
+Efeito de gate & Como a conclusão afeta operação ou maturidade? & Resultado independente da avaliação, expresso por \texttt{shadow}, \texttt{pass}, \texttt{warn} ou \texttt{block}. \\
+Ameaça & O que pode comprometer um ativo ou garantia? & Cenário identificável, conhecido ou plausível, associado a superfície, precondições, impacto e exposição. \\
+Controle & Como a ameaça é prevenida, detectada, contida ou recuperada? & Medida técnica, operacional ou de governança com owner, teste e evidência. \\
+Risco residual & O que permanece após os controles? & Exposição remanescente explicitamente aceita, bloqueada ou limitada por maturidade e contexto operacional. \\
+Maturidade & Qual confiança é autorizada para esta capacidade? & Estado governado, reversível, sustentado por evidências e limitado por perfil e risco. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Hierarquia obrigatória}
+\begin{center}
+\begin{tikzpicture}[
+  node distance=5mm,
+  box/.style={draw=sisterblue, rounded corners, fill=sisterlightblue, minimum width=8.4cm, minimum height=8mm, align=center, font=\small\bfseries},
+  arr/.style={-{Latex[length=2.2mm]}, thick, draw=sisterdarkgray}
+]
+\node[box] (o) {Objetivo e ontologia};
+\node[box, below=of o] (f) {Funções sistêmicas};
+\node[box, below=of f] (p) {Processos finalísticos};
+\node[box, below=of p] (c) {Capacidades};
+\node[box, below=of c] (ct) {Contratos e acordos};
+\node[box, below=of ct] (s) {Serviços e componentes};
+\node[box, below=of s] (i) {Implementação};
+\node[box, below=of i] (e) {Testes, evidências, avaliação reflexiva e maturidade};
+\draw[arr] (o)--(f); \draw[arr] (f)--(p); \draw[arr] (p)--(c); \draw[arr] (c)--(ct);
+\draw[arr] (ct)--(s); \draw[arr] (s)--(i); \draw[arr] (i)--(e);
+\draw[arr, bend right=68] (e.west) to node[left, font=\scriptsize, align=right]{retroalimentação\\governada} (f.west);
+\end{tikzpicture}
+\end{center}
+
+\begin{decisao}[Regra contra inversão arquitetural]
+Classes, endpoints, scripts e tabelas não definem a finalidade do sistema. Eles somente são admitidos como elementos governados quando podem ser remontados à hierarquia acima.
+\end{decisao}
+
+\section{Processo finalístico completo}
+
+\subsection{Ciclo de transformação e retroalimentação}
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=7mm,
+  stage/.style={draw=sisterblue, rounded corners, fill=sisterlightblue, minimum width=2.25cm, minimum height=10mm, align=center, font=\small\bfseries},
+  arr/.style={-{Latex[length=2.3mm]}, thick, draw=sisterdarkgray}
+]
+\node[stage] (r) {Realidade};
+\node[stage, right=of r] (o) {Observação};
+\node[stage, right=of o] (d) {Dado};
+\node[stage, right=of d] (v) {Validação};
+\node[stage, right=of v] (i) {Integração};
+\node[stage, right=of i] (inf) {Informação};
+\node[stage, right=of inf] (c) {Convergência};
+\node[stage, right=of c] (k) {Conhecimento};
+\node[stage, right=of k] (dec) {Decisão};
+\node[stage, right=of dec] (a) {Ação};
+\draw[arr] (r)--(o); \draw[arr] (o)--(d); \draw[arr] (d)--(v); \draw[arr] (v)--(i);
+\draw[arr] (i)--(inf); \draw[arr] (inf)--(c); \draw[arr] (c)--(k); \draw[arr] (k)--(dec); \draw[arr] (dec)--(a);
+\draw[arr, bend left=35] (a.north) to node[above, font=\scriptsize]{nova observação} (r.north);
+\end{tikzpicture}}
+\end{center}
+
+O ciclo completo é maior do que o software central. A observação pode ocorrer em MorfoCampo, Clima, Compras, Nexo ou outro domínio. O SisTer governa especialmente as passagens entre fronteiras: identidade, autorização, contrato, validação, integração, proveniência, convergência, exposição e revisão.
+
+\subsection{Ciclo reflexivo da execução governada}
+O ciclo epistemológico descreve como a ação retorna à realidade observada. O ciclo reflexivo descreve como o próprio SisTer observa o desempenho de suas funções e verifica se a execução permaneceu coerente com aquilo que a autorizou.
+
+\begin{center}
+\resizebox{0.98\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=7mm,
+  stage/.style={draw=sisterpurple, rounded corners, fill=sisterpurple!8, minimum width=2.7cm, minimum height=10mm, align=center, font=\small\bfseries},
+  arr/.style={-{Latex[length=2.3mm]}, thick, draw=sisterdarkgray}
+]
+\node[stage] (ref) {Referências\\vigentes};
+\node[stage, right=of ref] (exe) {Execução};
+\node[stage, right=of exe] (evi) {Evidências};
+\node[stage, right=of evi] (ava) {Avaliação\\reflexiva};
+\node[stage, right=of ava] (res) {Confirmação,\\divergência ou\\inconclusão};
+\node[stage, right=of res] (dec) {Decisão\\autorizada};
+\node[stage, right=of dec] (cor) {Correção ou\\reconfiguração};
+\draw[arr] (ref)--(exe); \draw[arr] (exe)--(evi); \draw[arr] (evi)--(ava);
+\draw[arr] (ava)--(res); \draw[arr] (res)--(dec); \draw[arr] (dec)--(cor);
+\draw[arr, bend left=34] (cor.north) to node[above, font=\scriptsize]{nova execução} (exe.north);
+\draw[arr, dashed, bend right=38] (res.south) to node[below, font=\scriptsize]{descoberta pode revisar a referência por processo formal} (ref.south);
+\end{tikzpicture}}
+\end{center}
+
+A avaliação deve registrar a revisão exata das referências utilizadas. Caso contrário, uma política alterada posteriormente poderia reescrever retrospectivamente o significado de uma execução passada. O resultado mínimo é \texttt{confirmed}, \texttt{divergent}, \texttt{inconclusive} ou \texttt{not\_applicable}; severidade e efeito sobre operação e maturidade são dimensões separadas.
+
+\subsection{Critérios das passagens epistemológicas}
+\begin{longtable}{P{3.0cm}P{5.4cm}P{6.4cm}}
+\toprule
+\textbf{Estágio} & \textbf{Condição mínima} & \textbf{Evidência exigida} \\
+\midrule
+\endhead
+Dado contratado & Produtor identificado, contrato ativo, schema e versão reconhecidos, finalidade autorizada, integridade verificável. & Identificador imutável, digest, instante, produtor, contrato, schema, escopo e referência ao original. \\
+Informação integrada & Dado contextualizado, associado a entidades, tempo e espaço, relacionado a outras fontes, com incertezas explícitas. & Transformação identificada, entradas, parâmetros, código/revisão, relações produzidas, pendências e qualidade. \\
+Conhecimento rastreável & Afirmação ou interpretação sustentada por informações, método, responsabilidade, limitações e confiança. & \texttt{KnowledgeArtifact} revisável, autoria, evidências, método, validade, confiança, finalidade e histórico. \\
+Decisão governada & Conhecimento utilizado por ator autorizado em finalidade definida, sem ocultar incerteza. & Registro de uso, decisão, responsável, artefatos considerados, restrições e resultado esperado. \\
+Avaliação reflexiva & Execução comparada às referências aplicáveis, sem confundir ausência de evidência com conformidade. & Referências congeladas, evidências consideradas, avaliador/revisão, resultado, divergências, limitações, recomendação e impacto. \\
+Retroalimentação & Efeito observado retorna ao ciclo e pode confirmar, revisar ou invalidar conhecimento, política ou ação. & Nova observação relacionada à decisão, comparação e evento de revisão/reprocessamento. \\
+\bottomrule
+\end{longtable}
+
+\section{Arquitetura funcional e fronteiras de autoridade}
+
+\subsection{Participantes}
+\begin{center}
+\begin{tikzpicture}[
+  node distance=10mm and 14mm,
+  comp/.style={draw=sisterblue, rounded corners, fill=sisterlightblue, minimum width=3.7cm, minimum height=12mm, align=center, font=\small\bfseries},
+  ext/.style={draw=sisterdarkgray, rounded corners, fill=sistergray, minimum width=3.7cm, minimum height=12mm, align=center, font=\small\bfseries},
+  arr/.style={-{Latex[length=2.2mm]}, thick, draw=sisterdarkgray}
+]
+\node[ext] (human) {Pessoa / automação / CI-CD};
+\node[comp, below=of human] (ctl) {\texttt{sisterctl}\\interface de controle};
+\node[comp, below=of ctl] (d) {\texttt{sisterd}\\plano de controle persistente};
+\node[ext, below left=of d] (sub1) {Subsistema A\\autoridade do domínio};
+\node[ext, below right=of d] (sub2) {Subsistema B\\autoridade do domínio};
+\node[comp, right=of d] (sge) {SGE-SisTer\\avaliação e evidência};
+\node[comp, left=of d] (store) {Persistência\\registros e proveniência};
+\draw[arr] (human)--(ctl); \draw[arr] (ctl)--(d);
+\draw[arr] (d)--(sub1); \draw[arr] (d)--(sub2);
+\draw[arr] (d)--(sge); \draw[arr] (d)--(store);
+\draw[arr, dashed] (sub1) to[bend right=15] node[below, font=\scriptsize]{relação contratada} (sub2);
+\end{tikzpicture}
+\end{center}
+
+\subsection{Matriz de autoridade}
+\begin{longtable}{P{3.3cm}P{5.7cm}P{5.8cm}}
+\toprule
+\textbf{Âmbito} & \textbf{Detém autoridade sobre} & \textbf{Não deve absorver} \\
+\midrule
+\endhead
+Subsistema & Dados nativos, regras especializadas, semântica interna, operação e interface do domínio. & Governança transversal, contratos globais ou dados de autoridade de outros domínios. \\
+Relacionamento bilateral & Mapeamento semântico, tradução de identificadores, restrições, correlação e capacidades negociadas. & Regras internas completas de qualquer participante ou decisões globais de maturidade. \\
+\texttt{sisterd} & Registro federativo, contratos ativos, autorização transversal, execução, proveniência, estado, conhecimento transversal, avaliações reflexivas, ações corretivas autorizadas e auditoria. & Regras especializadas, bancos de autoridade de todos os domínios, interpretação científica sem método e responsável ou alteração autônoma de referências estruturais. \\
+\texttt{sisterctl} & Comando, inspeção, diagnóstico, explicação de divergências, aprovação ou aplicação autorizada de correções e exportação. & Estado próprio divergente, acesso direto à persistência no modo operacional, avaliação oculta no cliente ou regras que pertencem ao serviço. \\
+SGE-SisTer & Diagnóstico, atestação, comparação entre evidências e referências, maturidade, promoção, regressão, divergência e publicação. & Execução de regras de domínio, definição unilateral do propósito ou promoção baseada apenas em observação humana. \\
+Coordenação científica & Finalidade, método, critérios de avaliação, validade e limites de artefatos científicos. & Implementação técnica, operação cotidiana ou alteração direta de contratos. \\
+\bottomrule
+\end{longtable}
+
+\section{Catálogo de objetivos sistêmicos}
+
+Os objetivos abaixo vinculam a finalidade científica às funções, processos e capacidades.
+
+\begin{longtable}{P{1.5cm}P{5.1cm}P{8.2cm}}
+\toprule
+\textbf{ID} & \textbf{Objetivo} & \textbf{Resultado verificável} \\
+\midrule
+\endhead
+O-01 & Governar o ecossistema federativo & Participantes e relacionamentos são reconhecidos, autorizados, versionados, auditáveis e reversíveis. \\
+O-02 & Produzir informação integrada rastreável & Dados contratados são validados, contextualizados e relacionados sem perda de origem, autoridade ou incerteza. \\
+O-03 & Registrar conhecimento contextualizado e seu uso & Artefatos tipificados são sustentados por informação, método, responsabilidade, limitações, revisão e finalidade. \\
+O-04 & Sustentar operação e evolução resilientes & Capacidades são diagnosticáveis, observáveis, recuperáveis e avaliadas por evidências e maturidade reversível. \\
+O-05 & Sustentar reflexividade operacional & Execuções relevantes são comparadas às referências vigentes, divergências são explicáveis e respostas corretivas são autorizadas, auditáveis e reavaliadas. \\
+\bottomrule
+\end{longtable}
+
+\section{Catálogo de funções sistêmicas}
+
+Os identificadores \texttt{F-01} a \texttt{F-11} são estáveis. Uma função pode ser realizada por vários componentes, mas deve possuir um responsável final pela sua definição e critérios de aceitação.
+
+\begin{landscape}
+\small
+\begin{longtable}{P{1.35cm}P{3.4cm}P{6.2cm}P{4.8cm}P{3.4cm}P{2.7cm}}
+\toprule
+\textbf{ID} & \textbf{Função} & \textbf{Responsabilidade sistêmica} & \textbf{Saída/evidência mínima} & \textbf{Executor principal} & \textbf{Baseline apps} \\
+\midrule
+\endhead
+F-01 & Reconhecimento federativo & Reconhecer identidade, versão, domínio, responsável, endpoints, capacidades, dependências e perfil de cada participante. & \texttt{SystemRegistration}, manifesto validado, catálogo consultável e histórico. & \texttt{sisterd}; declaração pelo subsistema; inspeção pelo \texttt{sisterctl}. & \statusparcial \\
+F-02 & Governança dos relacionamentos & Propor, validar, aceitar, ativar, suspender, revogar e versionar acordos e capacidades autorizadas. & \texttt{IntegrationAgreement}, recibos, digest, revisão, estado e histórico. & \texttt{sisterd} e participantes; comando pelo \texttt{sisterctl}. & \statusparcial \\
+F-03 & Identidade, autorização e confiança & Autenticar pessoas e sistemas e autorizar por papel, capacidade, finalidade, escopo e risco. & Sessão ou credencial, decisão de autorização, ator e trilha de operação. & \texttt{sisterd}; identidade de domínio nos subsistemas. & \statusparcial \\
+F-04 & Intercâmbio e ingestão & Receber, localizar ou encaminhar dados por API, eventos, pacotes, sincronização e referências. & Entrada identificada, recibo, estado da transferência, limites e erros. & Adaptadores e subsistemas coordenados pelo \texttt{sisterd}. & \statusparcial \\
+F-05 & Validação e conformidade & Validar schema, versão, integridade, contrato, origem, finalidade e compatibilidade. & Resultado por verificação, bloqueios, advertências e artefatos validados. & \texttt{sisterd}, contratos e SGE. & \statusparcial \\
+F-06 & Evidência e proveniência & Preservar evidências e relacionar origem, execução, transformação, contrato, revisão e derivado. & Evidência com integridade verificável e registro causal consultável. & \texttt{sisterd} e repositórios especializados. & \statusparcial \\
+F-07 & Contextualização e correlação & Relacionar dados a entidades, projetos, atividades, tempo, espaço e outras fontes, explicitando pendências. & \texttt{IntegratedInformation}, correlações, qualidade, incertezas e método. & Integrações e motores especializados; governança pelo \texttt{sisterd}. & \statusausente \\
+F-08 & Síntese e produção de conhecimento & Registrar interpretações sustentadas por informações, método, confiança, limitações e autoria. & \texttt{KnowledgeArtifact} revisável, publicável e invalidável. & Coordenação científica, serviços de domínio e \texttt{sisterd}. & \statusausente \\
+F-09 & Convergência e exposição & Apresentar visão transversal e disponibilizar resultados segundo papel, finalidade e escopo. & API/CLI/interface com estado, proveniência, restrições e versão. & \texttt{sisterd}, \texttt{sisterctl} e interfaces. & \statusparcial \\
+F-10 & Diagnóstico e governança operacional & Expor saúde, prontidão, dependências, maturidade, degradações e capacidade de recuperação. & Diagnóstico estruturado, atestação, logs seguros, promoção/regressão e indicadores. & Subsistemas, \texttt{sisterd}, \texttt{sisterctl} e SGE. & \statusparcial \\
+F-11 & Reflexividade operacional & Aplicar \texttt{ReflexivityProfile}s, comparar execuções relevantes às referências, separar resultado, gate e ação, explicar divergências e governar respostas dentro da autoridade concedida. & \texttt{ReflexivityProfile}, \texttt{ReferenceSnapshot}, \texttt{OperationalAssessment}, efeito de gate, recomendação, decisão e verificação da correção. & \texttt{sisterd} persiste e coordena; SGE avalia; \texttt{sisterctl} explica e opera; owners definem referências e autorizam. & \statusausente \\
+\bottomrule
+\end{longtable}
+\end{landscape}
+
+Na linha de base, F-03 cobre autenticação humana e autorização por papéis; identidade de sistemas, finalidade e escopo permanecem ausentes. F-06 cobre custódia e consulta de evidências; proveniência causal não foi observada. F-11 não está materializada: diagnósticos e artefatos de maturidade existem como insumos, mas não há referência congelada, comparação reproduzível, resultado reflexivo ou ciclo governado de correção.
+
+\section{Processos finalísticos}
+
+Cada processo deve possuir estado persistente ou evidência suficiente para reconstruir sua execução. Os fluxos abaixo são normativos para o modelo-alvo.
+
+\subsection{P-01 -- Entrada de um subsistema}
+\textbf{Objetivo:} reconhecer um participante sem transferir ao núcleo sua autoridade de domínio.
+
+\textbf{Fluxo mínimo:}
+\begin{lstlisting}
+manifesto apresentado
+-> identidade e responsavel validados
+-> capacidades e endpoints verificados
+-> diagnostico executado
+-> registro operacional criado
+-> perfil de maturidade associado por evidencia
+\end{lstlisting}
+
+\textbf{Saídas:} \texttt{SystemRegistration}, capacidades, responsável, perfil e atestação.  
+\textbf{Falhas:} identidade duplicada, schema inválido, raiz não resolvível, owner ausente, diagnóstico inexistente.  
+\textbf{Pronto quando:} o sistema pode ser descoberto, inspecionado, diagnosticado e retirado sem alterar código do núcleo.
+
+\subsection{P-02 -- Estabelecimento de um relacionamento}
+\textbf{Objetivo:} autorizar uma relação por finalidade e capacidade, não apenas por compatibilidade técnica.
+
+\begin{lstlisting}
+proposta
+-> validacao dos participantes e capacidades
+-> negociacao de finalidade, escopo e restricoes
+-> aceite dos owners
+-> digest e revisao registrados
+-> ativacao
+-> observacao, suspensao, revogacao ou substituicao
+\end{lstlisting}
+
+\textbf{Saídas:} \texttt{IntegrationAgreement} ativo e recibos dos participantes.  
+\textbf{Falhas:} capacidade inexistente, semântica incompatível, finalidade não autorizada, aceite incompleto.  
+\textbf{Pronto quando:} nenhuma execução pode ocorrer sem acordo ativo e reproduzível.
+
+\subsection{P-03 -- Recepção de um dado}
+\textbf{Objetivo:} registrar uma entrada contratada preservando original, identidade e escopo.
+
+\begin{lstlisting}
+solicitacao ou evento
+-> autenticacao e autorizacao
+-> criacao de IntegrationRun
+-> validacao de contrato/schema/integridade
+-> registro do original ou referencia imutavel
+-> recibo de ingestao
+\end{lstlisting}
+
+\textbf{Saídas:} entrada registrada, digest, \texttt{IntegrationRun} e evidência de validação.  
+\textbf{Falhas:} origem desconhecida, contrato inativo, schema inválido, excedente de tamanho, indisponibilidade.  
+\textbf{Pronto quando:} a entrada pode ser localizada, reproduzida e recusada sem ambiguidade.
+
+\subsection{P-04 -- Produção de informação integrada}
+\textbf{Objetivo:} contextualizar e correlacionar dados sem apagar discrepâncias ou incertezas.
+
+\begin{lstlisting}
+entrada validada
+-> resolucao de entidades e identificadores
+-> associacao temporal e espacial
+-> correlacao com outras ofertas autorizadas
+-> registro de pendencias, qualidade e inconsistencias
+-> producao de IntegratedInformation
+\end{lstlisting}
+
+\textbf{Saídas:} \texttt{IntegratedInformation}, relações, método, pendências e proveniência.  
+\textbf{Falhas:} entidade não resolvida, conflito semântico, fonte indisponível, transformação não reproduzível.  
+\textbf{Pronto quando:} toda relação pode ser confirmada, contestada e reprocessada.
+
+\subsection{P-05 -- Produção de conhecimento}
+\textbf{Objetivo:} registrar afirmação ou interpretação tipificada, sustentada por informação, método e responsabilidade.
+
+\begin{lstlisting}
+informacoes integradas elegiveis
+-> selecao do tipo de artefato
+-> aplicacao de metodo ou regra declarada
+-> formulacao da afirmacao
+-> associacao de evidencias e limitacoes
+-> atribuicao de autoria, confianca e finalidade
+-> revisao pela autoridade aplicavel ao tipo
+-> publicacao, invalidacao ou substituicao
+\end{lstlisting}
+
+\textbf{Tipos mínimos:} \texttt{scientific}, \texttt{operational}, \texttt{administrative}, \texttt{methodological} e \texttt{governance}.  
+\textbf{Saídas:} \texttt{KnowledgeArtifact} tipificado e versionado.  
+\textbf{Falhas:} tipo indefinido, método ausente, evidência insuficiente, conflito não tratado ou autoridade revisora inexistente.  
+\textbf{Pronto quando:} o artefato pode ser revisado pela autoridade adequada, invalidado e remontado às informações que o sustentam.
+
+\subsection{P-06 -- Uso e retroalimentação}
+\textbf{Objetivo:} relacionar conhecimento a decisões e retornar seus efeitos ao ciclo de observação.
+
+\textbf{Saídas:} registro de uso, ator, finalidade, decisão, resultado esperado e nova observação relacionada.  
+\textbf{Falhas:} uso fora de escopo, artefato inválido, incerteza omitida ou decisão sem responsável.  
+\textbf{Pronto quando:} é possível saber que conhecimento apoiou qual decisão e qual efeito foi observado.
+
+\subsection{P-07 -- Suspensão, invalidação e reconfiguração}
+\textbf{Objetivo:} preservar coerência quando contratos, dados, métodos, dependências ou evidências mudam.
+
+\begin{lstlisting}
+evento de mudanca ou falha
+-> identificacao de execucoes e derivados afetados
+-> suspensao ou marcacao de invalidade
+-> notificacao dos responsaveis
+-> reprocessamento ou substituicao
+-> preservacao do historico
+\end{lstlisting}
+
+\textbf{Saídas:} evento de impacto, lista de derivados, decisão, reprocessamento e histórico.  
+\textbf{Pronto quando:} mudanças relevantes produzem impacto, suspensão, invalidação ou reprocessamento explícitos.
+
+\subsection{P-08 -- Avaliação reflexiva e ação corretiva}
+\textbf{Objetivo:} verificar se uma execução relevante permaneceu coerente com as referências que a autorizaram e governar a resposta sem ultrapassar o perfil de reflexividade aplicável.
+
+\begin{lstlisting}
+execucao relevante concluida ou interrompida
+-> selecao e validacao do ReflexivityProfile
+-> congelamento das referencias aplicaveis
+-> coleta e validacao das evidencias
+-> comparacao por avaliador versionado
+-> resultado: confirmed | divergent | inconclusive | not_applicable
+-> determinacao independente de severidade e efeito de gate
+-> resposta: none | collect_evidence | recommend | request_approval
+            | cancel | retry | isolate | rollback | suspend | reprocess
+-> decisao conforme autoridade A0--A5
+-> aplicacao reversivel quando autorizada
+-> nova execucao e verificacao de efetividade
+\end{lstlisting}
+
+\textbf{Saídas:} \texttt{ReflexivityProfile}, \texttt{ReferenceSnapshot}, \texttt{OperationalAssessment}, divergências tipificadas, efeito de gate, recomendação, decisão, \texttt{CorrectiveAction} e avaliação posterior.  
+\textbf{Falhas:} perfil ausente ou incompatível, referência ausente ou mutável, evidência insuficiente, avaliador sem versão, confusão entre resultado/gate/ação, conflito de autoridade, correção não reversível ou ação sem verificação posterior.  
+\textbf{Pronto quando:} a conclusão pode ser reproduzida, explicada e contestada; o efeito aplicado corresponde ao perfil; e nenhuma ação além do nível autorizado é executada automaticamente.
+
+P-08 é transversal: pode ser acionado ao final de P-01 a P-07, por evento crítico, mudança de referência ou avaliação periódica. Ele não substitui os processos finalísticos; observa seu desempenho e fecha o ciclo entre evidência, decisão e reconfiguração. O primeiro uso normativo é Nexo--Compras em D2--D3, A1 e \texttt{shadow}.
+
+\section{Especificação dos componentes}
+
+\subsection{\texttt{sisterd}: plano de controle persistente}
+\textbf{Por que existe:} manter o estado governado do ecossistema e coordenar funções transversais que não pertencem a um único domínio.
+
+\textbf{Deve:}
+\begin{itemize}
+  \item manter registros de sistemas, capacidades, acordos, execuções, evidências, proveniência e conhecimento;
+  \item autenticar e autorizar operações por capacidade, finalidade e escopo;
+  \item coordenar integrações sem incorporar regras internas dos domínios;
+  \item expor APIs estáveis, saúde, prontidão, auditoria e evidências consumíveis pelo SGE;
+  \item suportar suspensão, invalidação, reprocessamento e impacto sobre derivados;
+  \item registrar e validar \texttt{ReflexivityProfile}s, congelar referências aplicáveis, persistir avaliações reflexivas e coordenar ações corretivas autorizadas e sua verificação posterior.
+\end{itemize}
+
+\textbf{Não deve:}
+\begin{itemize}
+  \item ser banco de autoridade de todos os subsistemas;
+  \item produzir inferência científica sem método e responsável explícitos;
+  \item ocultar indisponibilidade por fallback indistinguível de dado real;
+  \item decidir sozinho promoção de maturidade;
+  \item concentrar novas responsabilidades no arquivo monolítico existente;
+  \item alterar autonomamente propósito, contrato, política, critério científico ou código em resposta a uma divergência.
+\end{itemize}
+
+\subsection{\texttt{sisterctl}: interface operacional e administrativa}
+\textbf{Por que existe:} permitir operação humana e automação sem acesso direto à persistência ou a interfaces privadas no modo operacional normal. Comandos de \textit{bootstrap}, migração, manutenção ou recuperação podem acessar mecanismos internos quando forem separados, autorizados e auditáveis.
+
+\textbf{Todo comando permanente deve possuir:}
+\begin{itemize}
+  \item sintaxe documentada e parâmetros explícitos;
+  \item saída humana e saída estruturada (\texttt{--json});
+  \item códigos de retorno estáveis;
+  \item modo não interativo para CI/CD;
+  \item confirmação para ação destrutiva;
+  \item idempotência quando aplicável;
+  \item ator, ambiente, alvo, operação e evidência relacionados.
+\end{itemize}
+
+\textbf{Comandos-alvo:}
+\begin{lstlisting}
+sisterctl system list|show|register|retire
+sisterctl capability list|show
+sisterctl agreement propose|validate|activate|suspend|revoke
+sisterctl integration run|status|result|reprocess
+sisterctl knowledge list|show|review|invalidate|publish
+sisterctl audit show|export
+sisterctl doctor
+sisterctl maturity evaluate|publish
+sisterctl reflexivity profile list|show|validate
+sisterctl assessment list|show|explain
+sisterctl correction propose|approve|apply|rollback|verify
+\end{lstlisting}
+
+\subsection{Subsistemas}
+Cada subsistema declara identidade, capacidades, contratos, diagnóstico, dados de autoridade, política de falha, referências de avaliação aplicáveis e responsável. Ele executa regras especializadas e fornece evidências suficientes para que o SisTer governe e avalie a relação, sem entregar ao núcleo detalhes internos desnecessários.
+
+\subsection{Adaptadores de integração}
+Adaptadores traduzem protocolos e contratos técnicos. Eles devem ser pequenos, substituíveis, testáveis e incapazes de redefinir a semântica dos domínios. Toda transformação relevante deve possuir identificador, versão, entrada, saída, erro e evidência.
+
+\subsection{SGE-SisTer}
+O SGE avalia componentes, integrações, processos e evidências. Deve operar com motores explicitamente identificados, registrar divergências e permitir estados como \texttt{PASS}, \texttt{FAIL}, \texttt{WARN}, \texttt{SHADOW}, \texttt{NOT\_APPLICABLE}, \texttt{SKIP\_JUSTIFIED}, \texttt{UNRESOLVED}, \texttt{BLOCKED} e \texttt{ERROR}. Na reflexividade operacional, valida o \texttt{ReflexivityProfile}, compara evidências a \texttt{ReferenceSnapshot}s, produz \texttt{OperationalAssessment}s explicáveis e publica separadamente resultado, severidade e efeito de gate. O SGE não executa ação corretiva por inferência nem redefine unilateralmente as referências avaliadas.
+
+\subsection{CI/CD e publicação}
+A esteira não cria maturidade; ela executa gates e publica decisões sustentadas por evidências. Nenhuma capacidade pode avançar sem perfil aplicável, evidência estruturada ou justificativa válida para \texttt{SKIP}. Quando P-08 for aplicável, a esteira também deve publicar a avaliação reflexiva e impedir promoção diante de divergência bloqueante ou inconclusão não tratada.
+
+\section{Linha de base verificada do código}
+
+\subsection{Inventário inspecionado}
+\begin{longtable}{P{5.0cm}P{1.6cm}P{7.7cm}}
+\toprule
+\textbf{Arquivo/módulo} & \textbf{Linhas} & \textbf{Responsabilidade observada} \\
+\midrule
+\endhead
+\texttt{apps/sisterd/}\newline\texttt{main.cpp} & 2.267 & Servidor HTTP próprio, configuração, concorrência, parsing, autenticação de rotas, proxy reverso, APIs, arquivos estáticos, logs e despacho principal. \\
+\texttt{apps/sisterd/}\newline\texttt{auth.cpp/.hpp} & 604 & Usuários, papéis, senha com salt/hash, sessões persistidas, bootstrap, login, CRUD administrativo e logout. \\
+\texttt{apps/sisterd/}\newline\texttt{db.cpp/.hpp} & 193 & Conexão opcional PostgreSQL e consultas de leitura para sistemas, contratos, evidências e diagnósticos; stub quando compilado sem libpq. \\
+\texttt{apps/sisterd/}\newline\texttt{studio\_client.cpp/.hpp} & 206 & Cliente TLS para capacidades e saúde do Studio, verificação de CA/host e token por arquivo. \\
+\texttt{apps/sisterd/}\newline\texttt{sister\_campo\_client.}\allowbreak\texttt{cpp/.hpp} & 106 & Cliente HTTP local, validação mínima de saúde/capacidade e estado integrado/degradado. \\
+\texttt{apps/sisterd/api/}\newline\texttt{maturity\_routes.cpp/.hpp} & 169 & Exposição administrativa de artefatos de maturidade publicados, com limite de tamanho e verificação de identificador de schema. \\
+\texttt{apps/sisterctl/}\newline\texttt{main.cpp} & 158 & Validação de manifesto, verificação/migração de banco por scripts e importação interativa de usuário. \\
+\bottomrule
+\end{longtable}
+
+\subsection{Capacidades efetivamente observadas no \texttt{sisterd}}
+\begin{itemize}
+  \item configuração por variáveis de ambiente, limites numéricos e defaults diferenciados por ambiente;
+  \item servidor HTTP com fila limitada, conjunto de workers, timeouts, encerramento por sinal e identificador de requisição;
+  \item autenticação por sessão, cookie, bootstrap, login, logout, rate limiting de falhas e gestão administrativa de usuários;
+  \item autorização atualmente centrada em papéis, principalmente \texttt{admin}, com catálogo de capacidades derivado do papel;
+  \item proteção de origem para métodos inseguros, cookie seguro configurável, HSTS opcional e controle de arquivos estáticos;
+  \item APIs de saúde, sistemas, contratos, evidências, diagnósticos e descritores de integrações;
+  \item proxy autenticado para Nexo e Clima; cliente TLS específico para Studio; verificação local específica para SisTer-Campo;
+  \item leitura PostgreSQL de registros selecionados e operação degradada/fallback quando o banco não responde ou libpq não está presente;
+  \item exposição de artefatos administrativos de maturidade, catálogo, componentes, qualidade, última execução e histórico.
+\end{itemize}
+
+\subsection{Endpoints observados}
+\begin{landscape}
+\small
+\begin{longtable}{P{4.5cm}P{3.0cm}P{3.2cm}P{8.0cm}}
+\toprule
+\textbf{Endpoint} & \textbf{Método} & \textbf{Controle} & \textbf{Comportamento observado} \\
+\midrule
+\endhead
+\texttt{/api/health} & GET/HEAD & público & Sinal de vida e diagnóstico básico; informa versão e conexão com banco, mas não constitui prontidão completa. \\
+\texttt{/api/auth/bootstrap} & GET & público controlado & Informa disponibilidade de bootstrap administrativo. \\
+\texttt{/api/auth/register} & POST & bootstrap & Registra primeiro administrador e cria sessão. \\
+\texttt{/api/auth/login} & POST & público com limite & Autentica e cria cookie/sessão. \\
+\texttt{/api/auth/logout} & POST & autenticado & Revoga sessão e limpa cookie. \\
+\texttt{/api/me}, \texttt{/api/me/capabilities} & GET & autenticado & Usuário atual e capacidades derivadas de papel. \\
+\texttt{/api/admin/users[/id]} & \shortstack[l]{GET/POST/PUT/\\PATCH/DELETE} & administrador & Gestão de contas. \\
+\texttt{/api/systems} & GET & autenticado & Consulta PostgreSQL ou catálogo fallback. \\
+\texttt{/api/contracts} & GET & administrador & Consulta PostgreSQL ou catálogo fallback. \\
+\texttt{/api/evidence} & GET & administrador & Consulta de evidências; retorna lista vazia como fallback. \\
+\texttt{/api/diagnostics} & GET & administrador & Consulta PostgreSQL ou diagnóstico fallback. \\
+\texttt{/api/integrations/*} & GET & varia por integração & Descritor fixo ou resultado de cliente/adaptador específico. \\
+\texttt{/integrations/nexo/*} & vários/proxy & autenticado & Proxy reverso local com identidade encaminhada. \\
+\texttt{/integrations/clima/*} & vários/proxy & autenticado & Proxy HTTP/WebSocket local com identidade encaminhada. \\
+\texttt{/api/admin/maturity/*} & GET/HEAD & administrador & Lê e valida artefatos JSON publicados em diretório configurado. \\
+\bottomrule
+\end{longtable}
+\end{landscape}
+
+\subsection{Capacidades observadas no \texttt{sisterctl}}
+\begin{tabularx}{\textwidth}{P{4.7cm}Y}
+\toprule
+\textbf{Comando atual} & \textbf{Comportamento} \\
+\midrule
+\texttt{validate-manifest <arquivo>} & Carrega JSON, usa contrato comum e retorna sucesso/falha de validação. \\
+\texttt{db-check} & Delega a \texttt{scripts/dev/db\_check.sh}. \\
+\texttt{db-migrate [arquivo]} & Delega a \texttt{scripts/dev/db\_migrate.sh}, com quoting do argumento. \\
+\texttt{auth-import-user ...} & Solicita senha sem eco e escreve por meio de \texttt{AuthStore}. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{O que o snapshot ainda não materializa}
+Não foram observados, no código inspecionado:
+\begin{itemize}
+  \item API de escrita e ciclo de vida para registro federativo e acordos;
+  \item modelo persistente e API de \texttt{IntegrationRun};
+  \item registro causal de proveniência entre original, transformação e derivado;
+  \item operação genérica de validação por schema/contrato nas integrações;
+  \item \texttt{IntegratedInformation} como artefato governado;
+  \item \texttt{KnowledgeArtifact} e seus estados de revisão, publicação e invalidação;
+  \item consulta de impacto e reprocessamento de derivados;
+  \item trilha de auditoria de domínio exportável;
+  \item cliente \texttt{sisterctl} para as APIs do \texttt{sisterd}, saída \texttt{--json} e modo não interativo abrangente;
+  \item autorização baseada diretamente em capacidades, finalidade e escopo; no snapshot, o papel administrativo ainda concentra decisões;
+  \item diagnóstico federado acionável por \texttt{sisterctl doctor};
+  \item referência congelada, avaliação reflexiva reproduzível, explicação de divergências e ciclo autorizado de ação corretiva.
+\end{itemize}
+
+\begin{alerta}[Diagnóstico arquitetural do snapshot]
+O código já materializa uma base de operação e segurança considerável, mas o arquivo \texttt{main.cpp} concentra múltiplas camadas e responsabilidades. A próxima evolução deve preservar o comportamento atual, extrair fronteiras mínimas e implementar processos finalísticos por fatias verticais.
+\end{alerta}
+
+\section{Matriz atual versus alvo}
+
+Os estados de implementação registram presença observada no snapshot e não equivalem a maturidade. A conformidade compara o comportamento observado com o modelo-alvo.
+
+\begin{landscape}
+\scriptsize
+\begin{longtable}{P{3.2cm}P{3.0cm}P{2.5cm}P{5.1cm}P{5.6cm}}
+\toprule
+\textbf{Capacidade} & \textbf{Implementação} & \textbf{Conformidade} & \textbf{Código/evidência atual} & \textbf{Lacuna para o objetivo} \\
+\midrule
+\endhead
+Servidor e configuração & \statusimpl & Parcial & HTTP, workers, fila, timeouts, configuração, logs e arquivos estáticos. & Extrair responsabilidades, caracterizar protocolo, decidir manutenção do servidor HTTP e implementar prontidão estruturada. \\
+Identidade de usuários & \statusimpl & Parcial & Bootstrap, login, sessões, CRUD, papéis e logout. & Capacidade, finalidade, escopo, identidade de sistemas e credenciais adequadas à produção. \\
+Registro de sistemas & \statusparcial & Parcial & Consulta PostgreSQL, fallback e validação de manifesto via CLI. & Registro, versão, owner, capacidades, estado operacional, perfil de maturidade, retirada e histórico. \\
+Contratos & \statusparcial & Parcial & Consulta de contratos e descritores fixos de integrações. & Ciclo completo, aceite bilateral, digest, suspensão, revogação e compatibilidade. \\
+Integrações & \statusparcial & Parcial & Proxies e clientes específicos para Nexo, Clima, Studio e Campo. & Adaptadores contratados, execução identificada, recibos, idempotência, timeout e política de retry. \\
+Validação & \statusparcial & Parcial & Manifesto, identificadores de schema em maturidade e verificações específicas. & Validação por contrato/schema, erros estruturados, versão e evidência por check. \\
+Evidências & \statusparcial & Parcial & Consulta de evidências e artefatos de maturidade publicados. & Escrita, integridade, retenção, classificação e vínculo causal. \\
+Proveniência causal & \statusausente & Não conforme & Não observada no snapshot. & Relação origem--execução--transformação--derivado, consulta de impacto e reprocessamento. \\
+Diagnóstico & \statusparcial & Parcial & \texttt{/api/health}, consultas/fallback e maturidade exposta. & Separar \textit{liveness}, \textit{readiness} e degradação; implementar \texttt{doctor} federado. \\
+Reflexividade operacional & \statusespec & Não conforme & Logs, diagnósticos e artefatos de maturidade fornecem insumos dispersos, mas não constituem avaliação reflexiva. & Congelar referências; comparar evidências; produzir \texttt{OperationalAssessment}; explicar divergências; autorizar, aplicar e verificar correções. \\
+\texttt{IntegrationRun} & \statusespec & Não conforme & Estruturas citadas nos documentos, não observadas no snapshot. & Entidade, estado de execução, validade, relações entre execuções, persistência, API e evidência. \\
+Informação integrada & \statusespec & Não conforme & Processo Nexo--Compras descrito fora do snapshot. & Artefato, critérios, correlação, qualidade, pendências e proveniência. \\
+\texttt{KnowledgeArtifact} & \statusespec & Não conforme & Modelo conceitual nos documentos. & Tipos, estados independentes de revisão/publicação/validade, autoridade revisora e impacto. \\
+CLI governada & \statusparcial & Parcial & Quatro operações locais, incluindo migração e importação. & Cliente HTTP, comandos funcionais, JSON, não interativo, códigos estáveis e separação de comandos de manutenção. \\
+\bottomrule
+\end{longtable}
+\end{landscape}
+
+\section{Arquitetura de implementação proposta}
+
+\subsection{Dependências entre camadas}
+A estrutura abaixo define a direção de dependência do modelo-alvo.
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=10mm and 8mm,
+  layer/.style={draw=sisterblue, rounded corners, text width=7.8cm, minimum height=11mm, align=center, font=\small\bfseries},
+  infra/.style={draw=sisterdarkgray, rounded corners, fill=sistergray, text width=4.6cm, minimum height=18mm, align=center, font=\small\bfseries},
+  arr/.style={-{Latex[length=2.2mm]}, thick, draw=sisterdarkgray},
+  impl/.style={-{Latex[length=2.2mm]}, dashed, thick, draw=sisterdarkgray}
+]
+\node[layer, fill=sisterlightblue] (api) {Interfaces: HTTP, CLI, eventos e pacotes};
+\node[layer, fill=sistergray, below=of api] (app) {Aplicação\\casos de uso, comandos, consultas, transações e portas};
+\node[layer, fill=sisterlightblue, below=of app] (dom) {Domínio\\entidades, estados, invariantes, políticas e eventos};
+\node[infra, right=of app] (infra) {Infraestrutura\\PostgreSQL, arquivos, rede, TLS, filas e adaptadores};
+\draw[arr] (api)--(app);
+\draw[arr] (app)--(dom);
+\draw[impl] (infra)--node[above, font=\scriptsize]{implementa portas} (app);
+\draw[impl] (infra.south west)--(dom.east);
+\end{tikzpicture}
+\end{center}
+
+\begin{decisao}[Regra de dependência]
+O domínio não depende de HTTP, PostgreSQL, arquivos, terminal ou build. A aplicação depende do domínio e define portas. Interfaces acionam casos de uso. A infraestrutura implementa portas e depende das abstrações internas.
+\end{decisao}
+
+\subsection{Estratégia de extração incremental}
+A decomposição deve preservar o comportamento atual e avançar por fatias verticais:
+\begin{enumerate}
+  \item criar testes de caracterização das rotas, autenticação, códigos e comandos existentes;
+  \item registrar ADR sobre manutenção ou substituição do servidor HTTP próprio;
+  \item extrair transporte, roteamento e composição sem alterar contratos externos;
+  \item criar portas mínimas de persistência, relógio, identidade e integração;
+  \item implementar uma fatia Nexo--Compras com \texttt{IntegrationRun}, proveniência e informação integrada;
+  \item generalizar módulos somente após comprovação por teste e evidência.
+\end{enumerate}
+
+\subsection{Decisão sobre o servidor HTTP}
+O servidor HTTP próprio concentra parsing, sockets, concorrência, proxy, WebSocket, cookies, origem, limites e arquivos estáticos. Sua continuidade exige ADR com alternativa considerada, responsabilidade, perfil de exposição, testes de protocolo, entradas malformadas, contenção de exceções, limites de recursos, atualização e segurança.
+
+\begin{principio}[Princípio de transporte restrito]
+\textbf{O SisTer não pretende reproduzir um servidor HTTP generalista. Quando implementar ou utilizar capacidades de transporte, deverá herdar o conhecimento acumulado sobre suas ameaças, limitar sua superfície e demonstrar por evidências que os riscos aplicáveis estão controlados.}
+\end{principio}
+
+Por padrão, o \texttt{sisterd} é um plano de controle interno. TLS público, normalização de borda, conexões persistentes, WebSocket, arquivos estáticos, quotas externas e funções de proxy generalista devem ser delegados a componentes especializados. Exceção exige ADR, modelo de ameaças, testes negativos e risco residual explícito.
+
+\subsection{Módulos de domínio propostos}
+\begin{tabularx}{\textwidth}{P{4.3cm}Y}
+\toprule
+\textbf{Módulo} & \textbf{Responsabilidade} \\
+\midrule
+\texttt{federation} & Sistemas, versões, owners, capacidades, endpoints, estado operacional e perfil de maturidade. \\
+\texttt{agreements} & Proposta, aceite, ativação, suspensão, revogação, digest e compatibilidade. \\
+\texttt{execution} & \texttt{IntegrationRun}, estado de execução, idempotência, bloqueios, tentativas e relações entre execuções. \\
+\texttt{provenance} & Origem, transformação, evidência, derivação, impacto e reprocessamento. \\
+\texttt{information} & Contextualização, correlação, qualidade, pendências e \texttt{IntegratedInformation}. \\
+\texttt{knowledge} & Tipo, afirmação, método, confiança, revisão, publicação, validade e uso. \\
+\texttt{identity} & Pessoas, sistemas, credenciais, papéis, capacidades, finalidade e escopo. \\
+\texttt{operations} & \textit{Liveness}, \textit{readiness}, degradação, diagnóstico, auditoria, métricas e SGE. \\
+\texttt{reflexivity} & Referências de avaliação, comparação, divergências, recomendações, decisões corretivas, reversibilidade e verificação de efetividade. \\
+\bottomrule
+\end{tabularx}
+
+
+\subsection{Diretrizes de materialização da reflexividade em C++}
+\label{sec:cpp-reflexividade}
+
+A implementação deve distinguir recursos estáveis da linha de base e experimentos de linguagem. O modelo funcional não pode depender de recurso ainda indisponível na matriz oficial de compiladores do projeto.
+
+\begin{tabularx}{\textwidth}{P{3.0cm}P{5.2cm}Y}
+\toprule
+\textbf{Faixa} & \textbf{Mecanismos} & \textbf{Uso recomendado} \\
+\midrule
+C++20 & tipos fortes, \texttt{concepts}, \texttt{constexpr}/\texttt{consteval}, \texttt{std::source\_location}, \texttt{std::jthread}, \texttt{std::stop\_token}, \texttt{std::variant} & Invariantes estruturais, contratos de tipo, máquinas de estado, origem técnica e cancelamento cooperativo. \\
+C++23 & \texttt{std::expected}, \texttt{std::stacktrace} & Resultados e falhas tipificados, reconstrução técnica de falhas e integração direta com evidências. \\
+Laboratório C++26 & contratos da linguagem, reflexão estática e \texttt{std::execution} & Prototipar geração de metadados/schemas, precondições/pós-condições e composição assíncrona, sem tornar o piloto dependente desses recursos. \\
+\bottomrule
+\end{tabularx}
+
+\subsubsection{Elementos arquiteturais mínimos}
+A implementação inicial deve separar cinco responsabilidades:
+\begin{lstlisting}[language=C++]
+struct ReflexiveContext;
+class EvidenceCollector;
+class AssessmentEngine;
+struct ReflexivityPolicy;
+class CorrectiveActionExecutor;
+\end{lstlisting}
+
+\begin{itemize}
+  \item \texttt{ReflexiveContext}: identifica execução, referência, política, correlação, ator, modo e origem técnica;
+  \item \texttt{EvidenceCollector}: captura evidências estruturadas durante todo o escopo da operação;
+  \item \texttt{AssessmentEngine}: compara referência e evidência sem efeitos colaterais, com versão e explicação;
+  \item \texttt{ReflexivityPolicy}: materializa profundidade, autoridade, tolerâncias, gate e ações permitidas do perfil;
+  \item \texttt{CorrectiveActionExecutor}: executa somente ação previamente autorizada e devolve recibo ou falha tipificada.
+\end{itemize}
+
+\subsubsection{Regras de projeto C++}
+\begin{enumerate}
+  \item identificadores de domínios distintos devem ser tipos distintos, evitando conversão implícita entre \texttt{RunId}, \texttt{AgreementId}, \texttt{SystemId} e equivalentes;
+  \item estados centrais devem ser modelados por enumerações ou variantes tipificadas, sem strings livres como fonte de verdade;
+  \item precondições e invariantes estáveis devem ser verificadas em compilação quando possível e novamente nas fronteiras não confiáveis;
+  \item operações com falha esperada devem preferir resultado tipificado, incluindo código, explicação, evidência, possibilidade de retry e indicação de efeitos já confirmados;
+  \item coleta de evidência deve usar RAII para registrar conclusão, falha, cancelamento ou abandono, sem depender de todos os caminhos de retorno lembrarem de emitir logs;
+  \item cancelamento de tarefas deve ser cooperativo e observável, evitando término abrupto de threads e perda de estado;
+  \item o avaliador deve ser determinístico, reproduzível e separado do executor de ações corretivas;
+  \item contratos, reflexão e \texttt{std::execution} do C++26 permanecem em laboratório até haver suporte documentado, testes de portabilidade e ADR de adoção.
+\end{enumerate}
+
+\begin{lstlisting}[language=C++]
+OperationalAssessment assess(
+    const ReflexivityProfile& profile,
+    const ReferenceSnapshot& reference,
+    const EvidenceBundle& evidence);
+
+std::expected<ActionReceipt, ActionFailure>
+execute_corrective_action(
+    const CorrectiveAction& action,
+    const Authorization& authorization);
+\end{lstlisting}
+
+\begin{decisao}[Fronteira de autoridade no código]
+O componente que detecta ou classifica a divergência não recebe, por esse fato, autoridade para corrigi-la. Avaliação e execução corretiva devem possuir interfaces, políticas, testes e registros separados.
+\end{decisao}
+
+\subsubsection{Estratégia para recursos C++26}
+Enquanto contratos nativos não integrarem a linha de base, o projeto pode usar uma fachada própria, por exemplo \texttt{SISTER\_PRECONDITION}, \texttt{SISTER\_POSTCONDITION} e \texttt{SISTER\_INVARIANT}, desde que cada violação produza evidência estruturada. A reflexão estática deve ser experimentada para inventário de campos, serialização, geração de schemas e consistência entre modelo, API e CLI. Nenhum experimento pode redefinir contratos externos ou gerar código de produção sem revisão e testes equivalentes ao caminho manual.
+
+\subsection{Estrutura de diretórios sugerida}
+\begin{lstlisting}
+apps/sisterd/
+  main.cpp                  # composicao e inicializacao
+  api/                      # controllers, DTOs, serializacao
+  application/              # casos de uso e portas
+  domain/
+    federation/
+    agreements/
+    execution/
+    provenance/
+    information/
+    knowledge/
+    identity/
+    operations/
+    reflexivity/
+  infrastructure/
+    postgres/
+    filesystem/
+    http/
+    integrations/
+
+apps/sisterctl/
+  main.cpp                  # parser e composicao
+  commands/
+    operational/
+    maintenance/
+  client/
+  output/
+  config/
+\end{lstlisting}
+
+
+\section{Engenharia de segurança orientada por ameaças}
+\label{sec:engenharia-seguranca}
+
+\subsection{Finalidade}
+A segurança do SisTer deve ser conduzida como processo permanente de engenharia. O objetivo não é prever toda vulnerabilidade, mas manter um sistema capaz de conhecer ameaças já documentadas, restringir superfície, conter falhas, incorporar descobertas e impedir promoção sem evidência.
+
+A EFE define as obrigações normativas. O registro operacional de ameaças, controles, risco residual e revisão deve ser mantido em documento complementar versionado, denominado \textbf{MAES-SisTer -- Modelo de Ameaças e Estratégia de Segurança}. Mudança de ameaça não altera necessariamente a EFE; mudança de função, fronteira, protocolo ou garantia estrutural altera.
+
+\subsection{Ativos e fronteiras de confiança}
+Ativos mínimos protegidos:
+\begin{itemize}
+  \item identidades humanas e de sistemas, credenciais, sessões e chaves;
+  \item contratos, acordos, capacidades e decisões de autorização;
+  \item dados de autoridade, execuções, proveniência, informação integrada e conhecimento;
+  \item evidências, decisões de maturidade e integridade da cadeia de publicação;
+  \item disponibilidade, recuperabilidade e configuração do plano de controle.
+\end{itemize}
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=7mm,
+  b/.style={draw=sisterblue, rounded corners, fill=sisterlightblue, minimum width=8.8cm, minimum height=9mm, align=center, font=\small\bfseries},
+  a/.style={-{Latex[length=2.2mm]}, thick, draw=sisterdarkgray}
+]
+\node[b] (net) {Rede externa ou institucional};
+\node[b, below=of net] (gw) {Gateway especializado};
+\node[b, below=of gw] (sd) {\texttt{sisterd}: plano de controle interno};
+\node[b, below=of sd] (clients) {Clientes internos, persistência, \texttt{sisterctl} e SGE};
+\node[b, below=of clients] (subs) {Subsistemas autônomos};
+\draw[a] (net)--(gw); \draw[a] (gw)--(sd); \draw[a] (sd)--(clients); \draw[a] (clients)--(subs);
+\end{tikzpicture}
+\end{center}
+
+Cada travessia deve declarar identidade aceita, protocolo, capacidades, dados permitidos, validação, limites, auditoria, comportamento em falha e owner.
+
+\subsection{Ficha obrigatória de ameaça}
+Cada ameaça aplicável deve possuir, no mínimo:
+\begin{itemize}
+  \item identificador, título, ativo e superfície;
+  \item origem, precondições, cenário, impacto e exposição;
+  \item controles preventivos, detectivos, de contenção e recuperação;
+  \item testes, evidências, risco residual, owner, estado e data de revisão;
+  \item fontes normativas, históricas ou internas que sustentam sua inclusão.
+\end{itemize}
+
+\subsection{Classes iniciais de ameaças}
+\begin{landscape}
+\begingroup
+\tiny
+\renewcommand{\arraystretch}{1.02}
+\begin{longtable}{P{2.2cm}P{3.2cm}P{6.5cm}P{7.7cm}}
+\toprule
+\textbf{ID} & \textbf{Classe} & \textbf{Cenário representativo} & \textbf{Estratégia de engenharia} \\
+\midrule
+\endhead
+TH-HTTP-01 & Parsing e enquadramento & \texttt{Content-Length} inválido, duplicado, ambíguo, overflow ou combinação incompatível de headers. & Parsing estrito; erro controlado; conexão encerrada; corpus negativo; conformidade com RFC; teste de sobrevivência do processo. \\
+TH-HTTP-02 & Dessincronização HTTP & Gateway e backend interpretam a mesma mensagem de forma diferente, permitindo smuggling ou splitting. & Normalização no gateway; sintaxe restrita; testes diferenciais; rejeição de framing ambíguo; ausência de tolerância incompatível. \\
+TH-HTTP-03 & Exaustão de recursos & Requisição lenta, corpo grande, filas, threads, memória, descritores ou logs esgotados. & Limites absolutos e por origem; deadlines; fila limitada; quotas; backpressure; testes de carga e exaustão. \\
+TH-HTTP-04 & Injeção de cabeçalhos & CRLF, nomes inválidos, cabeçalhos internos forjados ou resposta maliciosa do upstream. & Allowlist; sanitização; sobrescrita de headers internos; validação de respostas; logs seguros. \\
+TH-PROXY-01 & SSRF e proxy indevido & Entrada controla destino, esquema, porta ou caminho e transforma o sistema em proxy aberto. & Destinos fixos e contratados; egress restrito; resolução validada; nenhuma URL arbitrária; testes de negação. \\
+TH-PROXY-02 & Upstream comprometido & Subsistema retorna headers, tamanhos, estados ou fluxos maliciosos. & Todo upstream é não confiável; limites de resposta; parser independente; timeout; circuito de contenção; auditoria. \\
+TH-AUTH-01 & Autenticação e sessão & Força bruta, enumeração, sessão roubada, bootstrap indevido ou credencial persistente. & Rate limiting multidimensional; resposta uniforme; cookies seguros; bootstrap offline; expiração e revogação. \\
+TH-AUTHZ-01 & Autorização ausente ou excessiva & Rota sem política, capacidade ampla ou decisão reinterpretada pelo handler. & Negação por padrão; política declarada na entrada; menor privilégio; teste \texttt{401}/\texttt{403}; auditoria correlacionada. \\
+TH-IDENT-01 & Identidade entre sistemas & Cookie humano, header forjado, token sem audiência ou credencial estática atravessa a fronteira. & Asserção interna assinada, curta, com audiência, capacidade e \texttt{request\_id}; rotação; rejeição de replay quando aplicável. \\
+TH-WS-01 & Conexões persistentes & WebSocket ocupa worker, não expira, ignora origem ou permite retenção de recursos. & WebSocket no gateway; quotas; origem permitida; timeout de inatividade e vida máxima; proxy legado proibido em produção. \\
+TH-PATH-01 & Caminhos e arquivos & Traversal, symlink, encoding ambíguo, leitura indevida ou exposição de fonte. & Raiz fixa; canonicalização; privilégios mínimos; arquivos estáticos fora do \texttt{sisterd}; testes de caminhos hostis. \\
+TH-CXX-01 & Memória e inteiros & Overflow, leitura/escrita fora de limites, uso após liberação, ponteiro nulo ou corrida. & Tipos limitados; validação; RAII; sanitizers; análise estática; fuzzing; revisão especializada. \\
+TH-CXX-02 & Exceções e encerramento & Entrada externa ou falha de handler propaga exceção e encerra worker ou processo. & Erros esperados tratados localmente; barreira final por job; isolamento; teste hostil seguido de health. \\
+TH-CONF-01 & Configuração insegura & Bind público, ambiente desconhecido, proxy legado ou bootstrap habilitado em produção. & Schema e validação no startup; defaults seguros; falha fechada; unit file explícito; teste da configuração efetiva. \\
+TH-SUP-01 & Cadeia de suprimento & Dependência vulnerável, build não reproduzível, artefato alterado ou origem não verificada. & Inventário/SBOM; pinning; verificação de origem e integridade; advisories; atualização e rollback. \\
+TH-AUD-01 & Logs e evidências & Segredo em log, injeção de controle, ausência de correlação ou evidência alterável. & Sanitização; schema; retenção; integridade; classificação; separação entre log operacional e auditoria governada. \\
+\bottomrule
+\end{longtable}
+\endgroup
+\end{landscape}
+
+\subsection{Invariantes para ameaças conhecidas e novas}
+\begin{enumerate}
+  \item Toda entrada é não confiável, inclusive a produzida por subsistema autenticado.
+  \item Falhas são contidas na menor unidade possível e não atravessam fronteiras sem tradução controlada.
+  \item Memória, tempo, conexões, filas, threads, corpos, descritores e logs possuem limites explícitos.
+  \item Toda fronteira nega por padrão e toda permissão possui capacidade, escopo e owner.
+  \item Credenciais não atravessam fronteiras sem necessidade demonstrada.
+  \item Configuração desconhecida ou incompleta falha fechada.
+  \item O upstream, o gateway e o cliente podem estar defeituosos ou comprometidos.
+  \item Segurança depende de camadas independentes, não de um único controle.
+  \item Vulnerabilidade corrigida gera teste de regressão e atualização do modelo de ameaças.
+  \item Ameaça nova é associada a classe existente ou cria nova classe versionada.
+  \item Perda de controle ou evidência pode regredir maturidade, suspender capacidade ou revogar integração.
+  \item Capacidade não necessária deve ser removida ou mantida fora da superfície operacional.
+\end{enumerate}
+
+\subsection{Ciclo de incorporação de ameaças}
+\begin{lstlisting}
+descoberta, incidente, advisory ou nova exposicao
+        -> avaliacao de aplicabilidade
+        -> ameaca existente ou novo TH-ID
+        -> risco e fronteira afetada
+        -> controle e owner
+        -> teste reproduzivel
+        -> implementacao e evidencia
+        -> risco residual
+        -> avaliacao SGE
+        -> promocao, manutencao, regressao ou bloqueio
+\end{lstlisting}
+
+O acompanhamento deve considerar RFCs e erratas dos protocolos utilizados, advisories dos componentes e dependências, CVE/CWE aplicáveis, sistema operacional, resultados de fuzzing e sanitizers, incidentes internos e vulnerabilidades históricas de servidores e proxies maduros.
+
+\subsection{Verificação proporcional à exposição}
+Conforme risco e superfície, o conjunto de evidências deve combinar:
+\begin{itemize}
+  \item testes unitários, negativos, de contrato, integração e ponta a ponta;
+  \item corpus de entradas hostis e testes diferenciais de protocolo;
+  \item fuzzing de parsers e fronteiras de serialização;
+  \item AddressSanitizer, UndefinedBehaviorSanitizer e ThreadSanitizer quando aplicável;
+  \item análise estática, warnings máximos e revisão de dependências;
+  \item testes de carga, requisição lenta, exaustão, upstream hostil e recuperação;
+  \item verificação de configuração produtiva, sandbox, rollback, backup e restauração.
+\end{itemize}
+
+\subsection{Rastreabilidade de segurança}
+\begin{principio}[Cadeia de segurança]
+\centering
+\textbf{Ameaça $\rightarrow$ requisito $\rightarrow$ controle $\rightarrow$ implementação $\rightarrow$ teste $\rightarrow$ evidência $\rightarrow$ risco residual $\rightarrow$ maturidade.}
+\end{principio}
+
+Nenhuma ameaça relevante é considerada controlada apenas porque existe código defensivo. O estado depende de teste reproduzível, evidência válida e risco residual aceito pela autoridade definida.
+
+\section{Contratos e objetos centrais a codificar}
+
+\subsection{\texttt{SystemRegistration}}
+Campos mínimos: identificador, nome, domínio, versão, owner, mantenedor alternativo, capacidades, endpoints, contratos suportados, diagnóstico, revisão e datas. Devem ser independentes:
+\begin{itemize}
+  \item \texttt{registry\_status}: \texttt{registered}, \texttt{active}, \texttt{suspended}, \texttt{retired};
+  \item \texttt{maturity\_profile}: perfil avaliado pelo SGE, como \texttt{experimental}, \texttt{shadow} ou estágio posterior.
+\end{itemize}
+Invariantes: identidade única, capacidade versionada, owner presente e transições auditáveis.
+
+\subsection{\texttt{IntegrationAgreement}}
+Campos mínimos: participantes, capacidades, finalidade, escopo, restrições, schemas, revisão, digest, aceites, estado, vigência, política de falha, segurança e evidências. Estados mínimos: \texttt{proposed}, \texttt{validated}, \texttt{accepted}, \texttt{active}, \texttt{suspended}, \texttt{revoked}, \texttt{superseded}.
+
+\subsection{\texttt{IntegrationRun}}
+Campos mínimos:
+\begin{itemize}
+  \item identificador e chave de idempotência;
+  \item acordo, revisão, participantes, ator, finalidade e capacidade;
+  \item entradas, digests, schemas e transformações;
+  \item instantes, tentativas, bloqueios, erros, saídas e evidências;
+  \item relações \texttt{retry\_of\_run\_id}, \texttt{reprocesses\_run\_id} e \texttt{supersedes\_run\_id}, quando aplicáveis.
+\end{itemize}
+O estado de execução deve ser separado da validade posterior:
+\begin{itemize}
+  \item \texttt{execution\_status}: \texttt{requested}, \texttt{authorized}, \texttt{validating}, \texttt{running};
+  \item estados terminais: \texttt{succeeded}, \texttt{failed}, \texttt{blocked}, \texttt{cancelled};
+  \item \texttt{validity\_status}: \texttt{valid}, \texttt{invalidated}, \texttt{superseded}.
+\end{itemize}
+Retry ou reprocessamento cria nova execução vinculada à anterior.
+
+\subsection{\texttt{ProvenanceRecord}}
+Deve representar relações como \texttt{wasGeneratedBy}, \texttt{used}, \texttt{wasDerivedFrom}, \texttt{wasAttributedTo} e \texttt{wasInvalidatedBy}. Uma implementação relacional versionada é suficiente no primeiro ciclo se permitir travessia de impacto.
+
+\subsection{\texttt{IntegratedInformation}}
+Campos mínimos: identificador, entidades canônicas, tempo, espaço, fontes, correlações, transformação, qualidade, inconsistências, pendências, validade, responsável e proveniência.
+
+\subsection{\texttt{KnowledgeArtifact}}
+Campos mínimos: tipo, afirmação, informações sustentadoras, método, evidências, autor ou responsável, confiança, limitações, validade temporal, finalidade, revisões e substituições. Dimensões independentes:
+\begin{itemize}
+  \item \texttt{artifact\_type}: \texttt{scientific}, \texttt{operational}, \texttt{administrative}, \texttt{methodological}, \texttt{governance};
+  \item \texttt{review\_status}: \texttt{draft}, \texttt{under\_review}, \texttt{accepted}, \texttt{rejected};
+  \item \texttt{publication\_status}: \texttt{unpublished}, \texttt{published}, \texttt{withdrawn};
+  \item \texttt{validity\_status}: \texttt{valid}, \texttt{invalidated}, \texttt{superseded}, \texttt{retracted}.
+\end{itemize}
+O tipo determina método mínimo e autoridade revisora. Revisão científica é obrigatória apenas para artefatos \texttt{scientific}.
+
+\subsection{\texttt{DecisionUse}}
+Relaciona conhecimento, decisão, ator, finalidade, contexto, restrições, data e resultado observado. O registro torna o uso auditável e não atribui decisão autônoma ao SisTer.
+
+\subsection{\texttt{ReflexivityProfile}}
+Contrato operacional versionado que declara: escopo; profundidade D0--D5; autoridade A0--A5; modo; tipos de referência; evidências obrigatórias; avaliador e versão; tolerâncias; mapeamento de severidade; efeito de gate; ações corretivas permitidas; owner de autorização; requisito de rollback; retenção; e política de falha. Deve possuir schema, digest, vigência e compatibilidade explícita. Uma execução relevante sem perfil válido produz \texttt{inconclusive} ou bloqueio definido por política, nunca avaliação improvisada.
+
+\subsection{\texttt{ReferenceSnapshot}}
+Congela as referências utilizadas em uma avaliação: objetivo e função, processo, acordo e revisão, políticas, critérios de aceitação, perfil de risco, dependências, contexto e instante de vigência. Deve possuir digest e não pode ser reescrito após a avaliação; mudança posterior cria nova referência.
+
+\subsection{\texttt{OperationalAssessment}}
+Campos mínimos: identificador, execução/processo avaliado, \texttt{ReflexivityProfile}, \texttt{ReferenceSnapshot}, evidências consideradas, avaliador e versão, instante, resultado, severidade, divergências, limitações, confiança, recomendação, efeito de gate, resposta operacional proposta, impacto sobre operação/maturidade e responsável. Resultados mínimos: \texttt{confirmed}, \texttt{divergent}, \texttt{inconclusive} e \texttt{not\_applicable}. Resultado, severidade, gate e decisão corretiva são dimensões independentes.
+
+\subsection{\texttt{CorrectiveAction}}
+Relaciona avaliação, ação proposta, nível de autonomia permitido, autoridade, aprovação, escopo, precondições, efeitos esperados, reversão, estado, evidências de aplicação e avaliação posterior. Estados mínimos: \texttt{proposed}, \texttt{authorized}, \texttt{applied}, \texttt{verified}, \texttt{rolled\_back}, \texttt{rejected} e \texttt{failed}. Mudança estrutural nunca é autorizada apenas pela existência de uma avaliação divergente.
+
+
+\subsection{\texttt{ReferenceRevisionProposal}}
+Registra descoberta que pode exigir alteração de propósito, contrato, política, critério ou método. Campos mínimos: referência atual, avaliações e evidências motivadoras, mudança proposta, impacto, owner competente, consulta/revisão exigida, decisão, nova versão e relação de substituição. O artefato pode ser criado automaticamente, mas sua aprovação pertence ao nível A5 de governança humana.
+
+\section{Rastreabilidade da engenharia}
+
+\subsection{Cadeia normativa}
+\begin{center}
+\resizebox{0.92\textwidth}{!}{%
+\begin{tikzpicture}[
+  node distance=4mm,
+  t/.style={draw=sisterblue, rounded corners, fill=sisterlightblue, minimum width=8.8cm, minimum height=8mm, align=center, font=\small\bfseries},
+  arr/.style={-{Latex[length=2.1mm]}, thick, draw=sisterdarkgray}
+]
+\node[t] (o) {Objetivo científico};
+\node[t, below=of o] (f) {Função sistêmica};
+\node[t, below=of f] (p) {Processo};
+\node[t, below=of p] (c) {Contrato};
+\node[t, below=of c] (u) {Caso de uso};
+\node[t, below=of u] (cl) {Componente / unidade de implementação};
+\node[t, below=of cl] (te) {Teste};
+\node[t, below=of te] (at) {Atestação};
+\node[t, below=of at] (ra) {Avaliação reflexiva e divergências};
+\node[t, below=of ra] (m) {Indicador, ação autorizada e decisão de maturidade};
+\draw[arr] (o)--(f); \draw[arr] (f)--(p); \draw[arr] (p)--(c); \draw[arr] (c)--(u); \draw[arr] (u)--(cl); \draw[arr] (cl)--(te); \draw[arr] (te)--(at); \draw[arr] (at)--(ra); \draw[arr] (ra)--(m);
+\draw[arr, bend right=72] (m.west) to node[left, font=\scriptsize, align=right]{correção e\\reavaliação} (p.west);
+\end{tikzpicture}}
+\end{center}
+
+\subsection{Convenção de identificadores}
+\begin{tabularx}{\textwidth}{P{3.0cm}P{3.3cm}Y}
+\toprule
+\textbf{Elemento} & \textbf{Padrão} & \textbf{Exemplo} \\
+\midrule
+Objetivo & \texttt{O-nn} & \texttt{O-01} Produzir convergência governada. \\
+Função & \texttt{F-nn} & \texttt{F-06} Preservar proveniência. \\
+Processo & \texttt{P-nn} & \texttt{P-03} Recepção de dado. \\
+Capacidade & \texttt{CAP-domínio-nn} & \texttt{CAP-EXEC-01} Registrar execução. \\
+Contrato & ID + versão & \texttt{integration-run/1.0.0}. \\
+Caso de uso & \texttt{UC-domínio-nn} & \texttt{UC-EXEC-01} Iniciar integração. \\
+Requisito & \texttt{REQ-domínio-nn} & \texttt{REQ-PROV-04} Relacionar derivado à origem. \\
+Ameaça & \texttt{TH-domínio-nn} & \texttt{TH-HTTP-01} Parsing e enquadramento inválido. \\
+Controle & \texttt{CTRL-domínio-nn} & \texttt{CTRL-HTTP-03} Conter exceções por job. \\
+Teste & \texttt{TST-domínio-nn} & \texttt{TST-EXEC-07} Rejeitar acordo suspenso. \\
+Evidência & schema + id da execução & \texttt{sister.integration-attestation/1.0.0}. \\
+Perfil reflexivo & \texttt{RFP-domínio-nn} & \texttt{RFP-NC-01} Nexo--Compras D2--D3/A1 em shadow. \\
+Avaliação & \texttt{ASM-domínio-nn} & \texttt{ASM-REF-01} Comparar execução ao acordo ativo. \\
+Ação corretiva & \texttt{ACT-domínio-nn} & \texttt{ACT-REF-02} Suspender integração divergente. \\
+Indicador & \texttt{IND-nn} & \texttt{IND-04} Proporção com proveniência válida. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Matriz inicial de rastreabilidade}
+\begin{landscape}
+\scriptsize
+\begin{longtable}{P{1.3cm}P{1.3cm}P{1.3cm}P{3.4cm}P{3.5cm}P{3.8cm}P{3.6cm}P{3.0cm}}
+\toprule
+\textbf{Obj.} & \textbf{Função} & \textbf{Proc.} & \textbf{Capacidade} & \textbf{Caso de uso} & \textbf{Implementação-alvo} & \textbf{Teste/evidência} & \textbf{Indicador} \\
+\midrule
+\endhead
+O-01 & F-01 & P-01 & CAP-FED-01 registrar sistema & UC-FED-01 registrar manifesto & \texttt{FederationService}, \texttt{SystemRepository}, API/CLI & manifesto válido/inválido, duplicidade, atestação de registro & IND-01 sistemas com perfil válido \\
+O-01 & F-02 & P-02 & CAP-AGR-01 ativar acordo & UC-AGR-03 ativar após aceite & \texttt{AgreementService}, repositório, política de transição & rejeitar aceite incompleto; recibo e digest & IND-02 integrações com acordo ativo \\
+O-01 & F-03 & P-01--P-07 & CAP-IAM-01 autorizar capacidade & UC-IAM-02 avaliar ator/finalidade & \texttt{AuthorizationPolicy}, identidade humana e de sistema & matriz de autorização e decisão registrada & IND-03 operações autorizadas/negadas \\
+O-02 & F-04/F-05 & P-03 & CAP-EXEC-01 iniciar execução & UC-EXEC-01 receber dado & \texttt{IntegrationRunService}, validador, adaptador & contrato inativo, schema inválido, idempotência & IND-04 execuções reproduzíveis \\
+O-02 & F-06 & P-03--P-07 & CAP-PROV-01 registrar derivação & UC-PROV-01 ligar entrada e saída & \texttt{ProvenanceService}, \texttt{ProvenanceRepository} & travessia origem--derivado e impacto & IND-05 derivados com proveniência válida \\
+O-02 & F-07 & P-04 & CAP-INF-01 contextualizar & UC-INF-01 correlacionar necessidade/projeto & \texttt{ContextualizationService}, adaptador Nexo--Compras & relação confirmada, pendência e conflito & IND-06 dados contextualizados \\
+O-03 & F-08 & P-05 & CAP-KNW-01 registrar conhecimento & UC-KNW-01 submeter para revisão & \texttt{KnowledgeService}, revisão e repositório & evidência insuficiente, revisão, invalidação & IND-07 artefatos revisados \\
+O-03 & F-09 & P-05/P-06 & CAP-EXP-01 publicar & UC-EXP-01 expor conforme escopo & API, CLI, interface e política de exposição & acesso permitido/negado e versão correta & IND-08 usos governados \\
+O-04 & F-10 & todos & CAP-OPS-01 diagnosticar & UC-OPS-01 executar doctor federado & contrato de diagnóstico, agregador SGE, CLI & PASS/WARN/BLOCK, sanitização, schema & IND-09 checks resolvidos \\
+O-05 & F-11 & P-08 & CAP-REF-01 aplicar perfil e avaliar execução & UC-REF-01 comparar execução e referências & \texttt{ReflexivityService}, \texttt{AssessmentEngine}, repositórios de perfil, referência, avaliação e correção & perfil válido, confirmação/divergência/inconclusão, gate separado, explicação, autorização e verificação & IND-10 avaliações reproduzíveis por perfil e correções eficazes \\
+\bottomrule
+\end{longtable}
+\end{landscape}
+
+\subsection{Rastreabilidade proporcional}
+A rastreabilidade obrigatória incide sobre unidades que alterem comportamento observável, contrato, segurança, persistência, integração ou maturidade. Funções auxiliares são relacionadas pelo módulo, requisito e conjunto de testes.
+
+\subsection{Regra de revisão de código}
+Nenhuma mudança governada deve ser aprovada sem responder:
+\begin{enumerate}
+  \item Qual objetivo e função ela atende?
+  \item Qual processo e caso de uso são alterados?
+  \item Qual contrato, schema ou política limita o comportamento?
+  \item Qual teste demonstra o critério de aceitação?
+  \item Qual evidência será produzida?
+  \item Quais ameaças e fronteiras são afetadas e quais controles se aplicam?
+  \item Qual teste negativo e qual evidência demonstram o controle?
+  \item Como a execução será comparada às referências e que divergências podem ser produzidas?
+  \item Qual ação corretiva é permitida, por quem, com que reversão e verificação posterior?
+  \item Qual risco residual, compatibilidade e impacto sobre maturidade existem?
+\end{enumerate}
+
+\section{Roadmap de materialização por capacidades}
+
+O roadmap é organizado em trilhas coordenadas. A base segura precede alterações estruturais; a fatia Nexo--Compras orienta a generalização; operação e SGE acompanham os incrementos.
+
+\begin{landscape}
+\scriptsize
+\begin{longtable}{P{1.4cm}P{2.4cm}P{4.2cm}P{6.0cm}P{5.4cm}P{2.5cm}}
+\toprule
+\textbf{ID} & \textbf{Trilha} & \textbf{Capacidade} & \textbf{Implementação principal} & \textbf{Gate} & \textbf{Dependência} \\
+\midrule
+\endhead
+I-00 & Base segura & Caracterização e decisão HTTP & Cobrir comportamento atual; registrar ADR sobre manter, endurecer ou substituir o servidor HTTP próprio. & Rotas, códigos, autenticação e comandos preservados; ADR aceita. & -- \\
+I-01 & Base segura & Fronteiras e portas mínimas & Extrair transporte, roteamento e composição; definir portas de persistência, identidade, relógio e integrações. & \texttt{main.cpp} reduzido sem mudança de contrato externo. & I-00 \\
+I-02 & Fatia de referência & Registro e acordo mínimos & Persistir sistema, capacidade e acordo Nexo--Compras com estados independentes e aceite. & Execução rejeitada sem sistema ativo e acordo válido. & I-01 \\
+I-03 & Fatia de referência & \texttt{IntegrationRun} mínima & Criar execução, idempotência, entradas, estado, saída, erro e relações entre execuções. & Uma execução é identificável e reconstruível. & I-02 \\
+I-04 & Fatia de referência & Proveniência e informação integrada & Ligar original, execução e transformação; produzir correlação ou pendência Nexo--Compras. & Resultado remonta às entradas e explicita qualidade e pendências. & I-03 \\
+I-05 & Fatia de referência & Conhecimento tipificado & Produzir artefato \texttt{operational} ou \texttt{governance}; habilitar revisão conforme tipo, invalidação e substituição. & Artefato revisável e vinculado à informação integrada. & I-04 \\
+I-06 & Operação & Cliente \texttt{sisterctl} & Implementar comandos operacionais, \texttt{--json}, modo não interativo e códigos estáveis; separar manutenção. & Fluxo de referência operável sem acesso direto à persistência. & I-02--I-05 \\
+I-07 & Operação & Saúde, prontidão e auditoria & Separar \textit{liveness}, \textit{readiness} e degradação; implementar \texttt{doctor}, logs correlacionados e exportação segura. & Dependências e falhas são detectáveis e auditáveis. & I-01; evolui com I-03--I-06 \\
+I-08 & SGE & Avaliação em \texttt{shadow} & Criar schemas e checks para acordo, execução, proveniência, informação, conhecimento e CLI desde a primeira fatia. & Cada incremento produz atestação válida sem bloquear inicialmente. & inicia em I-02 \\
+I-09 & SGE/operação & Gates vinculantes e recuperação & Ativar bloqueios por risco; implementar retenção, backup, rollback, regressão e resposta a falhas. & Promoção e publicação dependem de evidência; recuperação comprovada. & I-05--I-08 \\
+I-10 & Reflexividade & Perfis e avaliação em \texttt{shadow} & Implementar \texttt{ReflexivityProfile}, \texttt{ReferenceSnapshot}, coleta RAII, \texttt{AssessmentEngine} e \texttt{OperationalAssessment}; configurar Nexo--Compras em D2--D3/A1. & A mesma execução e referências reproduzem o mesmo resultado; CLI explica resultado, severidade e gate sem alterar o fluxo. & I-04--I-09 \\
+I-11 & Reflexividade & Recomendação, gates e correção limitada & Evoluir perfis aceitos para A2/A3 e, somente em ações locais reversíveis, A4; separar avaliador e executor; persistir autorização, aplicação, rollback e nova avaliação. & Nenhuma ação excede o perfil; bloqueios e correções possuem política, testes de falha, recibo, rollback e verificação de efetividade. & I-10, I-06--I-09 \\
+\bottomrule
+\end{longtable}
+\end{landscape}
+
+
+\subsection{Trilha de segurança}
+\begin{longtable}{P{1.8cm}P{3.2cm}P{5.5cm}P{2.9cm}}
+\toprule
+\textbf{ID} & \textbf{Entrega} & \textbf{Gate} & \textbf{Dependência} \\
+\midrule
+\endhead
+SEC-GOV-00 & MAES-SisTer e perfil do \texttt{sisterd} & Ativos, fronteiras, classes de ameaça, controles, owners e risco residual estão versionados. & I-00 \\
+SEC-00 & Quarentena do transporte & Produção aceita apenas transporte interno; proxies e bootstrap legados falham fechados. & SEC-GOV-00 \\
+SEC-01 & Autorização e bootstrap & Políticas negam por padrão; capacidades são explícitas; bootstrap administrativo é local e de uso único. & SEC-00 \\
+SEC-01C & Robustez do parser e dos workers & Entrada malformada produz erro controlado; worker e processo sobrevivem; teste de regressão existe. & SEC-01 \\
+SEC-01D & Contenção de abuso & Rate limiting não depende da porta, possui memória limitada e combina IP, identidade e limite global. & SEC-01 \\
+SEC-02 & Identidade interna assinada & Cookie humano não atravessa fronteira; audiência, validade, capacidade, rotação e falha fechada são testadas. & SEC-01C, SEC-01D \\
+SEC-03 & Gateway especializado & TLS, normalização, limites externos, WebSocket, origem confiável e observabilidade de borda estão operacionais. & SEC-02 \\
+SEC-SGE-01 & Verificação contínua & Threat IDs, controles, testes e risco residual integram atestações e regressão de maturidade. & inicia em SEC-GOV-00 \\
+\bottomrule
+\end{longtable}
+
+\subsection{Coordenação das trilhas}
+\begin{lstlisting}
+I-00 -> I-01 -> I-02 -> I-03 -> I-04 -> I-05
+                    |       |       |       |
+                    +------ I-08 acompanha em shadow
+I-02 -----------------------------> I-06
+I-01 -> I-07, ampliado a cada fatia
+I-05 + I-06 + I-07 + I-08 -> I-09
+I-04 + I-08 + I-09 -> I-10
+
+SEC-GOV-00 -> SEC-00 -> SEC-01 -> SEC-01C + SEC-01D
+SEC-01C + SEC-01D -> SEC-02 -> SEC-03
+SEC-SGE-01 acompanha toda a trilha
+\end{lstlisting}
+
+\section{Requisitos transversais de engenharia}
+
+\subsection{Segurança}
+Aplicam-se as obrigações da Seção~\ref{sec:engenharia-seguranca}. Em particular:
+\begin{itemize}
+  \item nova fronteira, protocolo, parser, proxy, credencial ou exposição exige modelo de ameaças e perfil de segurança;
+  \item credenciais e segredos nunca entram em evidências, logs ou repositório;
+  \item identidade de sistema é distinta da identidade humana e restrita por audiência e capacidade;
+  \item autorização nega por padrão e evolui para capacidade, finalidade e escopo;
+  \item transporte possui limites de tamanho, tempo, concorrência, memória, destino e taxa;
+  \item falha provocada por entrada não confiável deve ser contida sem encerrar o plano de controle;
+  \item evidências são classificadas, sanitizadas, retidas e protegidas contra alteração indevida;
+  \item operação destrutiva exige autorização explícita, confirmação adequada, recuperação e auditoria;
+  \item avaliação reflexiva e ação corretiva devem respeitar separação de autoridade, menor privilégio, reversibilidade e falha fechada.
+\end{itemize}
+
+\subsection{Confiabilidade e resiliência}
+\begin{itemize}
+  \item idempotência em comandos repetíveis e chaves em execuções;
+  \item timeout e política de retry por capacidade, sem repetição cega de operação não idempotente;
+  \item degradação explícita: fallback nunca pode parecer dado atual e autorizado;
+  \item reprocessamento preserva execução anterior e produz nova relação de proveniência;
+  \item regressão automática ou assistida quando evidência, dependência ou contrato perde validade;
+  \item ação corretiva com escopo, reversão e verificação posterior, sem apagar a execução divergente.
+\end{itemize}
+
+\subsection{Testabilidade}
+Cada caso de uso deve possuir testes de unidade das invariantes, testes de contrato, integração de persistência/adaptadores, cenários de falha e pelo menos um teste ponta a ponta por processo. Testes devem produzir resultados consumíveis pelo SGE.
+
+\subsection{Observabilidade}
+Logs devem possuir identificador de requisição e, quando aplicável, \texttt{run\_id}, ator, capacidade, contrato, resultado e latência, sem segredos. Métricas mínimas: taxa de erro, tempo por estado, filas, retries, indisponibilidade, pendências, invalidações, reprocessamentos, avaliações por resultado, divergências por severidade e efetividade das correções.
+
+\subsection{Reflexividade operacional}
+\begin{itemize}
+  \item toda função classificada como relevante deve declarar propósito, \texttt{ReflexivityProfile}, referências avaliáveis, evidências mínimas e owner do critério;
+  \item profundidade D0--D5, autoridade A0--A5, efeito de gate e ações permitidas devem ser explícitos e versionados;
+  \item toda avaliação deve usar referências congeladas e avaliador versionado, permitindo reprodução e contestação;
+  \item ausência ou insuficiência de perfil, referência ou evidência produz \texttt{inconclusive} ou bloqueio definido por política, nunca confirmação implícita;
+  \item resultado da avaliação, severidade, efeito de gate, impacto sobre maturidade e decisão corretiva são dimensões independentes;
+  \item divergências devem ser explicadas em forma humana e estruturada, com evidências favoráveis e contrárias;
+  \item recomendações não são autorizações; ações automáticas limitam-se às previamente aprovadas por política, proporcionais ao risco, auditáveis e reversíveis;
+  \item toda correção aplicada deve produzir evidência e ser submetida a nova avaliação de efetividade;
+  \item revisão de propósito, contrato, política, critério ou método cria \texttt{ReferenceRevisionProposal}, exige autoridade A5 e não altera retrospectivamente avaliações anteriores;
+  \item recursos experimentais do C++26 não podem ser requisito da linha de base até ADR, portabilidade e testes demonstrarem adoção segura.
+\end{itemize}
+
+\subsection{Compatibilidade}
+Schemas e contratos são versionados. Mudança incompatível exige nova versão, migração ou adaptador explícito. Compatibilidade deve ser comprovada por contrato e teste.
+
+\section{Gates contra \textit{vibe coding}}
+
+\subsection{Definição de pronto para iniciar}
+Uma capacidade somente entra em implementação governada quando possui:
+\begin{itemize}
+  \item problema e objetivo relacionados;
+  \item função, processo e responsável;
+  \item escopo e fora de escopo;
+  \item contrato ou hipótese de contrato;
+  \item critérios de aceitação verificáveis;
+  \item ameaças aplicáveis, fronteiras afetadas, controles e risco residual esperado;
+  \item estratégia mínima de teste negativo, contenção e evidência;
+  \item referência de avaliação, resultado esperado e limite de autonomia para eventual correção.
+\end{itemize}
+
+\subsection{Definição global de concluído}
+Uma capacidade somente é concluída quando:
+\begin{itemize}
+  \item código e contratos estão versionados;
+  \item critérios são satisfeitos por testes reproduzíveis;
+  \item evidência estruturada foi produzida e validada;
+  \item documentação e rastreabilidade foram atualizadas;
+  \item compatibilidade, dados, ameaças, controles e risco residual foram revisados;
+  \item testes negativos, contenção, operação, falha, rollback/reprocessamento e observabilidade foram tratados;
+  \item owner científico/funcional validou o significado do resultado;
+  \item SGE avaliou o perfil aplicável;
+  \item quando aplicável, P-08 produziu avaliação reflexiva válida e a correção foi verificada ou formalmente dispensada.
+\end{itemize}
+
+\subsection{Sinais de bloqueio}
+Devem bloquear integração ou promoção:
+\begin{itemize}
+  \item implementação sem critério de aceitação;
+  \item contrato ausente ou estado não verificável;
+  \item \texttt{SKIP} sem motivo estruturado;
+  \item fallback indistinguível de resultado real;
+  \item alteração direta de banco por interface operacional;
+  \item evidência sem revisão, ambiente ou artefato relacionado;
+  \item decisão crítica presente apenas em conversa;
+  \item nova superfície ou protocolo sem ameaça, controle, teste negativo e owner;
+  \item ameaça conhecida e aplicável sem tratamento, exceção expirada ou risco residual aceito;
+  \item parser ou fronteira exposta sem contenção de falhas e limites de recursos demonstrados;
+  \item mudança de comportamento, contrato, segurança, persistência ou integração sem requisito, capacidade e teste associados;
+  \item função relevante sem referência avaliável, evidência suficiente ou owner do critério;
+  \item divergência bloqueante ou inconclusão crítica sem decisão, prazo e responsável;
+  \item ação corretiva automática sem autorização prévia, reversibilidade ou verificação posterior.
+\end{itemize}
+
+\section{Processo de referência: Nexo--Compras}
+
+\subsection{Objetivo demonstrador}
+Comprovar que o SisTer transforma uma necessidade de compra em informação contextualizada por projeto e atividade de pesquisa e em artefato de conhecimento operacional ou de governança, sem transferir ao núcleo a autoridade do Nexo ou do Compras.
+
+\subsection{Entradas e autoridades}
+\begin{tabularx}{\textwidth}{P{4.0cm}P{4.2cm}Y}
+\toprule
+\textbf{Oferta} & \textbf{Autoridade} & \textbf{Uso no processo} \\
+\midrule
+Necessidade de compra & Compras & Origem operacional, prioridade, estado, itens e justificativa. \\
+Projeto e atividade científica & Nexo & Finalidade científica, desafio, responsável e vínculo institucional. \\
+Acordo e contratos técnicos & Relação/SisTer & Autoriza capacidades, finalidade, schemas, restrições e evidências. \\
+Execução e proveniência & SisTer & Registra como, quando e sob qual revisão a contextualização ocorreu. \\
+Validação do artefato & Autoridade definida pelo tipo & Define significado, confiança, limites e uso admissível; revisão científica aplica-se apenas ao tipo \texttt{scientific}. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{Resultado mínimo do ciclo}
+\begin{enumerate}
+  \item acordo Nexo--Compras ativo e versionado;
+  \item \texttt{IntegrationRun} criada por comando/API;
+  \item dados originais preservados por referência/digest;
+  \item validações e transformações registradas;
+  \item necessidade vinculada a projeto/atividade ou marcada como pendente com razão;
+  \item \texttt{IntegratedInformation} produzida;
+  \item ao menos um \texttt{KnowledgeArtifact} do tipo \texttt{operational} ou \texttt{governance} submetido à revisão;
+  \item invalidação de uma entrada identifica os derivados afetados;
+  \item SGE publica atestação do processo;
+  \item o perfil \texttt{RFP-NC-01} aplica profundidade D2--D3, autoridade A1 e efeito \texttt{shadow};
+  \item P-08 compara execução e resultados ao propósito, ao acordo e aos critérios aplicáveis, publicando \texttt{OperationalAssessment};
+  \item uma divergência controlada produz recomendação, decisão autorizada, correção reversível e nova avaliação;
+  \item todo o ciclo pode ser executado e consultado pelo \texttt{sisterctl}.
+\end{enumerate}
+
+\subsection{Critérios de aceitação ponta a ponta}
+\begin{longtable}{P{1.5cm}P{9.0cm}P{4.1cm}}
+\toprule
+\textbf{ID} & \textbf{Critério} & \textbf{Evidência} \\
+\midrule
+\endhead
+AC-01 & Execução sem acordo ativo é rejeitada antes de consultar dados de domínio. & Decisão de autorização e status \texttt{blocked}. \\
+AC-02 & A mesma chave idempotente não duplica efeitos. & Duas solicitações, um efeito e referência à execução original. \\
+AC-03 & Cada entrada possui produtor, schema, digest e referência ao original. & Registro de entrada e validação. \\
+AC-04 & Correlação inexistente não é inventada; permanece pendente com causa explícita. & \texttt{IntegratedInformation} com pendência. \\
+AC-05 & Correlação confirmada referencia identificadores dos dois domínios. & Relação e proveniência reproduzíveis. \\
+AC-06 & Alteração do projeto ou contrato identifica informações e conhecimentos afetados. & Consulta de impacto. \\
+AC-07 & Artefato de conhecimento registra tipo, método, evidências, confiança, limitações, responsável e autoridade revisora. & Schema válido e revisão compatível com o tipo. \\
+AC-08 & CLI apresenta resultado humano e JSON equivalente, com códigos estáveis. & Teste de contrato do CLI. \\
+AC-09 & Evidência não contém credenciais, tokens ou URLs com segredos. & Check de sanitização. \\
+AC-10 & SGE distingue \texttt{PASS}, \texttt{SHADOW}, \texttt{WARN} e \texttt{BLOCK}. & Atestação validada por schema. \\
+AC-11 & A execução é avaliada sob perfil D2--D3/A1 contra propósito, acordo, políticas e critérios congelados, produzindo confirmação, divergência ou inconclusão explicável sem alterar o fluxo. & \texttt{ReflexivityProfile}, \texttt{ReferenceSnapshot} e \texttt{OperationalAssessment} válidos. \\
+AC-12 & Resultado da avaliação, severidade, efeito de gate e resposta proposta permanecem campos independentes e coerentes com o perfil. & Teste de schema e cenários \texttt{divergent+warn}, \texttt{divergent+block} e \texttt{inconclusive}. \\
+AC-13 & Divergência de teste não altera contrato, método ou código automaticamente; ação autorizada é reversível, auditada e reavaliada. & \texttt{CorrectiveAction}, evidência de aplicação/rollback, avaliação posterior e eventual \texttt{ReferenceRevisionProposal}. \\
+\bottomrule
+\end{longtable}
+
+\section{Responsabilidades e governança do trabalho}
+
+\begin{tabularx}{\textwidth}{P{4.1cm}Y}
+\toprule
+\textbf{Papel} & \textbf{Responsabilidade final} \\
+\midrule
+Coordenação científica & Finalidade científica, critérios de conhecimento científico, método, limites, referências de avaliação e validação do significado quando o tipo exigir. \\
+Arquitetura e governança & Funções, processos, fronteiras, ADRs, contratos estruturais e rastreabilidade. \\
+Core / \texttt{sisterd} & Casos de uso transversais, estado, persistência, autorização, proveniência e APIs. \\
+CLI / \texttt{sisterctl} & Experiência operacional, automação, saída estruturada, códigos e segurança de comando. \\
+Owners dos subsistemas & Capacidades, contratos de domínio, diagnóstico, testes e autoridade dos dados. \\
+Integração e qualidade & Adaptadores, testes de contrato, ponta a ponta, falhas e evidências. \\
+SGE-SisTer & Schemas de atestação e avaliação reflexiva, checks, comparação, explicação de divergências, gates, maturidade, regressão e publicação. \\
+Segurança/operação & MAES-SisTer, classes de ameaça, controles, risco residual, segredos, observabilidade, níveis de autonomia corretiva, continuidade, recuperação, advisories e resposta a incidentes. \\
+Owner funcional/científico da referência & Propósito, critério, tolerâncias, severidade e condições que distinguem confirmação, divergência e inconclusão. \\
+\bottomrule
+\end{tabularx}
+
+Uma pessoa pode acumular papéis, mas cada capacidade e cartão deve possuir um único responsável final. O owner técnico não deve ser a única pessoa capaz de operar, avaliar ou recuperar a capacidade.
+
+
+\subsection{Comunicação e adoção pela equipe}
+A versão 1.4 deve ser comunicada antes do início da implementação reflexiva porque altera vocabulário, fronteiras de autoridade, critérios de pronto e desenho de interfaces. A comunicação mínima deve:
+\begin{enumerate}
+  \item apresentar a distinção entre reflexividade do SisTer e reflexão do C++;
+  \item explicar as escalas D0--D5 e A0--A5 e a separação entre resultado, gate e ação;
+  \item declarar que o piloto Nexo--Compras começa em D2--D3/A1/\texttt{shadow};
+  \item informar que nenhuma alteração de contrato, método, política ou código será automática;
+  \item abrir a ADR-REF-01 para estabilizar schema do \texttt{ReflexivityProfile}, interfaces C++ e critérios de evolução a A2--A4;
+  \item separar recursos C++20/23 da linha de base e experimentos C++26 do laboratório.
+\end{enumerate}
+
+A comunicação não representa ordem para implementar imediatamente todo o modelo. Ela alinha a linguagem da equipe, impede soluções incompatíveis e define o experimento mínimo que produzirá evidência para a próxima decisão.
+
+\section{Manutenção desta especificação}
+
+\subsection{Quando atualizar}
+Atualização é obrigatória quando houver:
+\begin{itemize}
+  \item nova função sistêmica ou processo finalístico;
+  \item mudança de fronteira ou autoridade;
+  \item novo objeto central ou transição de estado;
+  \item mudança incompatível em contrato estruturante;
+  \item alteração na cadeia de rastreabilidade;
+  \item nova superfície, protocolo ou classe de ameaça que altere garantia estrutural;
+  \item perda de controle, evidência ou risco residual incompatível com a maturidade;
+  \item constatação de que o código real divergiu do modelo-alvo;
+  \item alteração de propósito, referência, critério, tolerância, severidade ou nível de autonomia corretiva.
+\end{itemize}
+
+\subsection{Como lidar com divergências}
+Divergência entre esta especificação e o código deve ser classificada:
+\begin{itemize}
+  \item \textbf{defeito}: código viola requisito vigente;
+  \item \textbf{dívida}: implementação parcial aceita temporariamente;
+  \item \textbf{descoberta}: experimento revelou necessidade de revisar a especificação;
+  \item \textbf{exceção}: desvio temporário, com risco, owner e expiração;
+  \item \textbf{obsolescência}: requisito perdeu finalidade e deve ser removido por decisão registrada.
+  \item \textbf{divergência operacional}: a execução não correspondeu à referência vigente e exige classificação de severidade, decisão e eventual correção.
+  \item \textbf{inconclusão}: faltam referência, evidência ou capacidade avaliativa; deve gerar pendência explícita e não pode ser tratada como conformidade.
+\end{itemize}
+
+\subsection{Critério de autoridade}
+Divergência entre especificação e código exige decisão versionada, atualização dos testes e nova evidência. Nenhuma divergência pode ser resolvida implicitamente.
+
+\section{Síntese executiva}
+
+O snapshot verificado apresenta servidor, autenticação, gestão de usuários, consultas PostgreSQL, proxies, clientes de integração e exposição de maturidade. Ainda não materializa execução governada, proveniência causal, informação integrada, conhecimento tipificado ou avaliação reflexiva da própria execução.
+
+\begin{principio}[Síntese adotada]
+\centering
+\textbf{Objetivo $\rightarrow$ função $\rightarrow$ processo $\rightarrow$ capacidade $\rightarrow$ contrato $\rightarrow$ caso de uso $\rightarrow$ implementação $\rightarrow$ teste $\rightarrow$ evidência $\rightarrow$ maturidade.}
+\end{principio}
+
+A evolução deve preservar o comportamento atual, estabelecer fronteiras e implementar fatias verticais verificáveis. O processo Nexo--Compras será a primeira comprovação: acordo válido, \texttt{IntegrationRun}, original preservado, proveniência, informação contextualizada, artefato operacional ou de governança, invalidação, avaliação pelo SGE e avaliação reflexiva regida por \texttt{ReflexivityProfile} D2--D3/A1 em \texttt{shadow}. Somente evidência acumulada e decisão arquitetural podem elevar autoridade ou efeito operacional.
+
+\begin{principio}[Síntese de segurança]
+\centering
+\textbf{O SisTer limita a superfície que decide manter, herda o conhecimento acumulado sobre ameaças aplicáveis e somente promove capacidades cujos controles foram demonstrados por evidências.}
+\end{principio}
+
+\begin{principio}[Síntese de reflexividade]
+\centering
+\textbf{O SisTer deve explicar o que fez, avaliar se permaneceu coerente com aquilo que deveria fazer e tornar governável o que precisa acontecer em seguida.}
+\end{principio}
+
+\appendix
+\section{Backlog mínimo rastreável}
+\begin{longtable}{P{1.5cm}P{3.6cm}P{5.7cm}P{2.7cm}}
+\toprule
+\textbf{ID} & \textbf{Entrega} & \textbf{Pronto quando} & \textbf{Dependência} \\
+\midrule
+\endhead
+SEC-GOV-00 & MAES-SisTer/1.0 & Ativos, fronteiras, ameaças, controles, testes, risco residual, owners e processo de atualização estão versionados. & -- \\
+SEC-01C & Robustez do transporte & Entrada HTTP inválida não encerra worker ou processo; corpus negativo e teste de sobrevivência aprovados. & SEC-GOV-00 \\
+SEC-01D & Contenção de abuso & Rate limiting usa IP sem porta, identidade e limite global; memória e expiração são limitadas. & SEC-GOV-00 \\
+SEC-02 & Identidade interna & Asserção assinada, curta e restrita substitui cookie e headers não verificáveis entre sistemas. & SEC-01C, SEC-01D \\
+SEC-03 & Gateway especializado & Borda assume TLS, normalização, quotas, WebSocket, origem confiável e proteção contra requisição lenta. & SEC-02 \\
+SEC-SGE-01 & Checks de segurança & Ameaças, controles, testes e risco residual produzem atestação e podem regredir maturidade. & SEC-GOV-00; incremental \\
+ENG-00 & Testes de caracterização & Rotas, códigos, autenticação e comandos atuais estão cobertos. & -- \\
+ADR-HTTP-01 & Decisão do servidor HTTP & Manutenção, endurecimento ou substituição possui critérios, riscos, owner e testes. & ENG-00 \\
+ENG-01 & Extração incremental & Transporte e roteamento são separados; portas mínimas são definidas; contratos externos permanecem estáveis. & ENG-00, ADR-HTTP-01 \\
+FED-01 & Registro persistente & Estado operacional e perfil de maturidade são independentes; API e CLI registram, consultam e retiram. & ENG-01 \\
+AGR-01 & Ciclo de acordos & Propor, aceitar, ativar, suspender e revogar funcionam com invariantes. & FED-01 \\
+EXEC-01 & \texttt{IntegrationRun} v1 & Estado de execução, validade, entradas, resultados, bloqueios, idempotência e vínculos entre execuções são persistidos. & AGR-01 \\
+PROV-01 & Proveniência v1 & Original, execução, transformação e saída estão ligados; impacto é consultável. & EXEC-01 \\
+INF-01 & Informação Nexo--Compras & Contextualização produz confirmação ou pendência explícita. & PROV-01 \\
+KNW-01 & Conhecimento tipificado & Artefato operacional ou de governança possui revisão, publicação e validade independentes. & INF-01 \\
+CLI-01 & Cliente operacional & Fluxo de referência funciona por CLI humana e JSON, sem acesso direto à persistência. & FED-01--KNW-01 \\
+OPS-01 & Saúde e \texttt{doctor} & \textit{Liveness}, \textit{readiness}, degradação e dependências são consultáveis. & ENG-01; incremental \\
+SGE-01 & Avaliação do processo & Checks acompanham cada fatia em \texttt{shadow} e produzem atestações válidas. & inicia em AGR-01 \\
+SGE-02 & Gates vinculantes & Promoção, regressão e publicação dependem das evidências aplicáveis. & CLI-01, OPS-01, SGE-01 \\
+ADR-REF-01 & Níveis e perfis de reflexividade & Schema, profundidades, autoridades, gates, ações, interfaces C++ e critérios de promoção do piloto estão aceitos. & EFE-SisTer/1.4 \\
+REF-00 & \texttt{ReflexivityProfile} v1 & Perfil versionado declara D2--D3/A1/\texttt{shadow}, referências, evidências, avaliador, tolerâncias, gates, owner, retenção e falha. & ADR-REF-01 \\
+REF-01 & Avaliação reflexiva v1 & Referências são congeladas; execução Nexo--Compras produz confirmação, divergência ou inconclusão reproduzível e explicável, sem alterar o fluxo. & REF-00, EXEC-01, PROV-01, INF-01, SGE-01 \\
+REF-02 & Ação corretiva governada & Recomendação, autorização, aplicação, rollback e verificação posterior são persistidos; nenhuma mudança estrutural ocorre autonomamente. & REF-01, CLI-01, OPS-01, SGE-02 \\
+REF-LAB-01 & Laboratório C++26 & Contratos, reflexão estática e \texttt{std::execution} são prototipados atrás de interfaces estáveis, sem dependência da linha de base. & ADR-REF-01, ENG-01 \\
+\bottomrule
+\end{longtable}
+
+
+\section{Referências normativas e históricas de segurança}
+\label{sec:referencias-seguranca}
+\begin{itemize}
+  \item IETF. \textit{RFC 9112 -- HTTP/1.1}. Regras de sintaxe, enquadramento de mensagens, tratamento de erro, request smuggling e response splitting. \url{https://www.rfc-editor.org/info/rfc9112/}
+  \item NIST. \textit{SP 800-218 -- Secure Software Development Framework (SSDF) Version 1.1}. Práticas de preparação, proteção, produção segura e resposta a vulnerabilidades. \url{https://csrc.nist.gov/pubs/sp/800/218/final}
+  \item Apache HTTP Server Project. \textit{Apache HTTP Server 2.4 vulnerabilities}. Histórico de vulnerabilidades corrigidas e classes recorrentes de falha. \url{https://httpd.apache.org/security/vulnerabilities_24.html}
+  \item Apache HTTP Server Project. \textit{Security Tips}. Limites de requisição, timeouts, privilégios e mitigação de negação de serviço. \url{https://httpd.apache.org/docs/2.4/en/misc/security_tips.html}
+  \item MITRE. \textit{Common Weakness Enumeration (CWE)}. Vocabulário para classificação de fraquezas de software. \url{https://cwe.mitre.org/}
+\end{itemize}
+
+
+\section{Referências de engenharia C++ para a reflexividade}
+\label{sec:referencias-cpp}
+Estas referências sustentam a direção técnica, mas não substituem a matriz de compiladores, ADRs e testes do projeto:
+\begin{itemize}
+  \item WG21. \textit{P0323R12 -- std::expected}. \url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p0323r12.html}
+  \item WG21. \textit{P1208R0 -- source\_location para C++20}. \url{https://www.open-std.org/JTC1/SC22/WG21/docs/papers/2018/p1208r0.html}
+  \item WG21. \textit{P2175R0 -- cancelamento componível em operações assíncronas}. \url{https://open-std.org/jtc1/sc22/wg21/docs/papers/2020/p2175r0.html}
+  \item WG21. \textit{P2996R13 -- Reflection for C++26}. \url{https://www9.open-std.org/JTC1/SC22/WG21/docs/papers/2025/p2996r13.html}
+  \item WG21. \textit{N5015 -- Working Draft, Standard for Programming Language C++}. \url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2025/n5015.html}
+  \item WG21. \textit{Índices de propostas 2024--2026}, incluindo evolução de \texttt{std::execution} e contratos. \url{https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2026/}
+\end{itemize}
+
+\section{Checklist de uma mudança governada}
+\begin{enumerate}
+  \item Há um identificador e um responsável?
+  \item O objetivo, a função e o processo estão declarados?
+  \item As fronteiras de autoridade permanecem corretas?
+  \item O contrato, o tipo de artefato e a compatibilidade estão definidos?
+  \item Há critérios de aceitação e casos de falha?
+  \item Quais ameaças conhecidas ou plausíveis se aplicam à fronteira alterada?
+  \item Os controles preventivos, detectivos, de contenção e recuperação possuem owner?
+  \item A unidade de implementação está na camada correta e respeita as dependências?
+  \item Os testes são reproduzíveis e incluem entrada hostil, falha e sobrevivência quando aplicável?
+  \item A evidência é estruturada, sanitizada e associada à revisão?
+  \item Qual referência congelada permitirá avaliar a execução e distinguir confirmação, divergência e inconclusão?
+  \item Que ação corretiva é permitida, quem a autoriza, como é revertida e como sua efetividade será verificada?
+  \item O risco residual e o impacto sobre maturidade, operação e segurança foram avaliados?
+  \item A decisão relevante saiu da conversa e entrou no repositório?
+\end{enumerate}
+
+\end{document}

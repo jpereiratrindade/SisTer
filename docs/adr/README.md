@@ -21,3 +21,4 @@
 - [ADR-0019 - Robustez HTTP e contenção interna de tentativas de login](./ADR-0019-http-robustness-and-login-rate-limiting.md)
 - [ADR-0020 - Gateway especializado e fronteira HTTP externa](./ADR-0020-specialized-http-gateway.md)
 - [ADR-0021 - Isolamento local por socket Unix ativado](./ADR-0021-local-upstream-unix-socket-activation.md)
+- [ADR-REF-01 - Perfis e autoridade da reflexividade operacional](./ADR-REF-01-reflexivity-profiles-and-authority.md)

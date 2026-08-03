@@ -1,0 +1,1 @@
+{"profile_id":"RFP-NC-01","version":"1.0.0","scope":"nexo-compras","depth":["D2","D3"],"authority":"A1","mode":"shadow","gate_effect":"shadow","references":["purpose","integration_agreement","input_schema","output_schema","applicable_policy"],"evaluator":{"id":"ASM-REF-01","version":"1.0.0"},"allowed_actions":[],"automatic_correction":false,"human_approval_required":true}
