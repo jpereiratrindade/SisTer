@@ -1,5 +1,12 @@
 # Sistema de Governança da Engenharia do SisTer
 
+## Reprodutibilidade da verificação
+
+Checks equivalentes dos motores legado e declarativo devem resolver para a
+mesma evidência executável. O `smoke-flow` usa `scripts/ci/test-smoke.sh`, que
+inicia um `sisterd` isolado em porta efêmera, executa a fronteira pública e o
+encerra. `sge verify` não depende de uma execução operacional previamente ativa.
+
 Encerrada a fase de validação do protótipo integrado. Inicia-se a consolidação
 da arquitetura de produção, orientada por contratos, evidências e gates de
 engenharia.

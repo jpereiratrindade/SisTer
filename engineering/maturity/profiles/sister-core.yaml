@@ -9,7 +9,7 @@ scripts:
   ci.test-contract:
     path: scripts/ci/test-contract.sh
   ci.test-smoke:
-    path: scripts/app/smoke.sh
+    path: scripts/ci/test-smoke.sh
   baseline.verify:
     path: scripts/ci/test-reference-contract.sh
 check_suites:

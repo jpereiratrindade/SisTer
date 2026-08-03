@@ -76,8 +76,13 @@ def cmd_maturity_publish_all(args):
     ecosystem = yaml.safe_load(ecosystem_path.read_text(encoding="utf-8")) or {"components": []}
     failures = 0
     skipped = 0
+    quarantined = 0
     for component in ecosystem.get("components", []):
         component_id = component["id"]
+        if component.get("governance_status") == "quarantined":
+            print(f"QUARANTINED {component_id}: avaliação operacional não autorizada")
+            quarantined += 1
+            continue
         profile_path = ROOT / "engineering/maturity/profiles" / f"{component_id}.yaml"
         if not profile_path.exists():
             print(f"SKIP {component_id}: perfil ausente")
@@ -106,7 +111,10 @@ def cmd_maturity_publish_all(args):
             failures += 1
             print(f"FAIL {component_id}: rc={rc}")
     cmd_maturity_components(args)
-    print(f"publish-all concluído: failures={failures} skipped={skipped}")
+    print(
+        f"publish-all concluído: failures={failures} skipped={skipped} "
+        f"quarantined={quarantined}"
+    )
     return 1 if failures else 0
 
 

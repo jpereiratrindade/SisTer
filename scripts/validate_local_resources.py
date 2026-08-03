@@ -37,6 +37,15 @@ def main() -> None:
             fail(f"duplicate project id: {project_id}")
         project_ids.add(project_id)
 
+        if project.get("integrates_with_sister") and project_id not in {
+            "sister", "sister_reference"
+        } and (
+            project.get("integration_state") != "quarantined"
+            or project.get("operational_access") is not False
+            or project.get("quarantine_reason") != "core_reference_validation_in_progress"
+        ):
+            fail(f"integrated subsystem quarantine is incomplete in {project_id}")
+
         repository = project.get("repository")
         integration_owner = project.get("integrates_with")
         if integration_owner is not None and (

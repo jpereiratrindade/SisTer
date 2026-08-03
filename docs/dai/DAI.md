@@ -1,5 +1,17 @@
 # DAI - SisTer
 
+## 2026-08-03 - WP-SGE-CONV-01
+
+- Decision: motores legado e declarativo devem usar os mesmos scripts para
+  checks equivalentes de baseline e smoke.
+- Decision: o smoke de maturidade cria e encerra um `sisterd` isolado em porta
+  efêmera; nenhum serviço operacional preexistente pode ser pré-requisito.
+- Decision: todo subsistema real registrado deve declarar explicitamente
+  `integration_state: quarantined` e `operational_access: false`.
+- Evidence: testes de convergência verificam caminhos, existência dos scripts,
+  isolamento do smoke e rejeição de quarentena implícita.
+- Authority boundary: a correção do SGE não promove subsistemas nem altera G6.
+
 ## 2026-08-03 - Baseline documental e taxonomia final de perfis
 
 - Decision: classificar artefatos como normativos vigentes, históricos
