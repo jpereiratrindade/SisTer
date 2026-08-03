@@ -602,7 +602,6 @@ function bindNavigation() {
       qsa(".view").forEach((item) => item.classList.remove("active"));
       button.classList.add("selected");
       qs(`#view-${button.dataset.view}`).classList.add("active");
-      if (button.dataset.view === "studio") loadSisterStudioIntegration();
     });
   });
 }
@@ -697,11 +696,6 @@ function init() {
   qs("#system-filter").addEventListener("input", (event) => renderSystems(event.target.value));
   qs("#validate-button").addEventListener("click", validateSample);
   qs("#systems-grid").addEventListener("click", (event) => {
-    const climateTrigger = event.target.closest("[data-climate-location]");
-    if (climateTrigger) {
-      requestLocalPrecipitation();
-      return;
-    }
     const trigger = event.target.closest("[data-system-id]");
     if (trigger) showSystemDetails(trigger.dataset.systemId);
   });
@@ -710,7 +704,6 @@ function init() {
     if (event.target === qs("#system-dialog")) qs("#system-dialog").close();
   });
   qs("#auth-logout").addEventListener("click", logout);
-  qs("#studio-refresh").addEventListener("click", loadSisterStudioIntegration);
   initializeIdentity();
 }
 

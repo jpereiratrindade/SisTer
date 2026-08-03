@@ -57,9 +57,9 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 19V5M4 19h16M8 16v-5M12 16V8M16 16v-3"/></svg>
           Diagnóstico
         </button>
-        <button class="nav-link" type="button" data-view="studio" data-admin-only hidden>
+        <button class="nav-link" type="button" data-view="reference" data-admin-only hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="3"/><circle cx="18" cy="6" r="3"/><circle cx="18" cy="18" r="3"/><path d="m9 11 6-4M9 13l6 4"/></svg>
-          Integração criativa
+          Validação de referência
         </button>
         <button class="nav-link" type="button" data-view="contracts" data-admin-only hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3h9l3 3v15H6V3ZM14 3v4h4M9 11h6M9 15h6"/></svg>
@@ -280,61 +280,58 @@
         <div class="diagnostic-grid" id="diagnostic-grid"></div>
       </section>
 
-      <section class="view" id="view-studio" aria-label="Integração criativa protegida">
+      <section class="view" id="view-reference" aria-label="Validação do subsistema de referência">
         <div class="page-heading">
           <div>
-            <span class="eyebrow">Sistema criativo federado</span>
-            <h2>Integração criativa</h2>
-            <p>Capacidades e disponibilidade consultadas diretamente do produtor, sem copiar conteúdo de usuários.</p>
+            <span class="eyebrow">Fronteira normativa</span>
+            <h2>Validação de referência</h2>
+            <p>Contrato controlado para provar identidade, roteamento, falhas e ciclo de vida.</p>
           </div>
-          <button class="primary-action" id="studio-refresh" type="button">
-            Atualizar conexão
-          </button>
         </div>
 
         <section class="studio-connection panel">
           <div class="connection-heading">
-            <span class="connection-signal" id="studio-signal"></span>
+            <span class="connection-signal"></span>
             <div>
-              <span class="section-kicker">Estado da conexão</span>
-              <h3 id="studio-connection-title">Aguardando consulta</h3>
-              <p id="studio-connection-detail">O SisTer ainda não consultou o contrato remoto.</p>
+              <span class="section-kicker">Canal interno governado</span>
+              <h3>Referência selecionada</h3>
+              <p>Único alvo operacional dos perfis oficiais nesta fase.</p>
             </div>
-            <span class="status-pill" id="studio-contract-version">integration/1.0.0</span>
+            <span class="status-pill">sister.subsystem/1.0.0</span>
           </div>
           <div class="connection-facts">
-            <article><span>Sistema</span><strong id="studio-system-version">—</strong></article>
-            <article><span>Última verificação</span><strong id="studio-checked-at">—</strong></article>
-            <article><span>Conteúdo recebido</span><strong>Não</strong></article>
-            <article><span>Escopo</span><strong>Restrito · admin</strong></article>
+            <article><span>Transporte</span><strong>Loopback</strong></article>
+            <article><span>Mediação</span><strong>SisTer Core</strong></article>
+            <article><span>Persistência</span><strong>Nenhuma</strong></article>
+            <article><span>Produção</span><strong>Não elegível</strong></article>
           </div>
         </section>
 
         <div class="studio-integration-grid">
           <section class="panel">
             <div class="panel-header">
-              <div><span class="section-kicker">Operação</span><h3>Módulos</h3></div>
+              <div><span class="section-kicker">Operação</span><h3>Estados controlados</h3></div>
             </div>
-            <div class="module-status-list" id="studio-modules">
-              <p class="panel-note">Atualize a conexão para consultar os módulos.</p>
+            <div class="module-status-list">
+              <p class="panel-note">Healthy, degraded, delayed, unavailable e falhas HTTP previsíveis.</p>
             </div>
           </section>
           <section class="panel">
             <div class="panel-header">
               <div><span class="section-kicker">Interoperabilidade</span><h3>Capacidades e formatos</h3></div>
             </div>
-            <div class="capability-contract-list" id="studio-capabilities">
-              <p class="panel-note">Nenhum catálogo carregado.</p>
+            <div class="capability-contract-list">
+              <p class="panel-note">Identidade mediada, echo, health, readiness e capacidades.</p>
             </div>
           </section>
         </div>
 
         <section class="panel studio-privacy">
           <div>
-            <span class="section-kicker">LGPD · minimização</span>
+            <span class="section-kicker">Isolamento</span>
             <h3>Fronteira preservada</h3>
           </div>
-          <p>O SisTer não recebe usuários, sessões, textos, voz, mídia, projetos, caminhos ou logs do Studio. Operações futuras dependerão de finalidade, base autorizativa e concessão explícita.</p>
+          <p>A referência não possui dados reais, banco, frontend ou porta pública. Integrações reais permanecem em quarentena.</p>
         </section>
       </section>
 
