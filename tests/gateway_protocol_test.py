@@ -107,21 +107,19 @@ def main():
         assert status(request(method="OPTIONS")) == 405
 
         assert status(request(method="POST", path="/upload", body=b"a" * 1048576)) == 200
-        assert status(
-            request(
-                method="POST",
-                path="/upload",
-                body=b"a" * 1048577,
-            )
-        ) == 413
+        oversized_upload = tls_exchange(
+            b"POST /upload HTTP/1.1\r\nHost: sister-gateway.test\r\n"
+            b"Content-Length: 1048577\r\nConnection: close\r\n\r\n",
+            stop_at_http_message=True,
+        )[0]
+        assert status(oversized_upload) == 413
         assert status(request(method="POST", path="/api/auth/login", body=b"a" * 65536)) == 200
-        assert status(
-            request(
-                method="POST",
-                path="/api/auth/login",
-                body=b"a" * 65537,
-            )
-        ) == 413
+        oversized_auth = tls_exchange(
+            b"POST /api/auth/login HTTP/1.1\r\nHost: sister-gateway.test\r\n"
+            b"Content-Length: 65537\r\nConnection: close\r\n\r\n",
+            stop_at_http_message=True,
+        )[0]
+        assert status(oversized_auth) == 413
         duplicate_length = tls_exchange(
             b"POST /framing-identical HTTP/1.1\r\nHost: sister-gateway.test\r\n"
             b"Content-Length: 5\r\nContent-Length: 5\r\nConnection: close\r\n\r\nhello"
