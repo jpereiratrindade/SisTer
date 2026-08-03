@@ -1,0 +1,13 @@
+{
+  "schema": "sister.boundary-object-envelope/1.0.0",
+  "envelope_id": "env-reference-mvp01",
+  "object_type": "reference.contribution/1.0.0",
+  "correlation_id": "corr-reference-mvp01",
+  "participation_id": "part-reference-mvp01",
+  "contract_version": "1.0.0",
+  "authority_reference": "coordination.mvp01",
+  "integrity": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "context": {"scope": "mvp01-reference"},
+  "provenance": ["evidence-reference-input"],
+  "payload": {"value": "deterministic-reference"}
+}

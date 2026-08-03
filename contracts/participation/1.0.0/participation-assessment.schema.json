@@ -1,0 +1,45 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/participation/1.0.0/participation-assessment.schema.json",
+  "title": "ParticipationAssessment",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "assessment_id", "participation_id", "contract_version", "contract_digest", "evaluated_commit", "profile_id", "evaluator", "result", "findings", "evidence_used", "evidence_missing", "confidence", "limitations", "gate_effect", "recommendation", "assessed_at"],
+  "properties": {
+    "schema": {"const": "sister.participation-assessment/1.0.0"},
+    "assessment_id": {"type": "string", "pattern": "^assessment-[a-z0-9-]+$"},
+    "participation_id": {"type": "string", "pattern": "^part-[a-z0-9-]+$"},
+    "contract_version": {"const": "1.0.0"},
+    "contract_digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"},
+    "evaluated_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "profile_id": {"type": "string", "minLength": 1},
+    "evaluator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "version"],
+      "properties": {"id": {"type": "string", "minLength": 1}, "version": {"type": "string", "minLength": 1}}
+    },
+    "result": {"enum": ["PASS", "WARN", "SHADOW", "BLOCK", "INCONCLUSIVE"]},
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["code", "layer", "explanation", "evidence"],
+        "properties": {
+          "code": {"type": "string", "minLength": 1},
+          "layer": {"enum": ["existence", "contribution", "interaction", "governance", "reflection"]},
+          "explanation": {"type": "string", "minLength": 1},
+          "evidence": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^evidence-[a-z0-9-]+$"}}
+        }
+      }
+    },
+    "evidence_used": {"type": "array", "uniqueItems": true, "items": {"type": "string", "pattern": "^evidence-[a-z0-9-]+$"}},
+    "evidence_missing": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "limitations": {"type": "array", "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+    "gate_effect": {"enum": ["none", "warn", "block"]},
+    "recommendation": {"type": "string", "minLength": 1},
+    "assessed_at": {"type": "string", "format": "date-time"}
+  }
+}
