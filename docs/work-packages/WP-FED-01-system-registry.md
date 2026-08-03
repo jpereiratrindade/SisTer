@@ -7,7 +7,8 @@ execuções a participantes e capacidades reais.
 
 ## Estado
 
-Em execução — registro em memória e modelo de domínio inicial.
+Registro em memória e modelo de domínio inicial. Classificação MVP-01:
+`TESTADO_EM_MEMORIA`. Não está `PERSISTIDO`, `OPERÁVEL` ou `GOVERNADO`.
 
 ## Entregas atuais
 

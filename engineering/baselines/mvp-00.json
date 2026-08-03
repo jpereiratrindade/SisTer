@@ -1,0 +1,31 @@
+{
+  "schema": "sister.engineering.baseline/1.0.0",
+  "baseline_id": "mvp-00-technical-federative-architecture",
+  "source_commit": "9fac5989561e91c2da88b9282b3be18c788d9d7b",
+  "captured_at": "2026-08-03T19:20:00Z",
+  "operational_authorization": false,
+  "g6_authorized": false,
+  "contract_freeze": "mvp-01",
+  "artifacts": [
+    {
+      "path": "contracts/subsystem/1.0.0/interface.json",
+      "sha256": "fdce5052bff58e4f1e88f712ac40be82f414fddd985fc08fea8b077791ffd262"
+    },
+    {
+      "path": "contracts/subsystem/1.0.0/manifest.schema.json",
+      "sha256": "b544b9b7cc4ea121c2c99f20a826596a1b6d3aebe87ece533487c0e5d7393fc2"
+    },
+    {
+      "path": "contracts/subsystem/1.0.0/openapi.yaml",
+      "sha256": "8b620ede5c77a9cc23928c537f1bae58ba4a4a9a1bc183ba1e02eae4b384f901"
+    },
+    {
+      "path": "reference/sister-reference/manifest.json",
+      "sha256": "b1703d9d175e3d5ab4555a8986b522b5d1cf61cad45ad279c827fdb3c59cf0f6"
+    }
+  ],
+  "domain_prototypes": {
+    "IntegrationRun": "TESTADO_EM_MEMORIA",
+    "GovernedSystemRegistry": "TESTADO_EM_MEMORIA"
+  }
+}
