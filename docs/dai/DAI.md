@@ -52,6 +52,27 @@
 - Authority boundary: nenhum serviço, banco, JSON, autorização por acordo,
   análise vetorial ou `AssessmentEngine` entra neste incremento.
 
+## 2026-08-02 - EXEC-01C iniciado
+
+- Decision: execução e validade serão máquinas de estado ortogonais, operadas
+  por funções puras e resultados tipados.
+- Action: implementar transições de autorização, início, conclusão, falha,
+  cancelamento, supersessão e marcação de validade.
+- Evidence: `sister_core_tests` valida o ciclo proposto → autorizado → running
+  → completed e mantém validade `pending` até transição explícita.
+- Authority boundary: nenhuma transição consulta infraestrutura ou concede
+  autoridade operacional.
+
+## 2026-08-02 - EXEC-01C concluído
+
+- Decision: a matriz de execução e validade foi fechada sem dependências de
+  infraestrutura.
+- Evidence: build Release, 19 testes executados/aprovados, 7 skips condicionais
+  explicitamente contabilizados, validador de contrato e validação de
+  governança aprovados.
+- Result: `EXEC-01C` concluído; `EXEC-01D`, `EXEC-01E` e `EXEC-01F` permanecem
+  não iniciados.
+
 ## 2026-07-30 - Nexo ampliado para portfólio multiprojeto
 
 - Decision: `nexo_projects` é a fonte de verdade e Aggregate raiz dos projetos

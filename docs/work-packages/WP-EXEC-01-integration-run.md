@@ -7,8 +7,9 @@ fluxo Nexo–Compras, servindo de objeto para proveniência e avaliação poster
 
 ## Estado
 
-`EXEC-01A` concluído; `EXEC-01B` em execução — tipos de valor e agregado
-encapsulado materializados no núcleo, sem serviço ou persistência.
+`EXEC-01A`, `EXEC-01B` e `EXEC-01C` concluídos — contrato, agregado
+encapsulado e máquinas de estado materializados no núcleo, sem serviço ou
+persistência.
 
 ## Entregas
 
@@ -26,6 +27,37 @@ encapsulado materializados no núcleo, sem serviço ou persistência.
 - relações distintas por `std::variant`;
 - `IntegrationRun final` com estado privado e fábrica validada;
 - teste de criação válida e rejeição de proposta inválida.
+
+## EXEC-01C atual
+
+- máquinas ortogonais de execução e validade;
+- transições puras sem banco, HTTP ou acordo concreto;
+- invariantes de `authorized`, `running`, `completed`, `failed`, `cancelled`
+  e `superseded`;
+- `completed` exige saída e timestamp;
+- `failed` exige erro e timestamp;
+- conclusão não altera automaticamente `validity_status`.
+
+## Evidência do gate EXEC-01C
+
+Build Release e CTest foram executados no commit integrado:
+
+```text
+26 testes descobertos
+19 executados e aprovados
+7 skips condicionais: gateway_protocol, gateway_header_sanitization,
+gateway_failure, gateway_abuse, gateway_slow_client, gateway_upstream_resilience
+e gateway_lab
+0 falhas
+```
+
+Validações adicionais aprovadas:
+
+```text
+./scripts/contracts/validate-integration-run.sh
+python3 scripts/validate_governance_repo.py
+git diff --check
+```
 
 ## Dependências
 
