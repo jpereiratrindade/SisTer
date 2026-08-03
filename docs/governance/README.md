@@ -1,5 +1,7 @@
 # Governanca
 
+Autoridade dos documentos: [ARTIFACT_STATUS.md](./ARTIFACT_STATUS.md).
+
 ## Decisão em vigor antes da codificação
 
 - [Comunicado à equipe — Reflexividade Operacional v1](./COMUNICADO_REFLEXIVIDADE_OPERACIONAL_V1.md)
@@ -41,6 +43,9 @@ Módulos internos de engenharia: [engineering](../../engineering/README.md).
 O estado atual do SisTer inclui componentes que devem ser tratados como superficie governada:
 
 - `contracts/`: contratos JSON Schema e versoes de integracao.
+- `ARTIFACT_STATUS.md`: autoridade vigente, história preservada e candidatos
+  em quarentena.
+- `SUBSYSTEM_CONFORMANCE.md`: sequência obrigatória para futura integração.
 - `SISTER_CLIMA_DATA.md`: acesso identificado, finalidade não comercial,
   licenças, atribuição e promoção de resultados climáticos.
 - `examples/*_manifest_example.json`: contratos firmados ou exemplos de contrato por sistema integrante.
@@ -74,7 +79,7 @@ Regras de governanca:
 - banco de desenvolvimento deve usar volume persistente, nao armazenamento efemero;
 - credenciais reais nao devem ser commitadas.
 
-## API e interface
+## API e interface vigentes
 
 O `sisterd` serve a interface e endpoints JSON iniciais:
 
@@ -83,8 +88,8 @@ O `sisterd` serve a interface e endpoints JSON iniciais:
 - `/api/contracts`
 - `/api/evidence`
 - `/api/diagnostics`
-- `/api/integrations/sister-studio` (administrador, contrato externo)
-- `/api/integrations/sister-campo` (administrador, saúde e contrato sanitizados)
+- `/api/integrations/sister-reference` (administrador, metadados mediados)
+- `/integrations/reference/*` (capacidades canônicas mediadas e autorizadas)
 
 Enquanto a API usar dados em memoria, a interface deve deixar claro quando indicadores forem demonstrativos. Quando a API passar a ler PostgreSQL, consultas de dashboard devem filtrar escopo de exposicao antes de retornar dados.
 
@@ -122,3 +127,6 @@ A politica detalhada de exposicao esta em:
 - [SISTER_STUDIO_DATA.md](./SISTER_STUDIO_DATA.md)
 - [SISTER_NEXO.md](./SISTER_NEXO.md)
 - [NEXO_COMPRAS.md](./NEXO_COMPRAS.md)
+
+Esses documentos específicos são históricos ou candidatos em quarentena. Sua
+presença preserva decisões anteriores e não concede integração operacional.

@@ -105,13 +105,12 @@ No worktree principal:
 Para executar o fluxo completo, incluindo servidor e teste dos endpoints:
 
 ```bash
-./scripts/run_all.sh --profile dev-ecosystem
+./scripts/run_all.sh --profile dev-reference
 ```
 
 Para validar somente banco, qualidade, `sisterd` e smoke test, sem consultar ou
-iniciar subsistemas, use `./scripts/run_all.sh --profile dev-core`. O perfil de
-ecossistema retorna sucesso com `PASS_WITH_DEGRADATION` quando apenas
-componentes opcionais falham. O resumo e
+iniciar subsistemas, use `./scripts/run_all.sh --profile dev-core`. O perfil
+`dev-reference` exige o subsistema normativo e bloqueia qualquer falha. O resumo e
 `.run/maturity/run-all-status.json` preservam essa distinção sem alterar a
 semântica de qualidade da árvore em `quality.json`.
 
@@ -122,9 +121,8 @@ executar qualidade e maturidade sem subir banco ou servidor, use:
 ./scripts/sge verify
 ```
 
-Esse é o ponto de entrada canônico do ecossistema integrado. O comando também
-garante os subsistemas governados; executar `run_all.sh` dentro de um subsistema
-inicia somente esse produto.
+Esse é o ponto de entrada canônico da plataforma com sua implementação de
+referência. Subsistemas reais permanecem em quarentena.
 
 O comando rejeita `dev` quando executado fora do worktree principal.
 
@@ -133,6 +131,16 @@ URL esperada:
 ```bash
 export SISTER_DATABASE_URL='postgresql://sister:sister@localhost:55434/sister'
 ```
+
+O ciclo completo é simétrico:
+
+```bash
+./scripts/run_all.sh --profile dev-reference
+./scripts/app/stop.sh dev
+```
+
+A parada usa `.run/executions/active-dev.json`, encerra somente processos e
+contêineres iniciados pela execução e preserva recursos preexistentes.
 
 ## Teste reproduzivel
 

@@ -150,9 +150,9 @@ serviço `sisterd`.
 
 Testar `sister-core` não significa executar todos os subsistemas externos. A
 execução do Core verifica se o núcleo e seus contratos estão aderentes ao gate.
-Os subsistemas federados, como `sister-clima` e `sister-nexo`, possuem perfis
-próprios e podem ser executados em conjunto por `publish-all` quando suas raízes
-locais estão configuradas.
+Os perfis específicos de `sister-clima` e `sister-nexo` são candidatos em
+quarentena. Eles preservam a avaliação independente, mas não são executados por
+perfis oficiais do núcleo nem produzem autorização de integração.
 
 ## Testes disponíveis × testes executados
 
@@ -165,14 +165,15 @@ O SGE distingue duas leituras:
 | Qualidade | `.run/maturity/quality.json` | Resultado de build, CTest e validadores da última execução de `run_quality.sh` |
 | Componentes | `.run/maturity/components.json` | Estado consolidado por componente federado |
 
-Na situação atual, o catálogo de maturidade contém checks declarados para:
+O catálogo histórico de maturidade contém checks declarados para:
 
 - `sister-core`;
 - `sister-clima`;
 - `sister-nexo`.
 
-`sister-campo` e `sister-studio` aparecem no ecossistema, mas ainda não possuem
-perfil de maturidade versionado neste repositório.
+`sister-clima`, `sister-nexo`, `sister-campo` e `sister-studio` estão marcados
+como `quarantined` no ecossistema de maturidade. Somente `sister-core` e a
+referência normativa participam da validação operacional atual.
 
 ## Relação com outros testes do repositório
 

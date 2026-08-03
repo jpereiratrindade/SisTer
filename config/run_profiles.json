@@ -17,22 +17,6 @@
       },
       "gate_closure_authorized": false
     },
-    "dev-ecosystem": {
-      "environment": "dev",
-      "default_port": 8000,
-      "scope": "ecosystem",
-      "access_scope": "LOCAL_ONLY",
-      "core_transport": "loopback-tcp",
-      "public_gateway": "not-requested",
-      "gateway_dynamic_tests": "optional",
-      "subsystems": {
-        "selection": "listed",
-        "projects": ["sister_reference"],
-        "required": ["sister_reference"],
-        "failure_policy": "warn"
-      },
-      "gate_closure_authorized": false
-    },
     "dev-reference": {
       "environment": "dev",
       "default_port": 8000,
@@ -57,22 +41,6 @@
       "core_transport": "unix-socket",
       "public_gateway": "lan-required",
       "gateway_dynamic_tests": "required",
-      "subsystems": {
-        "selection": "listed",
-        "projects": ["sister_reference"],
-        "required": ["sister_reference"],
-        "failure_policy": "block"
-      },
-      "gate_closure_authorized": false
-    },
-    "dev-ecosystem-strict": {
-      "environment": "dev",
-      "default_port": 8000,
-      "scope": "ecosystem",
-      "access_scope": "LOCAL_ONLY",
-      "core_transport": "loopback-tcp",
-      "public_gateway": "not-requested",
-      "gateway_dynamic_tests": "optional",
       "subsystems": {
         "selection": "listed",
         "projects": ["sister_reference"],

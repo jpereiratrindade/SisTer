@@ -1,5 +1,19 @@
 # DAI - SisTer
 
+## 2026-08-03 - Baseline documental e taxonomia final de perfis
+
+- Decision: classificar artefatos como normativos vigentes, históricos
+  preservados ou candidatos em quarentena; presença no repositório não concede
+  autoridade operacional.
+- Decision: manter somente `dev-core`, `dev-reference`, `dev-lan`, `test-core`
+  e `sec-03v` como perfis executáveis.
+- Decision: retirar `dev-ecosystem` e `dev-ecosystem-strict`; a forma posicional
+  `run_all.sh dev` resolve para `dev-reference` por compatibilidade.
+- Action: alinhar índices, contratos, arquitetura, operação e evidências à
+  fronteira normativa da ADR-0022.
+- Authority boundary: subsistemas reais permanecem `QUARANTINED` e nenhum
+  documento histórico autoriza inicialização, roteamento ou promoção.
+
 ## 2026-08-03 - API canônica e retirada do snapshot sisterd_lab
 
 - Decision: estabilizar `GET /manifest`, `/health`, `/ready`, `/capabilities`,
@@ -32,7 +46,7 @@
 
 - Decision: manter `sisterd` em loopback nos perfis locais e em socket Unix no
   perfil LAN; somente gateway federador SisTer pode publicar `8443`.
-- Decision: `dev-ecosystem` declara `LOCAL_ONLY` e gateway `NOT_REQUESTED`;
+- Decision: `dev-reference` declara `LOCAL_ONLY` e gateway `NOT_REQUESTED`;
   `dev-lan` declara `LAN_FEDERATED` e exige gateway `READY` para obter `PASS`.
 - Decision: subsistema orquestrado deve declarar endpoint HTTP interno,
   health check contratual e nenhuma escuta wildcard.
@@ -191,9 +205,9 @@
   subsistemas são dimensões distintas no relatório de execução.
 - Decision: falha opcional produz `PASS_WITH_DEGRADATION`; componente exigido
   pelo perfil produz `BLOCKED` e código `2`.
-- Decision: `dev-core`, `dev-ecosystem`, `dev-ecosystem-strict`, `test-core` e
-  `sec-03v` são contratos versionados; o último valida pré-requisitos, mas não
-  fecha o gate SEC-03V.
+- Historical decision: `dev-core`, `dev-ecosystem`, `dev-ecosystem-strict`,
+  `test-core` e `sec-03v` formavam a taxonomia inicial. Os aliases de ecossistema
+  foram posteriormente substituídos por `dev-reference`.
 - Decision: `quality.json` descreve somente a qualidade da árvore;
   `run-all-status.json` consolida banco, serviço, smoke e subsistemas.
 - Decision: resumos operacionais nunca imprimem credenciais, e `run_all.sh`

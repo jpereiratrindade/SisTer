@@ -4,6 +4,10 @@
 
 **Estado:** `PROVEN_IN_DEVELOPMENT`
 
+**Classificação atual:** evidência histórica preservada. Os perfis
+`dev-ecosystem` e `dev-ecosystem-strict` aqui reproduzidos foram retirados e
+não são comandos vigentes. Consulte `config/run_profiles.json`.
+
 ## Achado
 
 A execução comum aprovou qualidade, `sisterd` e smoke, mas encontrou Nexo e

@@ -4,6 +4,8 @@ Este diretório reúne documentos de referência arquitetural do SisTer.
 
 ## Referências principais
 
+- [Subsistema de referência](./SISTER-REFERENCE-SUBSYSTEM.md)
+- [Status e autoridade dos artefatos](../governance/ARTIFACT_STATUS.md)
 - [Ambientes](./ENVIRONMENTS.md)
 - [Modelo de domínio](./DDD.md)
 - [Interface](./INTERFACE.md)
@@ -18,3 +20,7 @@ Este diretório reúne documentos de referência arquitetural do SisTer.
 - [Arquitetura SGR](./sgr/)
 
 Decisões arquiteturais formais ficam em [docs/adr](../adr/).
+
+Documentos anteriores que descrevem subsistemas reais permanecem históricos ou
+candidatos em quarentena. Eles devem ser lidos sob a ADR-0022 e não constituem
+instrução operacional vigente.

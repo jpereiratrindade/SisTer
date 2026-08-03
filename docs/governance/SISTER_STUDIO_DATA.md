@@ -1,8 +1,11 @@
 # Governança de dados da integração Sister-Studio
 
+> **Status: histórico preservado / candidato em quarentena.** Este contrato
+> específico não substitui `sister.subsystem/1.0.0` nem autoriza acesso atual.
+
 ## Oferta inicial
 
-O SisTer recebe do Sister-Studio somente:
+Na integração histórica, o SisTer recebia do Sister-Studio somente:
 
 - identidade e versão do sistema e do contrato;
 - capacidades e formatos de entrada e saída;

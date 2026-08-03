@@ -1,11 +1,14 @@
 # Nexo e o contexto de compras
 
+> **Status: histórico preservado / candidato em quarentena.** Este documento
+> não autoriza inicialização, rota ou integração na baseline atual.
+
 ## Estado
 
-- SisTer Nexo: integrado e governado;
+- SisTer Nexo: integração histórica, atualmente em quarentena;
 - `Nexo-Compras`: contexto autônomo integrado ao Nexo;
 - identificador técnico preservado: `sister_compras`;
-- inicialização pelo orquestrador raiz: habilitada como dependência do Nexo;
+- inicialização pelo orquestrador raiz: não autorizada;
 - acesso arquitetural reservado: `/integrations/nexo/compras/`; não publicado
   pela `v0.2.7`.
 

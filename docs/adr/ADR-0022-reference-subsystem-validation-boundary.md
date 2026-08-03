@@ -33,10 +33,13 @@ reativação.
 Perfis oficiais:
 
 - `dev-core`: núcleo local, sem subsistema;
-- `dev-reference`: núcleo e referência obrigatória;
-- `dev-ecosystem`: alias governado de validação da referência;
+- `dev-reference`: núcleo local e referência obrigatória;
 - `dev-lan`: gateway federador, núcleo por socket Unix e referência;
 - `sec-03v`: segurança validada contra referência, nunca contra integração real.
+
+Os aliases `dev-ecosystem` e `dev-ecosystem-strict` foram retirados após a
+estabilização desta decisão. Evidências antigas que os mencionem permanecem
+históricas e não definem perfis executáveis atuais.
 
 ## Reintegração
 

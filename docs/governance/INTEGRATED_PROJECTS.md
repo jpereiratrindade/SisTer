@@ -1,5 +1,9 @@
 # Governanca local dos projetos integrados
 
+**Autoridade atual:** o registro reserva recursos para evitar colisões. Somente
+`sister_reference` é alvo operacional dos perfis oficiais. Demais projetos são
+candidatos em quarentena; cadastro não significa integração ou autorização.
+
 ## Fonte unica
 
 Projetos que integram o SisTer continuam autonomos, mas devem consultar este
@@ -101,9 +105,9 @@ quarentena e não integram perfis oficiais, catálogo vigente ou roteamento.
 O registro tambem inclui projetos locais nao integrados que reservam recursos,
 pois eles podem colidir no mesmo host.
 
-O repositório `cpp/sister_compras` está registrado como **Nexo-Compras**,
-dependência contratual do `sister_nexo`. Sua execução pode ser garantida pelo
-orquestrador raiz, mas ele não integra diretamente com o SisTer. A porta
+O repositório `cpp/sister_compras` está registrado historicamente como
+**Nexo-Compras**, dependência candidata do `sister_nexo`. Sua execução não é
+garantida por perfis atuais. A porta
 PostgreSQL `55440`, o container `nexo-compras-dev-db` e o volume
 `nexo_compras_dev_pgdata` são exclusivos.
 
@@ -121,13 +125,13 @@ Antes de adicionar ou mudar um recurso:
 O PostgreSQL sempre escuta em `5432` dentro do container; o registro coordena a
 porta publicada no host.
 
-## Inicializacao governada
+## Inicializacao governada vigente
 
-Projetos integrados podem declarar `orchestration` no registro central. A
-declaracao contém a URL local de saúde, o comando de inicialização sem shell, o
-prazo de prontidão e se a indisponibilidade impede a subida do SisTer.
+Projetos candidatos podem preservar declarações `orchestration` no registro
+central como memória de configuração. O validador permite `ensure-running`
+somente para `sister_reference`; perfis oficiais não iniciam subsistemas reais.
 
-No perfil `dev-ecosystem`, `scripts/run_all.sh` executa
+No perfil `dev-reference`, `scripts/run_all.sh` executa
 `scripts/subsystems/ensure.sh` depois de validar e iniciar o núcleo:
 
 1. consulta a saúde e confirma a identidade esperada de cada projeto com
@@ -148,11 +152,10 @@ integrados operam somente dentro da própria fronteira e nunca iniciam o SisTer.
 Essa direção única evita dependência invertida e ciclos de inicialização.
 
 O perfil `test-core` não inicia subsistemas. Os perfis executáveis vivem em
-`config/run_profiles.json`: `dev-core` valida somente o núcleo,
-`dev-ecosystem` trata os componentes como opcionais,
-`dev-ecosystem-strict` bloqueia qualquer degradação e `sec-03v` exige HAProxy
-real e Nexo. Este último valida pré-requisitos, mas não fecha SEC-03V nem gera
-aprovação. `quality.json` permanece restrito à árvore; o resultado composto é
+`config/run_profiles.json`: `dev-core` valida somente o núcleo;
+`dev-reference` exige a referência local; `dev-lan` exige referência e gateway
+LAN; `sec-03v` exige HAProxy real e referência. Este último valida
+pré-requisitos, mas não fecha SEC-03V nem gera aprovação. `quality.json` permanece restrito à árvore; o resultado composto é
 gravado em `run-all-status.json`. Nenhum segredo pode ser registrado no bloco
 de ambiente da orquestração nem impresso pelo resumo do ambiente.
 

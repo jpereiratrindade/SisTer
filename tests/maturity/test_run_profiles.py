@@ -17,11 +17,15 @@ SPEC.loader.exec_module(PROFILES)
 class RunProfileTests(unittest.TestCase):
     def test_profiles_are_executable_contracts(self) -> None:
         profiles = PROFILES.load_profiles()
+        self.assertEqual(
+            {"dev-core", "dev-reference", "dev-lan", "test-core", "sec-03v"},
+            set(profiles),
+        )
         self.assertEqual("none", profiles["dev-core"]["subsystems"]["selection"])
-        self.assertEqual("listed", profiles["dev-ecosystem"]["subsystems"]["selection"])
-        self.assertEqual(["sister_reference"], profiles["dev-ecosystem"]["subsystems"]["projects"])
-        self.assertEqual("LOCAL_ONLY", profiles["dev-ecosystem"]["access_scope"])
-        self.assertEqual("not-requested", profiles["dev-ecosystem"]["public_gateway"])
+        self.assertEqual("listed", profiles["dev-reference"]["subsystems"]["selection"])
+        self.assertEqual(["sister_reference"], profiles["dev-reference"]["subsystems"]["projects"])
+        self.assertEqual("LOCAL_ONLY", profiles["dev-reference"]["access_scope"])
+        self.assertEqual("not-requested", profiles["dev-reference"]["public_gateway"])
 
     def test_dev_lan_uses_only_federated_gateway(self) -> None:
         profile = PROFILES.load_profiles()["dev-lan"]
@@ -36,8 +40,8 @@ class RunProfileTests(unittest.TestCase):
         self.assertEqual(["sister_reference"], profile["subsystems"]["required"])
         self.assertFalse(profile["gate_closure_authorized"])
 
-    def test_strict_ecosystem_blocks_any_failure(self) -> None:
-        profile = PROFILES.load_profiles()["dev-ecosystem-strict"]
+    def test_reference_profile_blocks_any_failure(self) -> None:
+        profile = PROFILES.load_profiles()["dev-reference"]
         self.assertEqual(["sister_reference"], profile["subsystems"]["projects"])
         self.assertEqual("block", profile["subsystems"]["failure_policy"])
 

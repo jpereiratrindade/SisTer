@@ -1,5 +1,10 @@
 # ADRs
 
+ADRs registram decisões no tempo e não são apagadas. A ADR-0022 suspende a
+integração operacional de subsistemas reais; portanto, ADR-0004 a ADR-0007 e
+outras decisões específicas continuam históricas até nova ADR de reconformidade.
+Consulte [Status dos artefatos](../governance/ARTIFACT_STATUS.md).
+
 - [ADR-0001 - Plataforma federativa orientada por contratos](./ADR-0001-contract-oriented-federative-platform.md)
 - [ADR-0002 - Interface de convergencia e diagnostico](./ADR-0002-convergence-interface-and-diagnostics.md)
 - [ADR-0003 - PostgreSQL, PostGIS e pgvector](./ADR-0003-postgresql-postgis-pgvector.md)
