@@ -14,10 +14,12 @@ persistência ou efeito operacional.
 - `ParticipationContract` encapsulado e criado por fábrica validada;
 - identificadores fortes de participação, capacidade e contribuição;
 - `CapabilityDefinition`, `ContributionDefinition` e `AuthorityAllocation`;
+- `BoundaryObjectEnvelope` com contexto, autoridade, integridade e proveniência;
+- `ParticipationAssessment` separado da decisão de autorização;
 - estado inicial obrigatório `proposed`;
 - perfil reflexivo inicial obrigatório `D2/A1/shadow`;
 - schemas 1.0.0 e exemplo canônico da referência;
-- exemplos negativos para impedir autoautorização;
+- exemplos negativos para impedir autoautorização pelo contrato ou assessment;
 - validação de schema inteiramente local, sem resolução de rede.
 
 ## Invariantes
@@ -30,8 +32,8 @@ persistência ou efeito operacional.
 
 ## Fora do escopo
 
-Assessment, decisão humana, transições após `proposed`, persistência, HTTP, CLI
-e execução de capacidade.
+Motor de assessment, decisão humana, transições após `proposed`, persistência,
+HTTP, CLI e execução de capacidade.
 
 ## Gate
 

@@ -1,0 +1,19 @@
+{
+  "schema": "sister.participation-assessment/1.0.0",
+  "assessment_id": "assessment-reference-mvp01",
+  "participation_id": "part-reference-mvp01",
+  "contract_version": "1.0.0",
+  "contract_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "evaluated_commit": "0000000000000000000000000000000000000000",
+  "profile_id": "participation-mvp01/1.0.0",
+  "evaluator": {"id": "sge-sister", "version": "1.0.0"},
+  "result": "SHADOW",
+  "findings": [{"code": "participation.reference.complete", "layer": "governance", "explanation": "Autoridades declaradas e separadas.", "evidence": ["evidence-reference-contract"]}],
+  "evidence_used": ["evidence-reference-contract"],
+  "evidence_missing": [],
+  "confidence": 1,
+  "limitations": ["Avaliação não autoriza participação"],
+  "gate_effect": "none",
+  "recommendation": "Submeter à decisão humana competente.",
+  "assessed_at": "2026-08-03T00:00:00Z"
+}

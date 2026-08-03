@@ -23,10 +23,14 @@ private:
 struct ParticipationIdTag;
 struct CapabilityIdTag;
 struct ContributionTypeIdTag;
+struct AssessmentIdTag;
+struct EvidenceIdTag;
 
 using ParticipationId = ParticipationIdentifier<ParticipationIdTag>;
 using CapabilityId = ParticipationIdentifier<CapabilityIdTag>;
 using ContributionTypeId = ParticipationIdentifier<ContributionTypeIdTag>;
+using AssessmentId = ParticipationIdentifier<AssessmentIdTag>;
+using EvidenceId = ParticipationIdentifier<EvidenceIdTag>;
 
 enum class ParticipationState { proposed, assessed, authorized, suspended, revoked };
 
@@ -56,6 +60,49 @@ struct AuthorityAllocation final {
     std::string interpretationAuthority;
     std::string decisionAuthority;
     std::string consumptionAuthority;
+};
+
+struct BoundaryObjectEnvelope final {
+    std::string envelopeId;
+    std::string objectType;
+    std::string correlationId;
+    ParticipationId participationId;
+    std::string contractVersion;
+    std::string authorityReference;
+    std::string integrityDigest;
+    std::string context;
+    std::vector<EvidenceId> provenance;
+    std::string payload;
+};
+
+enum class AssessmentResult { pass, warn, shadow, block, inconclusive };
+enum class AssessmentLayer { existence, contribution, interaction, governance, reflection };
+
+struct AssessmentFinding final {
+    std::string code;
+    AssessmentLayer layer;
+    std::string explanation;
+    std::vector<EvidenceId> evidence;
+};
+
+struct ParticipationAssessment final {
+    AssessmentId id;
+    ParticipationId participationId;
+    std::string contractVersion;
+    std::string contractDigest;
+    std::string evaluatedCommit;
+    std::string profileId;
+    std::string evaluatorId;
+    std::string evaluatorVersion;
+    AssessmentResult result;
+    std::vector<AssessmentFinding> findings;
+    std::vector<EvidenceId> evidenceUsed;
+    std::vector<std::string> evidenceMissing;
+    double confidence;
+    std::vector<std::string> limitations;
+    std::string gateEffect;
+    std::string recommendation;
+    std::string assessedAt;
 };
 
 struct ParticipationContractDraft final {

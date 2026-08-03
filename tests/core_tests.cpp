@@ -198,6 +198,31 @@ int main() {
     expect(std::holds_alternative<sister::participation::ParticipationDomainError>(
         sister::participation::proposeParticipation(participationDraft)), "incomplete authority should fail");
 
+    const sister::participation::BoundaryObjectEnvelope envelope{
+        "env-reference-mvp01", "reference.contribution/1.0.0", "corr-reference-mvp01",
+        sister::participation::ParticipationId{"part-reference-mvp01"}, "1.0.0",
+        "coordination.mvp01", "sha256:reference", "mvp01-reference",
+        {sister::participation::EvidenceId{"evidence-reference-input"}},
+        "deterministic-reference"
+    };
+    expect(envelope.participationId.value() == "part-reference-mvp01" &&
+        !envelope.provenance.empty(), "boundary envelope should preserve governance context");
+
+    const sister::participation::ParticipationAssessment assessment{
+        sister::participation::AssessmentId{"assessment-reference-mvp01"},
+        sister::participation::ParticipationId{"part-reference-mvp01"}, "1.0.0",
+        "sha256:reference", "0000000000000000000000000000000000000000",
+        "participation-mvp01/1.0.0", "sge-sister", "1.0.0",
+        sister::participation::AssessmentResult::shadow,
+        {{"participation.reference.complete", sister::participation::AssessmentLayer::governance,
+          "authorities are explicit", {sister::participation::EvidenceId{"evidence-reference-contract"}}}},
+        {sister::participation::EvidenceId{"evidence-reference-contract"}}, {}, 1.0,
+        {"assessment does not authorize participation"}, "none",
+        "submit to competent human decision", "2026-08-03T00:00:00Z"
+    };
+    expect(assessment.result == sister::participation::AssessmentResult::shadow &&
+        assessment.gateEffect == "none", "assessment must remain separate from authorization");
+
     std::cout << "sister_core_tests ok\n";
     return 0;
 }

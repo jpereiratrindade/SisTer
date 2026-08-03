@@ -1,0 +1,20 @@
+{
+  "schema": "sister.participation-assessment/1.0.0",
+  "assessment_id": "assessment-invalid",
+  "participation_id": "part-reference-mvp01",
+  "contract_version": "1.0.0",
+  "contract_digest": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "evaluated_commit": "0000000000000000000000000000000000000000",
+  "profile_id": "participation-mvp01/1.0.0",
+  "evaluator": {"id": "sister_reference", "version": "1.0.0"},
+  "result": "PASS",
+  "findings": [],
+  "evidence_used": [],
+  "evidence_missing": [],
+  "confidence": 1,
+  "limitations": [],
+  "gate_effect": "none",
+  "recommendation": "Autoautorizar.",
+  "assessed_at": "2026-08-03T00:00:00Z",
+  "authorized": true
+}

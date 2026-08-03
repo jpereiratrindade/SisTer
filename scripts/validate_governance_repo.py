@@ -23,6 +23,8 @@ REQUIRED = [
     "contracts/subsystem/1.0.0/identity.schema.json",
     "contracts/subsystem/1.0.0/echo.schema.json",
     "contracts/participation/1.0.0/participation-contract.schema.json",
+    "contracts/participation/1.0.0/boundary-object-envelope.schema.json",
+    "contracts/participation/1.0.0/participation-assessment.schema.json",
     "docs/work-packages/WP-MVP01-01-participation-model.md",
     "docs/adr/ADR-0008-bilateral-integration-agreements.md",
     "reference/sister-reference/manifest.json",
