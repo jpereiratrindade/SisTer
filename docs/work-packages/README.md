@@ -1,5 +1,7 @@
 # Pacotes de Trabalho do SGE-SisTer
 
+- [WP-SGE-CONV-01 - Convergência reproduzível do SGE](./WP-SGE-CONV-01.md)
+
 Pacotes de trabalho conectam necessidades técnicas a arquitetura, contratos,
 evidências e gates. Eles são a unidade de planejamento da fase Alfa em diante.
 

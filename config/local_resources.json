@@ -40,6 +40,9 @@
       "id": "sister_campo",
       "repository": "cpp/SisTer-Campo",
       "integrates_with_sister": true,
+      "integration_state": "quarantined",
+      "operational_access": false,
+      "quarantine_reason": "core_reference_validation_in_progress",
       "resources": [
         {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8013},
         {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55438, "container": "sister-campo-dev-db", "volume": "sister_campo_dev_pgdata"}

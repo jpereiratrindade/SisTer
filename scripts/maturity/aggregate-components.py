@@ -31,12 +31,16 @@ def build_index():
     for comp in ecosystem.get('components', []):
         cid = comp['id']
         label = comp.get('label', cid)
+        quarantined = comp.get('governance_status') == 'quarantined'
         
         # Load profile
         profile_path = os.path.join(repo_root, 'engineering', 'maturity', 'profiles', f"{cid}.yaml")
         profile = read_yaml(profile_path)
         
-        if not profile:
+        if quarantined:
+            profile_state = "quarantined"
+            governance_mode = "quarantined"
+        elif not profile:
             profile_state = "missing"
             governance_mode = "none"
         else:
@@ -46,7 +50,7 @@ def build_index():
         # Load latest execution
         latest_rel_path = f"components/{cid}/latest.json"
         latest_abs_path = os.path.join(runtime_root, latest_rel_path)
-        latest_data = read_json(latest_abs_path)
+        latest_data = None if quarantined else read_json(latest_abs_path)
         
         if latest_data:
             technical_result = latest_data.get('result')
