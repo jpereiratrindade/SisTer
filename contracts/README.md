@@ -2,7 +2,7 @@
 
 Esta pasta e a fonte de verdade dos contratos de integracao do SisTer.
 
-Contratos iniciais:
+## Normativo vigente
 
 - `gateway_security_profile.schema.json`: perfil executável 1.1 da fronteira;
   SEC-03B está provado com restrições, mas a instância normativa em
@@ -12,20 +12,20 @@ Contratos iniciais:
   manifestos, saúde, prontidão, capacidades, identidade interna, erros,
   auditoria e superfície técnica de subsistemas.
 - `system_manifest.schema.json`: declaracao de um sistema federado.
-- `camposync_package.schema.json`: pacote `camposync.package/1.0.0`,
-  transportado por API local ou por meio offline sem alterar sua semantica.
 - `evidence.schema.json`: evidencia vinculada a objeto, sistema e proveniencia.
 - `public_scope.schema.json`: classificacao publico, restrito e privado para dados, evidencias, embeddings e diagnosticos.
-- `sister_studio_capabilities.schema.json`: descoberta restrita de capacidades e formatos do Sister-Studio.
-- `sister_nexo_integration.schema.json`: descoberta e acesso restrito ao
-  subsistema de governança científica SisTer Nexo.
-- `sister_studio_health.schema.json`: disponibilidade sanitizada dos modulos do Sister-Studio.
-- `sister_clima_governance.schema.json`: finalidade não comercial, acesso
-  identificado, licenças, atribuição e promoção de resultados do Sister-Clima.
 - `integration_agreement.schema.json`: proposta ou contraproposta bilateral,
   versionada e negociável entre sistemas autônomos.
 - `integration_receipt.schema.json`: aceite, ativação e transições auditáveis
   vinculadas ao digest exato de um acordo.
+
+## Histórico preservado e candidatos em quarentena
+
+`camposync_package.schema.json` e os contratos com nomes específicos de Clima,
+Nexo e Studio permanecem como memória arquitetural ou material candidato. Eles
+não são contratos operacionais vigentes, não autorizam rotas e não substituem
+o contrato comum. A classificação completa está em
+[`docs/governance/ARTIFACT_STATUS.md`](../docs/governance/ARTIFACT_STATUS.md).
 
 Versoes estabilizadas devem ser copiadas para `contracts/versions/vX.Y.Z/`.
 

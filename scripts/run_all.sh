@@ -22,7 +22,7 @@ while [[ $# -gt 0 ]]; do
       cat <<'USAGE'
 Usage:
   ./scripts/run_all.sh [dev|test] [port]
-  ./scripts/run_all.sh --profile dev-core|dev-ecosystem|dev-lan|dev-ecosystem-strict|test-core|sec-03v [port]
+  ./scripts/run_all.sh --profile dev-core|dev-reference|dev-lan|test-core|sec-03v [port]
                        [--update-subsystems]
 USAGE
       exit 0
@@ -41,7 +41,7 @@ done
 if [[ -z "$PROFILE" ]]; then
   LEGACY_ENV="${POSITIONAL[0]:-dev}"
   case "$LEGACY_ENV" in
-    dev) PROFILE="dev-ecosystem" ;;
+    dev) PROFILE="dev-reference" ;;
     test) PROFILE="test-core" ;;
     *) echo "run_all: expected dev or test, got $LEGACY_ENV" >&2; exit 3 ;;
   esac

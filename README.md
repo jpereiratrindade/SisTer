@@ -43,7 +43,7 @@ autenticação federada e navegação entre sistemas, inicie sempre neste
 repositório:
 
 ```bash
-./scripts/run_all.sh --profile dev-ecosystem
+./scripts/run_all.sh --profile dev-reference
 ```
 
 Os perfis separam afirmações que não são equivalentes:
@@ -51,16 +51,15 @@ Os perfis separam afirmações que não são equivalentes:
 ```bash
 ./scripts/run_all.sh --profile dev-core       # núcleo, sisterd e smoke
 ./scripts/run_all.sh --profile dev-reference  # núcleo + referência obrigatória
-./scripts/run_all.sh --profile dev-ecosystem  # alias governado da referência
 ./scripts/run_all.sh --profile dev-lan        # referência via gateway federador
-./scripts/run_all.sh --profile dev-ecosystem-strict # referência fail-closed
+./scripts/run_all.sh --profile test-core      # núcleo isolado no worktree de teste
 ./scripts/run_all.sh --profile sec-03v        # pré-requisitos estritos, não fecha o gate
 ```
 
 A preparação privilegiada do host candidato e o preflight fail-closed estão
 descritos em [`docs/operations/SEC-03V-ENV.md`](docs/operations/SEC-03V-ENV.md).
 
-`dev-reference` e os perfis de ecossistema garantem exclusivamente o
+`dev-reference`, `dev-lan` e `sec-03v` garantem exclusivamente o
 `sister_reference`. Integrações reais permanecem em quarentena e não são
 iniciadas, roteadas ou usadas como evidência do núcleo. Falha da referência
 produz `BLOCKED` e código `2`.
@@ -70,11 +69,20 @@ O ciclo local usa um registro de processo `0600` e somente encerra o PID após
 validar UID, ambiente, executável do worktree e instante de início em `/proc`.
 
 Cada resultado declara sua superfície operacional. `dev-core` e
-`dev-ecosystem` são `LOCAL_ONLY`, mantêm o núcleo em loopback e registram
+`dev-reference` são `LOCAL_ONLY`, mantêm o núcleo em loopback e registram
 `Public gateway: NOT_REQUESTED`. `dev-lan` é `LAN_FEDERATED`: mantém o núcleo
 em socket Unix e publica somente o HAProxy em `8443`. O manifesto privado em
 `.run/executions/` distingue processos e contêineres iniciados pela execução
 daqueles que já existiam; o teardown encerra somente os recursos próprios.
+
+Para encerrar a execução governada do ambiente de desenvolvimento:
+
+```bash
+./scripts/app/stop.sh dev
+```
+
+Em `dev-lan`, `./scripts/stop_gateway_lan_lab.sh` detecta o manifesto ativo e
+delega ao mesmo lifecycle, encerrando também a referência iniciada pela execução.
 
 ## Produção
 
@@ -146,15 +154,14 @@ nível:
 
 No perfil `dev-reference`, o SisTer verifica e inicia exclusivamente o
 `sister_reference`, declarado com `ensure-running` em
-`config/local_resources.json`. O perfil `dev-ecosystem` e um alias governado
-dessa mesma validacao. Servicos saudaveis sao preservados; processos iniciados
+`config/local_resources.json`. Servicos saudaveis sao preservados; processos iniciados
 pelo comando ficam registrados em `.run/executions/`. O perfil `dev-core` nao
 consulta nem inicia subsistemas.
 
 Subsistemas conteinerizados podem declarar `refresh.on-source-change`. O fluxo
 comum apenas informa divergência; não executa atualização ou rebuild implícito.
-Para solicitar explicitamente a reconciliação, use `--update-subsystems` com o
-perfil de ecossistema. Bancos e outros dados persistentes permanecem nos
+Para solicitar explicitamente a reconciliação, use `--update-subsystems` com um
+perfil que selecione a referência. Bancos e outros dados persistentes permanecem nos
 volumes exclusivos declarados pelo subsistema.
 
 O fluxo `dev` deve ser executado no worktree principal. Para preparar e executar

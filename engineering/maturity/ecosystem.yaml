@@ -3,9 +3,13 @@ components:
     label: SisTer-Core
   - id: sister-nexo
     label: SisTer Nexo
+    governance_status: quarantined
   - id: sister-clima
     label: Sister-Clima
+    governance_status: quarantined
   - id: sister-campo
     label: SisTer Campo
+    governance_status: quarantined
   - id: sister-studio
     label: Sister-Studio
+    governance_status: quarantined

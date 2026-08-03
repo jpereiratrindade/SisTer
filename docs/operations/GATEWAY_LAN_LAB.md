@@ -42,7 +42,7 @@ export GATEWAY_LAN_ADDRESS=10.163.80.176
 ```
 
 Nesse perfil, `run_all.sh` registra ownership da execução, mantém núcleo em
-socket Unix e declara `LAN_FEDERATED`. `dev-ecosystem` permanece local e nunca
+socket Unix e declara `LAN_FEDERATED`. `dev-reference` permanece local e nunca
 publica `8443`.
 
 O script sobe ou reutiliza o banco de teste, aplica migrations, compila o

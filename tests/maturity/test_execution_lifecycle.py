@@ -22,7 +22,7 @@ class ExecutionLifecycleTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             executions = Path(temporary) / "executions"
             args = argparse.Namespace(
-                profile="dev-ecosystem", environment="dev", access_scope="LOCAL_ONLY"
+                profile="dev-reference", environment="dev", access_scope="LOCAL_ONLY"
             )
             with mock.patch.object(LIFECYCLE, "ROOT", Path(temporary)), mock.patch.object(
                 LIFECYCLE, "EXECUTIONS", executions

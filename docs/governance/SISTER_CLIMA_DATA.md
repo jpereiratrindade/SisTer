@@ -1,8 +1,11 @@
 # Governança de dados e uso do Sister-Clima
 
+> **Status: histórico preservado / candidato em quarentena.** As regras abaixo
+> preservam condições de uma futura reconformidade, sem acesso operacional.
+
 ## Finalidade autorizada
 
-O Sister-Clima integra o SisTer para pesquisa pública, resiliência climática,
+Historicamente, o Sister-Clima foi proposto para integrar o SisTer em pesquisa pública, resiliência climática,
 educação e apoio decisório institucional sem finalidade lucrativa ou
 comercial. O contrato aplicável é `sister-clima.governance/1.0.0`, formalizado
 por:

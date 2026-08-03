@@ -1,6 +1,9 @@
 # Integração SisTer Nexo
 
-O SisTer Nexo é o subsistema federado de governança operacional, gestão
+> **Status: histórico preservado / candidato em quarentena.** Não existe rota,
+> inicialização ou autorização operacional vigente para o Nexo.
+
+O SisTer Nexo foi modelado como subsistema federado de governança operacional, gestão
 científica, projetos, ações, atividades, evidências, publicações e
 rastreabilidade.
 
