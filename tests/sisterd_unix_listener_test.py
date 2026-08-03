@@ -26,10 +26,13 @@ def environment(web_root, auth_file, socket_path):
             "SISTER_ENABLE_HTTP_BOOTSTRAP": "false",
             "SISTER_ENABLE_LEGACY_PROXY": "false",
             "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
-            "SISTER_ENABLE_NEXO_SIGNED_INTEGRATION": "false",
+            "SISTER_ENABLE_REFERENCE_SUBSYSTEM": "false",
         }
     )
-    for name in ("SISTER_BIND_HOST", "SISTER_PORT", "LISTEN_PID", "LISTEN_FDS", "LISTEN_FDNAMES"):
+    for name in (
+        "SISTER_BIND_HOST", "SISTER_PORT", "SISTER_INTERNAL_PROXY_TOKEN",
+        "LISTEN_PID", "LISTEN_FDS", "LISTEN_FDNAMES",
+    ):
         result.pop(name, None)
     return result
 
@@ -94,6 +97,29 @@ def stop(process):
             process.wait(timeout=3)
 
 
+def tcp_listener_inodes():
+    listeners = set()
+    for table in (Path("/proc/net/tcp"), Path("/proc/net/tcp6")):
+        for line in table.read_text(encoding="ascii").splitlines()[1:]:
+            fields = line.split()
+            if len(fields) >= 10 and fields[3] == "0A":
+                listeners.add(fields[9])
+    return listeners
+
+
+def process_has_tcp_listener(pid):
+    listeners = tcp_listener_inodes()
+    try:
+        descriptors = (Path("/proc") / str(pid) / "fd").iterdir()
+        targets = [descriptor.readlink().name for descriptor in descriptors]
+    except (FileNotFoundError, PermissionError):
+        raise AssertionError("sisterd process disappeared during listener inspection")
+    return any(
+        target.startswith("socket:[") and target[8:-1] in listeners
+        for target in targets
+    )
+
+
 def assert_fails(executable, env, fragment, listener_fds=()):
     process = start(executable, listener_fds, env)
     output, _ = process.communicate(timeout=5)
@@ -130,12 +156,8 @@ def main():
         try:
             wait_for_health(process, socket_path)
             assert exchange(socket_path).startswith(b"HTTP/1.1 200")
-            try:
-                socket.create_connection(("127.0.0.1", 8000), timeout=0.2)
-            except OSError:
-                pass
-            else:
-                raise AssertionError("sisterd exposed a TCP listener on port 8000")
+            if process_has_tcp_listener(process.pid):
+                raise AssertionError("activated sisterd exposed a TCP listener")
 
             inode = socket_path.stat().st_ino
             mode = socket_path.stat().st_mode & 0o777

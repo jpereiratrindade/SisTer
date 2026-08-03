@@ -63,9 +63,9 @@ def main():
             "SISTER_MATURITY_ROOT": str(maturity_root),
             "SISTER_DATABASE_URL": "",
             "SISTER_WORKERS": "4",
-            "SISTER_ENABLE_LEGACY_PROXY": "true",
-            "SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY": "false",
+            "SISTER_ENABLE_REFERENCE_SUBSYSTEM": "false",
         })
+        environment.pop("SISTER_INTERNAL_PROXY_TOKEN", None)
         process = subprocess.Popen(
             [executable, str(port), web_root], env=environment,
             stdout=subprocess.DEVNULL, stderr=subprocess.PIPE, text=True,
@@ -114,16 +114,13 @@ def main():
             reader_cookie = session_cookie(headers)
             assert request(port, "GET", "/api/admin/maturity/latest", cookie=reader_cookie)[0] == 403
             assert request(port, "GET", "/api/admin/users", cookie=reader_cookie)[0] == 403
-            assert request(port, "GET", "/api/integrations/sister-clima", cookie=reader_cookie)[0] == 403
-            assert request(port, "GET", "/integrations/clima", cookie=reader_cookie)[0] == 403
-            assert request(port, "GET", "/integrations/clima")[0] == 401
-            assert request(port, "GET", "/integrations/clima", cookie=admin_cookie)[0] == 308
-            status, _, payload = request(port, "GET", "/api/integrations/sister-clima", cookie=admin_cookie)
+            assert request(port, "GET", "/api/integrations/sister-reference", cookie=reader_cookie)[0] == 403
+            assert request(port, "GET", "/integrations/reference", cookie=admin_cookie)[0] == 404
+            status, _, payload = request(port, "GET", "/api/integrations/sister-reference", cookie=admin_cookie)
             assert status == 200, status
-            clima = json.loads(payload)
-            assert clima["access_url"] == "/integrations/clima/", clima
-            assert clima["operational_access"] is True, clima
-            assert clima["unavailable_reason"] is None, clima
+            reference = json.loads(payload)
+            assert reference["system_id"] == "sister_reference", reference
+            assert reference["operational_access"] is True, reference
             assert request(port, "GET", "/api/not-declared", cookie=admin_cookie)[0] == 403
 
             assert request(port, "GET", "/api/admin/maturity/history", cookie=admin_cookie)[0] == 404
@@ -157,7 +154,7 @@ def main():
         audit_log = process.stderr.read()
         assert "event=authorization" in audit_log
         assert "capability=maturity.evidence.read" in audit_log
-        assert "capability=climate.dashboard.read" in audit_log
+        assert "capability=reference.identity.read" in audit_log
         assert "result=allow" in audit_log
         assert "result=deny" in audit_log
         assert "reason=capability_missing" in audit_log

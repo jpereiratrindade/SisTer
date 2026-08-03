@@ -14,6 +14,29 @@
       ]
     },
     {
+      "id": "sister_reference",
+      "repository": "cpp/SisTer/reference/sister-reference",
+      "integrates_with_sister": true,
+      "integration_state": "reference",
+      "operational_access": true,
+      "orchestration": {
+        "policy": "ensure-running",
+        "environment": "dev",
+        "required": true,
+        "health": {
+          "url": "http://127.0.0.1:19001/api/health",
+          "expected_json": {"status": "ok", "service": "sister-reference"}
+        },
+        "start": {
+          "argv": ["./scripts/run.sh"],
+          "ready_timeout_seconds": 15
+        }
+      },
+      "resources": [
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 19001, "exposure": "internal"}
+      ]
+    },
+    {
       "id": "sister_campo",
       "repository": "cpp/SisTer-Campo",
       "integrates_with_sister": true,
@@ -26,8 +49,11 @@
       "id": "sister_nexo",
       "repository": "cpp/sister-nexo",
       "integrates_with_sister": true,
+      "integration_state": "quarantined",
+      "operational_access": false,
+      "quarantine_reason": "core_reference_validation_in_progress",
       "orchestration": {
-        "policy": "ensure-running",
+        "policy": "quarantined",
         "environment": "dev",
         "required": false,
         "health": {
@@ -63,7 +89,7 @@
         }
       },
       "resources": [
-        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8015},
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8015, "exposure": "internal"},
         {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55439, "container": "sister-nexo-dev-db", "volume": "sister_nexo_dev_pgdata"}
       ]
     },
@@ -106,8 +132,11 @@
       "id": "sister_clima",
       "repository": "python/Sister-Clima",
       "integrates_with_sister": true,
+      "integration_state": "quarantined",
+      "operational_access": false,
+      "quarantine_reason": "core_reference_validation_in_progress",
       "orchestration": {
-        "policy": "ensure-running",
+        "policy": "quarantined",
         "environment": "dev",
         "required": false,
         "health": {
@@ -116,32 +145,46 @@
         },
         "start": {
           "argv": ["./venv/bin/streamlit", "run", "app.py"],
-          "ready_timeout_seconds": 90
+          "ready_timeout_seconds": 90,
+          "environment": {
+            "STREAMLIT_SERVER_ADDRESS": "127.0.0.1",
+            "STREAMLIT_SERVER_PORT": "8501"
+          }
         }
       },
       "resources": [
-        {"kind": "http", "environment": "dev", "host": "0.0.0.0", "port": 8501}
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8501, "exposure": "internal"}
       ]
     },
     {
       "id": "sister_studio",
       "repository": "Sister-Studio",
       "integrates_with_sister": true,
+      "integration_state": "quarantined",
+      "operational_access": false,
+      "quarantine_reason": "core_reference_validation_in_progress",
       "components": ["audio", "voice", "video"],
       "orchestration": {
-        "policy": "ensure-running",
+        "policy": "quarantined",
         "environment": "dev",
         "required": false,
         "health": {
-          "url": "https://127.0.0.1:8443/api/health",
+          "url": "https://127.0.0.1:18443/api/health",
           "tls_verify": false,
           "expected_json": {"status": "ok", "service": "sister-studio"}
         },
-        "start": {"argv": ["./scripts/run_all.sh"], "ready_timeout_seconds": 240}
+        "start": {
+          "argv": ["./scripts/run_all.sh"],
+          "ready_timeout_seconds": 240,
+          "environment": {
+            "SISTER_STUDIO_BIND_HOST": "127.0.0.1",
+            "SISTER_STUDIO_PORT": "18443"
+          }
+        }
       },
       "resources": [
-        {"kind": "https", "environment": "dev", "host": "0.0.0.0", "port": 8443, "container": "sister-studio-dev", "volume": "sister_studio_generated"},
-        {"kind": "http", "environment": "dev", "host": "0.0.0.0", "port": 8088},
+        {"kind": "https", "environment": "dev", "host": "127.0.0.1", "port": 18443, "container": "sister-studio-dev", "volume": "sister_studio_generated", "exposure": "internal"},
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8088, "exposure": "internal"},
         {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 18013, "exposure": "internal"},
         {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 18043, "exposure": "internal"},
         {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 18014, "exposure": "internal"},
@@ -163,8 +206,11 @@
       "integration_contract": "nexo-compras.integration/1.0.0",
       "product_name": "Nexo-Compras",
       "status": "integrated-with-nexo",
+      "integration_state": "quarantined",
+      "operational_access": false,
+      "quarantine_reason": "core_reference_validation_in_progress",
       "orchestration": {
-        "policy": "ensure-running",
+        "policy": "quarantined",
         "environment": "dev",
         "required": false,
         "health": {
@@ -195,7 +241,7 @@
         }
       },
       "resources": [
-        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8016},
+        {"kind": "http", "environment": "dev", "host": "127.0.0.1", "port": 8016, "exposure": "internal"},
         {"kind": "postgresql", "environment": "dev", "host": "127.0.0.1", "port": 55440, "container": "nexo-compras-dev-db", "volume": "nexo_compras_dev_pgdata"}
       ]
     },

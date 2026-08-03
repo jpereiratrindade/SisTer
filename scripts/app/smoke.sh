@@ -33,8 +33,7 @@ for protected_path in \
   contracts \
   evidence \
   diagnostics \
-  integrations/sister-clima \
-  integrations/sister-studio \
+  integrations/sister-reference \
   admin/maturity/latest \
   admin/maturity/history
 do

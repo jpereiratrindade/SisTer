@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import signal
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -113,6 +114,30 @@ class ProcessIdentityTests(unittest.TestCase):
         self.assertEqual(str(self.process.pid), completed.stdout.strip())
         self.process.wait(timeout=5)
         self.assertEqual(-signal.SIGTERM, self.process.returncode)
+
+    def test_validates_recorded_process_after_binary_is_atomically_replaced(self) -> None:
+        self.process.terminate()
+        self.process.wait(timeout=5)
+        executable = Path(self.temporary.name) / "replaceable-sleep"
+        replacement = Path(self.temporary.name) / "replacement"
+        shutil.copy2("/usr/bin/sleep", executable)
+        environment = os.environ.copy()
+        environment["SISTER_ENV"] = "ownership-test"
+        self.process = subprocess.Popen([str(executable), "30"], cwd=ROOT, env=environment)
+        command = [
+            sys.executable, str(IDENTITY), "record", "--pid-file", str(self.pid_file),
+            "--environment", "ownership-test", "--executable", str(executable),
+            "--pid", str(self.process.pid),
+        ]
+        subprocess.run(command, cwd=ROOT, check=True)
+        shutil.copy2("/usr/bin/sleep", replacement)
+        replacement.replace(executable)
+        completed = subprocess.run(
+            [sys.executable, str(IDENTITY), "validate", "--pid-file", str(self.pid_file),
+             "--environment", "ownership-test", "--executable", str(executable)],
+            cwd=ROOT, capture_output=True, check=False,
+        )
+        self.assertEqual(0, completed.returncode, completed.stderr.decode())
 
     def test_stop_refuses_pid_file_for_a_different_executable(self) -> None:
         governed_pid_file = ROOT / ".run" / "sisterd-ownership-test.pid"

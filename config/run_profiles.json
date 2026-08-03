@@ -5,6 +5,9 @@
       "environment": "dev",
       "default_port": 8000,
       "scope": "core",
+      "access_scope": "LOCAL_ONLY",
+      "core_transport": "loopback-tcp",
+      "public_gateway": "not-requested",
       "gateway_dynamic_tests": "optional",
       "subsystems": {
         "selection": "none",
@@ -18,12 +21,47 @@
       "environment": "dev",
       "default_port": 8000,
       "scope": "ecosystem",
+      "access_scope": "LOCAL_ONLY",
+      "core_transport": "loopback-tcp",
+      "public_gateway": "not-requested",
       "gateway_dynamic_tests": "optional",
       "subsystems": {
-        "selection": "all",
-        "projects": [],
-        "required": [],
+        "selection": "listed",
+        "projects": ["sister_reference"],
+        "required": ["sister_reference"],
         "failure_policy": "warn"
+      },
+      "gate_closure_authorized": false
+    },
+    "dev-reference": {
+      "environment": "dev",
+      "default_port": 8000,
+      "scope": "ecosystem",
+      "access_scope": "LOCAL_ONLY",
+      "core_transport": "loopback-tcp",
+      "public_gateway": "not-requested",
+      "gateway_dynamic_tests": "optional",
+      "subsystems": {
+        "selection": "listed",
+        "projects": ["sister_reference"],
+        "required": ["sister_reference"],
+        "failure_policy": "block"
+      },
+      "gate_closure_authorized": false
+    },
+    "dev-lan": {
+      "environment": "dev",
+      "default_port": 8000,
+      "scope": "ecosystem",
+      "access_scope": "LAN_FEDERATED",
+      "core_transport": "unix-socket",
+      "public_gateway": "lan-required",
+      "gateway_dynamic_tests": "required",
+      "subsystems": {
+        "selection": "listed",
+        "projects": ["sister_reference"],
+        "required": ["sister_reference"],
+        "failure_policy": "block"
       },
       "gate_closure_authorized": false
     },
@@ -31,11 +69,14 @@
       "environment": "dev",
       "default_port": 8000,
       "scope": "ecosystem",
+      "access_scope": "LOCAL_ONLY",
+      "core_transport": "loopback-tcp",
+      "public_gateway": "not-requested",
       "gateway_dynamic_tests": "optional",
       "subsystems": {
-        "selection": "all",
-        "projects": [],
-        "required": [],
+        "selection": "listed",
+        "projects": ["sister_reference"],
+        "required": ["sister_reference"],
         "failure_policy": "block"
       },
       "gate_closure_authorized": false
@@ -44,6 +85,9 @@
       "environment": "test",
       "default_port": 8001,
       "scope": "core",
+      "access_scope": "LOCAL_TEST",
+      "core_transport": "loopback-tcp",
+      "public_gateway": "not-requested",
       "gateway_dynamic_tests": "optional",
       "subsystems": {
         "selection": "none",
@@ -57,11 +101,14 @@
       "environment": "dev",
       "default_port": 8000,
       "scope": "sec-03v-prerequisites",
+      "access_scope": "SECURITY_VALIDATION",
+      "core_transport": "loopback-tcp",
+      "public_gateway": "validation-only",
       "gateway_dynamic_tests": "required",
       "subsystems": {
         "selection": "listed",
-        "projects": ["sister_nexo"],
-        "required": ["sister_nexo"],
+        "projects": ["sister_reference"],
+        "required": ["sister_reference"],
         "failure_policy": "block"
       },
       "gate_closure_authorized": false

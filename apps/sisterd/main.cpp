@@ -1,11 +1,7 @@
 #include "auth.hpp"
 #include "db.hpp"
-#include "studio_client.hpp"
-#include "sister_campo_client.hpp"
 #include "api/maturity_routes.hpp"
 #include "http/content_length.hpp"
-#include "identity/key_provider.hpp"
-#include "integrations/nexo_client.hpp"
 #include "runtime/connection_thread_pool.hpp"
 #include "runtime/listener.hpp"
 #include "security/login_rate_limiter.hpp"
@@ -86,17 +82,13 @@ struct ServerConfig {
     bool httpBootstrapEnabled = false;
     bool legacyProxyEnabled = false;
     bool legacyWebSocketProxyEnabled = false;
-    bool nexoSignedIntegrationEnabled = false;
     std::size_t workerThreads = 4;
     std::size_t queueLimit = 256;
     int clientTimeoutSeconds = 10;
     int upstreamTimeoutMilliseconds = 5'000;
-    uint16_t climaPort = 8501;
-    uint16_t nexoPort = 8015;
+    bool referenceSubsystemEnabled = false;
+    uint16_t referencePort = 19001;
     std::string internalProxyToken;
-    std::filesystem::path internalIdentityPrivateKeyFile;
-    std::string internalIdentityKeyId;
-    int internalIdentityTtlSeconds = 60;
 };
 
 struct HttpRequest {
@@ -286,8 +278,6 @@ ServerConfig loadConfig(int argc, char** argv) {
         environment("SISTER_ENABLE_LEGACY_PROXY").value_or("false"), false);
     config.legacyWebSocketProxyEnabled = parseBool(
         environment("SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY").value_or("false"), false);
-    config.nexoSignedIntegrationEnabled = parseBool(
-        environment("SISTER_ENABLE_NEXO_SIGNED_INTEGRATION").value_or("false"), false);
 
     const auto tcpFallback = environment("SISTER_ALLOW_TCP_FALLBACK");
     if (tcpFallback && parseBool(*tcpFallback, false)) {
@@ -323,25 +313,15 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.upstreamTimeoutMilliseconds = parseInteger<int>(
         environment("SISTER_UPSTREAM_TIMEOUT_MS").value_or("5000"),
         100, 120'000, "SISTER_UPSTREAM_TIMEOUT_MS");
-    config.climaPort = parseInteger<uint16_t>(
-        environment("SISTER_CLIMA_PORT").value_or("8501"),
-        1, std::numeric_limits<uint16_t>::max(), "SISTER_CLIMA_PORT");
-    config.nexoPort = parseInteger<uint16_t>(
-        environment("SISTER_NEXO_PORT").value_or("8015"),
-        1, std::numeric_limits<uint16_t>::max(), "SISTER_NEXO_PORT");
+    config.referenceSubsystemEnabled = parseBool(
+        environment("SISTER_ENABLE_REFERENCE_SUBSYSTEM").value_or("false"), false);
+    config.referencePort = parseInteger<uint16_t>(
+        environment("SISTER_REFERENCE_PORT").value_or("19001"),
+        1, std::numeric_limits<uint16_t>::max(), "SISTER_REFERENCE_PORT");
     config.internalProxyToken = environment("SISTER_INTERNAL_PROXY_TOKEN").value_or("");
-    config.internalIdentityPrivateKeyFile =
-        environment("SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE").value_or("");
-    config.internalIdentityKeyId = environment("SISTER_INTERNAL_IDENTITY_KEY_ID").value_or("");
-    config.internalIdentityTtlSeconds = parseInteger<int>(
-        environment("SISTER_INTERNAL_IDENTITY_TTL_SECONDS").value_or("60"),
-        1, 300, "SISTER_INTERNAL_IDENTITY_TTL_SECONDS");
-
-    if (config.nexoSignedIntegrationEnabled) {
-        sisterd::identity::FileKeyProvider keyProvider(
-            config.internalIdentityPrivateKeyFile,
-            config.internalIdentityKeyId);
-        static_cast<void>(keyProvider.currentSigningKey());
+    if (config.referenceSubsystemEnabled && config.internalProxyToken.size() < 32) {
+        throw std::runtime_error(
+            "SISTER_ENABLE_REFERENCE_SUBSYSTEM requires SISTER_INTERNAL_PROXY_TOKEN");
     }
 
     std::error_code error;
@@ -1072,18 +1052,16 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
             "sister.governance.read",
             "sister.evidence.read",
             "sister.diagnostics.read",
-            "studio.capabilities.read",
-            "campo.capabilities.read",
-            "nexo.projects.read",
-            "climate.dashboard.read"
+            "reference.identity.read",
+            "reference.echo.execute"
         };
     }
     if (role == "researcher" || role == "project_lead") {
         return {
             "session.self.read",
             "subsystem.manifest.read",
-            "nexo.projects.read",
-            "climate.dashboard.read"
+            "reference.identity.read",
+            "reference.echo.execute"
         };
     }
     if (role == "user" || role == "registered_user" || role == "guest") {
@@ -1181,25 +1159,6 @@ bool sendAll(int socket, std::string_view data) {
         sent += static_cast<std::size_t>(count);
     }
     return true;
-}
-
-bool headerContainsToken(const HttpRequest& request, std::string_view name, std::string_view token) {
-    const auto header = request.headers.find(std::string(name));
-    if (header == request.headers.end()) return false;
-
-    const auto expected = lowercase(std::string(token));
-    std::istringstream values(header->second);
-    std::string value;
-    while (std::getline(values, value, ',')) {
-        if (lowercase(trim(value)) == expected) return true;
-    }
-    return false;
-}
-
-bool isWebSocketUpgrade(const HttpRequest& request) {
-    return request.method == "GET" &&
-           headerContainsToken(request, "connection", "upgrade") &&
-           headerContainsToken(request, "upgrade", "websocket");
 }
 
 std::string safeProxyHeaderValue(std::string_view value, std::size_t maximum = 1024) {
@@ -1338,130 +1297,6 @@ std::string proxyToSubsystem(
     return response;
 }
 
-UniqueFd openWebSocketProxy(
-    int client,
-    const HttpRequest& request,
-    const sisterd::AuthUser& actor,
-    std::string_view prefix,
-    uint16_t port,
-    std::string_view serviceName,
-    std::string_view requestId,
-    const ServerConfig& config) {
-    if (!request.path.starts_with(prefix)) throw std::runtime_error("invalid proxy prefix");
-
-    std::string upstreamPath = request.path.substr(prefix.size());
-    if (upstreamPath.empty()) upstreamPath = "/";
-    upstreamPath += request.query;
-    if (upstreamPath.find('\r') != std::string::npos || upstreamPath.find('\n') != std::string::npos) {
-        throw std::runtime_error("invalid upstream path");
-    }
-
-    const auto requiredHeader = [&request](std::string_view name) -> std::string {
-        const auto found = request.headers.find(std::string(name));
-        if (found == request.headers.end() || found->second.empty()) {
-            throw std::runtime_error("incomplete WebSocket handshake");
-        }
-        return safeProxyHeaderValue(found->second, 4096);
-    };
-    const auto sessionToken = cookieValue(request, kSessionCookie);
-    if (sessionToken.empty()) throw std::runtime_error("missing authenticated session cookie");
-    const auto requestHost = requiredHeader("host");
-    const std::string forwardedProto = config.secureCookie ? "https" : "http";
-
-    auto upstream = connectLoopback(port, config.upstreamTimeoutMilliseconds);
-    std::ostringstream forwarded;
-    forwarded << "GET " << upstreamPath << " HTTP/1.1\r\n"
-              << "Host: 127.0.0.1:" << port << "\r\n"
-              << "Connection: Upgrade\r\n"
-              << "Upgrade: websocket\r\n"
-              << "Sec-WebSocket-Key: " << requiredHeader("sec-websocket-key") << "\r\n"
-              << "Sec-WebSocket-Version: " << requiredHeader("sec-websocket-version") << "\r\n"
-              << "Cookie: " << kSessionCookie << '=' << safeProxyHeaderValue(sessionToken, 4096) << "\r\n"
-              << "X-Forwarded-Host: " << requestHost << "\r\n"
-              << "X-Forwarded-Proto: " << forwardedProto << "\r\n"
-              << "X-Sister-Subject: " << safeProxyHeaderValue(actor.id) << "\r\n"
-              << "X-Sister-Name: " << safeProxyHeaderValue(actor.name) << "\r\n"
-              << "X-Sister-Email: " << safeProxyHeaderValue(actor.email) << "\r\n"
-              << "X-Sister-Role: " << safeProxyHeaderValue(actor.role) << "\r\n"
-              << "X-Request-ID: " << safeProxyHeaderValue(requestId, 128) << "\r\n";
-
-    for (const std::string_view name : {
-             "origin", "user-agent", "sec-websocket-protocol", "sec-websocket-extensions"}) {
-        if (const auto header = request.headers.find(std::string(name)); header != request.headers.end()) {
-            forwarded << name << ": " << safeProxyHeaderValue(header->second, 4096) << "\r\n";
-        }
-    }
-    if (!config.internalProxyToken.empty()) {
-        forwarded << "X-Sister-Proxy-Token: "
-                  << safeProxyHeaderValue(config.internalProxyToken, 4096) << "\r\n";
-    }
-    forwarded << "\r\n";
-
-    if (!sendAll(upstream.get(), forwarded.str())) {
-        throw std::runtime_error("cannot send WebSocket handshake to " + std::string(serviceName));
-    }
-
-    std::string handshake;
-    handshake.reserve(4096);
-    while (handshake.find("\r\n\r\n") == std::string::npos) {
-        char buffer[8192];
-        const auto count = recv(upstream.get(), buffer, sizeof(buffer), 0);
-        if (count < 0 && errno == EINTR) continue;
-        if (count <= 0) {
-            throw std::runtime_error("cannot read WebSocket handshake from " + std::string(serviceName));
-        }
-        handshake.append(buffer, static_cast<std::size_t>(count));
-        if (handshake.size() > kMaxHeaderBytes) {
-            throw std::runtime_error("WebSocket handshake exceeds header limit");
-        }
-    }
-    if (!handshake.starts_with("HTTP/1.1 101 ") && !handshake.starts_with("HTTP/1.0 101 ")) {
-        throw std::runtime_error(std::string(serviceName) + " rejected WebSocket upgrade");
-    }
-    if (!sendAll(client, handshake)) {
-        throw std::runtime_error("cannot send WebSocket handshake to client");
-    }
-    return upstream;
-}
-
-void tunnelSockets(int client, int upstream) {
-    const timeval noTimeout{};
-    setsockopt(client, SOL_SOCKET, SO_RCVTIMEO, &noTimeout, sizeof(noTimeout));
-    setsockopt(client, SOL_SOCKET, SO_SNDTIMEO, &noTimeout, sizeof(noTimeout));
-    setsockopt(upstream, SOL_SOCKET, SO_RCVTIMEO, &noTimeout, sizeof(noTimeout));
-    setsockopt(upstream, SOL_SOCKET, SO_SNDTIMEO, &noTimeout, sizeof(noTimeout));
-
-    std::array<pollfd, 2> descriptors{{
-        {client, POLLIN, 0},
-        {upstream, POLLIN, 0},
-    }};
-    std::array<char, 16 * 1024> buffer{};
-    while (gKeepRunning) {
-        int ready;
-        do {
-            ready = poll(descriptors.data(), descriptors.size(), 1000);
-        } while (ready < 0 && errno == EINTR);
-        if (ready < 0) throw std::runtime_error("WebSocket tunnel poll failed");
-        if (ready == 0) continue;
-
-        for (std::size_t index = 0; index < descriptors.size(); ++index) {
-            const auto events = descriptors[index].revents;
-            if ((events & (POLLERR | POLLNVAL)) != 0) return;
-            if ((events & POLLIN) != 0) {
-                const auto count = recv(descriptors[index].fd, buffer.data(), buffer.size(), 0);
-                if (count < 0 && errno == EINTR) continue;
-                if (count <= 0) return;
-                const int destination = index == 0 ? upstream : client;
-                if (!sendAll(destination, std::string_view(buffer.data(), static_cast<std::size_t>(count)))) {
-                    return;
-                }
-            } else if ((events & POLLHUP) != 0) {
-                return;
-            }
-        }
-    }
-}
-
 int statusFromRawHttpResponse(std::string_view response) {
     const auto firstSpace = response.find(' ');
     if (firstSpace == std::string_view::npos || firstSpace + 4 > response.size()) return 502;
@@ -1475,20 +1310,13 @@ int statusFromRawHttpResponse(std::string_view response) {
 }
 
 constexpr std::string_view kFallbackContracts = R"([
-  {"name":"System Manifest","version":"0.1.0","required":"Sim"},
-  {"name":"CampoSync Package","version":"1.0.0","required":"Para ingestao por API ou pacote offline"},
-  {"name":"Evidence","version":"0.1.0","required":"Para dado promovido"},
-  {"name":"Public Scope","version":"0.1.0","required":"Para classificacao de exposicao"},
-  {"name":"Sister-Clima Governance","version":"1.0.0","required":"Para resultados climaticos nao comerciais"},
-  {"name":"Sister-Studio Integration","version":"1.0.0","required":"Para capacidades e saude sanitizada"},
-  {"name":"SisTer Nexo Integration","version":"1.0.0","required":"Para governanca e gestao cientifica"}
+  {"name":"Subsystem Manifest","version":"1.0.0","required":"Sim"},
+  {"name":"Reference Subsystem","version":"0.1.0","required":"Para validacao funcional, operacional e de seguranca"},
+  {"name":"Evidence","version":"0.1.0","required":"Para resultado promovido"}
 ])";
 
 constexpr std::string_view kFallbackSystems = R"([
-  {"id":"sister_campo","name":"SisTer-Campo","type":"Integracao de campo","status":"Integrado","contract":"camposync.package/1.0.0","access_mode":"service_api"},
-  {"id":"sister_nexo","name":"SisTer Nexo","type":"Governanca cientifica","status":"Integrado","contract":"sister-nexo.integration/1.0.0","access_mode":"authenticated_reverse_proxy"},
-  {"id":"sister_clima","name":"Sister-Clima","type":"Climatico","status":"Integrado","contract":"sister-contracts/0.1.0","access_mode":"restricted"},
-  {"id":"sister_studio","name":"Sister-Studio","type":"Criativo","status":"Integrado","contract":"sister-studio.integration/1.0.0","access_mode":"authenticated_reverse_proxy"}
+  {"id":"sister_reference","name":"SisTer Reference Subsystem","type":"Referencia controlada","status":"Validacao","contract":"sister.subsystem/1.0.0","access_mode":"authenticated_reverse_proxy","access_url":"/integrations/reference/"}
 ])";
 
 constexpr std::string_view kFallbackDiagnostics = R"([
@@ -1500,7 +1328,7 @@ constexpr std::string_view kFallbackDiagnostics = R"([
   {"service":"PostgreSQL/pgvector","status":"planejado","score":20}
 ])";
 
-ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig& config) {
+ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig&) {
     if (path == "/api/health") {
         std::lock_guard lock(state.dbMutex);
         const std::string dbStatus = state.db.connected() ? "connected" : "not_connected";
@@ -1511,14 +1339,10 @@ ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig
     }
 
     if (path == "/api/systems") {
-        std::lock_guard lock(state.dbMutex);
-        if (auto result = state.db.querySystems()) return {true, false, *result};
-        return {true, true, std::string(kFallbackSystems)};
+        return {true, false, std::string(kFallbackSystems)};
     }
     if (path == "/api/contracts") {
-        std::lock_guard lock(state.dbMutex);
-        if (auto result = state.db.queryContracts()) return {true, false, *result};
-        return {true, true, std::string(kFallbackContracts)};
+        return {true, false, std::string(kFallbackContracts)};
     }
     if (path == "/api/evidence") {
         std::lock_guard lock(state.dbMutex);
@@ -1530,27 +1354,9 @@ ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig
         if (auto result = state.db.queryDiagnostics()) return {true, false, *result};
         return {true, true, std::string(kFallbackDiagnostics)};
     }
-    if (path == "/api/integrations/sister-clima") {
-        const std::string accessUrl = config.legacyProxyEnabled ? R"("/integrations/clima/")" : "null";
-        const std::string operationalAccess = config.legacyProxyEnabled ? "true" : "false";
-        const std::string unavailableReason = config.legacyProxyEnabled
-            ? "null"
-            : R"("legacy_reverse_proxy_disabled")";
+    if (path == "/api/integrations/sister-reference") {
         return {true, false,
-            R"({"access_url":)" + accessUrl +
-            R"(,"operational_access":)" + operationalAccess +
-            R"(,"unavailable_reason":)" + unavailableReason +
-            R"(,"access_mode":"restricted","audience":"identified_users","purpose":"non_commercial_public_research","governance_contract":"sister-clima.governance/1.0.0","data_products":["daily_precipitation","rainfall_indicators"],"data_sources":[{"id":"open_meteo","url":"https://open-meteo.com/en/docs"},{"id":"nasa_power","url":"https://power.larc.nasa.gov/"}],"location_service":{"id":"ipwhois","mode":"explicit_action_http_fallback","persistence":"none","url":"https://ipwhois.io/documentation"}})"};
-    }
-    if (path == "/api/integrations/sister-studio") {
-        return {true, false, sisterd::sisterStudioIntegrationJson()};
-    }
-    if (path == "/api/integrations/sister-campo") {
-        return {true, false, sisterd::sisterCampoIntegrationJson()};
-    }
-    if (path == "/api/integrations/sister-nexo") {
-        return {true, false,
-            R"({"contract_version":"1.0.0","system_id":"sister_nexo","access_url":"/integrations/nexo/","access_mode":"authenticated_reverse_proxy","database_ownership":"exclusive","capabilities":["governance","activities","evidence","research","publications","audit"]})"};
+            R"({"contract_version":"1.0.0","system_id":"sister_reference","integration_state":"reference","operational_access":true,"access_url":"/integrations/reference/","access_mode":"authenticated_reverse_proxy","capabilities":["reference.identity.read","reference.echo.execute"]})"};
     }
     return {};
 }
@@ -1804,104 +1610,54 @@ void handleClient(
         actor = state.auth.userForToken(sessionToken);
     }
 
-    // --- Signed Nexo integration: one explicit read-only shadow route ---
-    if (request.path == "/integrations/nexo" ||
-        request.path.starts_with("/integrations/nexo/")) {
-        if (!config.nexoSignedIntegrationEnabled ||
-            request.method != "GET" ||
-            request.path != "/integrations/nexo/projects") {
-            sendResponse(clientFd,
-                jsonError(404, "Not Found", "Recurso não encontrado."),
-                config, requestId, isHead);
+    // --- Controlled reference subsystem: normative integration target ---
+    if (request.path == "/integrations/reference" ||
+        request.path.starts_with("/integrations/reference/")) {
+        if (!config.referenceSubsystemEnabled) {
+            sendResponse(clientFd, jsonError(404, "Not Found", "Recurso não encontrado."),
+                         config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 404, elapsed,
-                     "signed Nexo route denied by exact-route policy");
+                     "reference subsystem disabled by execution profile");
+            return;
+        }
+        if (request.path == "/integrations/reference") {
+            if (!authorizeOrReject(
+                    clientFd, actor, "reference.identity.read", "sister-reference",
+                    "platform_validation", request, config, requestId, peer, isHead, requestStart)) return;
+            sendResponse(clientFd,
+                         redirectResponse(308, "Permanent Redirect", "/integrations/reference/api/identity"),
+                         config, requestId, isHead);
             return;
         }
 
-        if (!authorizeOrReject(
-                clientFd, actor, "nexo.projects.read", "sister-nexo",
-                "research_operations", request, config, requestId, peer, isHead, requestStart)) return;
-        try {
-            const auto accept = request.headers.find("accept");
-            sisterd::integrations::NexoClient nexo({
-                config.nexoPort,
-                config.upstreamTimeoutMilliseconds,
-                config.internalIdentityPrivateKeyFile,
-                config.internalIdentityKeyId,
-                std::chrono::seconds(config.internalIdentityTtlSeconds),
-            });
-            const auto raw = nexo.execute({
-                "GET",
-                "/api/v1/projects",
-                request.query,
-                "",
-                accept == request.headers.end() ? "" : accept->second,
-                "",
-                actor->id,
-                "nexo.projects.read",
-                "research_operations",
-                requestId,
-            });
-            sendAll(clientFd, raw);
-            const auto proxyStatus = statusFromRawHttpResponse(raw);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("info", requestId, peer, request.method, request.path, proxyStatus, elapsed);
-        } catch (const std::exception& ex) {
-            sendResponse(clientFd,
-                jsonError(502, "Bad Gateway", "O SisTer Nexo está temporariamente indisponível."),
-                config, requestId, isHead);
-            const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-            logEvent("warn", requestId, peer, request.method, request.path, 502, elapsed, ex.what());
+        const bool identityRead = request.method == "GET" && (
+            request.path == "/integrations/reference/api/identity" ||
+            request.path == "/integrations/reference/api/whoami" ||
+            request.path.starts_with("/integrations/reference/_sister/"));
+        const bool echoExecute = request.method == "POST" &&
+            request.path == "/integrations/reference/api/echo";
+        if (!identityRead && !echoExecute) {
+            sendResponse(clientFd, jsonError(404, "Not Found", "Recurso não encontrado."),
+                         config, requestId, isHead);
+            return;
         }
-        return;
-    }
-
-    // --- Sister-Clima reverse proxy ---
-    if (config.legacyProxyEnabled && request.path == "/integrations/clima") {
+        const std::string_view capability = identityRead
+            ? "reference.identity.read" : "reference.echo.execute";
         if (!authorizeOrReject(
-                clientFd, actor, "climate.dashboard.read", "sister-clima",
-                "non_commercial_public_research", request, config, requestId, peer, isHead, requestStart)) return;
-        sendResponse(clientFd, redirectResponse(308, "Permanent Redirect", "/integrations/clima/"),
-                     config, requestId, isHead);
-        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-        logEvent("info", requestId, peer, request.method, request.path, 308, elapsed);
-        return;
-    }
-
-    if (config.legacyProxyEnabled && request.path.starts_with("/integrations/clima/")) {
-        if (!authorizeOrReject(
-                clientFd, actor, "climate.dashboard.read", "sister-clima",
-                "non_commercial_public_research", request, config, requestId, peer, isHead, requestStart)) return;
+                clientFd, actor, capability, "sister-reference", "platform_validation",
+                request, config, requestId, peer, isHead, requestStart)) return;
         try {
-            if (isWebSocketUpgrade(request)) {
-                if (!config.legacyWebSocketProxyEnabled) {
-                    sendResponse(clientFd,
-                        jsonError(404, "Not Found", "Recurso não encontrado."),
-                        config, requestId, isHead);
-                    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-                    logEvent("warn", requestId, peer, request.method, request.path, 404, elapsed,
-                             "legacy WebSocket proxy disabled");
-                    return;
-                }
-                auto upstream = openWebSocketProxy(
-                    clientFd, request, *actor, "/integrations/clima", config.climaPort,
-                    "Sister-Clima", requestId, config);
-                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
-                logEvent("info", requestId, peer, request.method, request.path, 101, elapsed);
-                tunnelSockets(clientFd, upstream.get());
-                return;
-            }
             const auto raw = proxyToSubsystem(
-                request, *actor, "/integrations/clima", config.climaPort,
-                "Sister-Clima", requestId, config);
+                request, *actor, "/integrations/reference", config.referencePort,
+                "SisTer Reference Subsystem", requestId, config);
             sendAll(clientFd, raw);
             const auto proxyStatus = statusFromRawHttpResponse(raw);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("info", requestId, peer, request.method, request.path, proxyStatus, elapsed);
         } catch (const std::exception& ex) {
             sendResponse(clientFd,
-                jsonError(502, "Bad Gateway", "O Sister-Clima está temporariamente indisponível."),
+                jsonError(502, "Bad Gateway", "Subsistema de referência indisponível."),
                 config, requestId, isHead);
             const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
             logEvent("warn", requestId, peer, request.method, request.path, 502, elapsed, ex.what());
@@ -2166,20 +1922,10 @@ void handleClient(
             else if (request.path == "/api/contracts") capability = "sister.governance.read";
             else if (request.path == "/api/evidence") capability = "sister.evidence.read";
             else if (request.path == "/api/diagnostics") capability = "sister.diagnostics.read";
-            else if (request.path == "/api/integrations/sister-clima") {
-                capability = "climate.dashboard.read";
-                resource = "sister-clima";
-                purpose = "non_commercial_public_research";
-            } else if (request.path == "/api/integrations/sister-nexo") {
-                capability = "nexo.projects.read";
-                resource = "sister-nexo";
-                purpose = "research_operations";
-            } else if (request.path == "/api/integrations/sister-studio") {
-                capability = "studio.capabilities.read";
-                resource = "sister-studio";
-            } else if (request.path == "/api/integrations/sister-campo") {
-                capability = "campo.capabilities.read";
-                resource = "sister-campo";
+            else if (request.path == "/api/integrations/sister-reference") {
+                capability = "reference.identity.read";
+                resource = "sister-reference";
+                purpose = "platform_validation";
             }
 
             if (!authorizeOrReject(
@@ -2315,9 +2061,6 @@ int main(int argc, char** argv) {
                   << " legacy_proxy=" << (config.legacyProxyEnabled ? "enabled" : "disabled")
                   << " legacy_websocket_proxy="
                   << (config.legacyWebSocketProxyEnabled ? "enabled" : "disabled")
-                  << " nexo_signed_integration="
-                  << (config.nexoSignedIntegrationEnabled ? "enabled" : "disabled")
-                  << " nexo_signed_mode=read_only_shadow"
                   << '\n';
     }
 

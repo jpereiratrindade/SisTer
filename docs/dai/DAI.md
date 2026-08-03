@@ -1,5 +1,33 @@
 # DAI - SisTer
 
+## 2026-08-03 - Subsistema de referência como alvo normativo
+
+- Decision: suspender integração operacional dos subsistemas reais e marcar
+  seus contratos de execução como `quarantined` e `operational_access: false`.
+- Decision: usar `sister_reference` como único alvo funcional, operacional e de
+  segurança dos perfis oficiais.
+- Decision: preservar ADRs, contratos, evidências e tags históricas; quarentena
+  não apaga história nem certifica integração futura.
+- Action: substituir catálogo, rotas, perfis e CTest operacionais pela referência
+  parametrizada em loopback.
+- Evidence: `sisterd_reference_integration_tests`, contrato de perfis e manifesto
+  de execução demonstram identidade mediada, echo, queda e preservação do núcleo.
+- Impediment: subsistemas reais só retornam após processo de conformidade definido
+  em ADR-0022.
+
+## 2026-08-03 - Superfície operacional e ownership do run_all
+
+- Decision: manter `sisterd` em loopback nos perfis locais e em socket Unix no
+  perfil LAN; somente gateway federador SisTer pode publicar `8443`.
+- Decision: `dev-ecosystem` declara `LOCAL_ONLY` e gateway `NOT_REQUESTED`;
+  `dev-lan` declara `LAN_FEDERATED` e exige gateway `READY` para obter `PASS`.
+- Decision: subsistema orquestrado deve declarar endpoint HTTP interno,
+  health check contratual e nenhuma escuta wildcard.
+- Decision: cada execução registra processos, grupos e contêineres próprios;
+  teardown preserva recursos encontrados antes da execução.
+- Action: validar superfície no contrato de perfis e no relatório final, sem
+  permitir que saúde local seja interpretada como publicação LAN.
+
 ## 2026-08-02 - ADR-REF-01 aceita para o piloto Nexo–Compras
 
 - Decision: o piloto utilizará `RFP-NC-01` em `D2–D3/A1/shadow`.

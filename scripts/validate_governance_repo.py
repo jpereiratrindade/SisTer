@@ -37,6 +37,7 @@ REQUIRED = [
     "docs/adr/ADR-0008-bilateral-integration-agreements.md",
     "adapters/sister_campo/README.md",
     "examples/sister_campo_manifest_example.json",
+    "reference/sister-reference/manifest.json",
     "docs/governance/SISTER_NEXO.md",
     "docs/governance/NEXO_COMPRAS.md",
     "docs/adr/ADR-0020-specialized-http-gateway.md",
@@ -93,9 +94,16 @@ def load_json(path):
 
 climate_policy = load_json("examples/sister_clima_governance_example.json")
 climate_manifest = load_json("examples/sister_clima_manifest_example.json")
+reference_manifest = load_json("reference/sister-reference/manifest.json")
 load_json("contracts/sister_clima_governance.schema.json")
 
 policy_errors = []
+if reference_manifest.get("system_id") != "sister_reference":
+    policy_errors.append("reference subsystem id is invalid")
+if reference_manifest.get("contract") != "sister.subsystem/1.0.0":
+    policy_errors.append("reference subsystem contract is invalid")
+if reference_manifest.get("production_eligible") is not False:
+    policy_errors.append("reference subsystem must not be production eligible")
 if climate_policy.get("contract_id") != "sister-clima.governance":
     policy_errors.append("Sister-Clima governance contract id is invalid")
 if climate_policy.get("contract_version") != "1.0.0":

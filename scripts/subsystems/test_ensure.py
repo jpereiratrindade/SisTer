@@ -74,6 +74,17 @@ class HealthResultTests(unittest.TestCase):
         result = ENSURE.health_result(self.project(port))
         self.assertEqual("unavailable", result.state)
 
+    def test_rejects_wildcard_listener_even_when_health_is_valid(self) -> None:
+        self.server.shutdown()
+        self.server.server_close()
+        self.thread.join()
+        self.server = ThreadingHTTPServer(("0.0.0.0", 0), HealthHandler)
+        self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
+        self.thread.start()
+        result = ENSURE.health_result(self.project(self.server.server_port))
+        self.assertEqual("occupied", result.state)
+        self.assertIn("wildcard", result.detail)
+
 
 class SubsystemReportTests(unittest.TestCase):
     def result(self, component: str, required: bool, status: str) -> dict:
@@ -86,6 +97,7 @@ class SubsystemReportTests(unittest.TestCase):
             "elapsed_seconds": 0.1,
             "log": None,
             "started_by_run": False,
+            "process_group": None,
             "detail": "test",
         }
 

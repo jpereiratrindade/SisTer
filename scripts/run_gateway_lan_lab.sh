@@ -2,6 +2,23 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ENV_NAME="test"
+PREPARE=1
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --environment)
+      [[ $# -ge 2 ]] || { echo "--environment requires a value" >&2; exit 3; }
+      ENV_NAME="$2"
+      shift 2
+      ;;
+    --no-prepare)
+      PREPARE=0
+      shift
+      ;;
+    *) echo "unknown option: $1" >&2; exit 3 ;;
+  esac
+done
+[[ "$ENV_NAME" =~ ^(dev|test)$ ]] || { echo "invalid environment: $ENV_NAME" >&2; exit 3; }
 RUN_DIR="$ROOT_DIR/.run/gateway"
 SISTERD_PID_FILE="$RUN_DIR/lan-sisterd.pid"
 SISTERD_LOG_FILE="$RUN_DIR/lan-sisterd.log"
@@ -33,11 +50,16 @@ if [[ -f "$SISTERD_PID_FILE" || -f "$GATEWAY_PID_FILE" ]]; then
 fi
 
 source "$ROOT_DIR/scripts/lib/sister_env.sh"
-sister_load_env test
-"$ROOT_DIR/scripts/db/up.sh" test
-"$ROOT_DIR/scripts/db/migrate.sh" test
-cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build"
-cmake --build "$ROOT_DIR/build" --target sisterd --parallel
+sister_load_env "$ENV_NAME"
+if [[ $PREPARE -eq 1 ]]; then
+  "$ROOT_DIR/scripts/db/up.sh" "$ENV_NAME"
+  "$ROOT_DIR/scripts/db/migrate.sh" "$ENV_NAME"
+  cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build"
+  cmake --build "$ROOT_DIR/build" --target sisterd --parallel
+elif [[ ! -x "$ROOT_DIR/build/apps/sisterd/sisterd" ]]; then
+  echo "tested sisterd artifact is missing" >&2
+  exit 1
+fi
 "$ROOT_DIR/scripts/create_gateway_lab_certificate.sh" "$GATEWAY_ALLOWED_HOST"
 
 rm -f "$SISTERD_SOCKET"
@@ -47,7 +69,7 @@ if command -v setsid >/dev/null 2>&1; then
 fi
 
 "${launch_prefix[@]}" env \
-  SISTER_ENV=test \
+  SISTER_ENV="$ENV_NAME" \
   SISTER_LISTENER_MODE=systemd-unix \
   SISTER_ACTIVATED_SOCKET_PATH="$SISTERD_SOCKET" \
   SISTER_WEB_ROOT="$ROOT_DIR/web" \
@@ -55,7 +77,9 @@ fi
   SISTER_ENABLE_HTTP_BOOTSTRAP=false \
   SISTER_ENABLE_LEGACY_PROXY=false \
   SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false \
-  SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=false \
+  SISTER_ENABLE_REFERENCE_SUBSYSTEM="${SISTER_ENABLE_REFERENCE_SUBSYSTEM:-false}" \
+  SISTER_REFERENCE_PORT="${SISTER_REFERENCE_PORT:-19001}" \
+  SISTER_INTERNAL_PROXY_TOKEN="${SISTER_INTERNAL_PROXY_TOKEN:-}" \
   SISTER_DATABASE_URL="$SISTER_DATABASE_URL" \
   python3 "$ROOT_DIR/scripts/app/socket_activation_lab.py" \
     "$SISTERD_SOCKET" "$ROOT_DIR/build/apps/sisterd/sisterd" \

@@ -16,6 +16,7 @@ from sec03v_env_preflight import (  # noqa: E402
     healthy_sisterd_response,
     identity_key_pair_check,
     parse_environment,
+    reference_contract_check,
     service_read_access_check,
     service_traverse_access_check,
     write_report,
@@ -28,12 +29,13 @@ def main():
         environment = temporary / "sister.env"
         environment.write_text(
             "# candidate\nSISTER_DATABASE_URL=redacted-test-value\n"
-            "SISTER_ENABLE_NEXO_SIGNED_INTEGRATION=true\n",
+            "SISTER_ENABLE_REFERENCE_SUBSYSTEM=true\n",
             encoding="utf-8",
         )
         values = parse_environment(environment)
         assert sorted(values) == [
-            "SISTER_DATABASE_URL", "SISTER_ENABLE_NEXO_SIGNED_INTEGRATION"]
+            "SISTER_DATABASE_URL", "SISTER_ENABLE_REFERENCE_SUBSYSTEM"]
+        assert reference_contract_check().status == "PASS"
 
         environment.write_text("SISTER_ENV=production\nSISTER_ENV=dev\n", encoding="utf-8")
         try:

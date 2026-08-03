@@ -21,6 +21,7 @@
 - [ADR-0019 - Robustez HTTP e contenção interna de tentativas de login](./ADR-0019-http-robustness-and-login-rate-limiting.md)
 - [ADR-0020 - Gateway especializado e fronteira HTTP externa](./ADR-0020-specialized-http-gateway.md)
 - [ADR-0021 - Isolamento local por socket Unix ativado](./ADR-0021-local-upstream-unix-socket-activation.md)
+- [ADR-0022 - Subsistema de referência como fronteira normativa](./ADR-0022-reference-subsystem-validation-boundary.md)
 - [ADR-REF-01 - Perfis e autoridade da reflexividade operacional](./ADR-REF-01-reflexivity-profiles-and-authority.md)
 - [ADR-CPP-01 - Abstração eficiente e polimorfismo no núcleo C++](./ADR-CPP-01-efficient-abstraction-and-polymorphism.md)
 - [ADR-VEC-01 - Análise vetorial como capacidade analítica derivada](./ADR-VEC-01-derived-vector-analysis.md)

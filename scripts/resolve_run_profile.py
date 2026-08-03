@@ -30,7 +30,8 @@ def load_profiles():
             raise ValueError(f"invalid run profile: {name}")
         required_fields = {
             "environment", "default_port", "scope", "gateway_dynamic_tests",
-            "subsystems", "gate_closure_authorized",
+            "access_scope", "core_transport", "public_gateway", "subsystems",
+            "gate_closure_authorized",
         }
         if set(profile) != required_fields:
             raise ValueError(f"invalid fields in run profile: {name}")
@@ -40,6 +41,26 @@ def load_profiles():
             raise ValueError(f"invalid port in run profile: {name}")
         if profile["scope"] not in {"core", "ecosystem", "sec-03v-prerequisites"}:
             raise ValueError(f"invalid scope in run profile: {name}")
+        if profile["access_scope"] not in {
+            "LOCAL_ONLY", "LOCAL_TEST", "LAN_FEDERATED", "SECURITY_VALIDATION"
+        }:
+            raise ValueError(f"invalid access scope in run profile: {name}")
+        if profile["core_transport"] not in {"loopback-tcp", "unix-socket"}:
+            raise ValueError(f"invalid core transport in run profile: {name}")
+        if profile["public_gateway"] not in {
+            "not-requested", "lan-required", "validation-only"
+        }:
+            raise ValueError(f"invalid public gateway in run profile: {name}")
+        if profile["access_scope"] == "LAN_FEDERATED" and (
+            profile["core_transport"] != "unix-socket"
+            or profile["public_gateway"] != "lan-required"
+        ):
+            raise ValueError(f"LAN profile must use the federated Unix gateway: {name}")
+        if profile["access_scope"] in {"LOCAL_ONLY", "LOCAL_TEST"} and (
+            profile["core_transport"] != "loopback-tcp"
+            or profile["public_gateway"] != "not-requested"
+        ):
+            raise ValueError(f"local profile cannot publish a gateway: {name}")
         if profile["gateway_dynamic_tests"] not in {"optional", "required"}:
             raise ValueError(f"invalid gateway policy in run profile: {name}")
         if profile["gate_closure_authorized"] is not False:
@@ -74,10 +95,10 @@ def load_profiles():
             raise ValueError(f"unknown governed subsystem in run profile: {name}")
         if profile["scope"] == "sec-03v-prerequisites" and (
             profile["gateway_dynamic_tests"] != "required"
-            or required != ["sister_nexo"]
+            or required != ["sister_reference"]
             or failure_policy != "block"
         ):
-            raise ValueError("SEC-03V prerequisites must require HAProxy and sister_nexo")
+            raise ValueError("SEC-03V prerequisites must require HAProxy and sister_reference")
     return profiles
 
 
@@ -98,6 +119,9 @@ def main():
         profile["environment"],
         str(profile["default_port"]),
         profile["scope"],
+        profile["access_scope"],
+        profile["core_transport"],
+        profile["public_gateway"],
         profile["gateway_dynamic_tests"],
         subsystems["selection"],
         ",".join(subsystems["projects"]) or "-",
