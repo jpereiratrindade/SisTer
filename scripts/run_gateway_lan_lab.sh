@@ -103,6 +103,11 @@ for _ in $(seq 1 120); do
     echo "lan gateway running on https://$GATEWAY_ALLOWED_HOST:8443"
     echo "LAN address: $GATEWAY_LAN_ADDRESS"
     echo "CA certificate: $RUN_DIR/ca-lab.crt"
+    echo
+    echo "Same laptop: add '$GATEWAY_LAN_ADDRESS $GATEWAY_ALLOWED_HOST' to /etc/hosts."
+    echo "Other computer: copy $RUN_DIR/ca-lab.crt and add the same /etc/hosts entry."
+    echo "Client check: scripts/check_gateway_lan_access.sh $GATEWAY_LAN_ADDRESS /path/to/ca-lab.crt"
+    echo "Browser URL: https://$GATEWAY_ALLOWED_HOST:8443"
     trap - EXIT
     exit 0
   fi

@@ -39,30 +39,81 @@ activation, renderiza o perfil `lan-lab` e valida o HAProxy antes de aceitá-lo.
 Ele falha se o endereço não for um IPv4 privado ou se houver um processo
 existente registrado pelo ciclo.
 
-## Preparar outro computador
+## Acessar no mesmo laptop
 
-No computador cliente, adicione ao arquivo local de hosts:
-
-```text
-10.163.80.176 sister-gateway.test
-```
-
-Copie `.run/gateway/ca-lab.crt` para o cliente e instale-a como autoridade
-certificadora de teste. Para uma verificação sem alterar o armazenamento do
-navegador, use:
+O comando de inicialização não altera `/etc/hosts` nem o armazenamento de
+certificados automaticamente. No próprio laptop, execute:
 
 ```bash
-curl --cacert ca-lab.crt https://sister-gateway.test:8443/api/health
+grep -qE '[[:space:]]sister-gateway\.test([[:space:]]|$)' /etc/hosts || \
+  echo '10.163.80.176 sister-gateway.test' | sudo tee -a /etc/hosts
+
+sudo cp .run/gateway/ca-lab.crt \
+  /etc/pki/ca-trust/source/anchors/sister-gateway-lab-ca.crt
+sudo update-ca-trust
 ```
 
-Depois, abra:
+Não use `/tmp/ca-lab.crt` neste caso. Esse caminho só é usado quando a CA foi
+copiada para outro computador.
+
+Confirme antes do navegador:
+
+```bash
+getent hosts sister-gateway.test
+NO_PROXY=sister-gateway.test,10.163.80.176 \
+no_proxy=sister-gateway.test,10.163.80.176 \
+curl --noproxy '*' https://sister-gateway.test:8443/api/health
+```
+
+Se aparecer `CONNECT tunnel failed` ou resposta `503` do proxy, a requisição
+ainda está passando pelo proxy da máquina. Configure `sister-gateway.test` e
+`10.163.80.176` na lista de exceções do proxy do sistema ou do navegador. A
+URL local não deve passar por proxy.
+
+Abra exatamente:
 
 ```text
 https://sister-gateway.test:8443
 ```
 
-O certificado precisa estar confiável no navegador. `curl -k` não é critério de
-aceitação porque esconderia erro de identidade TLS.
+## Acessar de outro computador Fedora
+
+Esta seção só se aplica a outro computador. Não execute estes comandos no
+laptop servidor. Execute os comandos seguintes no laptop SisTer para copiar a
+CA e o diagnóstico para o computador cliente. Substitua `usuario` e
+`IP_DO_CLIENTE` pelos valores reais:
+
+```bash
+scp .run/gateway/ca-lab.crt usuario@IP_DO_CLIENTE:/tmp/
+scp scripts/check_gateway_lan_access.sh usuario@IP_DO_CLIENTE:/tmp/
+```
+
+No computador cliente, execute:
+
+```bash
+echo '10.163.80.176 sister-gateway.test' | sudo tee -a /etc/hosts
+sudo cp /tmp/ca-lab.crt \
+  /etc/pki/ca-trust/source/anchors/sister-gateway-lab-ca.crt
+sudo update-ca-trust
+
+chmod +x /tmp/check_gateway_lan_access.sh
+/tmp/check_gateway_lan_access.sh 10.163.80.176 /tmp/ca-lab.crt
+```
+
+O diagnóstico testa, nesta ordem, nome local, porta TCP, certificado TLS e
+resposta da aplicação. Só abra o navegador depois de obter `OK: acesso ao
+SisTer funcionando`:
+
+```text
+https://sister-gateway.test:8443
+```
+
+Não use `localhost`, `127.0.0.1`, o IP diretamente ou `curl -k`. O gateway exige
+o nome exato para validar SNI, Host e certificado.
+
+Se o computador cliente não for Fedora, mantenha a entrada em hosts e instale
+`.run/gateway/ca-lab.crt` no armazenamento de autoridades certificadoras do
+sistema ou do navegador.
 
 ## Verificar e parar
 
