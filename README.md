@@ -222,6 +222,20 @@ Depois do login, a barra lateral libera as visoes internas e a opção **Equipe*
 em `/admin/users`, permite cadastrar as demais contas. Consulte a
 [ADR-0017](docs/adr/ADR-0017-offline-administrator-bootstrap.md).
 
+Para testar o acesso HTTPS pelo gateway na rede local, o perfil `lan-lab` usa
+um arquivo de autenticação separado e não permite bootstrap pela página. Crie a
+conta antes de iniciar o gateway:
+
+```bash
+./scripts/bootstrap_gateway_lan_admin.sh \
+  "Administrador LAN" jose.pereira-trindade@embrapa.br
+./scripts/run_gateway_lan_lab.sh
+```
+
+O comando solicita a senha de forma oculta. O procedimento completo de
+certificado, `/etc/hosts`, proxy, acesso LAN e login está em
+[`docs/operations/GATEWAY_LAN_LAB.md`](docs/operations/GATEWAY_LAN_LAB.md).
+
 Durante a migração de desenvolvimento, uma conta ativa do Sister-Studio pode
 se tornar a identidade inicial do SisTer sem perder seu UUID, autoria ou
 arquivos. A senha anterior não é copiada: uma nova senha é solicitada com
