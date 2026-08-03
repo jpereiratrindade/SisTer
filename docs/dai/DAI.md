@@ -73,6 +73,23 @@
 - Result: `EXEC-01C` concluído; `EXEC-01D`, `EXEC-01E` e `EXEC-01F` permanecem
   não iniciados.
 
+## 2026-08-02 - FED-01 iniciado
+
+- Decision: a fundação federativa será materializada antes de ligar
+  `IntegrationRun` à infraestrutura.
+- Action: fortalecer o registro em memória com identidade, versões, capacidades
+  versionadas e estados operacional/maturidade independentes.
+- Authority boundary: `FED-01` não cria acordos, autoriza execuções nem inicia
+  persistência ou HTTP.
+
+## 2026-08-02 - FED-01 concluído
+
+- Decision: o registro federativo aceita identidade e capacidades declaradas,
+  mas não concede autorização de consumo ou execução.
+- Evidence: tipos fortes, capacidades versionadas, estados independentes,
+  registro idempotente, conflitos rejeitados, contrato 1.0.0 e testes aprovados.
+- Result: `FED-01` concluído; `AGR-01` é o próximo cartão.
+
 ## 2026-07-30 - Nexo ampliado para portfólio multiprojeto
 
 - Decision: `nexo_projects` é a fonte de verdade e Aggregate raiz dos projetos

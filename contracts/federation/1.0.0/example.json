@@ -1,0 +1,1 @@
+{"system_id":"nexo","system_version":"1.0.0","owner":"owner-nexo","operational_status":"active","maturity":"pre-alpha","capabilities":[{"capability_id":"projects.read","version":"1.0.0","contract":"projects/1.0.0"},{"capability_id":"research.activities","version":"2.0.0","contract":"activities/2.0.0"}]}

@@ -20,6 +20,7 @@ correspondente com:
 - [WP-02 - Contrato comum de subsistema](./WP-02-contrato-comum-subsistema.md)
 - [WP-REF-00 - Contratos centrais da reflexividade](./WP-REF-00-reflexivity-contracts.md)
 - [WP-EXEC-01 - IntegrationRun](./WP-EXEC-01-integration-run.md)
+- [WP-FED-01 - Registro governado de sistemas e capacidades](./WP-FED-01-system-registry.md)
 
 ## Convergência de release
 

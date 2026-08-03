@@ -2,6 +2,7 @@
 #include "sister/provenance.hpp"
 #include "sister/registry.hpp"
 #include "sister/integration_run.hpp"
+#include "sister/federation.hpp"
 
 #include <cstdlib>
 #include <iostream>
@@ -134,6 +135,33 @@ int main() {
     auto runningValid = sister::transitionValidity(std::get<sister::IntegrationRun>(start),
         sister::ValidityTransition::mark_valid, {"2026-08-02T12:00:08Z", {}, ""});
     expect(std::holds_alternative<sister::TransitionError>(runningValid), "running run cannot be marked valid");
+
+    auto fedId = [](auto tag, const char* value) {
+        using Tag = decltype(tag);
+        return std::get<sister::FederationId<Tag>>(sister::FederationId<Tag>::fromString(value));
+    };
+    sister::GovernedSystemManifest governed{
+        fedId(sister::SystemIdTag{}, "nexo"), fedId(sister::SystemVersionTag{}, "1.0.0"),
+        fedId(sister::OwnerIdTag{}, "owner-nexo"),
+        {{fedId(sister::CapabilityIdTag{}, "projects.read"), fedId(sister::CapabilityVersionTag{}, "1.0.0"), "projects/1.0.0"}},
+        sister::OperationalStatus::active, sister::Maturity::pre_alpha
+    };
+    sister::GovernedSystemRegistry governedRegistry;
+    expect(std::holds_alternative<std::monostate>(governedRegistry.registerSystem(governed)), "governed system should register");
+    expect(governedRegistry.find(fedId(sister::SystemIdTag{}, "nexo")).has_value(), "governed system should be discoverable");
+    expect(governedRegistry.find(fedId(sister::SystemIdTag{}, "nexo")).value().maturity == sister::Maturity::pre_alpha,
+        "operational status and maturity should be independent");
+    expect(std::holds_alternative<std::monostate>(governedRegistry.updateOperationalStatus(
+        fedId(sister::SystemIdTag{}, "nexo"), sister::OperationalStatus::degraded)), "operational status should update explicitly");
+    expect(std::holds_alternative<std::monostate>(governedRegistry.updateMaturity(
+        fedId(sister::SystemIdTag{}, "nexo"), sister::Maturity::alpha)), "maturity should update independently");
+    governed.operational_status = sister::OperationalStatus::degraded;
+    governed.maturity = sister::Maturity::alpha;
+    expect(std::holds_alternative<std::monostate>(governedRegistry.registerSystem(governed)),
+        "identical registration should be idempotent");
+    governed.capabilities.push_back(governed.capabilities.front());
+    expect(std::holds_alternative<sister::FederationError>(governedRegistry.registerSystem(governed)),
+        "conflicting or duplicate capability registration should be rejected");
 
     std::cout << "sister_core_tests ok\n";
     return 0;
