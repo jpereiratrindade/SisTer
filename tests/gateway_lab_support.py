@@ -13,9 +13,10 @@ import time
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUN_DIR = ROOT / ".run/gateway"
+RUN_DIR = ROOT / ".run/gateway-tests" / str(os.getpid())
 HOST = "sister-gateway.test"
 UPSTREAM_SOCKET = RUN_DIR / "sisterd.sock"
+RUN_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
 
 
 class LabUnavailable(RuntimeError):
@@ -39,6 +40,8 @@ def lab_environment():
             "GATEWAY_TLS_PEM": str(RUN_DIR / "gateway-lab.pem"),
             "GATEWAY_ALLOWED_HOST": HOST,
             "GATEWAY_CANONICAL_HOST": HOST,
+            "GATEWAY_RUN_ROOT": str(RUN_DIR),
+            "GATEWAY_UPSTREAM_SOCKET": str(UPSTREAM_SOCKET),
         }
     )
     return environment
@@ -58,7 +61,7 @@ def prepare_runtime():
         check=True,
     )
     subprocess.run(
-        [str(ROOT / "scripts/render_gateway_config.py")],
+        [str(ROOT / "scripts/render_gateway_config.py"), "--output", str(RUN_DIR / "haproxy.cfg")],
         cwd=ROOT,
         env=environment,
         stdout=subprocess.DEVNULL,

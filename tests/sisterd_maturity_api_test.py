@@ -118,6 +118,12 @@ def main():
             assert request(port, "GET", "/integrations/clima", cookie=reader_cookie)[0] == 403
             assert request(port, "GET", "/integrations/clima")[0] == 401
             assert request(port, "GET", "/integrations/clima", cookie=admin_cookie)[0] == 308
+            status, _, payload = request(port, "GET", "/api/integrations/sister-clima", cookie=admin_cookie)
+            assert status == 200, status
+            clima = json.loads(payload)
+            assert clima["access_url"] == "/integrations/clima/", clima
+            assert clima["operational_access"] is True, clima
+            assert clima["unavailable_reason"] is None, clima
             assert request(port, "GET", "/api/not-declared", cookie=admin_cookie)[0] == 403
 
             assert request(port, "GET", "/api/admin/maturity/history", cookie=admin_cookie)[0] == 404

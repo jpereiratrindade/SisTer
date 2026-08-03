@@ -287,6 +287,12 @@ def main():
                 assert status == 404, (method, path, status)
             status, _ = call_route(denied_port, cookie, "GET", "/integrations/clima")
             assert status == 404, status
+            status, payload = call_route(denied_port, cookie, "GET", "/api/integrations/sister-clima")
+            assert status == 200, status
+            clima = json.loads(payload)
+            assert clima["access_url"] is None, clima
+            assert clima["operational_access"] is False, clima
+            assert clima["unavailable_reason"] == "legacy_reverse_proxy_disabled", clima
             denied_mock.join(timeout=4)
             assert not denied_captured, "denied routes must not connect to Nexo"
         finally:

@@ -2,8 +2,16 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-RUN_DIR="$ROOT_DIR/.run/gateway"
+RUN_DIR="${GATEWAY_RUN_ROOT:-$ROOT_DIR/.run/gateway}"
 LAB_HOST="${1:-${GATEWAY_ALLOWED_HOST:-sister-gateway.test}}"
+
+case "$RUN_DIR" in
+  "$ROOT_DIR"/.run/*) ;;
+  *)
+    echo "gateway certificate creation failed: GATEWAY_RUN_ROOT must stay inside $ROOT_DIR/.run" >&2
+    exit 1
+    ;;
+esac
 
 if [[ ! "$LAB_HOST" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$ ]] ||
    [[ "$LAB_HOST" == *"*"* ]] || [[ "$LAB_HOST" != *.test ]]; then
