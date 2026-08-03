@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import ipaddress
 import json
 import os
 from pathlib import Path
@@ -86,6 +87,8 @@ def haproxy_version(binary):
 
 
 def checked_environment(environment, scope="lab"):
+    if scope not in {"lab", "lan-lab", "candidate"}:
+        raise RenderError(f"unsupported gateway scope: {scope}")
     required = {
         "GATEWAY_TLS_PEM",
         "GATEWAY_ALLOWED_HOST",
@@ -113,13 +116,27 @@ def checked_environment(environment, scope="lab"):
         "GATEWAY_ERROR_ROOT": str((ROOT / "ops/gateway/haproxy/errors").resolve()),
         "GATEWAY_STATS_SOCKET": str((RUN_ROOT / "haproxy.sock").resolve()),
     }
-    if values["GATEWAY_LISTEN_ADDRESS"] != "127.0.0.1":
+    try:
+        listen_address = ipaddress.ip_address(values["GATEWAY_LISTEN_ADDRESS"])
+    except ValueError as exc:
+        raise RenderError(f"{scope} listener must be an IPv4 address") from exc
+    if listen_address.version != 4:
+        raise RenderError(f"{scope} listener must be an IPv4 address")
+    if scope in {"lab", "candidate"} and values["GATEWAY_LISTEN_ADDRESS"] != "127.0.0.1":
         raise RenderError(f"{scope} listener must be 127.0.0.1")
+    if scope == "lan-lab":
+        private_networks = (
+            ipaddress.ip_network("10.0.0.0/8"),
+            ipaddress.ip_network("172.16.0.0/12"),
+            ipaddress.ip_network("192.168.0.0/16"),
+        )
+        if not any(listen_address in network for network in private_networks):
+            raise RenderError("lan-lab listener must be an explicit private IPv4 address")
     if values["GATEWAY_LISTEN_PORT"] != "8443":
         raise RenderError(f"{scope} listener port must be 8443")
     upstream_socket = require_absolute_safe_path(
         values["GATEWAY_UPSTREAM_SOCKET"], "GATEWAY_UPSTREAM_SOCKET")
-    if scope == "lab":
+    if scope in {"lab", "lan-lab"}:
         require_inside_run_root(upstream_socket, "GATEWAY_UPSTREAM_SOCKET")
         if upstream_socket != (RUN_ROOT / "sisterd.sock").resolve():
             raise RenderError("laboratory upstream must use the governed runtime Unix socket")
@@ -132,7 +149,7 @@ def checked_environment(environment, scope="lab"):
         raise RenderError(f"canonical and allowed {scope} Host must match")
 
     pem = require_absolute_safe_path(values["GATEWAY_TLS_PEM"], "GATEWAY_TLS_PEM", must_exist=True)
-    if scope == "lab":
+    if scope in {"lab", "lan-lab"}:
         require_inside_run_root(pem, "GATEWAY_TLS_PEM")
         require_private_file(pem, "GATEWAY_TLS_PEM")
     else:
@@ -188,7 +205,7 @@ def render(template, values):
 
 
 def write_private_atomic(output, content, scope="lab"):
-    if scope == "lab":
+    if scope in {"lab", "lan-lab"}:
         require_inside_run_root(output, "output")
     elif output != CANDIDATE_CONFIG:
         raise RenderError("candidate output must be /etc/sister/gateway/haproxy.cfg")
@@ -214,7 +231,7 @@ def parse_arguments():
     parser = argparse.ArgumentParser(description="Render a governed SisTer HAProxy configuration")
     parser.add_argument("--profile", type=Path, default=PROFILE_PATH)
     parser.add_argument("--template", type=Path, default=TEMPLATE_PATH)
-    parser.add_argument("--scope", choices=("lab", "candidate"), default="lab")
+    parser.add_argument("--scope", choices=("lab", "lan-lab", "candidate"), default="lab")
     parser.add_argument("--output", type=Path)
     return parser.parse_args()
 
@@ -224,7 +241,7 @@ def main():
     try:
         profile_path = require_absolute_safe_path(str(arguments.profile.resolve()), "profile", must_exist=True)
         template_path = require_absolute_safe_path(str(arguments.template.resolve()), "template", must_exist=True)
-        default_output = DEFAULT_OUTPUT if arguments.scope == "lab" else CANDIDATE_CONFIG
+        default_output = DEFAULT_OUTPUT if arguments.scope in {"lab", "lan-lab"} else CANDIDATE_CONFIG
         output = require_absolute_safe_path(str((arguments.output or default_output).resolve()), "output")
         validate_governed_profile(profile_path)
         values = checked_environment(os.environ, arguments.scope)

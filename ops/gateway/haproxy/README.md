@@ -49,6 +49,29 @@ O certificado é assinado por uma CA efêmera local. Os testes usam
 `.run/gateway/ca-lab.crt` para validar a cadeia e o SAN; `curl -k` não faz
 parte dos critérios de aceitação. O processo escuta somente em loopback.
 
+Para testar a fronteira pela rede local, use o perfil separado `lan-lab`.
+Ele aceita somente um IPv4 privado explícito, mantém o `sisterd` no socket Unix
+e não abre as portas TCP 8000 ou 8001. O candidato de produção continua em
+loopback conforme SEC-03V.
+
+```bash
+export GATEWAY_HAPROXY_BIN=/usr/local/sbin/haproxy-3.2.22
+export GATEWAY_LAN_ADDRESS=10.163.80.176
+./scripts/run_gateway_lan_lab.sh
+```
+
+O ciclo termina com:
+
+```bash
+./scripts/stop_gateway_lan_lab.sh
+```
+
+O script mostra o caminho da CA em `.run/gateway/ca-lab.crt`. Em cada cliente
+da rede, resolva o Host exato `sister-gateway.test` para o IP do laptop e
+instale essa CA como autoridade de teste. Libere TCP 8443 somente na rede de
+teste, se o firewall do laptop bloquear a interface. O endereço final é
+`https://sister-gateway.test:8443`.
+
 SEC-03B está encerrado como `LAB_PROVEN_WITH_RESTRICTIONS`: `Content-Length`
 idêntico é normalizado com segurança, campos Upgrade isolados são removidos e
 Host idêntico duplicado permanece `ACCEPTED_LAB_DIVERGENCE` sob autoridade

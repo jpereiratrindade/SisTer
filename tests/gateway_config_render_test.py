@@ -21,9 +21,9 @@ from render_gateway_config import (  # noqa: E402
 )
 
 
-def expect_rejected(environment, fragment):
+def expect_rejected(environment, fragment, scope="lab"):
     try:
-        checked_environment(environment)
+        checked_environment(environment, scope)
     except RenderError as exc:
         assert fragment in str(exc), (fragment, str(exc))
         return
@@ -72,6 +72,18 @@ def main():
         assert '"queue_ms":%Tw' in rendered
         assert '"upstream_ms":%Tr' in rendered
         assert "lua" not in rendered.lower()
+
+        lan_environment = copy.deepcopy(environment)
+        lan_environment["GATEWAY_LISTEN_ADDRESS"] = "10.163.80.176"
+        lan_values = checked_environment(lan_environment, "lan-lab")
+        lan_rendered = render(TEMPLATE_PATH.read_text(encoding="utf-8"), lan_values)
+        assert "bind 10.163.80.176:8443" in lan_rendered
+        assert f"server sisterd unix@{ROOT}/.run/gateway/sisterd.sock check" in lan_rendered
+        for address in ("127.0.0.1", "0.0.0.0", "192.0.2.10", "not-an-ip"):
+            changed = copy.deepcopy(environment)
+            changed["GATEWAY_LISTEN_ADDRESS"] = address
+            expect_rejected(changed, "lan-lab listener", "lan-lab")
+
         output = temporary / "haproxy.cfg"
         write_private_atomic(output, rendered)
         assert stat.S_IMODE(output.stat().st_mode) == 0o640

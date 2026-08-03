@@ -22,6 +22,12 @@ import urllib.request
 
 
 ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts.lib.workspace_paths import (  # noqa: E402
+    repository_env_name,
+    repository_path as resolve_repository_path,
+)
+
 DEFAULT_REPORT = ROOT / ".run/security/sec03v-env-preflight.json"
 NON_INTERACTIVE_SHELLS = {"/bin/false", "/sbin/nologin", "/usr/sbin/nologin"}
 REQUIRED_ENVIRONMENT = {
@@ -538,6 +544,18 @@ def worktree_check(path: Path, name: str) -> Check:
     return Check(f"revision.{name}", "PASS" if valid else "BLOCKED", detail)
 
 
+def nexo_root_from_registry() -> Path:
+    registry = ROOT / "config/local_resources.json"
+    try:
+        data = json.loads(registry.read_text(encoding="utf-8"))
+        for project in data["projects"]:
+            if project.get("id") == "sister_nexo":
+                return resolve_repository_path(ROOT, project)
+    except (OSError, KeyError, RuntimeError, TypeError, json.JSONDecodeError):
+        pass
+    return ROOT.parent / "sister-nexo"
+
+
 def write_report(path: Path, checks: list[Check]) -> None:
     result = "READY" if all(check.status == "PASS" for check in checks) else "BLOCKED"
     payload = {
@@ -563,7 +581,15 @@ def write_report(path: Path, checks: list[Check]) -> None:
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--haproxy-bin", type=Path, default=Path("/usr/local/sbin/haproxy-3.2.22"))
-    parser.add_argument("--nexo-root", type=Path, default=ROOT.parent / "sister-nexo")
+    parser.add_argument(
+        "--nexo-root",
+        type=Path,
+        default=nexo_root_from_registry(),
+        help=(
+            "Nexo worktree; defaults to config/local_resources.json resolution. "
+            f"Can also be controlled with {repository_env_name('sister_nexo')}."
+        ),
+    )
     parser.add_argument("--report", type=Path, default=DEFAULT_REPORT)
     arguments = parser.parse_args()
 

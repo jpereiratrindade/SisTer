@@ -8,6 +8,7 @@ import sys
 import tempfile
 import threading
 import unittest
+from unittest import mock
 
 
 MODULE_PATH = Path(__file__).with_name("ensure.py")
@@ -114,6 +115,59 @@ class SubsystemReportTests(unittest.TestCase):
             [self.result("ready", True, "READY")],
         )
         self.assertEqual("READY", state)
+
+
+class RepositoryPathTests(unittest.TestCase):
+    def test_resolves_repository_from_workspace_root(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            repository = workspace / "cpp" / "sister-nexo"
+            repository.mkdir(parents=True)
+            with mock.patch.dict("os.environ", {"SISTER_WORKSPACE_ROOT": str(workspace)}, clear=False):
+                resolved = ENSURE.repository_path(
+                    {"id": "sister_nexo", "repository": "cpp/sister-nexo"}
+                )
+            self.assertEqual(repository.resolve(), resolved)
+
+    def test_project_override_wins_over_workspace_layout(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            repository = Path(temporary) / "custom-nexo"
+            repository.mkdir()
+            with mock.patch.dict(
+                "os.environ",
+                {"SISTER_REPOSITORY_ROOT_SISTER_NEXO": str(repository)},
+                clear=False,
+            ):
+                resolved = ENSURE.repository_path(
+                    {"id": "sister_nexo", "repository": "cpp/sister-nexo"}
+                )
+            self.assertEqual(repository.resolve(), resolved)
+
+    def test_discovers_repository_by_integration_contract(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            workspace = Path(temporary)
+            repository = workspace / "python" / "NexoLocal"
+            repository.mkdir(parents=True)
+            (repository / "SISTER_INTEGRATION.md").write_text(
+                "Identificador no registro: `sister_nexo`.\n",
+                encoding="utf-8",
+            )
+            with mock.patch.dict("os.environ", {"SISTER_WORKSPACE_ROOT": str(workspace)}, clear=False):
+                resolved = ENSURE.repository_path(
+                    {"id": "sister_nexo", "repository": "cpp/sister-nexo"}
+                )
+            self.assertEqual(repository.resolve(), resolved)
+
+    def test_missing_repository_message_requests_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temporary:
+            with mock.patch.dict("os.environ", {"SISTER_WORKSPACE_ROOT": temporary}, clear=False):
+                with self.assertRaisesRegex(
+                    RuntimeError,
+                    "SISTER_REPOSITORY_ROOT_SISTER_NEXO=/caminho/do/repositorio",
+                ):
+                    ENSURE.repository_path(
+                        {"id": "sister_nexo", "repository": "cpp/sister-nexo"}
+                    )
 
 
 if __name__ == "__main__":

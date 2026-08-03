@@ -7,8 +7,10 @@ from urllib.parse import urlparse
 
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts.lib.workspace_paths import repository_path as resolve_repository_path  # noqa: E402
+
 REGISTRY = ROOT / "config" / "local_resources.json"
-DEV_ROOT = ROOT.parents[1]
 
 
 def fail(message: str) -> None:
@@ -48,9 +50,12 @@ def main() -> None:
                 if project.get("status") != "planned":
                     fail(f"integrated project {project_id} has no repository")
             else:
-                repository_path = DEV_ROOT / repository
-                link = repository_path / "SISTER_INTEGRATION.md"
-                if repository_path.is_dir() and not link.is_file():
+                try:
+                    repository_path = resolve_repository_path(ROOT, project)
+                except RuntimeError:
+                    repository_path = None
+                link = repository_path / "SISTER_INTEGRATION.md" if repository_path else None
+                if repository_path is not None and repository_path.is_dir() and not link.is_file():
                     fail(f"integrated project {project_id} lacks {link}")
 
         orchestration = project.get("orchestration")
@@ -135,8 +140,15 @@ def main() -> None:
                     source = pathlib.PurePosixPath(path)
                     if source.is_absolute() or ".." in source.parts:
                         fail(f"orchestration refresh path is unsafe in {project_id}")
-                    repository_path = DEV_ROOT / repository
-                    if repository_path.is_dir() and not (repository_path / path).exists():
+                    try:
+                        repository_path = resolve_repository_path(ROOT, project)
+                    except RuntimeError:
+                        repository_path = None
+                    if (
+                        repository_path is not None
+                        and repository_path.is_dir()
+                        and not (repository_path / path).exists()
+                    ):
                         fail(
                             f"orchestration refresh path does not exist in {project_id}: "
                             f"{path}"

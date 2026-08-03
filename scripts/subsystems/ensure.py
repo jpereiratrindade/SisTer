@@ -23,7 +23,12 @@ from urllib.request import HTTPSHandler, ProxyHandler, Request, build_opener, ur
 
 
 ROOT = Path(__file__).resolve().parents[2]
-DEV_ROOT = ROOT.parents[1]
+sys.path.insert(0, str(ROOT))
+from scripts.lib.workspace_paths import (  # noqa: E402
+    integration_contracts,
+    repository_path as resolve_repository_path,
+)
+
 REGISTRY = ROOT / "config" / "local_resources.json"
 RUN_DIR = ROOT / ".run" / "subsystems"
 
@@ -50,11 +55,7 @@ def governed_projects(environment: str) -> list[dict[str, Any]]:
 
 
 def repository_path(project: dict[str, Any]) -> Path:
-    path = (DEV_ROOT / project["repository"]).resolve()
-    path.relative_to(DEV_ROOT.resolve())
-    if not path.is_dir():
-        raise RuntimeError(f"repositório ausente: {path}")
-    return path
+    return resolve_repository_path(ROOT, project)
 
 
 def start_argv(project: dict[str, Any], repository: Path) -> list[str]:
@@ -396,9 +397,37 @@ def main() -> int:
     selected = set(args.project)
     if selected:
         projects = [project for project in projects if project["id"] in selected]
+    resolved: list[tuple[dict[str, Any], Path]] = []
+    missing: list[str] = []
     for project in projects:
-        repository = repository_path(project)
-        start_argv(project, repository)
+        try:
+            repository = repository_path(project)
+            start_argv(project, repository)
+            resolved.append((project, repository))
+        except (OSError, RuntimeError, ValueError) as error:
+            if not args.check:
+                raise
+            missing.append(f"{project['id']}: {error}")
+    if args.check:
+        registered = {project["id"] for project, _repository in resolved}
+        governed_contracts = sorted(
+            project["id"]
+            for project, repository in resolved
+            if (repository / "SISTER_INTEGRATION.md").is_file()
+        )
+        discovered = integration_contracts(ROOT)
+        unmanaged = sorted(project_id for project_id in discovered if project_id not in registered)
+        if governed_contracts:
+            log("contratos governados encontrados: " + ", ".join(governed_contracts))
+        if unmanaged:
+            log("contratos fora da seleção governada: " + ", ".join(unmanaged))
+        if missing:
+            log("informe a localização dos subsistemas ausentes:")
+            for detail in missing:
+                log(f"  - {detail}")
+            return 3
+    elif missing:
+        raise RuntimeError("; ".join(missing))
     if args.check:
         log(
             f"configuração válida para {len(projects)} subsistema(s): "

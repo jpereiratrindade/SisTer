@@ -27,6 +27,38 @@ para esta governanca e define como localizar a raiz:
 O vinculo e um arquivo pequeno, e nao um symlink absoluto, para continuar
 funcionando quando os repositorios forem clonados separadamente.
 
+## Descoberta dos subsistemas
+
+O SisTer resolve repositórios integrados por contrato, sem caminhos absolutos no
+Git:
+
+1. `SISTER_WORKSPACE_ROOT` define a raiz comum do workspace;
+2. `repository` em `config/local_resources.json` é resolvido abaixo dessa raiz;
+3. `SISTER_REPOSITORY_ROOT_<ID>` sobrescreve um projeto específico quando teste,
+   candidato ou produção usam outro layout;
+4. sem variáveis, o layout local padrão é derivado da raiz do SisTer.
+
+Exemplos:
+
+```bash
+export SISTER_WORKSPACE_ROOT=/run/media/jpereiratrindade/labeco10T/dev
+export SISTER_REPOSITORY_ROOT_SISTER_NEXO=/opt/sister-nexo
+```
+
+As variáveis por projeto usam o ID normalizado em maiúsculas, com caracteres não
+alfanuméricos convertidos para `_`.
+
+Para diagnosticar uma máquina nova sem iniciar serviços:
+
+```bash
+python3 scripts/subsystems/ensure.py --environment dev --check
+```
+
+O comando identifica repositórios governados com `SISTER_INTEGRATION.md`, lista
+contratos presentes fora da seleção executável e, quando algum subsistema
+governado estiver ausente, informa a variável `SISTER_REPOSITORY_ROOT_<ID>` que
+deve receber o caminho do repositório.
+
 ## Recursos sujeitos a coordenacao
 
 - portas TCP/UDP, inclusive HTTP, HTTPS, PostgreSQL e servicos auxiliares;
