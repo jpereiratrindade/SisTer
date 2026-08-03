@@ -3,6 +3,16 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="$ROOT_DIR/.run/gateway"
+ACTIVE_EXECUTION="$ROOT_DIR/.run/executions/active-dev.json"
+
+# A direct operator request stops the complete dev-lan execution. The lifecycle
+# sets component-only mode when it calls back here to stop just HAProxy/sisterd.
+if [[ "${SISTER_COMPONENT_STOP_ONLY:-0}" != "1" && -f "$ACTIVE_EXECUTION" ]]; then
+  PROFILE="$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["profile"])' "$ACTIVE_EXECUTION")"
+  if [[ "$PROFILE" == "dev-lan" ]]; then
+    exec python3 "$ROOT_DIR/scripts/app/execution_lifecycle.py" stop --environment dev
+  fi
+fi
 
 stop_pid() {
   local pid_file="$1"
