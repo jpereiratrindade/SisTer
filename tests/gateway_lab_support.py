@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import contextlib
+import fcntl
 import http.server
 import os
 from pathlib import Path
@@ -17,6 +18,7 @@ RUN_DIR = ROOT / ".run/gateway-tests" / str(os.getpid())
 HOST = "sister-gateway.test"
 UPSTREAM_SOCKET = RUN_DIR / "sisterd.sock"
 RUN_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+LAB_LOCK = ROOT / ".run/gateway-tests/port-8443.lock"
 
 
 class LabUnavailable(RuntimeError):
@@ -103,7 +105,10 @@ def connect_tls(*, context=None, server_hostname=HOST, source_address=None, time
         raise
 
 
-def tls_exchange(request, *, context=None, server_hostname=HOST, source_address=None, timeout=4):
+def tls_exchange(
+    request, *, context=None, server_hostname=HOST, source_address=None, timeout=4,
+    stop_at_http_message=False,
+):
     with connect_tls(
         context=context,
         server_hostname=server_hostname,
@@ -120,6 +125,17 @@ def tls_exchange(request, *, context=None, server_hostname=HOST, source_address=
             if not chunk:
                 break
             response.extend(chunk)
+            if stop_at_http_message:
+                header_end = response.find(b"\r\n\r\n")
+                if header_end >= 0:
+                    headers = response[:header_end].split(b"\r\n")[1:]
+                    lengths = [
+                        int(line.split(b":", 1)[1].strip())
+                        for line in headers
+                        if line.lower().startswith(b"content-length:")
+                    ]
+                    if lengths and len(response) >= header_end + 4 + lengths[-1]:
+                        break
         return bytes(response), connection.version(), connection.selected_alpn_protocol()
 
 
@@ -203,32 +219,35 @@ def wait_for_tls(process, expected_status=None):
 
 @contextlib.contextmanager
 def running_haproxy(*, expect_backend=False):
-    environment = prepare_runtime()
-    log_path = RUN_DIR / "haproxy-test.log"
-    with log_path.open("w", encoding="utf-8") as log:
-        process = subprocess.Popen(
-            [environment["GATEWAY_HAPROXY_BIN"], "-Ws", "-f", str(RUN_DIR / "haproxy.cfg")],
-            cwd=ROOT,
-            env=environment,
-            stdout=log,
-            stderr=subprocess.STDOUT,
-            text=True,
-        )
-        try:
-            wait_for_tls(process, 200 if expect_backend else None)
-            yield process
-        finally:
-            if process.poll() is None:
-                process.send_signal(signal.SIGTERM)
-                try:
-                    process.wait(timeout=8)
-                except subprocess.TimeoutExpired:
-                    process.kill()
-                    process.wait(timeout=5)
+    LAB_LOCK.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    with LAB_LOCK.open("w", encoding="utf-8") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        environment = prepare_runtime()
+        log_path = RUN_DIR / "haproxy-test.log"
+        with log_path.open("w", encoding="utf-8") as log:
+            process = subprocess.Popen(
+                [environment["GATEWAY_HAPROXY_BIN"], "-Ws", "-f", str(RUN_DIR / "haproxy.cfg")],
+                cwd=ROOT,
+                env=environment,
+                stdout=log,
+                stderr=subprocess.STDOUT,
+                text=True,
+            )
             try:
-                (RUN_DIR / "haproxy.sock").unlink()
-            except FileNotFoundError:
-                pass
+                wait_for_tls(process, 200 if expect_backend else None)
+                yield process
+            finally:
+                if process.poll() is None:
+                    process.send_signal(signal.SIGTERM)
+                    try:
+                        process.wait(timeout=8)
+                    except subprocess.TimeoutExpired:
+                        process.kill()
+                        process.wait(timeout=5)
+                try:
+                    (RUN_DIR / "haproxy.sock").unlink()
+                except FileNotFoundError:
+                    pass
 
 
 class CaptureHandler(http.server.BaseHTTPRequestHandler):
