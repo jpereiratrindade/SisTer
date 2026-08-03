@@ -23,6 +23,7 @@ STEPS = [
     ("subsystems", "Testes de subsistemas", ["python3", "-m", "unittest", "scripts/subsystems/test_ensure.py"]),
     ("maturity-tests", "Testes do SGE e maturidade", ["python3", "-m", "unittest", "discover", "-s", "tests/maturity", "-p", "test_*.py"]),
     ("shell", "Validação de shell scripts", ["./scripts/validate_shell_scripts.sh"]),
+    ("prod01-tests", "Testes do gate PROD-01", ["python3", "-m", "unittest", "tests/prod01_readiness_test.py"]),
 ]
 GATEWAY_DYNAMIC_TESTS = [
     "gateway_protocol_tests",
