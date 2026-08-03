@@ -18,6 +18,15 @@ export GATEWAY_UPSTREAM_SOCKET="$SISTERD_SOCKET"
 
 mkdir -p "$RUN_DIR"
 chmod 700 "$RUN_DIR"
+cleanup_on_error() {
+  local status="$?"
+  if [[ "$status" -ne 0 ]]; then
+    "$ROOT_DIR/scripts/stop_gateway_lan_lab.sh" >/dev/null 2>&1 || true
+  fi
+  return "$status"
+}
+trap cleanup_on_error EXIT
+
 if [[ -f "$SISTERD_PID_FILE" || -f "$GATEWAY_PID_FILE" ]]; then
   echo "lan gateway appears to be running; use scripts/stop_gateway_lan_lab.sh first" >&2
   exit 1
@@ -81,18 +90,20 @@ gateway_pid="$!"
 printf '%s\n' "$gateway_pid" >"$GATEWAY_PID_FILE"
 chmod 600 "$GATEWAY_PID_FILE" "$RUN_DIR/haproxy.log"
 
-for _ in $(seq 1 50); do
+for _ in $(seq 1 120); do
   if ! kill -0 "$gateway_pid" >/dev/null 2>&1; then
     echo "lan gateway failed to start; see $RUN_DIR/haproxy.log" >&2
     exit 1
   fi
-  if curl --silent --show-error --fail \
+  if curl --noproxy '*' --connect-timeout 1 --max-time 2 \
+      --silent --show-error --fail \
       --resolve "$GATEWAY_ALLOWED_HOST:8443:$GATEWAY_LAN_ADDRESS" \
       --cacert "$RUN_DIR/ca-lab.crt" \
       "https://$GATEWAY_ALLOWED_HOST:8443/api/health" >/dev/null 2>&1; then
     echo "lan gateway running on https://$GATEWAY_ALLOWED_HOST:8443"
     echo "LAN address: $GATEWAY_LAN_ADDRESS"
     echo "CA certificate: $RUN_DIR/ca-lab.crt"
+    trap - EXIT
     exit 0
   fi
   sleep 0.1
