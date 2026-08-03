@@ -56,11 +56,14 @@ def quality_gate() -> Gate:
         return Gate("G1", "Plataforma", "BLOCKED", "relatório de qualidade ausente ou inválido", evidence)
     current = git("rev-parse", "HEAD")
     report_commit = payload.get("source", {}).get("commit")
+    worktree = payload.get("source", {}).get("worktree")
     skipped = payload.get("summary", {}).get("skipped", 0)
     if payload.get("result") != "PASS":
         return Gate("G1", "Plataforma", "BLOCKED", "run_quality não terminou em PASS", evidence)
     if report_commit != current:
         return Gate("G1", "Plataforma", "BLOCKED", "relatório de qualidade pertence a outro commit", evidence)
+    if worktree != "clean" or git("status", "--porcelain"):
+        return Gate("G1", "Plataforma", "BLOCKED", "worktree atual ou relatório de qualidade não está limpo", evidence)
     if skipped:
         return Gate("G1", "Plataforma", "BLOCKED", f"relatório contém {skipped} teste(s) SKIP", evidence)
     return Gate("G1", "Plataforma", "PASS", "qualidade PASS no commit atual sem skips", evidence)
