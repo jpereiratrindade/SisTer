@@ -5,6 +5,16 @@ promoção do núcleo SisTer. Ele não cria autorização por inferência: a pro
 produtiva só muda para `AUTHORIZED` quando existe uma evidência G6 explícita
 para o mesmo commit avaliado.
 
+## Relação com os MVPs funcionais
+
+- MVP-00 é a baseline técnica federativa comprovada, sem autorização G6
+  inferida;
+- `PROD-01` governa prontidão e promoção operacional do núcleo;
+- MVP-01 governa participação, execução, evidência e reflexão da referência.
+
+MVP-01 não substitui, reabre ou conclui `PROD-01`. Uma avaliação funcional não
+produz `Production authorized: true`.
+
 ## Executar
 
 Primeiro gere o relatório de qualidade no commit que será avaliado. Para exigir

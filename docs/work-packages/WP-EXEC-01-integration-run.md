@@ -11,6 +11,9 @@ fluxo Nexo–Compras, servindo de objeto para proveniência e avaliação poster
 encapsulado e máquinas de estado materializados no núcleo, sem serviço ou
 persistência.
 
+Classificação MVP-01: `TESTADO_EM_MEMORIA`. Não está `INTEGRADO`, `PERSISTIDO`,
+`OPERÁVEL` ou `GOVERNADO`.
+
 ## Entregas
 
 - contrato `contracts/execution/1.0.0`;
