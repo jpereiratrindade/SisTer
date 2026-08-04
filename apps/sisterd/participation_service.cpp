@@ -36,4 +36,18 @@ std::variant<std::string, ParticipationServiceError> ParticipationService::show(
     return *record;
 }
 
+std::variant<std::string, ParticipationServiceError> ParticipationService::recordTechnicalAssessment(
+    const std::string& assessmentId, const std::string& participationId,
+    const std::string& contractDigest, const std::string& evaluatedCommit,
+    const std::string& assessmentJson) {
+    if (assessmentId.empty() || participationId.empty() || contractDigest.empty() ||
+        evaluatedCommit.empty() || assessmentJson.empty()) {
+        return ParticipationServiceError{400, "invalid_assessment", "Assessment técnico incompleto."};
+    }
+    auto record = db_.registerParticipationAssessment(
+        assessmentId, participationId, contractDigest, evaluatedCommit, assessmentJson);
+    if (!record) return ParticipationServiceError{503, "persistence_unavailable", "Persistência de assessment indisponível."};
+    return *record;
+}
+
 } // namespace sisterd

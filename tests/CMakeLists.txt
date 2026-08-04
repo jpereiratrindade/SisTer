@@ -53,6 +53,10 @@ add_test(
 add_test(
     NAME participation_persistence_tests
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/participation_persistence_test.py)
+
+add_test(
+    NAME participation_assessment_tests
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/participation_assessment_test.py)
 add_test(
     NAME gateway_security_profile_tests
     COMMAND

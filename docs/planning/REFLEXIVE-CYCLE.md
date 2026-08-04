@@ -33,8 +33,24 @@ identidade autenticada
 → consulta
 ```
 
-Ainda faltam `TechnicalAssessment`, autorização de capacidade, execução,
-observação, `OperationalAssessment`, recomendação e realimentação por decisão.
+O primeiro `participation-assessment` técnico agora pode ser produzido a partir
+do contrato validado. Ele registra PASS, digest, commit e limitações, mas seu
+efeito de gate é `none` e sua recomendação ainda exige decisão humana.
+
+O próximo registro observável é restrito ao processo
+`P-MVP01-PARTICIPATION`. A migração `010_participation_timeline.sql` reserva uma
+timeline mínima para `ParticipationProposed` e
+`TechnicalAssessmentCompleted`, sem criar um barramento genérico de eventos.
+
+O Centro de Engenharia deve apresentar esse processo como uma sequência de
+funções cumpridas — proposta, avaliação, decisão, autorização, execução e
+reavaliação. Documentos, scripts e testes são sustentação e evidência dessas
+funções, não o processo em si.
+
+O `TechnicalAssessment` já é produzido localmente e a persistência autoritativa
+está preparada. Ainda falta integrá-lo à timeline, registrar a decisão humana,
+autorizar capacidade, executar, observar, produzir `OperationalAssessment` e
+realimentar a próxima condição por decisão.
 
 ## Regra de conclusão
 
