@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+import json
 import os
 import subprocess
 import sys
@@ -9,6 +10,11 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
+PLAN_PATH = ROOT / "engineering/planning/plan.json"
+
+
+def plan_path():
+    return Path(os.environ.get("SISTER_PLAN_PATH", PLAN_PATH))
 
 
 def run(command, env=None):
@@ -141,6 +147,134 @@ def cmd_verify(args):
     return quality_rc or maturity_rc
 
 
+def load_plan():
+    try:
+        return json.loads(plan_path().read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"erro: plano inválido: {exc}", file=sys.stderr)
+        return None
+
+
+def emit_plan(value, as_json):
+    if as_json:
+        print(json.dumps(value, ensure_ascii=False, indent=2))
+        return
+    if isinstance(value, list):
+        for item in value:
+            print(f"{item.get('action_id', item.get('gap_id', item.get('goal_id', '?')))}\t{item.get('state', item.get('status', ''))}\t{item.get('title', item.get('description', ''))}")
+    else:
+        if "plan_id" in value:
+            print(f"Plano: {value['plan_id']}  revisão: {value['revision']}")
+            print(f"Objetivo: {value['goal']['goal_id']} — {value['goal']['title']}")
+            for action in value.get("actions", []):
+                print(f"Ação: {action['action_id']} [{action['state']}] — {action['title']}")
+        else:
+            identifier = value.get("decision_id", value.get("assessment_id", "record"))
+            print(f"{identifier} registrado")
+
+
+def cmd_plan(args):
+    plan = load_plan()
+    if plan is None:
+        return 2
+    if args.command == "assess":
+        action = next((a for a in plan.get("actions", []) if a["action_id"] == args.action_id), None)
+        if action is None:
+            print(f"ação não encontrada: {args.action_id}", file=sys.stderr)
+            return 1
+        value = {
+            "assessment_id": f"PLAN-ASSESS-{action['action_id'].replace('PDE-', '')}",
+            "action_id": action["action_id"],
+            "evaluator": "sge-planning/1.0.0",
+            "recommendation": "P0" if action["action_id"] == "PDE-MVP01-01" else "DEFER",
+            "evidence": ["docs/planning/PDE-SISTER.md", "docs/reports/RAF-SisTer/relatorio_atualizacao_funcional_sister_v1_0.tex"],
+            "assessed_at": "2026-08-03T00:00:00Z"
+        }
+        if args.persist:
+            plan.setdefault("assessments", []).append(value)
+            plan_path().write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        emit_plan(value, args.json)
+        return 0
+    if args.command == "decision":
+        if args.decision_command != "record":
+            print("operação de decisão não suportada", file=sys.stderr)
+            return 2
+        try:
+            decision = json.loads(Path(args.path).read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f"decisão inválida: {exc}", file=sys.stderr)
+            return 2
+        required = ("decision_id", "action_id", "decision", "authorized_transition", "actor", "authority", "reason", "assessment_id", "baseline", "valid_until", "plan_revision", "decided_at")
+        if any(not decision.get(field) for field in required) or decision["decision"] not in {"approve", "reject", "suspend", "supersede"}:
+            print("decisão inválida: campos obrigatórios ou decisão inválida", file=sys.stderr)
+            return 2
+        if not any(a["action_id"] == decision["action_id"] for a in plan.get("actions", [])):
+            print("decisão inválida: ação não encontrada", file=sys.stderr)
+            return 1
+        decision["used"] = False
+        plan.setdefault("decisions", []).append(decision)
+        plan_path().write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        emit_plan(decision, args.json)
+        return 0
+    if args.command == "transition":
+        action = next((a for a in plan.get("actions", []) if a["action_id"] == args.action_id), None)
+        if action is None:
+            print(f"ação não encontrada: {args.action_id}", file=sys.stderr)
+            return 1
+        decision = next((d for d in plan.get("decisions", []) if d["decision_id"] == args.decision_id and d["action_id"] == args.action_id and d["decision"] == "approve" and d.get("authorized_transition") == f"{action['state']}->{args.state}" and not d.get("used", False)), None)
+        if decision is None:
+            print("transição bloqueada: decisão humana aprovada e vigente não encontrada", file=sys.stderr)
+            return 1
+        if decision:
+            decision["used"] = True
+            revision_id = f"PLAN-REV-{args.action_id.replace('PDE-', '')}-{args.state}"
+            plan.setdefault("revisions", []).append({
+                "schema": "sister.plan-revision/1.0.0",
+                "revision_id": revision_id,
+                "previous_revision": plan["revision"],
+                "reason": f"Transição autorizada {action['state']}->{args.state}.",
+                "actor": decision["actor"],
+                "evidence": [decision["decision_id"], decision["assessment_id"]],
+                "created_at": decision["decided_at"]
+            })
+            plan["revision"] = revision_id
+        action["state"] = args.state
+        plan_path().write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        emit_plan(action, args.json)
+        return 0
+    if args.command == "status":
+        value = plan
+    elif args.command == "list":
+        value = plan.get("actions", [])
+    elif args.command == "gaps":
+        value = plan.get("gaps", [])
+    elif args.command in {"show", "explain"}:
+        value = next((a for a in plan.get("actions", []) if a["action_id"] == args.action_id), None)
+        if value is None:
+            print(f"ação não encontrada: {args.action_id}", file=sys.stderr)
+            return 1
+        if args.command == "explain" and not args.json:
+            gap = next(g for g in plan["gaps"] if g["gap_id"] == value["gap_id"])
+            print(f"Ação {value['action_id']}: {value['title']}")
+            print(f"Estado: {value['state']}")
+            print(f"Objetivo: {value['goal_id']}")
+            print(f"Lacuna: {gap['description']}")
+            print(f"Observado: {gap['observed_reference']}")
+            print(f"Esperado: {gap['expected_reference']}")
+            print("Critérios:")
+            for criterion in value["acceptance_criteria"]:
+                print(f"- {criterion}")
+            print("Decisões registradas: nenhuma; ação ainda aguarda avaliação e decisão humana." if not plan.get('decisions') else "Decisões registradas:")
+            if plan.get("assessments") or plan.get("decisions"):
+                print(f"Avaliações: {len(plan.get('assessments', []))}")
+                print(f"Decisões: {len(plan.get('decisions', []))}")
+                for decision in plan.get("decisions", []):
+                    print(f"Decisão {decision['decision_id']}: {decision['authorized_transition']} por {decision['actor']} ({'usada' if decision.get('used') else 'vigente'})")
+            return 0
+    emit_plan(value, args.json)
+    return 0
+
+
 def build_parser():
     parser = argparse.ArgumentParser(prog="scripts/sge", description="SGE-SisTer command line tools.")
     subparsers = parser.add_subparsers(dest="area", required=True)
@@ -183,6 +317,36 @@ def build_parser():
     validate = maturity_sub.add_parser("validate", help="Validate maturity contracts or a status JSON.")
     validate.add_argument("--status-json")
     validate.set_defaults(func=cmd_maturity_validate)
+
+    plan = subparsers.add_parser("plan", help="Planejamento evolutivo governado.")
+    plan.add_argument("--json", action="store_true", help="Emitir saída estruturada.")
+    plan_sub = plan.add_subparsers(dest="command", required=True)
+    for command, help_text in (("status", "Mostrar o plano vigente."), ("gaps", "Listar lacunas."), ("list", "Listar ações.")):
+        item = plan_sub.add_parser(command, help=help_text)
+        item.add_argument("--json", action="store_true", help="Emitir saída estruturada.")
+        item.set_defaults(func=cmd_plan)
+    for command, help_text in (("show", "Mostrar uma ação."), ("explain", "Explicar uma ação.")):
+        item = plan_sub.add_parser(command, help=help_text)
+        item.add_argument("action_id")
+        item.add_argument("--json", action="store_true", help="Emitir saída estruturada.")
+        item.set_defaults(func=cmd_plan)
+    assess = plan_sub.add_parser("assess", help="Avaliar e recomendar prioridade.")
+    assess.add_argument("action_id")
+    assess.add_argument("--persist", action="store_true")
+    assess.add_argument("--json", action="store_true")
+    assess.set_defaults(func=cmd_plan)
+    decision = plan_sub.add_parser("decision", help="Registrar decisão humana.")
+    decision_sub = decision.add_subparsers(dest="decision_command", required=True)
+    record = decision_sub.add_parser("record", help="Registrar decisão a partir de JSON.")
+    record.add_argument("path")
+    record.add_argument("--json", action="store_true")
+    record.set_defaults(func=cmd_plan)
+    transition = plan_sub.add_parser("transition", help="Aplicar transição autorizada.")
+    transition.add_argument("action_id")
+    transition.add_argument("state")
+    transition.add_argument("--decision-id")
+    transition.add_argument("--json", action="store_true")
+    transition.set_defaults(func=cmd_plan)
 
     return parser
 

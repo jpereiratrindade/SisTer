@@ -25,6 +25,7 @@ correspondente com:
 - [WP-REF-00 - Contratos centrais da reflexividade](./WP-REF-00-reflexivity-contracts.md)
 - [WP-EXEC-01 - IntegrationRun](./WP-EXEC-01-integration-run.md)
 - [WP-FED-01 - Registro governado de sistemas e capacidades](./WP-FED-01-system-registry.md)
+- [WP-SGE-PLAN-01 - Primeiro ciclo de planejamento reflexivo](./WP-SGE-PLAN-01.md)
 
 ## Convergência de release
 

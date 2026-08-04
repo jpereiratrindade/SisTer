@@ -1,0 +1,712 @@
+\documentclass[11pt,a4paper,oneside]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{ltablex}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{pdflscape}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{ragged2e}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric,calc,backgrounds}
+
+\geometry{top=2.2cm,bottom=2.2cm,left=2.2cm,right=2.2cm}
+\setstretch{1.08}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist[itemize]{leftmargin=1.45em,itemsep=0.15em,topsep=0.25em}
+\setlist[enumerate]{leftmargin=1.65em,itemsep=0.2em,topsep=0.25em}
+\renewcommand{\arraystretch}{1.18}
+\keepXColumns
+
+\definecolor{sisterblue}{RGB}{28,67,105}
+\definecolor{sisterlightblue}{RGB}{232,241,248}
+\definecolor{sistergray}{RGB}{245,246,247}
+\definecolor{sisterdarkgray}{RGB}{74,83,91}
+\definecolor{sistergreen}{RGB}{33,112,77}
+\definecolor{sisterlightgreen}{RGB}{231,244,237}
+\definecolor{sisteramber}{RGB}{161,102,0}
+\definecolor{sisterlightamber}{RGB}{252,244,225}
+\definecolor{sisterred}{RGB}{155,44,44}
+\definecolor{sisterlightred}{RGB}{252,235,235}
+\definecolor{sisterpurple}{RGB}{93,63,130}
+\definecolor{sisterlightpurple}{RGB}{241,236,248}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=sisterblue,
+  urlcolor=sisterblue,
+  citecolor=sisterblue,
+  hypertexnames=false,
+  pdftitle={Relatorio de Atualizacao Funcional do SisTer},
+  pdfauthor={Projeto SisTer},
+  pdfsubject={Estado funcional, materializacao, evidencias e proximo fio vertical do SisTer}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{sisterdarkgray}{SisTer -- Relatório de Atualização Funcional}}
+\fancyhead[R]{\small\textcolor{sisterdarkgray}{RAF-SisTer/1.0}}
+\fancyfoot[C]{\small Página \thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\titleformat{\section}{\Large\bfseries\color{sisterblue}}{\thesection.}{0.55em}{}
+\titleformat{\subsection}{\large\bfseries\color{sisterdarkgray}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{0.45em}{}
+
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+\newtcolorbox{principio}[1][]{
+  colback=sisterlightblue,
+  colframe=sisterblue,
+  boxrule=0.65pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2.2mm,bottom=2.2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{conclusao}[1][]{
+  colback=sisterlightgreen,
+  colframe=sistergreen,
+  boxrule=0.65pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2.2mm,bottom=2.2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{decisao}[1][]{
+  colback=sistergray,
+  colframe=sisterdarkgray,
+  boxrule=0.55pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{alerta}[1][]{
+  colback=sisterlightred,
+  colframe=sisterred,
+  boxrule=0.6pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{pendencia}[1][]{
+  colback=sisterlightamber,
+  colframe=sisteramber,
+  boxrule=0.6pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+
+\newcommand{\statusobservado}{\textcolor{sistergreen}{\textbf{OBSERVADO EM EXECUÇÃO}}}
+\newcommand{\statustestado}{\textcolor{sisterblue}{\textbf{IMPLEMENTADO E TESTADO}}}
+\newcommand{\statusmemoria}{\textcolor{sisterpurple}{\textbf{TESTADO EM MEMÓRIA}}}
+\newcommand{\statusparcial}{\textcolor{sisteramber}{\textbf{PARCIAL}}}
+\newcommand{\statusparcialavancado}{\textcolor{sisteramber}{\textbf{PARCIAL AVANÇADO}}}
+\newcommand{\statusespec}{\textcolor{sisterdarkgray}{\textbf{ESPECIFICADO}}}
+\newcommand{\statusausente}{\textcolor{sisterred}{\textbf{NÃO MATERIALIZADO}}}
+\newcommand{\statuspendente}{\textcolor{sisteramber}{\textbf{PENDENTE DE EVIDÊNCIA}}}
+
+\lstdefinestyle{sistercode}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{sistergray},
+  frame=single,
+  rulecolor=\color{sisterdarkgray!35},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  xleftmargin=0.5em,
+  framexleftmargin=0.4em
+}
+\lstset{style=sistercode}
+
+\tikzset{
+  flow/.style={rectangle, rounded corners=1.5mm, draw=sisterdarkgray, line width=.55pt,
+    align=center, minimum height=10mm, text width=24mm, font=\small},
+  flowwide/.style={flow, text width=34mm},
+  observed/.style={flow, fill=sisterlightgreen, draw=sistergreen},
+  tested/.style={flow, fill=sisterlightblue, draw=sisterblue},
+  memory/.style={flow, fill=sisterlightpurple, draw=sisterpurple},
+  partial/.style={flow, fill=sisterlightamber, draw=sisteramber},
+  absent/.style={flow, fill=sisterlightred, draw=sisterred},
+  objective/.style={rectangle, rounded corners=1.5mm, draw=sisterblue, fill=sisterlightblue,
+    line width=.65pt, align=center, minimum height=11mm, text width=37mm, font=\small\bfseries},
+  function/.style={rectangle, rounded corners=1.2mm, draw=sisterdarkgray, fill=sistergray,
+    align=center, minimum height=8mm, text width=28mm, font=\scriptsize},
+  artifact/.style={rectangle, rounded corners=.8mm, draw=sistergreen, fill=sisterlightgreen,
+    align=center, minimum height=7mm, text width=27mm, font=\scriptsize},
+  future/.style={rectangle, rounded corners=.8mm, draw=sisterred, fill=sisterlightred,
+    align=center, minimum height=7mm, text width=27mm, font=\scriptsize},
+  arrow/.style={-{Latex[length=2.2mm]}, line width=.65pt, draw=sisterdarkgray},
+  softarrow/.style={-{Latex[length=2mm]}, line width=.45pt, draw=sisterdarkgray!70},
+  dashedarrow/.style={-{Latex[length=2mm]}, dashed, line width=.55pt, draw=sisteramber}
+}
+
+\begin{document}
+
+\begin{titlepage}
+\pagestyle{empty}
+\thispagestyle{empty}
+\vspace*{1.7cm}
+{\color{sisterblue}\rule{\textwidth}{1.2pt}}\\[1.0cm]
+{\Huge\bfseries Relatório de Atualização Funcional do SisTer\par}
+\vspace{0.38cm}
+{\Large Estado real de funcionamento, materialização e alinhamento ao propósito\par}
+\vspace{0.18cm}
+{\large Documento complementar à EFE-SisTer/1.6\par}
+\vspace{1.0cm}
+\begin{principio}[Pergunta governante]
+\centering\Large\textbf{O que o SisTer já executa de fato, quais funções ligadas ao seu objetivo principal estão materializadas e qual é o próximo fio funcional que precisa operar de ponta a ponta?}
+\end{principio}
+\vfill
+\begin{tabularx}{\textwidth}{P{4.2cm}Y}
+\toprule
+\textbf{Identificador} & RAF-SisTer/1.0 \\
+\textbf{Natureza} & Relatório descritivo, diagnóstico e versionado; não substitui a EFE, contratos, ADRs, evidências ou decisões de autorização. \\
+\textbf{Base normativa} & EFE-SisTer/1.6, especialmente objetivos O-01--O-05, funções F-01--F-11 e marcos MVP-00--MVP-03. \\
+\textbf{Linha de base do código} & Commit \texttt{db0edb5db5863dd57ff4f094f11437845353ad72} (\texttt{main}), snapshot recebido em 3 de agosto de 2026. \\
+\textbf{Evidência de execução} & Compilação, CTest, perfil \texttt{dev-core}, smoke test e avaliação \texttt{PROD-01} executados no laptop em 3 de agosto de 2026. \\
+\textbf{Data de corte} & 3 de agosto de 2026. \\
+\bottomrule
+\end{tabularx}
+\vspace{1.0cm}
+{\color{sisterblue}\rule{\textwidth}{1.2pt}}
+\thispagestyle{empty}
+\end{titlepage}
+\pagestyle{fancy}
+
+\pagenumbering{roman}
+\section*{Controle do documento}
+\addcontentsline{toc}{section}{Controle do documento}
+
+\begin{tabularx}{\textwidth}{P{3.7cm}Y}
+\toprule
+\textbf{Campo} & \textbf{Definição} \\
+\midrule
+Finalidade & Produzir uma fotografia argumentada do estado funcional do SisTer, distinguindo existência de código, prova por teste, observação em execução, prontidão operacional e realização do propósito científico. \\
+Relação com a EFE & A EFE define o que o SisTer deve ser e realizar. Este relatório verifica quanto dessa definição está materializado em uma linha de base específica. \\
+Unidade de análise & Função sistêmica, processo, objeto, componente, código, teste, evidência, operação observada e relação com os marcos MVP. \\
+Regra de prudência & Presença no repositório não equivale a vigência operacional; teste isolado não equivale a fluxo ponta a ponta; transporte de JSON não equivale a informação integrada; diagnóstico técnico não equivale a conhecimento científico. \\
+Regra de atualização & Nova versão deve ser emitida quando mudança de código ou nova evidência alterar o estado de uma função, de um MVP ou da recomendação de próximo trabalho. \\
+\bottomrule
+\end{tabularx}
+
+\subsection*{Histórico de revisão}
+\begin{tabularx}{\textwidth}{P{2.0cm}P{2.8cm}Y}
+\toprule
+\textbf{Versão} & \textbf{Data} & \textbf{Alteração} \\
+\midrule
+1.0 & 03/08/2026 & Baseline inicial do relatório; consolida o estado funcional até a EFE-SisTer/1.6 e o commit \texttt{db0edb5}; introduz taxonomia de evidência, matriz F-01--F-11, fluxos de alcance atual, grafo propósito--funções--artefatos e recomendação do próximo fio vertical. \\
+\bottomrule
+\end{tabularx}
+
+\subsection*{Convenção de estados}
+\begin{tabularx}{\textwidth}{P{4.1cm}Y}
+\toprule
+\textbf{Estado} & \textbf{Significado neste relatório} \\
+\midrule
+\statusobservado & Comportamento visto na execução de referência desta linha de base, com saída ou evidência registrada. \\
+\statustestado & Implementação existente e coberta por teste automatizado relevante, mas não necessariamente observada no fluxo operacional executado para este relatório. \\
+\statusmemoria & Modelo, tipo ou regra executável validado sem persistência, API/CLI operacional ou ciclo completo. \\
+\statusparcial & Parte da responsabilidade existe, mas faltam etapas, ligações, autoridade, persistência, semântica ou evidência exigidas pela função. \\
+\statusespec & Definido normativamente ou planejado, sem prova suficiente de materialização na linha de base. \\
+\statusausente & Não foi identificada implementação funcional que satisfaça a responsabilidade e a evidência mínima. \\
+\statuspendente & Pode haver implementação, mas a prontidão declarada depende de ensaio ou evidência ainda não encerrada. \\
+\bottomrule
+\end{tabularx}
+
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Conclusão executiva}
+
+\begin{conclusao}[Conclusão principal]
+O SisTer já funciona como \textbf{plataforma técnica governada} e como \textbf{bancada controlada de federação}. Ele ainda não funciona, de ponta a ponta, como sistema científico capaz de governar uma participação completa, transformar contribuições reais em informação integrada e registrar conhecimento contextualizado e revisável.
+\end{conclusao}
+
+A linha de base comprova um núcleo executável, seguro no escopo local, testável, diagnosticável e governado por contratos e evidências. Também contém um subsistema de referência normativo, integração técnica testada, perfis oficiais, contratos de participação e um modelo de domínio inicial. Entretanto, a execução observada foi do perfil \texttt{dev-core}; portanto, o subsistema de referência não foi erguido no ensaio operacional registrado neste relatório.
+
+A leitura correta do estado atual é:
+
+\begin{tabularx}{\textwidth}{P{4.3cm}P{3.3cm}Y}
+\toprule
+\textbf{Dimensão} & \textbf{Estado} & \textbf{Conclusão} \\
+\midrule
+Plataforma de engenharia local & \statusobservado & Pronta para desenvolvimento controlado e para materializar o MVP-01. \\
+Arquitetura técnica federativa & \statustestado & MVP-00 concluído na baseline; contrato, referência, identidade, falhas, testes e perfis existem. \\
+Execução do ecossistema de referência & \statusparcial & Implementada e testada, mas não observada no último ensaio, que solicitou apenas \texttt{dev-core}. \\
+Participação governada & \statusparcial & Objetos e invariantes iniciais existem em memória; ciclo persistente, operável e autorizado ainda não existe. \\
+Produção operacional & \statuspendente & G1 e G2 passam; G3--G5 permanecem pendentes e G6 aguarda autorização. \\
+Informação integrada rastreável & \statusausente & Não há fluxo científico real de contextualização e correlação. \\
+Conhecimento contextualizado & \statusausente & Não há \texttt{KnowledgeArtifact} funcional com método, evidência, revisão e invalidação. \\
+\bottomrule
+\end{tabularx}
+
+\begin{decisao}[Leitura de prontidão]
+O SisTer está \textbf{pronto para implementar e provar o MVP-01}; não está pronto para declarar produção, reintegrar subsistemas reais ou afirmar que realiza a transformação finalística dado $\rightarrow$ informação $\rightarrow$ conhecimento.
+\end{decisao}
+
+\section{Base da avaliação}
+
+\subsection{Fontes utilizadas}
+
+Este relatório foi construído a partir de quatro classes de fonte:
+
+\begin{enumerate}
+  \item \textbf{Norma funcional}: EFE-SisTer/1.6, com objetivos O-01--O-05, funções F-01--F-11, processos P-01--P-08 e marcos MVP-00--MVP-03.
+  \item \textbf{Linha de base do repositório}: commit \texttt{db0edb5}, incluindo contratos, núcleo C++, \texttt{sisterd}, \texttt{sisterctl}, SGE, subsistema de referência, perfis e testes.
+  \item \textbf{Evidência automatizada}: \texttt{quality.json}, testes CTest, testes do SGE, contratos, governança e avaliação \texttt{PROD-01}.
+  \item \textbf{Observação operacional}: execução no laptop do perfil \texttt{dev-core}, com banco, migrações, compilação, testes, início do \texttt{sisterd}, smoke test e resumo final.
+\end{enumerate}
+
+\subsection{Critério de realidade funcional}
+
+Uma função somente é considerada realizada quando há encadeamento suficiente entre:
+
+\begin{center}
+\begin{tikzpicture}[node distance=6mm]
+\node[flowwide] (purpose) {propósito e responsabilidade};
+\node[flowwide, right=of purpose] (object) {objeto ou estado de domínio};
+\node[flowwide, right=of object] (code) {componente e código};
+\node[flowwide, below=of code] (test) {teste e critério de aceitação};
+\node[flowwide, left=of test] (evidence) {evidência e persistência};
+\node[flowwide, left=of evidence] (operation) {operação consultável};
+\draw[arrow] (purpose) -- (object);
+\draw[arrow] (object) -- (code);
+\draw[arrow] (code) -- (test);
+\draw[arrow] (test) -- (evidence);
+\draw[arrow] (evidence) -- (operation);
+\draw[arrow] (operation) -- (purpose);
+\end{tikzpicture}
+\end{center}
+
+A ausência de um elo não invalida o trabalho realizado, mas limita a afirmação possível. Um tipo C++ sem persistência é materialização de domínio; não é ainda processo operacional. Um endpoint \texttt{/echo} prova transporte; não prova contribuição científica.
+
+\section{Propósito finalístico e alcance atual}
+
+\subsection{Processo finalístico esperado}
+
+A finalidade do SisTer é governar as fronteiras pelas quais observações e contribuições de sistemas autônomos podem tornar-se informação integrada e conhecimento contextualizado, sem perda de origem, autoridade, validade, incerteza e possibilidade de revisão.
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=4.5mm]
+\node[flow] (realidade) {realidade};
+\node[flow, right=of realidade] (obs) {observação};
+\node[flow, right=of obs] (dado) {dado};
+\node[flow, right=of dado] (val) {validação};
+\node[flow, right=of val] (int) {integração};
+\node[flow, right=of int] (info) {informação};
+\node[flow, right=of info] (conv) {convergência};
+\node[flow, right=of conv] (know) {conhecimento};
+\node[flow, right=of know] (dec) {decisão};
+\node[flow, right=of dec] (act) {ação};
+\draw[arrow] (realidade) -- (obs);
+\draw[arrow] (obs) -- (dado);
+\draw[arrow] (dado) -- (val);
+\draw[arrow] (val) -- (int);
+\draw[arrow] (int) -- (info);
+\draw[arrow] (info) -- (conv);
+\draw[arrow] (conv) -- (know);
+\draw[arrow] (know) -- (dec);
+\draw[arrow] (dec) -- (act);
+\draw[arrow, bend left=22] (act.north) to node[above, font=\scriptsize]{nova observação} (obs.north);
+\end{tikzpicture}}
+\captionof{figure}{Processo finalístico completo previsto na EFE-SisTer/1.6.}
+\end{center}
+
+\subsection{Alcance materializado na linha de base}
+
+O alcance atual termina antes da integração científica. A baseline consegue reconhecer e validar tecnicamente um participante controlado, executar percursos técnicos, observar o núcleo e produzir evidência de engenharia.
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=5mm]
+\node[tested] (cand) {subsistema candidato};
+\node[tested, right=of cand] (id) {identidade e manifesto};
+\node[tested, right=of id] (contract) {contrato técnico};
+\node[observed, right=of contract] (validate) {validação técnica};
+\node[tested, right=of validate] (route) {execução controlada};
+\node[tested, right=of route] (response) {resposta verificável};
+\node[partial, right=of response] (participation) {participação governada};
+\node[absent, right=of participation] (information) {informação integrada};
+\node[absent, right=of information] (knowledge) {conhecimento};
+\draw[arrow] (cand) -- (id);
+\draw[arrow] (id) -- (contract);
+\draw[arrow] (contract) -- (validate);
+\draw[arrow] (validate) -- (route);
+\draw[arrow] (route) -- (response);
+\draw[dashedarrow] (response) -- (participation);
+\draw[dashedarrow] (participation) -- (information);
+\draw[dashedarrow] (information) -- (knowledge);
+\end{tikzpicture}}
+\captionof{figure}{Alcance funcional atual: sólido até a prova técnica; incompleto a partir da participação governada.}
+\end{center}
+
+\begin{alerta}[Fronteira que não pode ser encoberta]
+O SisTer ainda não demonstrou operacionalmente a passagem contribuição de domínio $\rightarrow$ informação integrada $\rightarrow$ conhecimento. Essa lacuna não deve ser ocultada por dashboards, schemas, chamadas HTTP ou métricas de engenharia.
+\end{alerta}
+
+\section{O que funciona de fato}
+
+\subsection{Núcleo e execução local}
+
+A execução registrada demonstrou:
+
+\begin{itemize}
+  \item configuração e compilação CMake concluídas;
+  \item 27 testes CTest sem falhas;
+  \item sete testes dinâmicos do gateway justificadamente não executados no perfil local sem HAProxy configurado;
+  \item banco PostgreSQL ativo, migrações aplicadas e extensão pgvector disponível;
+  \item validação de contratos de ferramentas, governança, recursos locais, perfis e maturidade;
+  \item 11 testes de subsistemas e 44 testes do SGE/maturidade aprovados, com um skip justificado;
+  \item \texttt{sisterd} iniciado em \texttt{127.0.0.1:8000};
+  \item smoke test da fronteira pública e de autenticação aprovado;
+  \item resumo \texttt{Core quality: PASS}, \texttt{sisterd readiness: READY}, \texttt{Core smoke: PASS} e \texttt{Overall: PASS}.
+\end{itemize}
+
+\textbf{Conclusão}: o núcleo está \statusobservado{} para desenvolvimento local controlado. Isso não implica prontidão de produção nem execução do ecossistema.
+
+\subsection{Subsistema de referência}
+
+O repositório possui o \texttt{sister\_reference} com manifesto \texttt{sister.subsystem.manifest/1.0.0}, endpoint interno em loopback, capacidades \texttt{reference.identity.read} e \texttt{reference.echo.execute}, health, readiness, identidade, echo e modos parametrizados de falha.
+
+A suíte registrou aprovação de:
+
+\begin{itemize}
+  \item \texttt{sisterd\_reference\_integration\_tests};
+  \item \texttt{reference\_subsystem\_contract\_tests};
+  \item testes de quarentena de transporte, identidade e hardening relacionados.
+\end{itemize}
+
+O perfil oficial \texttt{dev-reference} exige o projeto \texttt{sister\_reference} e aplica política \texttt{block} em caso de falha. Entretanto, a execução observada para este relatório usou \texttt{dev-core}, cujo contrato solicita \texttt{selection: none}.
+
+\begin{pendencia}[Estado correto da referência]
+O subsistema de referência está \statustestado{} e pronto para ensaio controlado pelo perfil \texttt{dev-reference}, mas seu início conjunto com o núcleo não foi observado no log operacional usado nesta versão do relatório.
+\end{pendencia}
+
+\subsection{Contratos e domínio de participação}
+
+A linha de base contém schemas versionados e tipos C++ para:
+
+\begin{itemize}
+  \item \texttt{ParticipationContract};
+  \item \texttt{CapabilityDefinition};
+  \item \texttt{ContributionDefinition};
+  \item \texttt{AuthorityAllocation};
+  \item \texttt{BoundaryObjectEnvelope};
+  \item \texttt{ParticipationAssessment};
+  \item identificadores fortes e estados \texttt{proposed}, \texttt{assessed}, \texttt{authorized}, \texttt{suspended} e \texttt{revoked}.
+\end{itemize}
+
+A fábrica de proposta rejeita campos obrigatórios vazios, oferta sem capacidade ou contribuição, capacidades duplicadas, alocação incompleta de autoridade e perfil reflexivo diferente de \texttt{D2/A1/shadow}. Exemplos negativos impedem autoautorização pelo contrato ou pelo assessment.
+
+O próprio pacote de trabalho classifica essa fatia como \statusmemoria{}: não há persistência, HTTP, CLI, motor de avaliação, decisão humana ou transições operacionais posteriores a \texttt{proposed}.
+
+\subsection{Segurança, diagnóstico e governança de engenharia}
+
+Estão materializados e testados:
+
+\begin{itemize}
+  \item autenticação e sessões com fronteira fechada;
+  \item autorização por capacidades para rotas sensíveis;
+  \item isolamento do núcleo em loopback e suporte a socket Unix;
+  \item contrato de gateway e perfil LAN separados do núcleo;
+  \item sanitização de erros e identidade mediada;
+  \item SGE, contratos de maturidade, relatórios de qualidade e validação do repositório;
+  \item classificação de artefatos vigentes, históricos e candidatos em quarentena.
+\end{itemize}
+
+Essa camada realiza principalmente O-04 e sustenta partes de O-01 e O-05. Ela é condição para o objetivo científico, mas não o substitui.
+
+\subsection{Prontidão PROD-01}
+
+A avaliação executada para o commit da baseline produziu:
+
+\begin{tabularx}{\textwidth}{P{1.4cm}P{3.2cm}P{3.0cm}Y}
+\toprule
+\textbf{Gate} & \textbf{Objetivo} & \textbf{Estado} & \textbf{Leitura} \\
+\midrule
+G1 & Plataforma & PASS & Qualidade aprovada no commit atual. \\
+G2 & Segurança & PASS & Pré-condições e validações de segurança aprovadas. \\
+G3 & Operação & PENDING & Faltam evidências de reinício, reboot, atualização, certificado e logs. \\
+G4 & Recuperação & PENDING & Faltam backup/restauração, rollback e reinício de serviços. \\
+G5 & Observabilidade & PENDING & Faltam health, métricas, logs, auditoria e carga como pacote encerrado. \\
+G6 & Promoção & AWAITING\_AUTHORIZATION & Falta decisão formal de governança após os gates técnicos. \\
+\bottomrule
+\end{tabularx}
+
+\textbf{Conclusão}: o produto permanece Beta, com estado técnico \texttt{NOT\_READY} para produção e decisão \texttt{AWAITING\_AUTHORIZATION}. Isso é compatível com o \texttt{PASS} do perfil \texttt{dev-core}: são perguntas diferentes.
+
+\section{Avaliação das funções F-01--F-11}
+
+\begin{landscape}
+\small
+\begin{longtable}{P{1.25cm}P{4.1cm}P{3.3cm}P{7.2cm}P{6.0cm}}
+\toprule
+\textbf{ID} & \textbf{Função} & \textbf{Estado real} & \textbf{O que está materializado} & \textbf{O que falta para a função estar realizada} \\
+\midrule
+\endhead
+F-01 & Reconhecimento e qualificação federativa & \statusparcial & Manifesto, identidade, contrato técnico, catálogo técnico da referência, tipos de participação e proposta validada em memória. & Registro persistente, avaliação das cinco camadas, histórico, consulta operacional e elegibilidade conceitual vinculada a decisão. \\
+F-02 & Governança da participação e relacionamentos & \statusparcial & Quarentena, perfis oficiais, schemas, estados e separação normativa entre avaliação e autorização. & Propor, avaliar, autorizar, suspender e revogar por API/CLI, com persistência, vigência, digest, commit e histórico. \\
+F-03 & Identidade, autorização e confiança & \statusparcial & Autenticação humana, sessões, capacidades de rota, identidade mediada do subsistema e falha fechada. & Vincular autorização à participação, finalidade, capacidade, autoridade, contrato, versão, escopo e decisão humana registrada. \\
+F-04 & Intercâmbio de contribuições & \statusparcial & Encaminhamento técnico à referência, \texttt{/echo}, correlação técnica e \texttt{BoundaryObjectEnvelope} em memória. & Execução autorizada de capacidade gerando contribuição tipificada, recibo, persistência, limites e correlação consultável. \\
+F-05 & Validação semântica, técnica e conformidade & \statusparcialavancado & Schemas, contrato técnico, validação de manifesto, lifecycle, identidade, transporte, falhas, segurança e exemplos inválidos. & Validação semântica e de autoridade da contribuição real, unificada com política de restrições sem confundir conformidade com autorização. \\
+F-06 & Evidência, autoridade e proveniência & \statusparcial & Logs, atestações, quality report, evidências de maturidade, alocação de autoridade e referências de proveniência no envelope. & Grafo causal persistente origem--execução--resultado--derivado, integridade consultável e vínculo a participação e decisão. \\
+F-07 & Contextualização e correlação & \statusausente & Estruturas e intenção aparecem na EFE e em dados territoriais demonstrativos. & Contribuição real relacionada a entidades, projeto, atividade, tempo, espaço e fontes, com pendências, discrepâncias e incertezas. \\
+F-08 & Síntese e produção de conhecimento & \statusausente & Não há materialização funcional suficiente. & \texttt{KnowledgeArtifact} com método, autoria, evidências, confiança, limitações, revisão, publicação e invalidação. \\
+F-09 & Convergência e exposição governada & \statusparcial & Home, APIs de saúde, sistemas, contratos, evidências, diagnósticos, painel e gateway especificado/testado em partes. & Expor contribuições, informação e conhecimento com estado, autoridade, proveniência, finalidade, restrições e versão. \\
+F-10 & Diagnóstico, conformidade e governança operacional & \statustestado & Health, readiness, smoke, testes, SGE, maturidade, quality report, perfis, PROD-01, quarentena e políticas. & Encerrar G3--G5, executar perfis de gateway quando exigidos e consolidar recuperação/observabilidade operacional. \\
+F-11 & Reflexividade operacional e aprendizagem & \statusparcial & Avaliações técnicas, comparação de evidências, maturidade, recomendações e perfil D2/A1/shadow exigido no modelo. & \texttt{OperationalAssessment} persistente sobre execução autorizada, explicação consultável, decisão separada e reavaliação sem ação autônoma indevida. \\
+\bottomrule
+\end{longtable}
+\end{landscape}
+
+\subsection{Síntese funcional}
+
+As funções mais avançadas são F-05 e F-10, pois a engenharia atual privilegia validação, segurança, testes, diagnóstico e governança. F-01, F-03, F-04, F-06, F-09 e F-11 possuem peças reais, mas ainda não formam um processo integral. F-07 e F-08 permanecem fora do funcionamento atual.
+
+\begin{principio}[Assimetria da baseline]
+A arquitetura de processos para governar a engenharia está mais materializada do que a arquitetura de processos para governar a transformação contribuição $\rightarrow$ informação $\rightarrow$ conhecimento.
+\end{principio}
+
+\section{Grafo de alinhamento entre propósito, funções e artefatos}
+
+O grafo abaixo mostra onde há continuidade entre o propósito e a implementação e onde a cadeia se interrompe.
+
+\begin{landscape}
+\centering
+\begin{tikzpicture}[node distance=7mm and 12mm]
+\node[objective] (o1) {O-01\\participação federativa};
+\node[objective, below=of o1] (o2) {O-02\\informação integrada};
+\node[objective, below=of o2] (o3) {O-03\\conhecimento contextualizado};
+\node[objective, below=of o3] (o4) {O-04\\operação resiliente};
+\node[objective, below=of o4] (o5) {O-05\\reflexividade operacional};
+
+\node[function, right=18mm of o1] (f12) {F-01/F-02\\reconhecer e governar};
+\node[function, right=18mm of o2] (f4567) {F-04/F-05/F-06/F-07\\intercambiar, validar e contextualizar};
+\node[function, right=18mm of o3] (f89) {F-08/F-09\\produzir e expor};
+\node[function, right=18mm of o4] (f310) {F-03/F-10\\autorizar e diagnosticar};
+\node[function, right=18mm of o5] (f11) {F-11\\avaliar e aprender};
+
+\node[artifact, right=18mm of f12] (a1) {manifesto, contrato técnico, referência, tipos de participação};
+\node[future, below=4mm of a1] (g1) {falta: ciclo persistente e decisão humana};
+
+\node[artifact, right=18mm of f4567] (a2) {/echo, schemas, validação, envelope em memória};
+\node[future, below=4mm of a2] (g2) {falta: contribuição real, contexto e proveniência causal};
+
+\node[future, right=18mm of f89] (g3) {falta: IntegratedInformation e KnowledgeArtifact};
+
+\node[artifact, right=18mm of f310] (a4) {auth, health, readiness, SGE, quality, PROD-01};
+\node[future, below=4mm of a4] (g4) {falta: G3--G6 e autorização ligada à participação};
+
+\node[artifact, right=18mm of f11] (a5) {avaliações técnicas, maturidade, D2/A1/shadow};
+\node[future, below=4mm of a5] (g5) {falta: assessment da execução e decisão reconstruível};
+
+\draw[arrow] (o1) -- (f12); \draw[arrow] (f12) -- (a1); \draw[dashedarrow] (a1) -- (g1);
+\draw[arrow] (o2) -- (f4567); \draw[arrow] (f4567) -- (a2); \draw[dashedarrow] (a2) -- (g2);
+\draw[arrow] (o3) -- (f89); \draw[dashedarrow] (f89) -- (g3);
+\draw[arrow] (o4) -- (f310); \draw[arrow] (f310) -- (a4); \draw[dashedarrow] (a4) -- (g4);
+\draw[arrow] (o5) -- (f11); \draw[arrow] (f11) -- (a5); \draw[dashedarrow] (a5) -- (g5);
+
+\draw[softarrow, bend left=16] (f310.north) to (f12.south);
+\draw[softarrow, bend left=16] (f11.north) to (f4567.south);
+\draw[softarrow, bend left=16] (f4567.north) to (f89.south);
+\end{tikzpicture}
+\captionof{figure}{Grafo de alinhamento: O-04 está mais conectado a artefatos executáveis; O-02 e O-03 ainda dependem de materialização futura.}
+\end{landscape}
+
+\section{Estado dos marcos MVP}
+
+\begin{tabularx}{\textwidth}{P{1.6cm}P{4.2cm}P{3.2cm}Y}
+\toprule
+\textbf{Marco} & \textbf{Nome} & \textbf{Estado neste relatório} & \textbf{Justificativa} \\
+\midrule
+MVP-00 & Arquitetura Técnica Federativa & \statustestado & Núcleo, contrato técnico, referência controlada, identidade, falhas, conformidade, perfis e evidências de engenharia estão materializados; núcleo observado em execução. \\
+MVP-01 & Participação Governada e Reflexiva & \statusparcial & Baseline e modelo mínimo iniciados; proposta de participação testada em memória. Faltam persistência, assessment operacional, decisão humana, execução autorizada, contribuição, proveniência e explicação ponta a ponta. \\
+MVP-02 & Informação Integrada Rastreável & \statusausente & Nenhum participante real autorizado nem contextualização/correlação de contribuição científica foi demonstrado. \\
+MVP-03 & Conhecimento Contextualizado e Revisável & \statusausente & Não há produção funcional de artefato de conhecimento sustentado por método e evidência. \\
+\bottomrule
+\end{tabularx}
+
+\subsection{O que o MVP-00 realmente prova}
+
+O MVP-00 prova que a arquitetura pode existir e que o núcleo consegue ser construído, executado, protegido, testado e conectado a uma referência controlada. Não prova legitimidade de participação, contribuição científica, integração de informação ou conhecimento.
+
+\subsection{O que já começou no MVP-01}
+
+Há duas fatias relevantes:
+
+\begin{itemize}
+  \item baseline e vocabulário para separar arquitetura técnica, prontidão operacional e participação;
+  \item modelo mínimo de participação com tipos fortes, proposta validada, capacidades, contribuições, autoridade, envelope e assessment separados da decisão.
+\end{itemize}
+
+O ganho é real, mas ainda horizontal. A próxima prova deve ser vertical.
+
+\section{Próximo fio vertical recomendado}
+
+\begin{conclusao}[Unidade correta de avanço]
+Completar um único ciclo de participação governada com o \texttt{sister\_reference}, desde a candidatura até a decisão posterior à avaliação da execução. Nenhum subsistema real deve ser acrescentado antes disso.
+\end{conclusao}
+
+\subsection{Fluxo-alvo}
+
+\begin{center}
+\resizebox{\textwidth}{!}{%
+\begin{tikzpicture}[node distance=4.2mm]
+\node[memory] (candidate) {candidato e proposta};
+\node[tested, right=of candidate] (technical) {avaliação técnica};
+\node[partial, right=of technical] (assessment) {avaliação de participação};
+\node[absent, right=of assessment] (human) {decisão humana};
+\node[tested, right=of human] (execution) {execução de capacidade};
+\node[memory, right=of execution] (contribution) {contribuição tipificada};
+\node[partial, right=of contribution] (prov) {evidência e proveniência};
+\node[partial, right=of prov] (reflex) {avaliação reflexiva};
+\node[absent, right=of reflex] (explain) {explicação e nova decisão};
+\draw[arrow] (candidate) -- (technical);
+\draw[arrow] (technical) -- (assessment);
+\draw[arrow] (assessment) -- (human);
+\draw[arrow] (human) -- (execution);
+\draw[arrow] (execution) -- (contribution);
+\draw[arrow] (contribution) -- (prov);
+\draw[arrow] (prov) -- (reflex);
+\draw[arrow] (reflex) -- (explain);
+\end{tikzpicture}}
+\captionof{figure}{Fio vertical do MVP-01 e estado atual de cada etapa.}
+\end{center}
+
+\subsection{Sequência operacional mínima}
+
+\begin{enumerate}
+  \item O \texttt{sister\_reference} apresenta identidade e proposta de participação.
+  \item O \texttt{sisterd} registra o candidato e o contrato de participação.
+  \item O SGE executa avaliação técnica e avaliação de participação separadas.
+  \item Um operador humano, pelo \texttt{sisterctl}, autoriza ou rejeita a participação.
+  \item O \texttt{sisterd} aplica a decisão e libera somente uma capacidade autorizada.
+  \item A referência executa a capacidade e produz uma contribuição tipificada.
+  \item O SisTer persiste \texttt{IntegrationRun}, envelope, evidências e proveniência.
+  \item O motor produz \texttt{OperationalAssessment} em D2/A1/\texttt{shadow}.
+  \item O \texttt{sisterctl} explica estado, evidências, divergências e recomendação.
+  \item O operador mantém, suspende ou reabre a decisão, com histórico reconstruível.
+\end{enumerate}
+
+\subsection{Critério de conclusão}
+
+O fio estará encerrado quando puder ser executado por interfaces oficiais, sem edição manual do banco, leitura de arquivos internos como operação ou conhecimento implícito mantido apenas pela equipe. Uma execução deve ser reconstruível a partir de contrato, versão, digest, commit, ator, autorização, evidências e resultados.
+
+\section{O que não deve ser feito agora}
+
+\begin{alerta}[Proteção do foco]
+A lacuna atual não é falta de novos subsistemas. É falta de fechamento do ciclo entre participação, autoridade, execução, contribuição, evidência, avaliação e decisão.
+\end{alerta}
+
+Durante o fechamento do MVP-01, não se recomenda:
+
+\begin{itemize}
+  \item reintegrar Nexo, Clima, Campo, Studio, Compras ou outro candidato real;
+  \item adaptar contratos para peculiaridades de domínio;
+  \item declarar F-07 ou F-08 realizadas por existir transporte ou armazenamento;
+  \item transformar \texttt{/echo} em falsa capacidade científica;
+  \item criar novo status agregado que misture técnica, participação, operação e maturidade;
+  \item permitir que assessment, maturidade ou reflexividade concedam autorização;
+  \item ampliar governança documental sem materializar uma fatia executável correspondente.
+\end{itemize}
+
+\section{Plano de atualização do relatório}
+
+\subsection{Versionamento}
+
+Recomenda-se manter este documento em paralelo à EFE:
+
+\begin{itemize}
+  \item \textbf{major}: alteração da metodologia, da taxonomia de estados ou da estrutura de avaliação;
+  \item \textbf{minor}: nova baseline, evidência ou entrega que altere o estado funcional de uma ou mais funções/MVPs;
+  \item \textbf{patch}: correção editorial sem mudança de conclusão.
+\end{itemize}
+
+Nome recomendado no repositório:
+
+\begin{lstlisting}
+docs/reports/RAF-SisTer/relatorio_atualizacao_funcional_sister_v1_0.tex
+\end{lstlisting}
+
+Cada versão deve declarar a EFE de referência, o commit, os perfis executados, os testes, os skips, as evidências operacionais e as alterações de status desde a versão anterior.
+
+\subsection{Próxima versão esperada}
+
+A RAF-SisTer/1.1 deve ser emitida após:
+
+\begin{itemize}
+  \item execução observada e registrada de \texttt{dev-reference};
+  \item confirmação do lifecycle conjunto núcleo--referência;
+  \item avanço do contrato de participação além de \texttt{TESTADO\_EM\_MEMORIA};
+  \item existência de pelo menos uma operação persistente e consultável do ciclo MVP-01.
+\end{itemize}
+
+\section{Síntese final}
+
+\begin{principio}[Estado do SisTer em uma frase]
+O SisTer já sabe sustentar e avaliar uma plataforma federativa controlada; agora precisa provar que sabe governar, de ponta a ponta, a participação e a contribuição que darão sentido científico a essa plataforma.
+\end{principio}
+
+O que existe não é pouco: há núcleo, segurança, contratos, referência, testes, SGE, maturidade, evidência técnica e disciplina de promoção. O ponto de atenção é que esses elementos formam sobretudo a infraestrutura de confiança anterior à integração científica.
+
+O avanço decisivo será conectar as peças já construídas em um percurso operacional único. Quando o ciclo do MVP-01 estiver completo, o SisTer deixará de ser apenas uma arquitetura tecnicamente comprovada e passará a executar sua primeira característica distintiva: \textbf{governança federativa orientada por contratos, evidências, autoridade e reflexividade}.
+
+\appendix
+\section{Matriz resumida de evidências}
+
+\begin{longtable}{P{4.5cm}P{4.2cm}P{5.8cm}}
+\toprule
+\textbf{Afirmação} & \textbf{Evidência principal} & \textbf{Limite da evidência} \\
+\midrule
+\endhead
+Núcleo compila e inicia localmente & CMake, build, \texttt{dev-core}, PID e smoke test & Não prova gateway LAN nem produção. \\
+Suíte de qualidade local passa & 27 CTest sem falhas; validações complementares e SGE & Sete testes dinâmicos do gateway foram justificados como não solicitados/configurados. \\
+Referência cumpre contrato técnico & Manifesto, servidor, contrato e testes de integração/conformidade & Execução conjunta não observada no ensaio \texttt{dev-core}. \\
+Modelo de participação existe & Tipos C++, schemas, exemplos e testes negativos & Sem persistência, API, CLI, decisão ou transições operacionais. \\
+Segurança e diagnóstico possuem prova & Auth, hardening, health, readiness, SGE e G1/G2 & Operação, recuperação e observabilidade de produção não encerradas. \\
+Informação integrada existe & Não há evidência suficiente & Estruturas demonstrativas não satisfazem F-07. \\
+Conhecimento contextualizado existe & Não há evidência suficiente & Não foi observado \texttt{KnowledgeArtifact} funcional. \\
+\bottomrule
+\end{longtable}
+
+\section{Comandos de reprodução da baseline}
+
+\begin{lstlisting}
+cd ~/dev/cpp/SisTer
+
+git status
+cmake -S . -B build
+cmake --build build -j"$(nproc)"
+ctest --test-dir build --output-on-failure
+
+./scripts/app/stop.sh
+./scripts/run_all.sh --profile dev-core
+python3 scripts/prod01_readiness.py
+
+# Ensaio complementar ainda necessario para a proxima versao:
+./scripts/app/stop.sh
+./scripts/run_all.sh --profile dev-reference
+\end{lstlisting}
+
+\end{document}
