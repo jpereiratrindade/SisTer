@@ -12,16 +12,20 @@
       <div><span class="eyebrow">CENTRO DE ENGENHARIA</span><h1>O que estamos construindo</h1><p id="objective">Carregando o plano vigente…</p><p class="human-intro">Acompanhe o trabalho, os sinais que já temos e o próximo passo necessário.</p></div>
       <nav class="engineering-nav"><a href="/admin/maturity">Maturidade</a><a href="/">Voltar ao SisTer</a></nav>
     </header>
+    <nav class="engineering-tabs" aria-label="Visões do Centro de Engenharia">
+      <a class="active" href="#work">Plano e trabalho</a><a href="#process">Processo</a><a href="#curation">Curadoria</a><a href="#artifacts">Artefatos e evidências</a>
+    </nav>
     <section class="summary" aria-label="Resumo do plano">
       <article><span>Onde estamos</span><strong id="revision">—</strong></article>
       <article><span>Foco atual</span><strong id="current-action">—</strong></article>
       <article><span>O que vem agora</span><strong id="next-step">—</strong></article>
       <article><span>O que impede o avanço</span><strong id="blockers">—</strong></article>
     </section>
-    <section class="board-section"><div class="section-title"><div><span class="eyebrow">CAMINHO DO TRABALHO</span><h2>De uma ideia a algo que podemos usar</h2><p class="section-help">Cada cartão representa uma etapa do desenvolvimento. A posição mostra o estado reconhecido pelo plano.</p></div><span class="readonly">visão consultiva</span></div><div id="board" class="board"></div></section>
+    <section id="work" class="board-section"><div class="section-title"><div><span class="eyebrow">CAMINHO DO TRABALHO</span><h2>De uma ideia a algo que podemos usar</h2><p class="section-help">Cada cartão representa uma etapa do desenvolvimento. A posição mostra o estado reconhecido pelo plano.</p></div><span class="readonly">visão consultiva</span></div><div id="board" class="board"></div></section>
     <section id="details" class="details" hidden></section>
-    <section class="catalog-section"><div class="section-title"><div><span class="eyebrow">BASE DE TRABALHO</span><h2>Artefatos, testes e evidências</h2><p class="section-help">O trabalho dos engenheiros não vive apenas nos cartões. Aqui estão as bases que orientam, implementam e verificam o sistema.</p></div></div><div id="catalog" class="catalog"></div></section>
-    <section class="process-section"><div class="section-title"><div><span class="eyebrow">PROCESSO EM CONSTRUÇÃO</span><h2>Participação governada do sister_reference</h2><p class="section-help">O objetivo não é apenas acompanhar documentos: é fazer as funções acontecerem e observar seus efeitos.</p></div></div><div class="process-flow"><span>Propor</span><i>→</i><span>Avaliar</span><i>→</i><span>Decidir</span><i>→</i><span>Autorizar</span><i>→</i><span>Executar</span><i>→</i><span>Observar</span><i>→</i><span>Reavaliar</span></div></section>
+    <section id="curation" class="curation-section"><div class="section-title"><div><span class="eyebrow">CURADORIA TÉCNICA</span><h2>Revisar antes de avançar</h2><p class="section-help">O SisTer reúne sinais e recomenda; o engenheiro revisa as evidências e assume responsabilidade pelo estado observado.</p></div><span class="readonly">ação humana necessária</span></div><div id="curation-content" class="curation-content"></div></section>
+    <section id="artifacts" class="catalog-section"><div class="section-title"><div><span class="eyebrow">BASE DE TRABALHO</span><h2>Artefatos, testes e evidências</h2><p class="section-help">O trabalho dos engenheiros não vive apenas nos cartões. Aqui estão as bases que orientam, implementam e verificam o sistema.</p></div></div><div id="catalog" class="catalog"></div></section>
+    <section id="process" class="process-section"><div class="section-title"><div><span class="eyebrow">PROCESSO EM CONSTRUÇÃO</span><h2>Participação governada do sister_reference</h2><p class="section-help">O objetivo não é apenas acompanhar documentos: é fazer as funções acontecerem e observar seus efeitos.</p></div></div><div class="process-flow"><span>Propor</span><i>→</i><span>Avaliar</span><i>→</i><span>Decidir</span><i>→</i><span>Autorizar</span><i>→</i><span>Executar</span><i>→</i><span>Observar</span><i>→</i><span>Reavaliar</span></div></section>
   </main>
   <script src="./app.js"></script>
 </body>
