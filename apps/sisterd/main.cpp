@@ -1,5 +1,6 @@
 #include "auth.hpp"
 #include "db.hpp"
+#include "participation_service.hpp"
 #include "api/maturity_routes.hpp"
 #include "http/content_length.hpp"
 #include "runtime/connection_thread_pool.hpp"
@@ -125,11 +126,12 @@ struct ApiPayload {
 struct AppState {
     sisterd::AuthStore auth;
     sisterd::DbConn db;
+    sisterd::ParticipationService participation;
     std::mutex authMutex;
     std::mutex dbMutex;
 
     AppState(const std::filesystem::path& authFile, const std::string& databaseUrl)
-        : auth(authFile), db(databaseUrl) {}
+        : auth(authFile), db(databaseUrl), participation(db) {}
 };
 
 class UniqueFd {
@@ -1014,6 +1016,7 @@ std::optional<std::filesystem::path> resolveStaticPath(
     else if (routePath == "/login") routePath = "/login.html";
     else if (routePath == "/admin/users") routePath = "/admin.html";
     else if (routePath == "/admin/maturity") routePath = "/maturity/index.html";
+    else if (routePath == "/engineering" || routePath == "/engineering/") routePath = "/engineering/index.html";
 
     std::filesystem::path relative = routePath.substr(1);
     if (relative.empty() || relative.is_absolute()) return std::nullopt;
@@ -1046,6 +1049,9 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
     if (role == "admin") {
         return {
             "session.self.read",
+            "engineering.plan.read",
+            "participation.propose",
+            "participation.read",
             "identity.users.manage",
             "maturity.evidence.read",
             "subsystem.manifest.read",
@@ -1329,6 +1335,13 @@ constexpr std::string_view kFallbackDiagnostics = R"([
 ])";
 
 ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig&) {
+    if (path == "/api/v1/engineering/plan") {
+        std::ifstream input("engineering/planning/plan.json");
+        if (!input) return {false, true, "{}"};
+        std::ostringstream body;
+        body << input.rdbuf();
+        return {true, false, body.str()};
+    }
     if (path == "/api/health") {
         std::lock_guard lock(state.dbMutex);
         const std::string dbStatus = state.db.connected() ? "connected" : "not_connected";
@@ -1608,6 +1621,56 @@ void handleClient(
     {
         std::lock_guard lock(state.authMutex);
         actor = state.auth.userForToken(sessionToken);
+    }
+
+    // --- Governed participation ---
+    if (request.path == "/api/v1/participations" ||
+        (request.path.starts_with("/api/v1/participations/") && request.method == "GET")) {
+        const bool proposing = request.method == "POST" && request.path == "/api/v1/participations";
+        const auto capability = proposing ? "participation.propose" : "participation.read";
+        if (!authorizeOrReject(clientFd, actor, capability, "participation",
+                "governed_participation", request, config, requestId, peer, isHead, requestStart)) return;
+        if (proposing) {
+            std::lock_guard lock(state.dbMutex);
+            const auto field = [&](std::string_view name) -> std::string {
+                const std::string marker = "\"" + std::string(name) + "\"";
+                const auto at = request.body.find(marker);
+                if (at == std::string::npos) return {};
+                const auto colon = request.body.find(':', at + marker.size());
+                const auto first = request.body.find('"', colon + 1);
+                const auto last = request.body.find('"', first + 1);
+                return colon == std::string::npos || first == std::string::npos || last == std::string::npos
+                    ? std::string() : request.body.substr(first + 1, last - first - 1);
+            };
+            const std::optional<sisterd::AuthenticatedPrincipal> principal = actor
+                ? std::optional<sisterd::AuthenticatedPrincipal>(sisterd::AuthenticatedPrincipal{actor->id, "AuthStore"})
+                : std::nullopt;
+            const auto result = state.participation.propose(
+                principal ? &*principal : nullptr,
+                request.body, field("participation_id"), field("participant_system_id"),
+                field("contract_version"), field("contract_digest"), field("origin_commit"));
+            if (std::holds_alternative<sisterd::ParticipationServiceError>(result)) {
+                const auto& error = std::get<sisterd::ParticipationServiceError>(result);
+                sendResponse(clientFd, jsonError(error.status, error.status == 503 ? "Service Unavailable" : "Bad Request", error.detail), config, requestId, isHead);
+                return;
+            }
+            sendResponse(clientFd, HttpResponse{201, "Created", std::get<std::string>(result), "application/json; charset=utf-8", {}}, config, requestId, isHead);
+            return;
+        }
+        const auto id = request.path.substr(std::string("/api/v1/participations/").size());
+        if (id.empty() || id.find('/') != std::string::npos) {
+            sendResponse(clientFd, jsonError(404, "Not Found", "Participação não encontrada."), config, requestId, isHead);
+            return;
+        }
+        std::lock_guard lock(state.dbMutex);
+        const auto result = state.participation.show(id);
+        if (std::holds_alternative<sisterd::ParticipationServiceError>(result)) {
+            const auto& error = std::get<sisterd::ParticipationServiceError>(result);
+            sendResponse(clientFd, jsonError(error.status, error.status == 503 ? "Service Unavailable" : "Not Found", error.detail), config, requestId, isHead);
+        } else {
+            sendResponse(clientFd, HttpResponse{200, "OK", std::get<std::string>(result), "application/json; charset=utf-8", {}}, config, requestId, isHead);
+        }
+        return;
     }
 
     // --- Controlled reference subsystem: normative integration target ---
@@ -1926,6 +1989,7 @@ void handleClient(
             std::string_view resource = "sister-control-plane";
             std::string_view purpose = "governed_api_access";
             if (request.path == "/api/systems") capability = "subsystem.manifest.read";
+            else if (request.path == "/api/v1/engineering/plan") capability = "engineering.plan.read";
             else if (request.path == "/api/contracts") capability = "sister.governance.read";
             else if (request.path == "/api/evidence") capability = "sister.evidence.read";
             else if (request.path == "/api/diagnostics") capability = "sister.diagnostics.read";

@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Centro de Engenharia · SisTer</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body>
+  <main class="engineering-shell">
+    <header class="engineering-header">
+      <div><span class="eyebrow">CENTRO DE ENGENHARIA</span><h1>Plano de Desenvolvimento</h1><p id="objective">Carregando o plano vigente…</p></div>
+      <nav class="engineering-nav"><a href="/admin/maturity">Maturidade</a><a href="/">Voltar ao SisTer</a></nav>
+    </header>
+    <section class="summary" aria-label="Resumo do plano">
+      <article><span>Linha de base</span><strong id="revision">—</strong></article>
+      <article><span>Ação corrente</span><strong id="current-action">—</strong></article>
+      <article><span>Próximo passo</span><strong id="next-step">—</strong></article>
+      <article><span>Bloqueadores</span><strong id="blockers">—</strong></article>
+    </section>
+    <section class="board-section"><div class="section-title"><div><span class="eyebrow">TRABALHO PLANEJADO</span><h2>Kanban consultivo</h2></div><span class="readonly">somente leitura</span></div><div id="board" class="board"></div></section>
+    <section id="details" class="details" hidden></section>
+  </main>
+  <script src="./app.js"></script>
+</body>
+</html>

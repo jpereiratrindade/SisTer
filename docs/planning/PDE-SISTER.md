@@ -17,6 +17,10 @@ em `IDEA`; nenhum estado de release ou tag é alterado por este incremento.
 `sister_reference`, antes de reintegrar subsistemas reais ou iniciar
 contextualização científica.
 
+O Centro de Engenharia é uma projeção consultiva do plano. A reflexividade
+principal do MVP-01 permanece o ciclo operacional de participação:
+execução, observação, evidência, avaliação, recomendação e decisão.
+
 ## Primeira ação governada
 
 `PDE-MVP01-01` — persistir a candidatura e o contrato de participação.
@@ -34,6 +38,8 @@ com versão, digest, owner, autoridades, capacidades, contribuições e estado
 - decisão humana vinculada à ação;
 - execução do work package no commit avaliado;
 - relatório de teste reproduzível.
+- endpoint HTTP autenticado preliminar e consulta pelo `sisterd`;
+- confirmação de que o armazenamento local experimental não é fonte de verdade.
 
 ### Estado inicial
 

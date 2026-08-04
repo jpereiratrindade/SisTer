@@ -33,12 +33,14 @@ def main():
             "authority": "mvp01.plan.decide",
             "reason": "A persistência é a próxima lacuna crítica do MVP-01.",
             "assessment_id": "PLAN-ASSESS-MVP01-01",
-            "baseline": "db0edb5",
+            "origin_baseline": "db0edb5",
+            "decision_commit": "431e6d5f6d20a863ae478a8f1e0a394fd1535d47c",
             "valid_until": "2026-12-31T23:59:59Z",
             "plan_revision": "PLAN-REV-INITIAL",
             "decided_at": "2026-08-03T00:00:00Z"
         }), encoding="utf-8")
         env = {**os.environ, "SISTER_PLAN_PATH": str(plan_copy)}
+        subprocess.run([sys.executable, str(ROOT / "scripts/sge"), "plan", "assess", "PDE-MVP01-01", "--persist"], cwd=ROOT, env=env, check=True)
         subprocess.run([sys.executable, str(ROOT / "scripts/sge"), "plan", "decision", "record", str(decision_path)], cwd=ROOT, env=env, check=True)
         subprocess.run([sys.executable, str(ROOT / "scripts/sge"), "plan", "transition", "PDE-MVP01-01", "PRIORITIZED", "--decision-id", "PLAN-DECISION-MVP01-01"], cwd=ROOT, env=env, check=True)
         result = subprocess.run([sys.executable, str(ROOT / "scripts/sge"), "plan", "transition", "PDE-MVP01-01", "IN_PROGRESS", "--decision-id", "PLAN-DECISION-MVP01-01"], cwd=ROOT, env=env)
