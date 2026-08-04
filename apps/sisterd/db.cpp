@@ -163,6 +163,44 @@ std::optional<std::string> DbConn::queryParticipation(const std::string& partici
     return response;
 }
 
+std::optional<std::string> DbConn::registerParticipationAssessment(
+    const std::string& assessmentId, const std::string& participationId,
+    const std::string& contractDigest, const std::string& evaluatedCommit,
+    const std::string& assessmentJson) {
+    if (!ensureConnected()) return std::nullopt;
+    const char* values[] = {assessmentId.c_str(), participationId.c_str(), contractDigest.c_str(),
+        evaluatedCommit.c_str(), assessmentJson.c_str()};
+    PGresult* result = PQexecParams(conn_,
+        "INSERT INTO sister_participation_assessments "
+        "(assessment_id, participation_id, contract_digest, evaluated_commit, result, gate_effect, assessment) "
+        "VALUES ($1, $2, $3, $4, 'PASS', 'none', $5::jsonb) "
+        "RETURNING row_to_json(sister_participation_assessments)", 5, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        std::cerr << "sisterd: participation assessment insert failed: " << PQerrorMessage(conn_) << '\n';
+        PQclear(result);
+        return std::nullopt;
+    }
+    std::string response = PQgetvalue(result, 0, 0);
+    PQclear(result);
+    return response;
+}
+
+std::optional<std::string> DbConn::queryParticipationAssessments(const std::string& participationId) {
+    if (!ensureConnected()) return std::nullopt;
+    const char* values[] = {participationId.c_str()};
+    PGresult* result = PQexecParams(conn_,
+        "SELECT COALESCE(jsonb_agg(t ORDER BY t.created_at), '[]'::jsonb) FROM ("
+        "SELECT assessment_id, participation_id, contract_digest, evaluated_commit, result, gate_effect, assessment, created_at "
+        "FROM sister_participation_assessments WHERE participation_id = $1) t", 1, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        PQclear(result);
+        return std::nullopt;
+    }
+    std::string response = PQgetvalue(result, 0, 0);
+    PQclear(result);
+    return response;
+}
+
 #else
 
 // ─── Stub sem libpq — compila sem banco disponível ───────────────────────────
@@ -187,6 +225,8 @@ std::optional<std::string> DbConn::queryEvidence()    { return std::nullopt; }
 std::optional<std::string> DbConn::queryDiagnostics() { return std::nullopt; }
 std::optional<std::string> DbConn::registerParticipationProposal(const ParticipationProposal&) { return std::nullopt; }
 std::optional<std::string> DbConn::queryParticipation(const std::string&) { return std::nullopt; }
+std::optional<std::string> DbConn::registerParticipationAssessment(const std::string&, const std::string&, const std::string&, const std::string&, const std::string&) { return std::nullopt; }
+std::optional<std::string> DbConn::queryParticipationAssessments(const std::string&) { return std::nullopt; }
 
 #endif
 

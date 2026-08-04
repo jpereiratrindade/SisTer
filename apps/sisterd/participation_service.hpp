@@ -31,6 +31,10 @@ public:
         std::string contractDigest,
         std::string sourceCommit);
     std::variant<std::string, ParticipationServiceError> show(const std::string& participationId);
+    std::variant<std::string, ParticipationServiceError> recordTechnicalAssessment(
+        const std::string& assessmentId, const std::string& participationId,
+        const std::string& contractDigest, const std::string& evaluatedCommit,
+        const std::string& assessmentJson);
 
 private:
     DbConn& db_;

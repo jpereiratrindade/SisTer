@@ -1335,6 +1335,23 @@ constexpr std::string_view kFallbackDiagnostics = R"([
 ])";
 
 ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig&) {
+    constexpr std::string_view artifactPrefix = "/api/v1/engineering/artifacts/";
+    if (path.starts_with(artifactPrefix)) {
+        const auto relative = path.substr(artifactPrefix.size());
+        const bool allowed = relative.starts_with("docs/") || relative.starts_with("contracts/") ||
+            relative.starts_with("engineering/") || relative.starts_with("apps/") ||
+            relative.starts_with("scripts/") || relative.starts_with("tests/") || relative.starts_with("storage/");
+        if (!allowed || relative.find("..") != std::string_view::npos) return {false, false, "{}"};
+        std::error_code error;
+        const auto file = std::filesystem::weakly_canonical(std::filesystem::path(relative), error);
+        if (error || !std::filesystem::is_regular_file(file, error) || error || std::filesystem::file_size(file, error) > 1024 * 1024) {
+            return {false, false, "{}"};
+        }
+        std::ifstream input(file);
+        std::ostringstream content;
+        content << input.rdbuf();
+        return {true, false, "{\"path\":\"" + jsonEscape(relative) + "\",\"content\":\"" + jsonEscape(content.str()) + "\"}"};
+    }
     if (path == "/api/v1/engineering/plan") {
         std::ifstream input("engineering/planning/plan.json");
         if (!input) return {false, true, "{}"};
@@ -1989,7 +2006,7 @@ void handleClient(
             std::string_view resource = "sister-control-plane";
             std::string_view purpose = "governed_api_access";
             if (request.path == "/api/systems") capability = "subsystem.manifest.read";
-            else if (request.path == "/api/v1/engineering/plan") capability = "engineering.plan.read";
+            else if (request.path == "/api/v1/engineering/plan" || request.path.starts_with("/api/v1/engineering/artifacts/")) capability = "engineering.plan.read";
             else if (request.path == "/api/contracts") capability = "sister.governance.read";
             else if (request.path == "/api/evidence") capability = "sister.evidence.read";
             else if (request.path == "/api/diagnostics") capability = "sister.diagnostics.read";

@@ -42,6 +42,11 @@ public:
     std::optional<std::string> queryDiagnostics();
     std::optional<std::string> registerParticipationProposal(const ParticipationProposal& proposal);
     std::optional<std::string> queryParticipation(const std::string& participationId);
+    std::optional<std::string> registerParticipationAssessment(
+        const std::string& assessmentId, const std::string& participationId,
+        const std::string& contractDigest, const std::string& evaluatedCommit,
+        const std::string& assessmentJson);
+    std::optional<std::string> queryParticipationAssessments(const std::string& participationId);
 
 private:
     std::string url_;
