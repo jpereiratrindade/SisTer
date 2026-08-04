@@ -10,6 +10,17 @@ namespace sisterd {
 
 class DbConn {
 public:
+    struct ParticipationProposal {
+        std::string participation_id;
+        std::string participant_system_id;
+        std::string contract_version;
+        std::string contract_digest;
+        std::string contract_json;
+        std::string proposed_by;
+        std::string authentication_source;
+        std::string source_commit;
+    };
+
     // Constrói sem conectar. Chame ensureConnected() para tentar a conexão.
     explicit DbConn(std::string url);
     ~DbConn();
@@ -29,6 +40,8 @@ public:
     std::optional<std::string> queryContracts();
     std::optional<std::string> queryEvidence();
     std::optional<std::string> queryDiagnostics();
+    std::optional<std::string> registerParticipationProposal(const ParticipationProposal& proposal);
+    std::optional<std::string> queryParticipation(const std::string& participationId);
 
 private:
     std::string url_;

@@ -3,7 +3,7 @@
   "$id": "https://sister.local/schemas/engineering/planning/1.0.0/planning-decision.schema.json",
   "title": "SisTer PlanningDecision",
   "type": "object",
-  "required": ["schema", "decision_id", "action_id", "decision", "authorized_transition", "actor", "authority", "reason", "assessment_id", "baseline", "valid_until", "plan_revision", "decided_at"],
+  "required": ["schema", "decision_id", "action_id", "decision", "authorized_transition", "actor", "authority", "reason", "assessment_id", "origin_baseline", "decision_commit", "valid_until", "plan_revision", "decided_at"],
   "properties": {
     "schema": {"const": "sister.planning-decision/1.0.0"},
     "decision_id": {"type": "string", "pattern": "^PLAN-DECISION-[A-Z0-9-]+$"},
@@ -14,7 +14,8 @@
     "authority": {"type": "string", "minLength": 1},
     "reason": {"type": "string", "minLength": 1},
     "assessment_id": {"type": "string", "pattern": "^PLAN-ASSESS-[A-Z0-9-]+$"},
-    "baseline": {"type": "string", "minLength": 1},
+    "origin_baseline": {"type": "string", "minLength": 1},
+    "decision_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
     "valid_until": {"type": "string", "format": "date-time"},
     "plan_revision": {"type": "string", "pattern": "^PLAN-REV-[A-Z0-9-]+$"},
     "decided_at": {"type": "string", "format": "date-time"}

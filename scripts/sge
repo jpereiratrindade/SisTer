@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import argparse
+from datetime import datetime, timezone
 import json
 import os
 import subprocess
@@ -173,6 +174,24 @@ def emit_plan(value, as_json):
             print(f"{identifier} registrado")
 
 
+def explain_action(plan, action):
+    gap = next((g for g in plan.get("gaps", []) if g["gap_id"] == action["gap_id"]), None)
+    goal = next((g for g in [plan.get("goal")] if g and g["goal_id"] == action["goal_id"]), None)
+    assessments = [a for a in plan.get("assessments", []) if a.get("action_id") == action["action_id"]]
+    decisions = [d for d in plan.get("decisions", []) if d.get("action_id") == action["action_id"]]
+    revisions = [r for r in plan.get("revisions", []) if r.get("revision_id") == plan.get("revision") or r.get("revision_id") == "PLAN-REV-INITIAL"]
+    return {
+        "plan_id": plan["plan_id"], "revision": plan["revision"],
+        "goal": goal, "gap": gap, "action": action,
+        "assessments": assessments, "decisions": decisions,
+        "revisions": revisions, "current_state": action["state"]
+    }
+
+
+def parse_timestamp(value):
+    return datetime.fromisoformat(value.replace("Z", "+00:00"))
+
+
 def cmd_plan(args):
     plan = load_plan()
     if plan is None:
@@ -183,6 +202,7 @@ def cmd_plan(args):
             print(f"ação não encontrada: {args.action_id}", file=sys.stderr)
             return 1
         value = {
+            "schema": "sister.priority-assessment/1.0.0",
             "assessment_id": f"PLAN-ASSESS-{action['action_id'].replace('PDE-', '')}",
             "action_id": action["action_id"],
             "evaluator": "sge-planning/1.0.0",
@@ -204,13 +224,32 @@ def cmd_plan(args):
         except (OSError, json.JSONDecodeError) as exc:
             print(f"decisão inválida: {exc}", file=sys.stderr)
             return 2
-        required = ("decision_id", "action_id", "decision", "authorized_transition", "actor", "authority", "reason", "assessment_id", "baseline", "valid_until", "plan_revision", "decided_at")
+        required = ("schema", "decision_id", "action_id", "decision", "authorized_transition", "actor", "authority", "reason", "assessment_id", "origin_baseline", "decision_commit", "valid_until", "plan_revision", "decided_at")
         if any(not decision.get(field) for field in required) or decision["decision"] not in {"approve", "reject", "suspend", "supersede"}:
             print("decisão inválida: campos obrigatórios ou decisão inválida", file=sys.stderr)
             return 2
         if not any(a["action_id"] == decision["action_id"] for a in plan.get("actions", [])):
             print("decisão inválida: ação não encontrada", file=sys.stderr)
             return 1
+        if any(d.get("decision_id") == decision["decision_id"] for d in plan.get("decisions", [])):
+            print("decisão inválida: identificador já registrado", file=sys.stderr)
+            return 1
+        assessment = next((a for a in plan.get("assessments", []) if a.get("assessment_id") == decision["assessment_id"] and a.get("action_id") == decision["action_id"]), None)
+        if assessment is None:
+            print("decisão inválida: avaliação da mesma ação não encontrada", file=sys.stderr)
+            return 1
+        if decision["plan_revision"] != plan.get("revision"):
+            print("decisão inválida: linha de base do plano desatualizada", file=sys.stderr)
+            return 1
+        if plan.get("origin_baseline") and decision["origin_baseline"] != plan["origin_baseline"]:
+            print("decisão inválida: baseline incompatível com o plano", file=sys.stderr)
+            return 1
+        try:
+            if parse_timestamp(decision["valid_until"]) <= parse_timestamp(decision["decided_at"]):
+                raise ValueError
+        except (ValueError, TypeError):
+            print("decisão inválida: validade deve ser posterior ao instante da decisão", file=sys.stderr)
+            return 2
         decision["used"] = False
         plan.setdefault("decisions", []).append(decision)
         plan_path().write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -221,9 +260,20 @@ def cmd_plan(args):
         if action is None:
             print(f"ação não encontrada: {args.action_id}", file=sys.stderr)
             return 1
-        decision = next((d for d in plan.get("decisions", []) if d["decision_id"] == args.decision_id and d["action_id"] == args.action_id and d["decision"] == "approve" and d.get("authorized_transition") == f"{action['state']}->{args.state}" and not d.get("used", False)), None)
+        requested_transition = f"{action['state']}->{args.state}"
+        decision = next((d for d in plan.get("decisions", []) if d.get("decision_id") == args.decision_id and d.get("action_id") == args.action_id and d.get("decision") == "approve" and d.get("authorized_transition") == requested_transition and not d.get("used", False)), None)
         if decision is None:
             print("transição bloqueada: decisão humana aprovada e vigente não encontrada", file=sys.stderr)
+            return 1
+        if decision.get("plan_revision") != plan.get("revision"):
+            print("transição bloqueada: decisão baseada em revisão obsoleta", file=sys.stderr)
+            return 1
+        try:
+            if parse_timestamp(decision["valid_until"]) <= datetime.now(timezone.utc):
+                print("transição bloqueada: decisão expirada", file=sys.stderr)
+                return 1
+        except (KeyError, ValueError, TypeError):
+            print("transição bloqueada: validade da decisão inválida", file=sys.stderr)
             return 1
         if decision:
             decision["used"] = True
@@ -253,6 +303,9 @@ def cmd_plan(args):
         if value is None:
             print(f"ação não encontrada: {args.action_id}", file=sys.stderr)
             return 1
+        if args.command == "explain" and args.json:
+            emit_plan(explain_action(plan, value), True)
+            return 0
         if args.command == "explain" and not args.json:
             gap = next(g for g in plan["gaps"] if g["gap_id"] == value["gap_id"])
             print(f"Ação {value['action_id']}: {value['title']}")
@@ -264,12 +317,14 @@ def cmd_plan(args):
             print("Critérios:")
             for criterion in value["acceptance_criteria"]:
                 print(f"- {criterion}")
-            print("Decisões registradas: nenhuma; ação ainda aguarda avaliação e decisão humana." if not plan.get('decisions') else "Decisões registradas:")
-            if plan.get("assessments") or plan.get("decisions"):
-                print(f"Avaliações: {len(plan.get('assessments', []))}")
-                print(f"Decisões: {len(plan.get('decisions', []))}")
-                for decision in plan.get("decisions", []):
-                    print(f"Decisão {decision['decision_id']}: {decision['authorized_transition']} por {decision['actor']} ({'usada' if decision.get('used') else 'vigente'})")
+            chain = explain_action(plan, value)
+            for assessment in chain["assessments"]:
+                print(f"Avaliação {assessment['assessment_id']}: recomendação {assessment['recommendation']}")
+            for decision in chain["decisions"]:
+                print(f"Decisão {decision['decision_id']}: {decision['authorized_transition']} por {decision['actor']} ({'usada' if decision.get('used') else 'vigente'})")
+            for revision in chain["revisions"]:
+                print(f"Revisão: {revision['revision_id']} — {revision['reason']}")
+            print(f"Estado atual: {value['state']}")
             return 0
     emit_plan(value, args.json)
     return 0

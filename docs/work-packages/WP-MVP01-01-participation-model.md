@@ -7,7 +7,8 @@ persistência ou efeito operacional.
 
 ## Estado
 
-`TESTADO_EM_MEMORIA`.
+`PERSISTENCIA_ARQUITETURAL_PRELIMINAR` — contrato e serviço persistente
+implementados; aceite funcional ponta a ponta ainda pendente.
 
 ## Entregas
 
@@ -21,6 +22,8 @@ persistência ou efeito operacional.
 - schemas 1.0.0 e exemplo canônico da referência;
 - exemplos negativos para impedir autoautorização pelo contrato ou assessment;
 - validação de schema inteiramente local, sem resolução de rede.
+- persistência PostgreSQL preliminar via `sisterd` e `DbConn`;
+- endpoints autenticados preliminares e cliente `sisterctl` em consolidação.
 
 ## Invariantes
 
@@ -32,8 +35,8 @@ persistência ou efeito operacional.
 
 ## Fora do escopo
 
-Motor de assessment, decisão humana, transições após `proposed`, persistência,
-HTTP, CLI e execução de capacidade.
+Motor de assessment, decisão humana, transições após `proposed` e execução de
+capacidade permanecem fora do aceite desta fatia.
 
 ## Gate
 

@@ -2,6 +2,7 @@
   "schema": "sister.plan/1.0.0",
   "plan_id": "PDE-SISTER-1.0",
   "revision": "PLAN-REV-INITIAL",
+  "origin_baseline": "db0edb5",
   "goal": {
     "schema": "sister.development-goal/1.0.0",
     "goal_id": "GOAL-MVP01",

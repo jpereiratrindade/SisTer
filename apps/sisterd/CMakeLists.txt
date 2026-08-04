@@ -6,6 +6,7 @@ add_executable(
     main.cpp
     auth.cpp
     db.cpp
+    participation_service.cpp
     api/maturity_routes.cpp
     http/content_length.cpp
     runtime/connection_thread_pool.cpp

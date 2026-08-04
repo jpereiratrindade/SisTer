@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #ifdef SISTER_HAVE_LIBPQ
 #include <libpq-fe.h>
@@ -120,6 +121,48 @@ std::optional<std::string> DbConn::queryDiagnostics() {
         ") t");
 }
 
+std::optional<std::string> DbConn::registerParticipationProposal(const ParticipationProposal& proposal) {
+    if (!ensureConnected()) return std::nullopt;
+    const char* values[] = {proposal.participation_id.c_str(), proposal.participant_system_id.c_str(),
+        proposal.contract_version.c_str(), proposal.contract_digest.c_str(), proposal.contract_json.c_str(),
+        proposal.proposed_by.c_str(), proposal.authentication_source.c_str(),
+        proposal.source_commit.empty() ? nullptr : proposal.source_commit.c_str()};
+    PGresult* result = PQexecParams(conn_,
+        "INSERT INTO sister_participation_contracts "
+        "(participation_id, participant_system_id, contract_version, contract_digest, state, contract, proposed_by, authentication_source, source_commit) "
+        "VALUES ($1, $2, $3, $4, 'proposed', $5::jsonb, $6, $7, $8) "
+        "RETURNING row_to_json(sister_participation_contracts)", 8, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        std::cerr << "sisterd: participation insert failed: " << PQerrorMessage(conn_) << '\n';
+        PQclear(result);
+        return std::nullopt;
+    }
+    std::string response = PQgetvalue(result, 0, 0);
+    PQclear(result);
+    return response;
+}
+
+std::optional<std::string> DbConn::queryParticipation(const std::string& participationId) {
+    if (!ensureConnected()) return std::nullopt;
+    const char* values[] = {participationId.c_str()};
+    PGresult* result = PQexecParams(conn_,
+        "SELECT row_to_json(t) FROM (SELECT participation_id, participant_system_id, contract_version, "
+        "contract_digest, state, contract, proposed_by, authentication_source, source_commit, created_at, updated_at "
+        "FROM sister_participation_contracts WHERE participation_id = $1) t", 1, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+        std::cerr << "sisterd: participation query failed: " << PQerrorMessage(conn_) << '\n';
+        PQclear(result);
+        return std::nullopt;
+    }
+    if (PQntuples(result) == 0) {
+        PQclear(result);
+        return std::string();
+    }
+    std::string response = PQgetvalue(result, 0, 0);
+    PQclear(result);
+    return response;
+}
+
 #else
 
 // ─── Stub sem libpq — compila sem banco disponível ───────────────────────────
@@ -142,6 +185,8 @@ std::optional<std::string> DbConn::querySystems()     { return std::nullopt; }
 std::optional<std::string> DbConn::queryContracts()   { return std::nullopt; }
 std::optional<std::string> DbConn::queryEvidence()    { return std::nullopt; }
 std::optional<std::string> DbConn::queryDiagnostics() { return std::nullopt; }
+std::optional<std::string> DbConn::registerParticipationProposal(const ParticipationProposal&) { return std::nullopt; }
+std::optional<std::string> DbConn::queryParticipation(const std::string&) { return std::nullopt; }
 
 #endif
 

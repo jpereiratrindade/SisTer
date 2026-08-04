@@ -28,6 +28,8 @@ void usage() {
               << "  sisterctl validate-manifest <manifest.json>\n"
               << "  sisterctl db-check\n"
               << "  sisterctl db-migrate [migration.sql]\n"
+              << "  sisterctl participation propose <contract.json> [--json]\n"
+              << "  sisterctl participation show <participation_id> [--json]\n"
               << "  sisterctl auth bootstrap-admin <name> <email>\n"
               << "  sisterctl auth-import-user <uuid> <name> <email> <role>\n";
 }
@@ -39,6 +41,12 @@ int runScript(const std::string& command) {
         return 1;
     }
     return 0;
+}
+
+std::string shellQuote(const std::string& value);
+
+int runParticipation(const std::string& operation, const std::string& value, bool asJson) {
+    return runScript("python3 ./scripts/participation_client.py " + shellQuote(operation) + " " + shellQuote(value) + (asJson ? " --json" : ""));
 }
 
 std::string shellQuote(const std::string& value) {
@@ -94,6 +102,13 @@ std::string readHidden(const std::string& prompt) {
 } // namespace
 
 int main(int argc, char** argv) {
+    if (argc >= 2 && std::string(argv[1]) == "participation") {
+        if ((argc != 4 && argc != 5) || (std::string(argv[2]) != "propose" && std::string(argv[2]) != "show") || (argc == 5 && std::string(argv[4]) != "--json")) {
+            usage();
+            return 2;
+        }
+        return runParticipation(argv[2], argv[3], argc == 5);
+    }
     if (argc >= 3 && std::string(argv[1]) == "auth" &&
         std::string(argv[2]) == "bootstrap-admin") {
         if (argc != 5) {
