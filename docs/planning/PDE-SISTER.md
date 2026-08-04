@@ -51,5 +51,14 @@ SGE.
 Qualquer mudança de EFE, RAF, contrato, baseline ou commit deve provocar nova
 avaliação da ação e pode invalidar decisões ou evidências anteriores.
 
-O PDE é um plano versionado. O Kanban, quando implementado, será somente uma
-projeção dos objetos persistidos.
+O PDE é um plano versionado e consultivo. O Centro de Engenharia e o Kanban são
+projeções dos objetos persistidos; não são o objetivo funcional do MVP-01. O
+objetivo é materializar o primeiro ciclo reflexivo operacional do SisTer:
+
+```text
+participação → execução → observação → evidência → avaliação
+→ recomendação → decisão → nova condição de execução
+```
+
+O plano registra o caminho e torna o avanço visível, mas a conclusão do trabalho
+depende de evidência funcional do ciclo, não apenas da transição de um cartão.

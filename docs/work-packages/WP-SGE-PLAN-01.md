@@ -7,9 +7,13 @@ release nem promoção de maturidade.
 
 ## Objetivo
 
-Materializar o primeiro ciclo do PDE-SisTer para o `GOAL-MVP01`, demonstrando
+Materializar a infraestrutura consultiva do PDE-SisTer para o `GOAL-MVP01`, demonstrando
 que uma recomendação de prioridade permanece separada da decisão humana e da
 transição de estado.
+
+Este WP é auxiliar. O ciclo funcional principal do MVP-01 é a reflexividade
+operacional da participação: execução, observação, evidência, avaliação,
+recomendação e decisão.
 
 ## Entregas
 
@@ -42,5 +46,6 @@ python3 scripts/sge plan explain PDE-MVP01-01
 
 ## Fora do escopo
 
-Kanban, API web, persistência PostgreSQL, autorização de produção e execução
-automática de work packages.
+Kanban editável, API web de decisão, autorização de produção e execução
+automática de work packages. A interface web consultiva não substitui o ciclo
+operacional da participação.
