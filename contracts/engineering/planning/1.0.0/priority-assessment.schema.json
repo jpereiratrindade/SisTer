@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sister.local/schemas/engineering/planning/1.0.0/priority-assessment.schema.json",
+  "title": "SisTer PriorityAssessment",
+  "type": "object",
+  "required": ["schema", "assessment_id", "action_id", "evaluator", "recommendation", "evidence", "assessed_at"],
+  "properties": {
+    "schema": {"const": "sister.priority-assessment/1.0.0"},
+    "assessment_id": {"type": "string", "pattern": "^PLAN-ASSESS-[A-Z0-9-]+$"},
+    "action_id": {"type": "string", "pattern": "^PDE-[A-Z0-9-]+$"},
+    "evaluator": {"type": "string", "minLength": 1},
+    "recommendation": {"enum": ["P0", "P1", "P2", "P3", "DEFER", "BLOCKED"]},
+    "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "assessed_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,23 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sister.local/schemas/engineering/planning/1.0.0/planning-decision.schema.json",
+  "title": "SisTer PlanningDecision",
+  "type": "object",
+  "required": ["schema", "decision_id", "action_id", "decision", "authorized_transition", "actor", "authority", "reason", "assessment_id", "baseline", "valid_until", "plan_revision", "decided_at"],
+  "properties": {
+    "schema": {"const": "sister.planning-decision/1.0.0"},
+    "decision_id": {"type": "string", "pattern": "^PLAN-DECISION-[A-Z0-9-]+$"},
+    "action_id": {"type": "string", "pattern": "^PDE-[A-Z0-9-]+$"},
+    "decision": {"enum": ["approve", "reject", "suspend", "supersede"]},
+    "authorized_transition": {"type": "string", "pattern": "^[A-Z]+->[A-Z]+$"},
+    "actor": {"type": "string", "minLength": 1},
+    "authority": {"type": "string", "minLength": 1},
+    "reason": {"type": "string", "minLength": 1},
+    "assessment_id": {"type": "string", "pattern": "^PLAN-ASSESS-[A-Z0-9-]+$"},
+    "baseline": {"type": "string", "minLength": 1},
+    "valid_until": {"type": "string", "format": "date-time"},
+    "plan_revision": {"type": "string", "pattern": "^PLAN-REV-[A-Z0-9-]+$"},
+    "decided_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

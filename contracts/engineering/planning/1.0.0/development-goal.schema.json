@@ -1,0 +1,16 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sister.local/schemas/engineering/planning/1.0.0/development-goal.schema.json",
+  "title": "SisTer DevelopmentGoal",
+  "type": "object",
+  "required": ["schema", "goal_id", "title", "objective", "source_reference", "status"],
+  "properties": {
+    "schema": {"const": "sister.development-goal/1.0.0"},
+    "goal_id": {"type": "string", "pattern": "^GOAL-[A-Z0-9-]+$"},
+    "title": {"type": "string", "minLength": 1},
+    "objective": {"type": "string", "minLength": 1},
+    "source_reference": {"type": "string", "minLength": 1},
+    "status": {"enum": ["proposed", "active", "achieved", "superseded"]}
+  },
+  "additionalProperties": false
+}

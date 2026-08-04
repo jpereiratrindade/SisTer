@@ -1,0 +1,17 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://sister.local/schemas/engineering/planning/1.0.0/plan-revision.schema.json",
+  "title": "SisTer PlanRevision",
+  "type": "object",
+  "required": ["schema", "revision_id", "previous_revision", "reason", "actor", "evidence", "created_at"],
+  "properties": {
+    "schema": {"const": "sister.plan-revision/1.0.0"},
+    "revision_id": {"type": "string", "pattern": "^PLAN-REV-[A-Z0-9-]+$"},
+    "previous_revision": {"type": ["string", "null"], "pattern": "^PLAN-REV-[A-Z0-9-]+$"},
+    "reason": {"type": "string", "minLength": 1},
+    "actor": {"type": "string", "minLength": 1},
+    "evidence": {"type": "array", "items": {"type": "string", "minLength": 1}, "minItems": 1},
+    "created_at": {"type": "string", "format": "date-time"}
+  },
+  "additionalProperties": false
+}

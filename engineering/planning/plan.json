@@ -1,0 +1,46 @@
+{
+  "schema": "sister.plan/1.0.0",
+  "plan_id": "PDE-SISTER-1.0",
+  "revision": "PLAN-REV-INITIAL",
+  "goal": {
+    "schema": "sister.development-goal/1.0.0",
+    "goal_id": "GOAL-MVP01",
+    "title": "Participação governada e reflexiva",
+    "objective": "Fechar o ciclo com o sister_reference antes de reintegrar subsistemas reais.",
+    "source_reference": "EFE-SisTer/1.7; RAF-SisTer/1.0",
+    "status": "active"
+  },
+  "gaps": [{
+    "schema": "sister.development-gap/1.0.0",
+    "gap_id": "GAP-MVP01-PARTICIPATION-PERSISTENCE",
+    "goal_id": "GOAL-MVP01",
+    "description": "O contrato de participação existe em memória, mas ainda não possui persistência operacional.",
+    "observed_reference": "WP-MVP01-01: TESTADO_EM_MEMORIA",
+    "expected_reference": "Contrato registrável, consultável e reconstruível por interface governada.",
+    "status": "open"
+  }],
+  "actions": [{
+    "schema": "sister.development-action/1.0.0",
+    "action_id": "PDE-MVP01-01",
+    "goal_id": "GOAL-MVP01",
+    "gap_id": "GAP-MVP01-PARTICIPATION-PERSISTENCE",
+    "title": "Persistir candidatura e contrato de participação",
+    "state": "IDEA",
+    "acceptance_criteria": [
+      "Contrato da referência registrado com versão e digest.",
+      "Estado proposed reconstruível após reinício.",
+      "Operação disponível sem edição direta da persistência."
+    ],
+    "evidence_requirements": ["schema válido", "teste reproduzível", "decisão humana"]
+  }],
+  "assessments": [],
+  "decisions": [],
+  "revisions": [{
+    "revision_id": "PLAN-REV-INITIAL",
+    "previous_revision": null,
+    "reason": "Publicação inicial do PDE-SisTer/1.0.",
+    "actor": "coordination.mvp01",
+    "evidence": ["docs/adr/ADR-0024-engineering-reflexivity-planning.md"],
+    "created_at": "2026-08-03T00:00:00Z"
+  }]
+}
