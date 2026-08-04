@@ -1,0 +1,23 @@
+{
+  "schema": "sister.version-state/1.0.0",
+  "status": "development",
+  "engineering": {
+    "last_release_version": "0.2.10",
+    "last_release_tag": "v0.2.10",
+    "last_release_commit": "3952aca4f4bd629544f9820818177fccaf32494f"
+  },
+  "product": {
+    "last_release_tag": "prod-mvp-v0.1.1",
+    "last_release_commit": "ec937e0f2e814da79b201c502ab8a382205e4d79"
+  },
+  "development": {
+    "branch": "main",
+    "base_tag": "v0.2.10",
+    "next_release": null
+  },
+  "document_references": {
+    "efe": "EFE-SisTer/1.7",
+    "raf": "RAF-SisTer/1.0",
+    "pde": "PDE-SisTer/1.0"
+  }
+}
