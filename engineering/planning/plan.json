@@ -19,6 +19,36 @@
     "observed_reference": "WP-MVP01-01: TESTADO_EM_MEMORIA",
     "expected_reference": "Contrato registrável, consultável e reconstruível por interface governada.",
     "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-HTTP-PROPOSAL", "goal_id": "GOAL-MVP01",
+    "description": "A proposta ainda não está comprovada ponta a ponta pelo cliente operacional.", "observed_reference": "ParticipationService e endpoints preliminares", "expected_reference": "Proposta autenticada, consultável e reconstruível pelo sisterctl.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-TECHNICAL-ASSESSMENT", "goal_id": "GOAL-MVP01",
+    "description": "A avaliação técnica ainda não está integrada ao estado autoritativo da participação.", "observed_reference": "Assessment local validado", "expected_reference": "TechnicalAssessment persistente e consultável.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-HUMAN-DECISION", "goal_id": "GOAL-MVP01",
+    "description": "Ainda não há decisão humana real vinculada à avaliação da participação.", "observed_reference": "Recomendação sem decisão", "expected_reference": "Decisão identificada, justificada e vigente.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-CAPABILITY-AUTH", "goal_id": "GOAL-MVP01",
+    "description": "Nenhuma capacidade foi autorizada sob escopo e validade específicos.", "observed_reference": "Contrato permanece proposed", "expected_reference": "Autorização limitada e revogável.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-EXECUTION", "goal_id": "GOAL-MVP01",
+    "description": "A capacidade autorizada ainda não foi executada pelo sister_reference.", "observed_reference": "Execução governada ausente", "expected_reference": "Execução correlacionada à autorização.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-EVIDENCE", "goal_id": "GOAL-MVP01",
+    "description": "Resultado e proveniência da execução ainda não formam evidência persistente.", "observed_reference": "Modelo de envelope existente", "expected_reference": "Evidência recuperável e vinculada à execução.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-OPERATIONAL-ASSESSMENT", "goal_id": "GOAL-MVP01",
+    "description": "Ainda não há comparação persistente entre resultado esperado e observado.", "observed_reference": "OperationalAssessment ausente", "expected_reference": "Avaliação operacional explicável em shadow.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-RECOMMENDATION", "goal_id": "GOAL-MVP01",
+    "description": "A execução ainda não produz recomendação para a próxima condição.", "observed_reference": "Recomendação apenas técnica", "expected_reference": "Recomendação operacional separada da decisão.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-FEEDBACK", "goal_id": "GOAL-MVP01",
+    "description": "O resultado de uma execução ainda não realimenta a próxima execução.", "observed_reference": "Ciclo operacional incompleto", "expected_reference": "Nova condição governada e reconstruível.", "status": "open"
+  }, {
+    "schema": "sister.development-gap/1.0.0", "gap_id": "GAP-MVP01-EXPLANATION", "goal_id": "GOAL-MVP01",
+    "description": "A cadeia funcional completa ainda não é explicada de ponta a ponta.", "observed_reference": "Explain cobre planejamento", "expected_reference": "Explicação de execução, avaliação, decisão e feedback.", "status": "open"
   }],
   "actions": [{
     "schema": "sister.development-action/1.0.0",
@@ -33,6 +63,28 @@
       "Operação disponível sem edição direta da persistência."
     ],
     "evidence_requirements": ["schema válido", "teste reproduzível", "decisão humana"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-02", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-HTTP-PROPOSAL", "title": "Expor proposta autenticada e consulta pelo sisterd", "state": "IDEA", "acceptance_criteria": ["propose e show funcionam por interface autorizada", "sisterctl não grava diretamente"], "evidence_requirements": ["teste HTTP", "teste de reinício"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-03", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-TECHNICAL-ASSESSMENT", "title": "Persistir TechnicalAssessment", "state": "IDEA", "acceptance_criteria": ["assessment vinculado à participação", "gate_effect permanece none"], "evidence_requirements": ["schema válido", "consulta persistente"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-04", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-HUMAN-DECISION", "title": "Registrar decisão humana da participação", "state": "IDEA", "acceptance_criteria": ["decisão referencia assessment e autoridade", "decisão não é executada automaticamente"], "evidence_requirements": ["decisão assinada ou identificada", "teste de rejeição"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-05", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-CAPABILITY-AUTH", "title": "Autorizar capacidade com escopo limitado", "state": "IDEA", "acceptance_criteria": ["capacidade e restrições explícitas", "validade e revogação verificáveis"], "evidence_requirements": ["autorização vinculada", "teste de fronteira"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-06", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-EXECUTION", "title": "Executar capacidade autorizada no sister_reference", "state": "IDEA", "acceptance_criteria": ["execução correlacionada à autorização", "capacidade não executa sem autorização"], "evidence_requirements": ["recibo de execução", "teste de falha"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-07", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-EVIDENCE", "title": "Registrar contribuição, evidência e proveniência", "state": "IDEA", "acceptance_criteria": ["resultado tipificado", "evidência aponta para a execução"], "evidence_requirements": ["envelope válido", "digest e correlação"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-08", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-OPERATIONAL-ASSESSMENT", "title": "Produzir OperationalAssessment", "state": "IDEA", "acceptance_criteria": ["resultado esperado comparado ao observado", "assessment não altera estado sozinho"], "evidence_requirements": ["assessment shadow", "achados explicáveis"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-09", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-RECOMMENDATION", "title": "Gerar recomendação operacional", "state": "IDEA", "acceptance_criteria": ["recomendação separada da decisão", "severidade e limitações registradas"], "evidence_requirements": ["recomendação reconstruível", "teste sem autoação"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-10", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-FEEDBACK", "title": "Realimentar a próxima condição de execução", "state": "IDEA", "acceptance_criteria": ["nova condição depende de decisão humana", "feedback referencia avaliação anterior"], "evidence_requirements": ["timeline completa", "teste de decisão vigente"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-11", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-EXPLANATION", "title": "Explicar o ciclo funcional completo", "state": "IDEA", "acceptance_criteria": ["cadeia contrato a feedback reconstruível", "JSON e texto equivalentes"], "evidence_requirements": ["explain funcional", "evidência de reinício"]
+  }, {
+    "schema": "sister.development-action/1.0.0", "action_id": "PDE-MVP01-12", "goal_id": "GOAL-MVP01", "gap_id": "GAP-MVP01-FEEDBACK", "title": "Aceitar o primeiro ciclo reflexivo operacional", "state": "IDEA", "acceptance_criteria": ["execução observada e reavaliada", "decisão influencia próxima condição"], "evidence_requirements": ["teste ponta a ponta", "relatório de aceitação"]
   }],
   "assessments": [],
   "decisions": [],
