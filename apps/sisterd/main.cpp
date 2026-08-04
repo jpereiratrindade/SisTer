@@ -951,6 +951,17 @@ std::string contentType(const std::filesystem::path& path) {
     return "application/octet-stream";
 }
 
+bool shouldNeverCacheStaticFile(const std::filesystem::path& path) {
+    const auto extension = lowercase(path.extension().string());
+    return extension == ".html" || extension == ".css" || extension == ".js" ||
+           extension == ".mjs" || extension == ".json";
+}
+
+bool shouldClearBrowserSiteData(const std::filesystem::path& path) {
+    const auto extension = lowercase(path.extension().string());
+    return extension == ".html" || extension == ".js" || extension == ".mjs";
+}
+
 std::string readFile(const std::filesystem::path& path) {
     std::error_code error;
     const auto size = std::filesystem::file_size(path, error);
@@ -2323,12 +2334,14 @@ void handleClient(
 
     try {
         const auto body = readFile(*staticPath);
-        const auto ext = staticPath->extension().string();
         std::vector<std::pair<std::string, std::string>> extraHeaders;
-        if (staticPath->filename() == "app.js") {
-            extraHeaders.push_back({"Cache-Control", "no-store"});
-        } else if (ext == ".html") {
-            extraHeaders.push_back({"Cache-Control", "no-cache"});
+        if (shouldNeverCacheStaticFile(*staticPath)) {
+            extraHeaders.push_back({"Cache-Control", "no-store, no-cache, must-revalidate, max-age=0"});
+            extraHeaders.push_back({"Pragma", "no-cache"});
+            extraHeaders.push_back({"Expires", "0"});
+            if (shouldClearBrowserSiteData(*staticPath)) {
+                extraHeaders.push_back({"Clear-Site-Data", "\"cache\", \"storage\""});
+            }
         } else {
             extraHeaders.push_back({"Cache-Control", "public, max-age=3600"});
         }
