@@ -2,16 +2,13 @@
 
 ## Estado
 
-Baseline publicada de integração e governança de release. Commits posteriores
-em `main` pertencem ao desenvolvimento e não alteram esta baseline.
+Baseline corrente de integração e governança de release.
 
 ## Regra de convergência
 
-No commit de publicação desta baseline, `main`, `VERSION`, a documentação da
-release e a tag apontavam para a mesma revisão integrada. Após a publicação,
-`main` pode avançar em estado `development`; tags anteriores permanecem
-imutáveis e conservam seu significado histórico. Consulte a
-[política de versionamento](./VERSIONING.md).
+Nesta baseline, a linha principal, o arquivo `VERSION`, a documentação corrente
+e a tag de release devem apontar para a mesma revisão integrada. Tags anteriores
+permanecem imutáveis e conservam seu significado histórico.
 
 ## Mapa de releases
 

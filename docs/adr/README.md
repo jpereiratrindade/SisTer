@@ -28,8 +28,6 @@ Consulte [Status dos artefatos](../governance/ARTIFACT_STATUS.md).
 - [ADR-0021 - Isolamento local por socket Unix ativado](./ADR-0021-local-upstream-unix-socket-activation.md)
 - [ADR-0022 - Subsistema de referência como fronteira normativa](./ADR-0022-reference-subsystem-validation-boundary.md)
 - [ADR-0023 - MVP-01 de Participação Governada e Reflexiva](./ADR-0023-mvp01-governed-participation.md)
-- [ADR-0024 - Reflexividade da engenharia e planejamento governado](./ADR-0024-engineering-reflexivity-planning.md)
-- [ADR-0025 - Versionamento explícito do desenvolvimento e das releases](./ADR-0025-development-versioning-and-release-lines.md)
 - [ADR-REF-01 - Perfis e autoridade da reflexividade operacional](./ADR-REF-01-reflexivity-profiles-and-authority.md)
 - [ADR-CPP-01 - Abstração eficiente e polimorfismo no núcleo C++](./ADR-CPP-01-efficient-abstraction-and-polymorphism.md)
 - [ADR-VEC-01 - Análise vetorial como capacidade analítica derivada](./ADR-VEC-01-derived-vector-analysis.md)
