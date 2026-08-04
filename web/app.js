@@ -1,33 +1,90 @@
-const state = {
-  systems: [
-    {
-      id: "sister_reference",
-      name: "SisTer Reference Subsystem",
-      version: "0.1.0",
-      owner: "SisTer Core",
-      type: "Referência controlada",
-      status: "Validação",
-      description: "Implementação mínima e parametrizada usada para provar contratos, identidade, roteamento, falhas e ciclo de vida.",
-      contract: "sister.subsystem/1.0.0",
-      accessUrl: "/integrations/reference/identity",
-      accessMode: "Proxy autenticado pelo SisTer",
-      accessRestricted: true,
-      publicScope: "Identidade, versão e manifesto contratual",
-      restrictedScope: "Whoami e echo mediados pelo núcleo",
-      privateScope: "Token interno, processos e cenários de falha",
-      domains: ["validacao", "contratos", "seguranca", "operacao"],
-      modes: ["healthy", "degraded", "delayed", "controlled_failure"],
-      exports: ["identity", "health", "capabilities", "echo"],
-      policy: ["loopback", "gateway_unico", "identidade_mediada", "fail_closed"],
-      infra: {
-        availability: "governada",
-        response: "HTTP",
-        storage: "sem persistência",
-        lastCheck: "por execução",
-        signal: "ok"
-      }
-    }
+const referenceSubsystemFallback = {
+  id: "sister_reference",
+  name: "Subsistema de Referência SisTer",
+  version: "0.1.0",
+  owner: "Centro de Engenharia SisTer",
+
+  type: "Bancada controlada de referência",
+  status: "Laboratório",
+
+  description:
+    "Participante canônico e controlado do SisTer, com cenário ambiental sintético, persistência, API, interface web e modos de falha configuráveis para testar contratos, identidade mediada, execução autorizada, evidências, reflexividade e resiliência.",
+
+  contract: "sister.subsystem/1.0.0",
+
+  /*
+   * Interface humana do laboratório.
+   *
+   * Enquanto a rota governada pelo gateway ainda não estiver implementada,
+   * o ambiente local é acessado diretamente pela porta do protótipo.
+   */
+  accessUrl: "http://127.0.0.1:19101/",
+  healthUrl: "http://127.0.0.1:19101/health",
+
+  accessMode:
+    "Interface local de laboratório; integração técnica mediada e governada pelo SisTer",
+
+  accessRestricted: false,
+
+  publicScope:
+    "Interface web local, identidade, manifesto, saúde e capacidades declaradas",
+
+  restrictedScope:
+    "Execuções mediadas, produção de evidências e comparação entre comportamento esperado e observado",
+
+  privateScope:
+    "Persistência local, configuração dos ensaios e cenários controlados de falha",
+
+  domains: [
+    "referencia",
+    "cenario_ambiental_sintetico",
+    "observacoes",
+    "execucoes",
+    "evidencias"
   ],
+
+  modes: [
+    "healthy",
+    "degraded",
+    "unavailable",
+    "delayed",
+    "invalid_response",
+    "incorrect_result",
+    "partial_failure"
+  ],
+
+  exports: [
+    "identity",
+    "manifest",
+    "health",
+    "capabilities",
+    "echo",
+    "observations",
+    "daily_summary",
+    "executions"
+  ],
+
+  policy: [
+    "laboratorio",
+    "loopback",
+    "proveniencia",
+    "identidade_mediada",
+    "integracao_governada",
+    "falhas_configuraveis",
+    "sem_producao"
+  ],
+
+  infra: {
+    availability: "local governada",
+    response: "HTTP",
+    storage: "SQLite local",
+    lastCheck: "tempo real",
+    signal: "ok"
+  }
+};
+
+const state = {
+  systems: [referenceSubsystemFallback],
   contracts: [
     {
       name: "System Manifest",
@@ -142,7 +199,7 @@ function resolveAccessUrl(accessUrl) {
   const url = new URL(accessUrl, window.location.href);
   const localNames = new Set(["127.0.0.1", "localhost", "0.0.0.0"]);
 
-  if (localNames.has(url.hostname) || url.hostname.endsWith(".local")) {
+  if ((localNames.has(url.hostname) || url.hostname.endsWith(".local")) && !url.port) {
     url.hostname = window.location.hostname;
   }
 
@@ -296,7 +353,7 @@ function drawMap() {
   ctx.stroke();
 
   const plots = [
-    { x: 455, y: 145, w: 260, h: 86, color: "#d5e8f4", label: "Reference Subsystem" }
+    { x: 455, y: 145, w: 260, h: 86, color: "#d5e8f4", label: "Subsistema de Referência" }
   ];
 
   plots.forEach((plot) => {
@@ -472,7 +529,7 @@ function showAuthenticatedIdentity(user) {
 
 async function initializeIdentity() {
   try {
-    const response = await fetch("/api/me", {cache: "no-store"});
+    const response = await fetch("/api/me", { cache: "no-store" });
     if (response.status === 401) {
       showPublicIdentity();
       return;
@@ -485,7 +542,7 @@ async function initializeIdentity() {
 }
 
 async function logout() {
-  await fetch("/api/auth/logout", {method: "POST"}).catch(() => {});
+  await fetch("/api/auth/logout", { method: "POST" }).catch(() => { });
   window.location.href = "/";
 }
 
@@ -496,13 +553,13 @@ async function checkSystemHealth() {
       continue;
     }
     try {
-      const url = resolveSystemAccessUrl(system);
+      const url = system.healthUrl ? resolveAccessUrl(system.healthUrl) : resolveSystemAccessUrl(system);
       if (!url) {
         system.healthStatus = "offline";
         continue;
       }
-      
-      const response = await fetch(url, { method: "GET", cache: "no-store", headers: { "Accept": "application/json" } });
+
+      const response = await fetch(url, { method: "GET", cache: "no-store", mode: "cors", headers: { "Accept": "application/json" } });
       system.healthStatus = isReachableStatus(response.status) ? "online" : "offline";
     } catch {
       system.healthStatus = "offline";
