@@ -92,6 +92,7 @@ struct ServerConfig {
     bool referenceSubsystemEnabled = false;
     uint16_t referencePort = 19001;
     std::string internalProxyToken;
+    std::string extraConnectSrc;
 };
 
 struct HttpRequest {
@@ -323,6 +324,7 @@ ServerConfig loadConfig(int argc, char** argv) {
         environment("SISTER_REFERENCE_PORT").value_or("19001"),
         1, std::numeric_limits<uint16_t>::max(), "SISTER_REFERENCE_PORT");
     config.internalProxyToken = environment("SISTER_INTERNAL_PROXY_TOKEN").value_or("");
+    config.extraConnectSrc = environment("SISTER_EXTRA_CONNECT_SRC").value_or("");
     if (config.referenceSubsystemEnabled && config.internalProxyToken.size() < 32) {
         throw std::runtime_error(
             "SISTER_ENABLE_REFERENCE_SUBSYSTEM requires SISTER_INTERNAL_PROXY_TOKEN");
@@ -1160,6 +1162,9 @@ std::string serializeResponse(
     std::string_view requestId,
     bool headOnly) {
     std::ostringstream output;
+    if (containsInvalidHeaderValueCharacter(config.extraConnectSrc)) {
+        throw std::runtime_error("unsafe SISTER_EXTRA_CONNECT_SRC");
+    }
     output << "HTTP/1.1 " << response.status << ' ' << response.reason << "\r\n";
     if (!response.contentType.empty()) output << "Content-Type: " << response.contentType << "\r\n";
     output << "Content-Length: " << response.body.size() << "\r\n"
@@ -1170,7 +1175,9 @@ std::string serializeResponse(
            << "Permissions-Policy: geolocation=(), microphone=(), camera=()\r\n"
            << "Cross-Origin-Opener-Policy: same-origin\r\n"
            << "Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self'; "
-              "img-src 'self' data:; connect-src 'self'; font-src 'self'; object-src 'none'; "
+              "img-src 'self' data:; connect-src 'self'"
+           << (config.extraConnectSrc.empty() ? "" : " " + config.extraConnectSrc)
+           << "; font-src 'self'; object-src 'none'; "
               "base-uri 'self'; frame-ancestors 'none'; form-action 'self'\r\n"
            << "X-Request-ID: " << requestId << "\r\n";
     if (config.hsts) output << "Strict-Transport-Security: max-age=31536000; includeSubDomains\r\n";
