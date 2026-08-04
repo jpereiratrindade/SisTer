@@ -113,6 +113,7 @@ sister_assert_environment_worktree "$ENV_NAME" "$ROOT_DIR"
 
 # A suíte de isolamento deve observar somente os processos que ela própria cria.
 ./scripts/app/stop.sh "$ENV_NAME" >/dev/null
+./scripts/app/stop_unmanaged_sister_containers.sh "$COMPOSE_PROJECT_NAME"
 python3 scripts/app/execution_lifecycle.py begin \
   --profile "$PROFILE" --environment "$ENV_NAME" --access-scope "$ACCESS_SCOPE" >/dev/null
 cleanup_failed_execution() {
@@ -128,6 +129,7 @@ trap cleanup_failed_execution EXIT
 ./scripts/db/migrate.sh "$ENV_NAME"
 ./scripts/db/check.sh "$ENV_NAME"
 ./scripts/run_quality.sh
+./scripts/app/stop_unmanaged_sister_containers.sh "$COMPOSE_PROJECT_NAME"
 if [[ "$CORE_TRANSPORT" == "loopback-tcp" ]]; then
   ./scripts/app/serve.sh "$ENV_NAME" "$PORT" --no-build
   ./scripts/app/smoke.sh "$PORT"
