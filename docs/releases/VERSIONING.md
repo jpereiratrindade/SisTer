@@ -17,9 +17,6 @@ para a última versão publicada até o próximo gate de publicação.
 
 O estado verificável da linha corrente está em
 [`engineering/release/version-state.json`](../../engineering/release/version-state.json).
-Cada release possui também um manifesto imutável, como
-[`v0.2.10.yaml`](./v0.2.10.yaml). A relação entre o manifesto e o commit
-observado é calculada por `scripts/release/version-state.py`.
 
 ## Gate de release
 
