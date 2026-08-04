@@ -1,29 +1,24 @@
 # Política de identificação e versionamento do SisTer
 
-## Revisão corrente do desenvolvimento
+## Revisão corrente do repositório
 
-No cotidiano do desenvolvimento, o SisTer usa uma revisão sequencial calculada
-do primeiro-parent da `main`:
+Além das versões de release, o SisTer usa uma revisão sequencial calculada do
+primeiro-parent da `main`:
 
 ```text
-r0142  estado integrado anterior
-r0163  estado integrado posterior
-r0167  estado integrado corrente
+R000142  release v0.2.10
+R000163  baseline funcional do RAF/1.0
+R000166  estado integrado corrente
 ```
 
-`r####` ordena estados integrados para leitura humana. Não substitui o hash Git,
-não é uma tag e não deve ser incrementado manualmente. Use:
+`R######` ordena estados integrados para leitura humana. Não substitui o hash
+Git, não é uma tag e não deve ser incrementado manualmente. O comando
+`scripts/release/version-state.py` calcula a revisão atual, a revisão da
+release, a revisão do RAF e a relação de ancestralidade.
 
-```bash
-git switch main
-git pull --ff-only origin main
-python3 scripts/revision.py
-```
-
-O comando calcula a revisão, o commit curto, a branch e o estado do worktree.
-
-A política exige que `main` não tenha histórico reescrito nem force-push. Novos
-commits sempre avançam a revisão.
+A política exige que `main` não tenha histórico reescrito nem force-push. Se a
+linha divergir, a verificação continua mostrando `DIVERGED`; a revisão
+sequencial, sozinha, nunca prova ancestralidade.
 
 ## Quatro coisas diferentes
 
@@ -33,7 +28,7 @@ commits sempre avançam a revisão.
 | Tag de engenharia | `v0.2.10` | commit imutável da baseline |
 | Tag de produto | `prod-mvp-v0.1.1` | release operacional do produto |
 | Documento normativo | `EFE-SisTer/1.7`, `RAF-SisTer/1.0` | versão independente de especificação ou diagnóstico |
-| Revisão do desenvolvimento | `r0167` | ordem calculada do estado integrado |
+| Revisão do repositório | `R000166` | ordem calculada do estado integrado |
 
 ## Estado de desenvolvimento
 
@@ -69,5 +64,5 @@ Antes do gate, a linguagem correta é “desenvolvimento posterior à baseline�
 última release de produto: prod-mvp-v0.1.1
 linha corrente: main / development
 próxima release: não definida
-revisão corrente: calculada por scripts/revision.py
+revisão corrente: calculada por scripts/release/version-state.py
 ```
