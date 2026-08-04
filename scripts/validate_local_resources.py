@@ -39,12 +39,8 @@ def main() -> None:
 
         if project.get("integrates_with_sister") and project_id not in {
             "sister", "sister_reference"
-        } and (
-            project.get("integration_state") != "quarantined"
-            or project.get("operational_access") is not False
-            or project.get("quarantine_reason") != "core_reference_validation_in_progress"
-        ):
-            fail(f"integrated subsystem quarantine is incomplete in {project_id}")
+        }:
+            fail(f"real subsystem must not be registered in SisTer core: {project_id}")
 
         repository = project.get("repository")
         integration_owner = project.get("integrates_with")
@@ -74,14 +70,8 @@ def main() -> None:
             if repository is None:
                 fail(f"orchestrated project {project_id} has no repository")
             policy = orchestration.get("policy")
-            if policy not in {"ensure-running", "quarantined"}:
+            if policy != "ensure-running":
                 fail(f"invalid orchestration policy in {project_id}")
-            if policy == "quarantined" and (
-                project.get("integration_state") != "quarantined"
-                or project.get("operational_access") is not False
-                or project.get("quarantine_reason") != "core_reference_validation_in_progress"
-            ):
-                fail(f"quarantined subsystem state is incomplete in {project_id}")
             if policy == "ensure-running" and project_id != "sister_reference":
                 fail(f"only sister_reference may be an operational validation target: {project_id}")
             if orchestration.get("environment") != "dev":

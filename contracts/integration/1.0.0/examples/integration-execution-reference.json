@@ -1,0 +1,33 @@
+{
+  "execution_id": "exec-int-sister_reference-echo-0001",
+  "integration_id": "int-sister_reference-mediated-echo",
+  "integration_version": "1.0.0",
+  "status": "completed",
+  "started_at": "2026-08-04T10:30:00Z",
+  "finished_at": "2026-08-04T10:30:02Z",
+  "inputs": [
+    {
+      "reference_id": "echo-request-0001",
+      "schema_id": "sister.echo.request",
+      "digest": "sha256:echo-request-0001",
+      "subsystem_id": "sister_reference"
+    }
+  ],
+  "transformations_applied": [
+    "enviar payload echo pelo SisTer",
+    "preservar value na resposta",
+    "registrar processed_by como executor observado"
+  ],
+  "outputs": [
+    {
+      "reference_id": "echo-response-0001",
+      "schema_id": "sister.subsystem.echo",
+      "digest": "sha256:echo-response-0001",
+      "subsystem_id": "sister"
+    }
+  ],
+  "observations": [
+    "value preservado na resposta",
+    "processed_by=sister_reference observado"
+  ]
+}

@@ -40,6 +40,19 @@ public:
     std::optional<std::string> queryContracts();
     std::optional<std::string> queryEvidence();
     std::optional<std::string> queryDiagnostics();
+    std::optional<std::string> queryOperationalBase();
+    std::optional<std::string> decideIntegration(
+        const std::string& integrationId, const std::string& version,
+        const std::string& decision, const std::string& decidedBy,
+        const std::string& rationale);
+    bool integrationApproved(const std::string& integrationId, const std::string& version);
+    std::optional<std::string> recordIntegrationExecution(
+        const std::string& integrationId, const std::string& version,
+        const std::string& executionId, const std::string& status,
+        const std::string& contractDigest, const std::string& executionJson,
+        const std::string& assessmentId, const std::string& result,
+        const std::string& recommendationAction, bool humanDecisionRequired,
+        const std::string& assessmentJson);
     std::optional<std::string> registerParticipationProposal(const ParticipationProposal& proposal);
     std::optional<std::string> queryParticipation(const std::string& participationId);
     std::optional<std::string> registerParticipationAssessment(

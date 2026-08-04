@@ -17,6 +17,8 @@
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <openssl/sha.h>
+
 #include <algorithm>
 #include <array>
 #include <cerrno>
@@ -394,6 +396,26 @@ std::string randomHex(std::size_t bytes) {
         result[i * 2 + 1] = digits[value & 0x0fu];
     }
     return result;
+}
+
+std::string sha256Hex(std::string_view value) {
+    std::array<unsigned char, SHA256_DIGEST_LENGTH> digest{};
+    SHA256(
+        reinterpret_cast<const unsigned char*>(value.data()),
+        value.size(),
+        digest.data());
+    std::ostringstream out;
+    out << std::hex << std::setfill('0');
+    for (const auto byte : digest) {
+        out << std::setw(2) << static_cast<int>(byte);
+    }
+    return out.str();
+}
+
+std::string rawHttpBody(std::string_view response) {
+    const auto separator = response.find("\r\n\r\n");
+    if (separator == std::string_view::npos) return {};
+    return std::string(response.substr(separator + 4));
 }
 
 bool isTokenCharacter(unsigned char character) {
@@ -1050,6 +1072,9 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
         return {
             "session.self.read",
             "engineering.plan.read",
+            "engineering.operational-base.read",
+            "engineering.integration.decide",
+            "engineering.integration.execute",
             "participation.propose",
             "participation.read",
             "identity.users.manage",
@@ -1358,6 +1383,18 @@ ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig
         std::ostringstream body;
         body << input.rdbuf();
         return {true, false, body.str()};
+    }
+    if (path == "/api/v1/engineering/operational-base/current") {
+        if (auto body = state.db.queryOperationalBase()) return {true, false, *body};
+        return {true, true,
+            "{\"schema\":\"sister.operational-base/0.1.0\","
+            "\"unavailable\":true,"
+            "\"capability_source\":{\"source\":\"postgresql\",\"signed_contracts_verified\":false,"
+            "\"verification_status\":\"database_unavailable\"},"
+            "\"capabilities\":[],\"candidates\":[],"
+            "\"assessment\":{\"status\":\"NOT_AVAILABLE\","
+            "\"recommendation\":\"Conectar PostgreSQL e registrar contratos assinados de integração.\"}}"
+        };
     }
     if (path == "/api/health") {
         std::lock_guard lock(state.dbMutex);
@@ -1690,6 +1727,202 @@ void handleClient(
         return;
     }
 
+    // --- Operational integration decisions ---
+    constexpr std::string_view integrationDecisionPrefix = "/api/v1/engineering/integrations/";
+    constexpr std::string_view integrationDecisionSuffix = "/decision";
+    if (request.path.starts_with(integrationDecisionPrefix) &&
+        request.path.ends_with(integrationDecisionSuffix)) {
+        if (request.method != "POST") {
+            sendResponse(clientFd, jsonError(405, "Method Not Allowed", "Método não permitido."),
+                         config, requestId, isHead);
+            return;
+        }
+        if (!authorizeOrReject(
+                clientFd, actor, "engineering.integration.decide",
+                "sister-operational-base", "integration_decision",
+                request, config, requestId, peer, isHead, requestStart)) return;
+
+        const auto encodedTarget = request.path.substr(
+            integrationDecisionPrefix.size(),
+            request.path.size() - integrationDecisionPrefix.size() -
+                integrationDecisionSuffix.size());
+        const auto separator = encodedTarget.rfind('/');
+        if (separator == std::string::npos || separator == 0 ||
+            separator + 1 >= encodedTarget.size()) {
+            sendResponse(clientFd, jsonError(404, "Not Found", "Integração não encontrada."),
+                         config, requestId, isHead);
+            return;
+        }
+        const std::string integrationId = encodedTarget.substr(0, separator);
+        const std::string version = encodedTarget.substr(separator + 1);
+        const auto fields = parseFlatJsonObject(request.body);
+        const auto decision = fields ? jsonStringField(*fields, "decision") : std::nullopt;
+        const auto rationale = fields ? jsonStringField(*fields, "rationale") : std::nullopt;
+        if (!decision || (*decision != "approved" && *decision != "rejected") ||
+            !rationale || trim(*rationale).empty()) {
+            sendResponse(clientFd, jsonError(400, "Bad Request", "Informe decision e rationale."),
+                         config, requestId, isHead);
+            return;
+        }
+
+        std::lock_guard lock(state.dbMutex);
+        const auto result = state.db.decideIntegration(
+            integrationId, version, *decision, actor->id, trim(*rationale));
+        if (!result) {
+            sendResponse(clientFd, jsonError(409, "Conflict", "Decisão de integração não aplicada."),
+                         config, requestId, isHead);
+            return;
+        }
+        sendResponse(clientFd, HttpResponse{
+            200, "OK", *result, "application/json; charset=utf-8",
+            {{"Cache-Control", "no-store"}}
+        }, config, requestId, isHead);
+        return;
+    }
+
+    constexpr std::string_view integrationExecuteSuffix = "/execute";
+    if (request.path.starts_with(integrationDecisionPrefix) &&
+        request.path.ends_with(integrationExecuteSuffix)) {
+        if (request.method != "POST") {
+            sendResponse(clientFd, jsonError(405, "Method Not Allowed", "Método não permitido."),
+                         config, requestId, isHead);
+            return;
+        }
+        if (!authorizeOrReject(
+                clientFd, actor, "engineering.integration.execute",
+                "sister-operational-base", "approved_integration_execution",
+                request, config, requestId, peer, isHead, requestStart)) return;
+        if (!config.referenceSubsystemEnabled) {
+            sendResponse(clientFd, jsonError(503, "Service Unavailable", "Subsistema de referência indisponível."),
+                         config, requestId, isHead);
+            return;
+        }
+
+        const auto encodedTarget = request.path.substr(
+            integrationDecisionPrefix.size(),
+            request.path.size() - integrationDecisionPrefix.size() -
+                integrationExecuteSuffix.size());
+        const auto separator = encodedTarget.rfind('/');
+        if (separator == std::string::npos || separator == 0 ||
+            separator + 1 >= encodedTarget.size()) {
+            sendResponse(clientFd, jsonError(404, "Not Found", "Integração não encontrada."),
+                         config, requestId, isHead);
+            return;
+        }
+        const std::string integrationId = encodedTarget.substr(0, separator);
+        const std::string version = encodedTarget.substr(separator + 1);
+        const auto fields = parseFlatJsonObject(request.body);
+        const auto value = fields ? jsonStringField(*fields, "value") : std::nullopt;
+        if (!value || value->empty()) {
+            sendResponse(clientFd, jsonError(400, "Bad Request", "Informe value para executar a integração."),
+                         config, requestId, isHead);
+            return;
+        }
+
+        {
+            std::lock_guard lock(state.dbMutex);
+            if (!state.db.integrationApproved(integrationId, version)) {
+                sendResponse(clientFd,
+                    jsonError(409, "Conflict", "Integração não aprovada na Base Operacional."),
+                    config, requestId, isHead);
+                return;
+            }
+        }
+
+        const std::string upstreamBody = "{\"value\":\"" + jsonEscape(*value) + "\"}";
+        HttpRequest upstream = request;
+        upstream.method = "POST";
+        upstream.path = "/integrations/reference/echo";
+        upstream.query.clear();
+        upstream.body = upstreamBody;
+        upstream.headers["content-type"] = "application/json";
+
+        std::string observedValue;
+        std::string observedExecutor;
+        std::string rawBody;
+        int proxyStatus = 502;
+        try {
+            const auto raw = proxyToSubsystem(
+                upstream, *actor, "/integrations/reference", config.referencePort,
+                "SisTer Reference Subsystem", requestId, config);
+            proxyStatus = statusFromRawHttpResponse(raw);
+            rawBody = rawHttpBody(raw);
+            const auto observed = parseFlatJsonObject(rawBody);
+            if (observed) {
+                observedValue = jsonStringField(*observed, "value").value_or("");
+                observedExecutor = jsonStringField(*observed, "processed_by").value_or("");
+            }
+        } catch (const std::exception& ex) {
+            rawBody = "{\"error\":\"" + jsonEscape(ex.what()) + "\"}";
+        }
+
+        const bool confirmed = proxyStatus == 200 &&
+            observedValue == *value && observedExecutor == "sister_reference";
+        const std::string executionId = "exec-" + integrationId + "-" + randomHex(6);
+        const std::string assessmentId = "oa-" + executionId;
+        const std::string status = confirmed ? "completed" : "failed";
+        const std::string result = confirmed ? "confirmed" : "divergent";
+        const std::string recommendation = confirmed ? "none" : "request_human_decision";
+        const bool humanDecisionRequired = !confirmed;
+        const std::string executionJson =
+            "{\"execution_id\":\"" + jsonEscape(executionId) + "\","
+            "\"integration_id\":\"" + jsonEscape(integrationId) + "\","
+            "\"integration_version\":\"" + jsonEscape(version) + "\","
+            "\"status\":\"" + status + "\","
+            "\"inputs\":[{\"reference_id\":\"request.value\","
+            "\"schema_id\":\"sister.echo.request/1.0.0\","
+            "\"digest\":\"sha256:" + sha256Hex(*value) + "\","
+            "\"subsystem_id\":\"sister\"}],"
+            "\"transformations_applied\":[\"enviar payload echo pelo SisTer\","
+            "\"registrar resposta observada\"],"
+            + (confirmed
+                ? "\"outputs\":[{\"reference_id\":\"response.echo\","
+                  "\"schema_id\":\"sister.subsystem.echo/1.0.0\","
+                  "\"digest\":\"sha256:" + sha256Hex(rawBody) + "\","
+                  "\"subsystem_id\":\"sister_reference\"}],"
+                  "\"observations\":[\"observed_value igual a expected_value\","
+                  "\"executor observado igual a sister_reference\"]"
+                : "\"errors\":[{\"code\":\"OBSERVED_DIVERGENCE\","
+                  "\"message\":\"Resposta observada diverge do esperado ou execução falhou\"}],"
+                  "\"observations\":[\"execução não confirmou os critérios aprovados\"]")
+            + "}";
+        const std::string assessmentJson =
+            "{\"assessment_id\":\"" + jsonEscape(assessmentId) + "\","
+            "\"integration_id\":\"" + jsonEscape(integrationId) + "\","
+            "\"execution_id\":\"" + jsonEscape(executionId) + "\","
+            "\"expected\":[\"requisição mediada pelo SisTer\","
+            "\"resposta segue sister.subsystem.echo/1.0.0\","
+            "\"observed_value igual a expected_value\","
+            "\"executor observado igual a sister_reference\"],"
+            "\"observed\":[\"status HTTP " + std::to_string(proxyStatus) + "\","
+            "\"observed_value=" + jsonEscape(observedValue) + "\","
+            "\"executor=" + jsonEscape(observedExecutor) + "\"],"
+            "\"result\":\"" + result + "\","
+            "\"severity\":\"" + (confirmed ? "informational" : "medium") + "\","
+            "\"recommendation\":{\"action\":\"" + recommendation + "\","
+            "\"summary\":\"" + (confirmed
+                ? "Execução compatível com os critérios aprovados."
+                : "Engenharia deve revisar contrato, disponibilidade ou mapeamento antes de nova execução.") + "\"},"
+            "\"human_decision_required\":" + std::string(humanDecisionRequired ? "true" : "false") + "}";
+
+        std::lock_guard lock(state.dbMutex);
+        const auto recorded = state.db.recordIntegrationExecution(
+            integrationId, version, executionId, status,
+            "sha256:" + sha256Hex(executionJson), executionJson,
+            assessmentId, result, recommendation, humanDecisionRequired,
+            assessmentJson);
+        if (!recorded) {
+            sendResponse(clientFd, jsonError(409, "Conflict", "Execução não registrada na Base Operacional."),
+                         config, requestId, isHead);
+            return;
+        }
+        sendResponse(clientFd, HttpResponse{
+            200, "OK", *recorded, "application/json; charset=utf-8",
+            {{"Cache-Control", "no-store"}}
+        }, config, requestId, isHead);
+        return;
+    }
+
     // --- Controlled reference subsystem: normative integration target ---
     if (request.path == "/integrations/reference" ||
         request.path.starts_with("/integrations/reference/")) {
@@ -2006,7 +2239,11 @@ void handleClient(
             std::string_view resource = "sister-control-plane";
             std::string_view purpose = "governed_api_access";
             if (request.path == "/api/systems") capability = "subsystem.manifest.read";
-            else if (request.path == "/api/v1/engineering/plan" || request.path.starts_with("/api/v1/engineering/artifacts/")) capability = "engineering.plan.read";
+            else if (request.path == "/api/v1/engineering/operational-base/current") {
+                capability = "engineering.operational-base.read";
+            }
+            else if (request.path == "/api/v1/engineering/plan" ||
+                     request.path.starts_with("/api/v1/engineering/artifacts/")) capability = "engineering.plan.read";
             else if (request.path == "/api/contracts") capability = "sister.governance.read";
             else if (request.path == "/api/evidence") capability = "sister.evidence.read";
             else if (request.path == "/api/diagnostics") capability = "sister.diagnostics.read";

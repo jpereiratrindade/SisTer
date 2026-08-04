@@ -1,0 +1,24 @@
+{
+  "assessment_id": "oa-int-sister_reference-echo-0001",
+  "integration_id": "int-sister_reference-mediated-echo",
+  "execution_id": "exec-int-sister_reference-echo-0001",
+  "expected": [
+    "requisição mediada pelo SisTer",
+    "resposta segue sister.subsystem.echo/1.0.0",
+    "observed_value igual a expected_value",
+    "executor observado igual a sister_reference"
+  ],
+  "observed": [
+    "contrato declara capacidade real reference.echo.execute",
+    "endpoint POST /echo existe no sister_reference",
+    "assinatura formal ainda ausente"
+  ],
+  "result": "inconclusive",
+  "severity": "informational",
+  "recommendation": {
+    "action": "request_human_decision",
+    "summary": "Assinar a definição de integração echo mediada antes de promover esta capacidade como aprovada."
+  },
+  "human_decision_required": true,
+  "assessed_at": "2026-08-04T10:31:00Z"
+}

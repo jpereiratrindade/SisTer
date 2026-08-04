@@ -48,27 +48,25 @@ class SgeConvergenceTests(unittest.TestCase):
             self.assertTrue((ROOT / legacy_path).is_file(), legacy_path)
         self.assertEqual("scripts/ci/test-smoke.sh", legacy["SMOKE_TEST"])
 
-    def test_all_real_integrations_declare_complete_quarantine(self) -> None:
+    def test_local_resources_do_not_register_real_subsystems(self) -> None:
         registry = json.loads(
             (ROOT / "config/local_resources.json").read_text(encoding="utf-8")
         )
-        for project in registry["projects"]:
-            if project.get("integrates_with_sister") and project["id"] not in {
-                "sister", "sister_reference"
-            }:
-                self.assertEqual("quarantined", project.get("integration_state"))
-                self.assertIs(project.get("operational_access"), False)
-                self.assertEqual(
-                    "core_reference_validation_in_progress",
-                    project.get("quarantine_reason"),
-                )
+        self.assertEqual(
+            {"sister", "sister_reference"},
+            {project["id"] for project in registry["projects"]},
+        )
 
-    def test_resource_validator_rejects_implicit_quarantine(self) -> None:
+    def test_resource_validator_rejects_real_subsystem_registration(self) -> None:
         registry = json.loads(
             (ROOT / "config/local_resources.json").read_text(encoding="utf-8")
         )
-        campo = next(project for project in registry["projects"] if project["id"] == "sister_campo")
-        campo.pop("integration_state")
+        registry["projects"].append({
+            "id": "sister_campo",
+            "repository": "cpp/SisTer-Campo",
+            "integrates_with_sister": True,
+            "resources": []
+        })
         with tempfile.TemporaryDirectory() as temporary:
             path = Path(temporary) / "local_resources.json"
             path.write_text(json.dumps(registry), encoding="utf-8")
