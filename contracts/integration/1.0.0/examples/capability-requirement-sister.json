@@ -1,0 +1,14 @@
+{
+  "requirement_id": "req-sister-mediated-echo-observation",
+  "subsystem_id": "sister",
+  "needed_capability": "observacao_de_execucao_mediada",
+  "expected_contract": {
+    "schema_id": "sister.subsystem.echo",
+    "version": "1.0.0",
+    "uri": "contracts/subsystem/1.0.0/echo.schema.json"
+  },
+  "purpose": "Verificar se o SisTer consegue mediar uma execução echo no sister_reference e observar o resultado sem acessar implementação interna.",
+  "accepts_from": ["sister_reference"],
+  "status": "active",
+  "published_at": "2026-08-04T10:05:00Z"
+}

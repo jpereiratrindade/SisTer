@@ -24,6 +24,16 @@
     "reference.identity.read",
     "reference.echo.execute"
   ],
+  "capability_offers": [
+    {
+      "capability": "reference.echo.execute",
+      "method": "POST",
+      "endpoint": "/echo",
+      "input": {"schema": "sister.echo.request/1.0.0", "fields": ["value"]},
+      "output": {"schema": "sister.subsystem.echo/1.0.0", "fields": ["value", "processed_by"]},
+      "observable_success": "output.value equals input.value and output.processed_by equals sister_reference"
+    }
+  ],
   "data_ownership": "external_reference",
   "audit_level": "all_state_changes",
   "production_eligible": false

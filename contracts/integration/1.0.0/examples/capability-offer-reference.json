@@ -1,0 +1,13 @@
+{
+  "offer_id": "offer-sister_reference-echo-execute",
+  "subsystem_id": "sister_reference",
+  "capability": "reference.echo.execute",
+  "produces": ["sister.subsystem.echo/1.0.0"],
+  "contract": {
+    "schema_id": "sister.subsystem.echo",
+    "version": "1.0.0",
+    "uri": "contracts/subsystem/1.0.0/echo.schema.json"
+  },
+  "status": "active",
+  "published_at": "2026-08-04T10:00:00Z"
+}

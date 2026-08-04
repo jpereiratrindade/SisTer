@@ -1,0 +1,15 @@
+{
+  "decision_id": "decision-int-sister_reference-mediated-echo-approve-example",
+  "integration_id": "int-sister_reference-mediated-echo",
+  "integration_version": "1.0.0",
+  "decision": "approved",
+  "decided_by": "engenharia.sister",
+  "authority": "integration.approve",
+  "rationale": "Contratos revisados pela engenharia; integração apta a entrar na Base Operacional.",
+  "decided_at": "2026-08-04T11:00:00Z",
+  "effects": [
+    "oferta marcada como verificada",
+    "necessidade marcada como satisfeita",
+    "definição de integração promovida para aprovada"
+  ]
+}

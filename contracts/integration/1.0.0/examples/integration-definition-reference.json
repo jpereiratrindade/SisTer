@@ -1,0 +1,36 @@
+{
+  "integration_id": "int-sister_reference-mediated-echo",
+  "version": "1.0.0",
+  "objective": "Executar a capacidade reference.echo.execute do sister_reference por mediação do SisTer e comparar a resposta observada com o valor esperado.",
+  "offer_id": "offer-sister_reference-echo-execute",
+  "requirement_id": "req-sister-mediated-echo-observation",
+  "source_subsystem_id": "sister_reference",
+  "target_subsystem_id": "sister",
+  "field_mappings": [
+    {"from": "value", "to": "expected_value"},
+    {"from": "value", "to": "observed_value"},
+    {"from": "processed_by", "to": "executor"}
+  ],
+  "transformations": [
+    "enviar payload echo pelo SisTer",
+    "preservar value na resposta",
+    "registrar processed_by como executor observado"
+  ],
+  "success_criteria": [
+    "requisição mediada pelo SisTer",
+    "resposta segue sister.subsystem.echo/1.0.0",
+    "observed_value igual a expected_value",
+    "executor observado igual a sister_reference"
+  ],
+  "required_evidence": [
+    "contrato de oferta assinado",
+    "contrato de requisito assinado",
+      "definição de integração assinada",
+      "execução com entrada e saída referenciadas por digest"
+  ],
+  "approval": {
+    "status": "draft",
+    "responsible": "engenharia.sister",
+    "authority": "integration.approve"
+  }
+}

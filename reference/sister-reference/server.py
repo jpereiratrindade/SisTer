@@ -122,7 +122,14 @@ class Handler(BaseHTTPRequestHandler):
                 "generated_at": self.now(),
                 "capabilities": [
                     {"id": "reference.identity.read", "description": "Read mediated identity", "risk": "low"},
-                    {"id": "reference.echo.execute", "description": "Execute controlled echo", "risk": "low"},
+                    {
+                        "id": "reference.echo.execute",
+                        "description": "Execute controlled echo through SisTer mediation",
+                        "risk": "low",
+                        "input_schema": "sister.echo.request/1.0.0",
+                        "output_schema": "sister.subsystem.echo/1.0.0",
+                        "observable_success": "response.value equals request.value and response.processed_by equals sister_reference",
+                    },
                 ],
             })
             return

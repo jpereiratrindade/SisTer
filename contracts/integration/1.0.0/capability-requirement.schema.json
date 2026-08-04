@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.dev/contracts/integration/1.0.0/capability-requirement.schema.json",
+  "type": "object",
+  "required": ["requirement_id", "subsystem_id", "needed_capability", "expected_contract", "purpose", "published_at"],
+  "additionalProperties": false,
+  "properties": {
+    "requirement_id": {"type": "string", "minLength": 1},
+    "subsystem_id": {"type": "string", "minLength": 1},
+    "needed_capability": {"type": "string", "minLength": 1},
+    "expected_contract": {"$ref": "capability-offer.schema.json#/$defs/schema-reference"},
+    "purpose": {"type": "string", "minLength": 1},
+    "accepts_from": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "status": {"enum": ["proposed", "active", "satisfied", "suspended"], "default": "active"},
+    "published_at": {"type": "string", "format": "date-time"}
+  }
+}

@@ -4,30 +4,29 @@ set -u
 
 SERVICES=(
   "sisterd.service"
-  "sister-nexo.service"
-  "sister-compras.service"
-  "sister-clima.service"
 )
 
-echo "=== Inicialização dos serviços SisTer ==="
+echo "=== Inicializacao do SisTer ==="
+echo
+echo "Somente o nucleo SisTer sera iniciado. Subsistemas reais nao pertencem ao ciclo operacional enquanto nao forem publicados por contratos assinados na Base Operacional."
 echo
 
-echo "[1/3] Recarregando configurações do systemd..."
+echo "[1/3] Recarregando configuracoes do systemd..."
 systemctl --user daemon-reload
 
 echo
-echo "[2/3] Habilitando e iniciando serviços..."
+echo "[2/3] Habilitando e iniciando servicos do nucleo..."
 
 FAILED=()
 
 for service in "${SERVICES[@]}"; do
     echo
-    echo "→ Processando: $service"
+    echo "-> Processando: $service"
 
     if systemctl --user enable --now "$service"; then
-        echo "✓ $service habilitado e iniciado."
+        echo "OK: $service habilitado e iniciado."
     else
-        echo "✗ Falha ao iniciar $service."
+        echo "Falha ao iniciar $service."
         FAILED+=("$service")
     fi
 done
@@ -47,7 +46,7 @@ done
 echo
 
 if (( ${#FAILED[@]} > 0 )); then
-    echo "Alguns serviços falharam:"
+    echo "Alguns servicos falharam:"
     printf '  - %s\n' "${FAILED[@]}"
 
     echo
@@ -59,4 +58,4 @@ if (( ${#FAILED[@]} > 0 )); then
     exit 1
 fi
 
-echo "✓ Todos os serviços SisTer estão ativos."
+echo "OK: nucleo SisTer ativo."

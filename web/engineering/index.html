@@ -9,23 +9,36 @@
 <body>
   <main class="engineering-shell">
     <header class="engineering-header">
-      <div><span class="eyebrow">CENTRO DE ENGENHARIA</span><h1>O que estamos construindo</h1><p id="objective">Carregando o plano vigente…</p><p class="human-intro">Acompanhe o trabalho, os sinais que já temos e o próximo passo necessário.</p></div>
+      <div><span class="eyebrow">CENTRO DE ENGENHARIA</span><h1>Base operacional reflexiva</h1><p id="objective">Carregando estrutura operacional...</p><p class="human-intro">O engenheiro aprova a estrutura operacional; o SisTer instancia, observa, compara e recomenda.</p></div>
       <nav class="engineering-nav"><a href="/admin/maturity">Maturidade</a><a href="/">Voltar ao SisTer</a></nav>
     </header>
     <nav class="engineering-tabs" aria-label="Visões do Centro de Engenharia">
-      <a class="active" href="#work">Plano e trabalho</a><a href="#process">Processo</a><a href="#curation">Curadoria</a><a href="#artifacts">Artefatos e evidências</a>
+      <a class="active" href="#capabilities">Capacidades</a><a href="#contracts">Contratos</a><a href="#operation">Ciclo</a><a href="#assessment">Avaliação</a><a href="#authority">Decisão</a>
     </nav>
-    <section class="summary" aria-label="Resumo do plano">
-      <article><span>Onde estamos</span><strong id="revision">—</strong></article>
-      <article><span>Foco atual</span><strong id="current-action">—</strong></article>
-      <article><span>O que vem agora</span><strong id="next-step">—</strong></article>
-      <article><span>O que impede o avanço</span><strong id="blockers">—</strong></article>
+    <section class="summary" aria-label="Estado atual do sistema">
+      <article><span>Capacidades conhecidas</span><strong id="capabilities-summary">-</strong></article>
+      <article><span>Propósito vigente</span><strong id="purpose-title">-</strong></article>
+      <article><span>Processo aprovado</span><strong id="process-title">-</strong></article>
+      <article><span>Conhecimento produzido</span><strong id="recommendation-state">-</strong></article>
     </section>
-    <section id="work" class="board-section"><div class="section-title"><div><span class="eyebrow">CAMINHO DO TRABALHO</span><h2>De uma ideia a algo que podemos usar</h2><p class="section-help">Cada cartão representa uma etapa do desenvolvimento. A posição mostra o estado reconhecido pelo plano.</p></div><span class="readonly">visão consultiva</span></div><div id="board" class="board"></div></section>
+    <section id="operational-diagnostic" class="operational-diagnostic" aria-label="Diagnóstico da base operacional reflexiva">
+      <div>
+        <span class="eyebrow">PERGUNTA CENTRAL</span>
+        <h2 id="diagnostic-title">O que o SisTer já sabe fazer?</h2>
+        <p id="diagnostic-text">O sistema simulado/de referência publica ofertas de capacidade. O SisTer só passa a saber fazer algo depois que uma integração entre oferta e necessidade for assinada, aprovada e verificada.</p>
+      </div>
+      <ol>
+        <li>Engenheiro aprova propósito, funções, processo, evidências e critérios.</li>
+        <li>SisTer instancia o processo aprovado e registra eventos.</li>
+        <li>SisTer compara esperado × observado e recomenda a próxima decisão.</li>
+      </ol>
+    </section>
+    <section id="capabilities" class="capabilities-section" aria-labelledby="capabilities-title"><div class="section-title"><div><span class="eyebrow">CONHECIMENTO OPERACIONAL</span><h2 id="capabilities-title">Capacidades do SisTer</h2><p class="section-help">Uma capacidade so existe quando nasce de necessidade, oferta e contrato assinados, aprovados e verificados.</p></div><span id="capability-count" class="readonly">-</span></div><div id="capability-grid" class="capability-grid"></div></section>
+    <section id="contracts" class="contracts-section" aria-labelledby="contracts-title"><div class="section-title"><div><span class="eyebrow">CONTRATOS CONCRETOS</span><h2 id="contracts-title">Ofertas, necessidades e candidatas</h2><p class="section-help">O engenheiro ve os contratos operacionais; detalhes de codigo ficam fora do nucleo.</p></div><span id="contracts-state" class="readonly">-</span></div><div id="contracts-grid" class="contracts-grid"></div></section>
+    <section id="operation" class="operation-section" aria-labelledby="operation-title"><div class="section-title"><div><span class="eyebrow">CICLO ESSENCIAL</span><h2 id="operation-title">Necessidade a nova decisão</h2><p class="section-help">Esta e a unica cadeia operacional que define o SisTer.</p></div><span id="revision" class="readonly">-</span></div><div id="operation-map" class="operation-map"></div></section>
+    <section id="assessment" class="assessment-section" aria-labelledby="assessment-title"><div class="section-title"><div><span class="eyebrow">REFLEXIVIDADE</span><h2 id="assessment-title">Esperado × observado</h2><p class="section-help">A operação só fecha quando há execução, evidência observada, comparação e recomendação.</p></div><span id="assessment-status" class="readonly">-</span></div><div id="assessment-grid" class="assessment-grid"></div></section>
     <section id="details" class="details" hidden></section>
-    <section id="curation" class="curation-section"><div class="section-title"><div><span class="eyebrow">CURADORIA TÉCNICA</span><h2>Revisar antes de avançar</h2><p class="section-help">O SisTer reúne sinais e recomenda; o engenheiro revisa as evidências e assume responsabilidade pelo estado observado.</p></div><span class="readonly">ação humana necessária</span></div><div id="curation-content" class="curation-content"></div></section>
-    <section id="artifacts" class="catalog-section"><div class="section-title"><div><span class="eyebrow">BASE DE TRABALHO</span><h2>Artefatos, testes e evidências</h2><p class="section-help">O trabalho dos engenheiros não vive apenas nos cartões. Aqui estão as bases que orientam, implementam e verificam o sistema.</p></div></div><div id="catalog" class="catalog"></div></section>
-    <section id="process" class="process-section"><div class="section-title"><div><span class="eyebrow">PROCESSO EM CONSTRUÇÃO</span><h2>Participação governada do sister_reference</h2><p class="section-help">O objetivo não é apenas acompanhar documentos: é fazer as funções acontecerem e observar seus efeitos.</p></div></div><div class="process-flow"><span>Propor</span><i>→</i><span>Avaliar</span><i>→</i><span>Decidir</span><i>→</i><span>Autorizar</span><i>→</i><span>Executar</span><i>→</i><span>Observar</span><i>→</i><span>Reavaliar</span></div></section>
+    <section id="authority" class="curation-section"><div class="section-title"><div><span class="eyebrow">DECISÃO HUMANA</span><h2>Recomendação não altera o sistema</h2><p class="section-help">Toda mudança passa por decisão da engenharia, nova configuração, nova execução e nova observação.</p></div><span class="readonly">governado</span></div><div id="curation-content" class="curation-content"></div></section>
   </main>
   <script src="./app.js"></script>
 </body>
