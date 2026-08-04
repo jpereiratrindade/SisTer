@@ -12,10 +12,6 @@ def git(*args):
     return subprocess.check_output(["git", *args], cwd=ROOT, text=True).strip()
 
 
-def revision(commit):
-    return f"R{int(git('rev-list', '--count', '--first-parent', commit)):06d}"
-
-
 def main():
     import yaml
     manifest = yaml.safe_load(MANIFEST.read_text(encoding="utf-8"))
@@ -33,18 +29,12 @@ def main():
         relationship = "RELEASE_ALIGNED"
     else:
         relationship = "POST_RELEASE_DEVELOPMENT"
-    state = {"RELEASE_ALIGNED": "RELEASED", "POST_RELEASE_DEVELOPMENT": "DEVELOPMENT", "DIVERGED": "DIVERGED"}[relationship]
     output = {
-        "current_revision": revision(current),
-        "current_commit": current,
-        "state": state,
         "published_release": manifest["engineering_release"]["tag"],
-        "release_revision": revision(baseline),
         "baseline_commit": baseline,
         "observed_commit": current,
         "baseline_relationship": relationship,
-        "commits_after_release": int(git("rev-list", "--count", "--first-parent", f"{baseline}..{current}")),
-        "raf_revision": revision("db0edb5"),
+        "commits_after_release": int(git("rev-list", "--count", f"{baseline}..{current}")),
         "publication_authorized": False if relationship != "RELEASE_ALIGNED" else manifest["publication"]["published"]
     }
     print(json.dumps(output, ensure_ascii=False, indent=2))
