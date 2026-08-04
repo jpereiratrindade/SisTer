@@ -35,6 +35,8 @@ def main() -> None:
     assert "engineering.integration.execute" in main_cpp
     assert "approved_integration_execution" in main_cpp
     assert "engineering.operational-base.read" in main_cpp
+    assert "no-store, no-cache, must-revalidate, max-age=0" in main_cpp
+    assert "Clear-Site-Data" in main_cpp
     assert "decideIntegration" in db_hpp
     assert "integrationApproved" in db_hpp
     assert "recordIntegrationExecution" in db_hpp
