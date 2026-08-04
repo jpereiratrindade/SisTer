@@ -24,7 +24,7 @@ class MaturityDashboardSmokeTests(unittest.TestCase):
     def test_dashboard_has_all_status_labels(self):
         source = (ROOT / "web" / "maturity" / "index.html").read_text(encoding="utf-8")
         for label in (
-            "Centro de Engenharia do SisTer",
+            "Maturidade do SisTer",
             "Síntese do gate",
             "Camadas avaliadas nesta execução",
             "Resultado técnico do componente",

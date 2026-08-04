@@ -143,7 +143,7 @@ def main():
             )
             assert request(port, "GET", "/api/admin/maturity/quality", cookie=admin_cookie)[0] == 200
             status, _, page = request(port, "GET", "/admin/maturity", cookie=admin_cookie)
-            assert status == 200 and b"Centro de Engenharia do SisTer" in page
+            assert status == 200 and b"Maturidade do SisTer" in page
         finally:
             if process.poll() is None:
                 process.send_signal(signal.SIGINT)
