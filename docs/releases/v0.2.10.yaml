@@ -1,0 +1,18 @@
+schema: sister.release-manifest/1.0.0
+engineering_release:
+  version: 0.2.10
+  tag: v0.2.10
+  commit: 3952aca4f4bd629544f9820818177fccaf32494f
+product:
+  release: prod-mvp-v0.1.1
+  maturity_state: MVP
+normative_documents:
+  efe: EFE-SisTer/1.4
+  raf: RAF-SisTer/1.0
+  pde: PDE-SisTer/1.0
+gates:
+  technical_status: READY
+  publication_decision: AUTHORIZED
+publication:
+  published: true
+  immutable: true
