@@ -32,13 +32,17 @@ export GATEWAY_CANONICAL_HOST="${GATEWAY_CANONICAL_HOST:-$GATEWAY_ALLOWED_HOST}"
 export GATEWAY_LISTEN_ADDRESS="$GATEWAY_LAN_ADDRESS"
 export GATEWAY_TLS_PEM="${GATEWAY_TLS_PEM:-$RUN_DIR/gateway-lab.pem}"
 export GATEWAY_UPSTREAM_SOCKET="$SISTERD_SOCKET"
+if [[ -n "${GATEWAY_NEXO_HOST:-}" ]]; then
+  export GATEWAY_ADDITIONAL_HOSTS="$GATEWAY_NEXO_HOST"
+fi
 
 mkdir -p "$RUN_DIR"
 chmod 700 "$RUN_DIR"
 cleanup_on_error() {
   local status="$?"
   if [[ "$status" -ne 0 ]]; then
-    "$ROOT_DIR/scripts/stop_gateway_lan_lab.sh" >/dev/null 2>&1 || true
+    SISTER_COMPONENT_STOP_ONLY=1 \
+      "$ROOT_DIR/scripts/stop_gateway_lan_lab.sh" >/dev/null 2>&1 || true
   fi
   return "$status"
 }
@@ -132,6 +136,9 @@ for _ in $(seq 1 120); do
     echo "Other computer: copy $RUN_DIR/ca-lab.crt and add the same /etc/hosts entry."
     echo "Client check: scripts/check_gateway_lan_access.sh $GATEWAY_LAN_ADDRESS /path/to/ca-lab.crt"
     echo "Browser URL: https://$GATEWAY_ALLOWED_HOST:8443"
+    if [[ -n "${GATEWAY_NEXO_HOST:-}" ]]; then
+      echo "Nexo URL: https://$GATEWAY_NEXO_HOST:8443"
+    fi
     trap - EXIT
     exit 0
   fi

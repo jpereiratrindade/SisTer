@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="${GATEWAY_RUN_ROOT:-$ROOT_DIR/.run/gateway}"
 LAB_HOST="${1:-${GATEWAY_ALLOWED_HOST:-sister-gateway.test}}"
+EXTRA_HOSTS="${GATEWAY_ADDITIONAL_HOSTS:-}"
 
 case "$RUN_DIR" in
   "$ROOT_DIR"/.run/*) ;;
@@ -45,8 +46,19 @@ openssl req -new -newkey rsa:3072 -sha256 -nodes \
   -subj "/CN=$LAB_HOST" \
   -keyout "$SERVER_KEY" -out "$SERVER_CSR" >/dev/null 2>&1
 
-printf 'subjectAltName=DNS:%s\nextendedKeyUsage=serverAuth\nkeyUsage=digitalSignature,keyEncipherment\n' \
-  "$LAB_HOST" >"$EXT_FILE"
+SAN_ENTRIES="DNS:$LAB_HOST"
+for host in $EXTRA_HOSTS; do
+  if [[ ! "$host" =~ ^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)+$ ]] \
+      || [[ "$host" == *"*"* ]] \
+      || [[ "$host" != *.test ]]; then
+    echo "invalid additional lab hostname: $host" >&2
+    exit 3
+  fi
+  SAN_ENTRIES+=",DNS:$host"
+done
+
+printf 'subjectAltName=%s\nextendedKeyUsage=serverAuth\nkeyUsage=digitalSignature,keyEncipherment\n' \
+  "$SAN_ENTRIES" >"$EXT_FILE"
 openssl x509 -req -sha256 -days 7 -in "$SERVER_CSR" \
   -CA "$CA_CERT" -CAkey "$CA_KEY" -CAcreateserial \
   -extfile "$EXT_FILE" -out "$SERVER_CERT" >/dev/null 2>&1
@@ -61,4 +73,7 @@ rm -f "$SERVER_CSR" "$EXT_FILE" "$RUN_DIR/ca-lab.srl"
 
 openssl verify -CAfile "$CA_CERT" "$SERVER_CERT" >/dev/null
 openssl x509 -in "$SERVER_CERT" -noout -checkhost "$LAB_HOST" >/dev/null
-echo "gateway lab certificate created for $LAB_HOST in $RUN_DIR"
+for host in $EXTRA_HOSTS; do
+  openssl x509 -in "$SERVER_CERT" -noout -checkhost "$host" >/dev/null
+done
+echo "gateway lab certificate created for $LAB_HOST${EXTRA_HOSTS:+ and $EXTRA_HOSTS} in $RUN_DIR"
