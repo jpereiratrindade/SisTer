@@ -164,6 +164,50 @@ const state = {
 const qs = (selector, root = document) => root.querySelector(selector);
 const qsa = (selector, root = document) => [...root.querySelectorAll(selector)];
 
+
+function normalizeSystem(system) {
+  const accessUrl = system.accessUrl ?? system.access_url ?? null;
+  return {
+    id: system.id ?? "unknown",
+    name: system.name ?? system.id ?? "Subsistema",
+    version: system.version ?? "N/D",
+    owner: system.owner ?? "Responsável não declarado",
+    type: system.type ?? "Subsistema federado",
+    status: system.status ?? "Registrado",
+    description: system.description ?? "Subsistema registrado no ecossistema SisTer.",
+    contract: system.contract ?? "Contrato não declarado",
+    governanceContract: system.governanceContract ?? system.governance_contract ?? null,
+    accessUrl,
+    healthStatus: system.healthStatus ?? system.health_status ?? "unknown",
+    healthObservedBy: system.healthObservedBy ?? system.health_observed_by ?? null,
+    healthHttpStatus: system.healthHttpStatus ?? system.health_http_status ?? 0,
+    healthDetail: system.healthDetail ?? system.health_detail ?? null,
+    accessMode: system.accessMode ?? system.access_mode ?? "Acesso governado",
+    accessRestricted: system.accessRestricted ?? system.access_restricted ?? false,
+    publicScope: system.publicScope ?? system.public_scope ?? "Não declarado",
+    restrictedScope: system.restrictedScope ?? system.restricted_scope ?? "Não declarado",
+    privateScope: system.privateScope ?? system.private_scope ?? "Não declarado",
+    domains: Array.isArray(system.domains) ? system.domains : [],
+    modes: Array.isArray(system.modes) ? system.modes : [],
+    exports: Array.isArray(system.exports) ? system.exports : [],
+    policy: Array.isArray(system.policy) ? system.policy : [],
+    dataReferences: Array.isArray(system.dataReferences) ? system.dataReferences : [],
+    dataSummary: system.dataSummary ?? ""
+  };
+}
+
+async function loadSystems() {
+  try {
+    const response = await fetch("/api/systems", { cache: "no-store" });
+    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    const systems = await response.json();
+    if (!Array.isArray(systems) || systems.length === 0) throw new Error("empty systems catalog");
+    state.systems = systems.map(normalizeSystem);
+  } catch {
+    state.systems = [normalizeSystem(referenceSubsystemFallback)];
+  }
+}
+
 function setCounts() {
   qs("#signed-contract-count").textContent = state.systems.length;
   qs("#system-count").textContent = state.systems.length;
@@ -212,10 +256,6 @@ function resolveSystemAccessUrl(system) {
   return url.href.replace(/\/$/, "");
 }
 
-function isReachableStatus(status) {
-  return (status >= 200 && status < 400) || status === 401 || status === 403;
-}
-
 function rerenderSystems() {
   renderSystems(qs("#system-filter")?.value || "");
 }
@@ -256,7 +296,7 @@ function renderSystems(filter = "") {
           ${system.name}
           ${system.healthStatus === 'online' ? '<span class="health-dot online" title="Online"></span>' : ''}
           ${system.healthStatus === 'offline' ? '<span class="health-dot offline" title="Offline"></span>' : ''}
-          ${system.healthStatus === 'checking' || !system.healthStatus ? '<span class="health-dot checking" title="Verificando..."></span>' : ''}
+          ${system.healthStatus === 'unknown' || !system.healthStatus ? '<span class="health-dot checking" title="Estado não observado"></span>' : ''}
         </h4>
         <p class="system-meta">${system.type} · ${system.owner}</p>
       </div>
@@ -546,33 +586,10 @@ async function logout() {
   window.location.href = "/";
 }
 
-async function checkSystemHealth() {
-  for (const system of state.systems) {
-    if (!system.accessUrl) {
-      system.healthStatus = "offline";
-      continue;
-    }
-    try {
-      const url = system.healthUrl ? resolveAccessUrl(system.healthUrl) : resolveSystemAccessUrl(system);
-      if (!url) {
-        system.healthStatus = "offline";
-        continue;
-      }
-
-      const response = await fetch(url, { method: "GET", cache: "no-store", mode: "cors", headers: { "Accept": "application/json" } });
-      system.healthStatus = isReachableStatus(response.status) ? "online" : "offline";
-    } catch {
-      system.healthStatus = "offline";
-    }
-  }
-  rerenderSystems();
-}
-
-function init() {
+async function init() {
+  await loadSystems();
   setCounts();
-  for (const sys of state.systems) sys.healthStatus = "checking";
   renderSystems();
-  checkSystemHealth();
   renderIntegrationBars();
   renderDiagnostics();
   renderContracts();
