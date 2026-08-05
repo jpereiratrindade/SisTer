@@ -75,7 +75,6 @@ if [[ ",$SUBSYSTEM_PROJECTS," == *,sister_reference,* ]]; then
   REFERENCE_SELECTED=1
   export SISTER_ENABLE_REFERENCE_SUBSYSTEM=true
   export SISTER_REFERENCE_PORT=19001
-  export SISTER_EXTRA_CONNECT_SRC="${SISTER_EXTRA_CONNECT_SRC:-http://127.0.0.1:19101 http://localhost:19101}"
   SISTER_INTERNAL_PROXY_TOKEN="$(openssl rand -hex 32)"
   export SISTER_INTERNAL_PROXY_TOKEN
 else
@@ -114,9 +113,7 @@ sister_assert_environment_worktree "$ENV_NAME" "$ROOT_DIR"
 
 # A suíte de isolamento deve observar somente os processos que ela própria cria.
 ./scripts/app/stop.sh "$ENV_NAME" >/dev/null
-./scripts/app/stop_unmanaged_sister_containers.sh "$COMPOSE_PROJECT_NAME"
-python3 scripts/app/execution_lifecycle.py begin \
-  --profile "$PROFILE" --environment "$ENV_NAME" --access-scope "$ACCESS_SCOPE" >/dev/null
+
 cleanup_failed_execution() {
   local status="$?"
   if [[ $status -ne 0 ]]; then
@@ -124,13 +121,17 @@ cleanup_failed_execution() {
   fi
   return "$status"
 }
-trap cleanup_failed_execution EXIT
 
 ./scripts/db/up.sh "$ENV_NAME"
 ./scripts/db/migrate.sh "$ENV_NAME"
 ./scripts/db/check.sh "$ENV_NAME"
 ./scripts/run_quality.sh
-./scripts/app/stop_unmanaged_sister_containers.sh "$COMPOSE_PROJECT_NAME"
+
+# A execução operacional começa somente depois dos testes, que manipulam
+# intencionalmente o estado de execução para validar isolamento e parada.
+python3 scripts/app/execution_lifecycle.py begin \
+  --profile "$PROFILE" --environment "$ENV_NAME" --access-scope "$ACCESS_SCOPE" >/dev/null
+trap cleanup_failed_execution EXIT
 if [[ "$CORE_TRANSPORT" == "loopback-tcp" ]]; then
   ./scripts/app/serve.sh "$ENV_NAME" "$PORT" --no-build
   ./scripts/app/smoke.sh "$PORT"
@@ -172,6 +173,11 @@ fi
 GATEWAY_STATUS="NOT_REQUESTED"
 PUBLIC_URL=""
 if [[ "$PUBLIC_GATEWAY" == "lan-required" && $SUBSYSTEM_CODE -eq 0 ]]; then
+  if [[ ",${SUBSYSTEM_PROJECTS}," == *,sister_nexo,* ]]; then
+    export GATEWAY_NEXO_HOST="${GATEWAY_NEXO_HOST:-nexo.test}"
+    export GATEWAY_NEXO_ADDRESS="127.0.0.1"
+    export GATEWAY_NEXO_PORT="8015"
+  fi
   set +e
   ./scripts/run_gateway_lan_lab.sh --environment "$ENV_NAME" --no-prepare
   GATEWAY_CODE=$?

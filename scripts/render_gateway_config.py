@@ -112,12 +112,12 @@ def checked_environment(environment, scope="lab"):
     missing = sorted(name for name in required if not environment.get(name))
     if missing:
         raise RenderError("missing environment: " + ", ".join(missing))
-    forbidden_tcp = sorted(
+    legacy_tcp = sorted(
         name for name in ("GATEWAY_UPSTREAM_ADDRESS", "GATEWAY_UPSTREAM_PORT")
         if environment.get(name)
     )
-    if forbidden_tcp:
-        raise RenderError("TCP upstream configuration is forbidden: " + ", ".join(forbidden_tcp))
+    if legacy_tcp:
+        raise RenderError("legacy core TCP upstream configuration is forbidden: " + ", ".join(legacy_tcp))
 
     run_root = lab_run_root(environment)
     values = {
@@ -130,6 +130,9 @@ def checked_environment(environment, scope="lab"):
             "GATEWAY_UPSTREAM_SOCKET", str((run_root / "sisterd.sock").resolve())),
         "GATEWAY_ERROR_ROOT": str((ROOT / "ops/gateway/haproxy/errors").resolve()),
         "GATEWAY_STATS_SOCKET": str((run_root / "haproxy.sock").resolve()),
+        "GATEWAY_NEXO_HOST": environment.get("GATEWAY_NEXO_HOST", ""),
+        "GATEWAY_NEXO_ADDRESS": environment.get("GATEWAY_NEXO_ADDRESS", ""),
+        "GATEWAY_NEXO_PORT": environment.get("GATEWAY_NEXO_PORT", ""),
     }
     try:
         listen_address = ipaddress.ip_address(values["GATEWAY_LISTEN_ADDRESS"])
@@ -162,6 +165,25 @@ def checked_environment(environment, scope="lab"):
         raise RenderError(f"{scope} Host must be one exact DNS name under .test")
     if values["GATEWAY_CANONICAL_HOST"] != allowed_host:
         raise RenderError(f"canonical and allowed {scope} Host must match")
+
+    nexo_fields = (values["GATEWAY_NEXO_HOST"], values["GATEWAY_NEXO_ADDRESS"], values["GATEWAY_NEXO_PORT"])
+    if any(nexo_fields) and not all(nexo_fields):
+        raise RenderError("Nexo gateway route requires host, address, and port together")
+    if all(nexo_fields):
+        if scope == "candidate":
+            raise RenderError("candidate Nexo routing is not authorized yet")
+        if not HOST.fullmatch(values["GATEWAY_NEXO_HOST"]) or not values["GATEWAY_NEXO_HOST"].endswith(".test"):
+            raise RenderError("GATEWAY_NEXO_HOST must be one exact DNS name under .test")
+        if values["GATEWAY_NEXO_HOST"] == allowed_host:
+            raise RenderError("GATEWAY_NEXO_HOST must differ from the core host")
+        if values["GATEWAY_NEXO_ADDRESS"] != "127.0.0.1":
+            raise RenderError("GATEWAY_NEXO_ADDRESS must be 127.0.0.1")
+        try:
+            nexo_port = int(values["GATEWAY_NEXO_PORT"])
+        except ValueError as exc:
+            raise RenderError("GATEWAY_NEXO_PORT must be numeric") from exc
+        if not 1024 <= nexo_port <= 65535:
+            raise RenderError("GATEWAY_NEXO_PORT must be between 1024 and 65535")
 
     pem = require_absolute_safe_path(values["GATEWAY_TLS_PEM"], "GATEWAY_TLS_PEM", must_exist=True)
     if scope in {"lab", "lan-lab"}:
@@ -204,6 +226,30 @@ def validate_governed_profile(profile_path):
 
 
 def render(template, values):
+    nexo_enabled = bool(values.get("GATEWAY_NEXO_HOST"))
+    values = dict(values)
+    values["GATEWAY_ALLOWED_HOSTS"] = values["GATEWAY_ALLOWED_HOST"] + (
+        " " + values["GATEWAY_ALLOWED_HOST"] + ":" + values["GATEWAY_LISTEN_PORT"]
+    ) + (
+        " " + values["GATEWAY_NEXO_HOST"] + " " + values["GATEWAY_NEXO_HOST"] + ":" + values["GATEWAY_LISTEN_PORT"]
+        if nexo_enabled else ""
+    )
+    values["GATEWAY_ROUTE_ACLS"] = (
+        f"    acl host_nexo req.hdr(host),lower -m str {values['GATEWAY_NEXO_HOST']} {values['GATEWAY_NEXO_HOST']}:{values['GATEWAY_LISTEN_PORT']}\n"
+        if nexo_enabled else ""
+    )
+    values["GATEWAY_ROUTE_SELECTION"] = (
+        "    use_backend sister_nexo_internal if host_nexo\n" if nexo_enabled else ""
+    )
+    values["GATEWAY_NEXO_BACKEND"] = (
+        "\nbackend sister_nexo_internal\n"
+        "    mode http\n"
+        "    option httpchk GET /api/health\n"
+        "    option abortonclose\n"
+        "    http-check expect status 200\n"
+        f"    server sister_nexo {values['GATEWAY_NEXO_ADDRESS']}:{values['GATEWAY_NEXO_PORT']} check maxconn 32 maxqueue 64\n"
+        if nexo_enabled else ""
+    )
     rendered = template
     for name, replacement in values.items():
         rendered = rendered.replace(f"@@{name}@@", replacement)
@@ -216,6 +262,10 @@ def render(template, values):
     expected_server = f"server sisterd unix@{values['GATEWAY_UPSTREAM_SOCKET']} check maxconn 32 maxqueue 64"
     if rendered.count(expected_server) != 1:
         raise RenderError("rendered configuration must contain exactly one fixed sisterd upstream")
+    if nexo_enabled:
+        expected_nexo = f"server sister_nexo {values['GATEWAY_NEXO_ADDRESS']}:{values['GATEWAY_NEXO_PORT']} check maxconn 32 maxqueue 64"
+        if rendered.count(expected_nexo) != 1:
+            raise RenderError("rendered configuration must contain exactly one governed Nexo upstream")
     return rendered
 
 

@@ -39,8 +39,8 @@ frontend sister_gateway_lab
     http-request deny status 400 if HTTP_URL_ABS
 
     acl host_count_valid req.fhdr_cnt(host) eq 1
-    acl host_allowed req.hdr(host),lower -m str @@GATEWAY_ALLOWED_HOST@@ @@GATEWAY_ALLOWED_HOST@@:@@GATEWAY_LISTEN_PORT@@
-    http-request deny status 400 unless host_count_valid
+    acl host_allowed req.hdr(host),lower -m str @@GATEWAY_ALLOWED_HOSTS@@
+@@GATEWAY_ROUTE_ACLS@@    http-request deny status 400 unless host_count_valid
     http-request deny status 403 unless host_allowed
 
     acl method_allowed method GET HEAD POST PUT PATCH DELETE
@@ -102,11 +102,10 @@ frontend sister_gateway_lab
 
     http-request set-header X-Request-ID %[var(txn.sister_request_id)]
     http-request set-header X-Forwarded-For %[src]
-    http-request set-header X-Forwarded-Host @@GATEWAY_CANONICAL_HOST@@
+    http-request set-header X-Forwarded-Host %[req.hdr(host)]
     http-request set-header X-Forwarded-Proto https
-    http-request set-header Host @@GATEWAY_CANONICAL_HOST@@
 
-    default_backend sisterd_internal
+@@GATEWAY_ROUTE_SELECTION@@    default_backend sisterd_internal
 
 backend sisterd_internal
     mode http
@@ -114,7 +113,7 @@ backend sisterd_internal
     option abortonclose
     http-check expect status 200
     server sisterd unix@@@GATEWAY_UPSTREAM_SOCKET@@ check maxconn 32 maxqueue 64
-
+@@GATEWAY_NEXO_BACKEND@@
 backend sister_connection_by_origin
     stick-table type ip size 128 expire 30s store conn_cur
 

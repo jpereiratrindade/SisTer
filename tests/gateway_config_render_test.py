@@ -59,7 +59,7 @@ def main():
         assert "http-request del-header X-Sister- -m beg" in rendered
         assert "alpn http/1.1" in rendered
         assert "strict-sni" in rendered
-        assert "http-request set-header Host sister-gateway.test" in rendered
+        assert "http-request set-header X-Forwarded-Host %[req.hdr(host)]" in rendered
         assert "sister-gateway.test:8443" in rendered
         assert "http-request deny status 400 if HTTP_URL_ABS" in rendered
         assert "tune.stick-counters 5" in rendered
@@ -79,6 +79,18 @@ def main():
         lan_rendered = render(TEMPLATE_PATH.read_text(encoding="utf-8"), lan_values)
         assert "bind 10.163.80.176:8443" in lan_rendered
         assert f"server sisterd unix@{ROOT}/.run/gateway/sisterd.sock check" in lan_rendered
+        nexo_environment = copy.deepcopy(lan_environment)
+        nexo_environment.update({
+            "GATEWAY_NEXO_HOST": "nexo.test",
+            "GATEWAY_NEXO_ADDRESS": "127.0.0.1",
+            "GATEWAY_NEXO_PORT": "8015",
+        })
+        nexo_values = checked_environment(nexo_environment, "lan-lab")
+        nexo_rendered = render(TEMPLATE_PATH.read_text(encoding="utf-8"), nexo_values)
+        assert "acl host_nexo" in nexo_rendered
+        assert "use_backend sister_nexo_internal if host_nexo" in nexo_rendered
+        assert "server sister_nexo 127.0.0.1:8015 check" in nexo_rendered
+        assert "nexo.test:8443" in nexo_rendered
         isolated_environment = copy.deepcopy(environment)
         isolated_root = temporary / "isolated-runtime"
         isolated_root.mkdir(mode=0o700)
@@ -104,8 +116,8 @@ def main():
             ("GATEWAY_LISTEN_ADDRESS", "0.0.0.0", "listener must be 127.0.0.1"),
             ("GATEWAY_LISTEN_PORT", "443", "port must be 8443"),
             ("GATEWAY_UPSTREAM_SOCKET", "/tmp/sisterd.sock", "must remain inside"),
-            ("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.1", "TCP upstream configuration is forbidden"),
-            ("GATEWAY_UPSTREAM_PORT", "8000", "TCP upstream configuration is forbidden"),
+            ("GATEWAY_UPSTREAM_ADDRESS", "127.0.0.1", "legacy core TCP upstream configuration is forbidden"),
+            ("GATEWAY_UPSTREAM_PORT", "8000", "legacy core TCP upstream configuration is forbidden"),
             ("GATEWAY_ALLOWED_HOST", "*.test", "one exact DNS name"),
             ("GATEWAY_CANONICAL_HOST", "other.test", "must match"),
         )
