@@ -441,3 +441,7 @@ maturidade:
 ```bash
 ./scripts/run_quality.sh
 ```
+
+## Licença
+
+Este projeto é distribuído sob os termos da GNU General Public License versão 3 ou posterior (`GPL-3.0-or-later`). Consulte o arquivo [LICENSE](LICENSE).
