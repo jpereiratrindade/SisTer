@@ -1,0 +1,1049 @@
+\documentclass[11pt,a4paper,oneside]{article}
+
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{lmodern}
+\usepackage{microtype}
+\usepackage{geometry}
+\usepackage{setspace}
+\usepackage{enumitem}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{tabularx}
+\usepackage{xcolor}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{titlesec}
+\usepackage{tcolorbox}
+\usepackage{tikz}
+\usepackage{listings}
+\usepackage{caption}
+\usepackage{ragged2e}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usetikzlibrary{arrows.meta,positioning,fit,shapes.geometric,calc}
+
+\geometry{top=2.2cm,bottom=2.2cm,left=2.2cm,right=2.2cm}
+\setstretch{1.08}
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.55em}
+\setlist[itemize]{leftmargin=1.45em,itemsep=0.18em,topsep=0.28em}
+\setlist[enumerate]{leftmargin=1.65em,itemsep=0.22em,topsep=0.28em}
+\renewcommand{\arraystretch}{1.18}
+
+\definecolor{sisterblue}{RGB}{28,67,105}
+\definecolor{sisterlightblue}{RGB}{232,241,248}
+\definecolor{sistergray}{RGB}{245,246,247}
+\definecolor{sisterdarkgray}{RGB}{74,83,91}
+\definecolor{sistergreen}{RGB}{33,112,77}
+\definecolor{sisteramber}{RGB}{161,102,0}
+\definecolor{sisterred}{RGB}{155,44,44}
+\definecolor{sisterpurple}{RGB}{93,63,130}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=sisterblue,
+  urlcolor=sisterblue,
+  citecolor=sisterblue,
+  hypertexnames=false,
+  pdftitle={Engenharia Ontológica Experimental de Sistemas},
+  pdfauthor={Projeto SisTer},
+  pdfsubject={Construção ontológica, Harness, reflexividade e engenharia orientada a grafos no SisTer},
+  pdfkeywords={SisTer, ontologia, harness, reflexividade, cibernética, grafos, engenharia de sistemas}
+}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\small\textcolor{sisterdarkgray}{SisTer -- Engenharia Ontológica Experimental}}
+\fancyhead[R]{\small\textcolor{sisterdarkgray}{EOE-SisTer/1.0}}
+\fancyfoot[C]{\small Página \thepage}
+\renewcommand{\headrulewidth}{0.3pt}
+\renewcommand{\footrulewidth}{0pt}
+
+\titleformat{\section}{\Large\bfseries\color{sisterblue}}{\thesection.}{0.55em}{}
+\titleformat{\subsection}{\large\bfseries\color{sisterdarkgray}}{\thesubsection.}{0.5em}{}
+\titleformat{\subsubsection}{\normalsize\bfseries}{\thesubsubsection.}{0.45em}{}
+
+\newcolumntype{Y}{>{\RaggedRight\arraybackslash}X}
+\newcolumntype{P}[1]{>{\RaggedRight\arraybackslash}p{#1}}
+
+\newtcolorbox{principio}[1][]{
+  colback=sisterlightblue,
+  colframe=sisterblue,
+  boxrule=0.65pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2.2mm,bottom=2.2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{decisao}[1][]{
+  colback=sistergray,
+  colframe=sisterdarkgray,
+  boxrule=0.55pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{alerta}[1][]{
+  colback=red!3,
+  colframe=sisterred,
+  boxrule=0.6pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+\newtcolorbox{hipotese}[1][]{
+  colback=purple!4,
+  colframe=sisterpurple,
+  boxrule=0.6pt,
+  arc=1.5mm,
+  left=3.5mm,right=3.5mm,top=2mm,bottom=2mm,
+  title={#1},fonttitle=\bfseries
+}
+
+\lstdefinestyle{sistercode}{
+  basicstyle=\ttfamily\small,
+  backgroundcolor=\color{sistergray},
+  frame=single,
+  rulecolor=\color{sisterdarkgray!35},
+  breaklines=true,
+  columns=fullflexible,
+  keepspaces=true,
+  showstringspaces=false,
+  xleftmargin=0.5em,
+  framexleftmargin=0.4em
+}
+\lstset{style=sistercode}
+
+\newcommand{\termo}[1]{\textbf{#1}}
+\newcommand{\sister}{\textsc{SisTer}}
+\newcommand{\harness}{\textit{Harness}}
+
+\begin{document}
+
+\begin{titlepage}
+\pagestyle{empty}
+\thispagestyle{empty}
+\vspace*{2.0cm}
+{\color{sisterblue}\rule{\textwidth}{1.2pt}}\\[1.15cm]
+{\Huge\bfseries Engenharia Ontológica Experimental de Sistemas\par}
+\vspace{0.45cm}
+{\Large Harness, reflexividade e engenharia orientada a grafos no SisTer\par}
+\vspace{0.25cm}
+{\large Construir, executar, observar e compreender como partes do mesmo ato de engenharia\par}
+\vspace{1.15cm}
+\begin{principio}[Tese central]
+\centering\Large
+\textbf{No SisTer, domínio, arquitetura, contratos, Harness, reflexividade e grafos não são apenas pressupostos de projeto: são distinções progressivamente descobertas, materializadas e avaliadas pela experimentação.}
+\end{principio}
+\vfill
+\begin{tabularx}{\textwidth}{P{4.3cm}Y}
+\toprule
+\textbf{Identificador} & EOE-SisTer/1.0 \\
+\textbf{Natureza} & Documento conceitual e metodológico, com consequências de engenharia \\
+\textbf{Status} & Versão inicial consolidada para validação e experimentação \\
+\textbf{Relação documental} & Complementa a EFE-SisTer/1.7; não a substitui nem cria, por si só, requisito normativo de implementação \\
+\textbf{Linha de base} & Texto ``Engenharia como construção ontológica'' e EFE-SisTer/1.7 \\
+\textbf{Data} & 5 de agosto de 2026 \\
+\bottomrule
+\end{tabularx}
+\vspace{1.15cm}
+{\color{sisterblue}\rule{\textwidth}{1.2pt}}
+\end{titlepage}
+\pagestyle{fancy}
+
+\pagenumbering{roman}
+\section*{Controle do documento}
+\addcontentsline{toc}{section}{Controle do documento}
+
+\begin{tabularx}{\textwidth}{P{3.8cm}Y}
+\toprule
+\textbf{Campo} & \textbf{Definição} \\
+\midrule
+Objeto & Método emergente de construção ontológica experimental aplicado ao desenvolvimento do SisTer e de seus subsistemas. \\
+Autoridade & Documento de orientação conceitual e metodológica. Torna-se normativo somente quando uma consequência for incorporada à EFE, a um ADR, contrato, perfil, plano ou gate autorizado. \\
+Problema governante & Como construir sistemas quando parte relevante do domínio, das fronteiras, das relações de autoridade e das capacidades ainda precisa ser descoberta na própria construção? \\
+Hipótese governante & Artefatos executáveis, submetidos a cenários controlados e observação estruturada, podem funcionar como instrumentos para descobrir, revisar e estabilizar distinções ontológicas. \\
+Não implica & Adoção imediata de banco em grafo; substituição de modelagem de domínio; autonomia decisória do software; abandono de requisitos; equivalência entre protótipo e evidência suficiente. \\
+Regra de atualização & Toda revisão deve declarar a hipótese alterada, a evidência que motivou a mudança, os efeitos sobre o método e sua relação com a linha de base documental e operacional. \\
+\bottomrule
+\end{tabularx}
+
+\subsection*{Histórico de revisão}
+\begin{tabularx}{\textwidth}{P{2.0cm}P{2.6cm}Y}
+\toprule
+\textbf{Versão} & \textbf{Data} & \textbf{Alteração} \\
+\midrule
+0.1 & 05/08/2026 & Ensaio inicial sobre construção ontológica, domínio, arquitetura, Harness, reflexividade e grafos como descobertas da experimentação. \\
+1.0 & 05/08/2026 & Revisão conceitual; correção de generalizações; delimitação entre uso estabelecido e uso ampliado de Harness; distinção entre Knowledge Graph Engineering e engenharia orientada a grafos; inclusão do ciclo metodológico, protocolo experimental, artefatos, critérios de avaliação, riscos e programa inicial de experimentos. \\
+\bottomrule
+\end{tabularx}
+
+\begin{decisao}[Decisão editorial]
+Este documento adota \textbf{Engenharia Ontológica Experimental de Sistemas} como nome provisório do método e \textbf{Engenharia Orientada a Grafos} como hipótese de trabalho. A expressão inglesa \textit{Graph Engineering} permanece apenas como rótulo exploratório e não é apresentada como disciplina consolidada.
+\end{decisao}
+
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\section{Síntese executiva}
+
+A forma como o \sister{} e seus subsistemas vêm sendo desenvolvidos difere de um fluxo puramente representacional. Não partimos sempre de um domínio completamente estabilizado para então traduzi-lo em arquitetura e código. Construímos artefatos mínimos, colocamo-los em relação, observamos tensões, explicitamos pressupostos e somente então estabilizamos certas distinções como domínio, contrato, fronteira, capacidade, autoridade ou evidência.
+
+Essa prática não elimina requisitos, modelagem ou arquitetura. Ela desloca parte de sua formação para um ciclo no qual a implementação participa da investigação. O código deixa de ser apenas a realização de um modelo e passa também a ser um meio de tornar hipóteses conceituais operáveis.
+
+O método proposto pode ser resumido assim:
+
+\begin{principio}[Ciclo fundamental]
+\centering
+\textbf{situação problemática $\rightarrow$ hipótese ontológica $\rightarrow$ materialização mínima $\rightarrow$ execução controlada $\rightarrow$ observação $\rightarrow$ avaliação $\rightarrow$ revisão ontológica $\rightarrow$ estabilização arquitetural}
+\end{principio}
+
+Nesse ciclo, o \harness{} assume papel central. Em seu significado estabelecido, um \textit{test harness} reúne ambiente, controladores, simuladores e utilitários necessários para executar testes. No \sister{}, propõe-se uma extensão explícita: o \termo{Harness de Experimentação Ontológica} organiza cenários em que não se avalia somente se uma implementação satisfaz um conceito, mas também se o próprio conceito é suficientemente consistente, distinguível e governável para ser materializado como sistema.
+
+A reflexividade emerge quando propósito, comportamento esperado, comportamento observado, avaliação, decisão e alteração passam a ser relacionados formalmente. A cibernética emerge quando essa relação participa da regulação futura, sem apagar a autoridade humana sobre propósito, prioridade e mudança estrutural.
+
+Os grafos emergem porque a constituição do sistema passa a depender menos de objetos isolados e mais de relações atravessáveis: subsistema oferece capacidade; capacidade participa de acordo; execução produz evidência; evidência sustenta avaliação; avaliação fundamenta recomendação; autoridade decide; decisão altera configuração.
+
+A adoção de grafos, contudo, deve obedecer a uma regra rigorosa:
+
+\begin{principio}[Regra da projeção]
+\centering
+\textbf{O grafo é uma projeção verificável de relações governadas; não é uma verdade paralela nem uma justificativa automática para trocar a persistência relacional por um banco em grafo.}
+\end{principio}
+
+\section{Natureza e alcance da proposta}
+
+\subsection{Uma tese metodológica, não uma proclamação disciplinar}
+
+Este documento não afirma que o \sister{} tenha criado uma nova disciplina. Afirma algo mais modesto e verificável: a prática de desenvolvimento observada possui regularidades que merecem ser explicitadas, comparadas com campos existentes e submetidas a experimentos.
+
+A denominação \termo{Engenharia Ontológica Experimental de Sistemas} é, portanto, uma hipótese organizadora. Ela será útil somente se:
+
+\begin{itemize}
+  \item produzir distinções mais claras do que as abordagens já utilizadas;
+  \item orientar artefatos e decisões concretas;
+  \item permitir repetição e crítica;
+  \item reduzir confusões entre domínio, tela, tabela, contrato, execução e evidência;
+  \item revelar cedo hipóteses insuficientes;
+  \item melhorar a governança das mudanças.
+\end{itemize}
+
+Se esses efeitos não forem demonstrados, a denominação deve ser abandonada ou reduzida a uma descrição histórica do projeto.
+
+\subsection{Dois sentidos de ontologia}
+
+A palavra \termo{ontologia} é usada em dois níveis que precisam permanecer distintos:
+
+\begin{enumerate}
+  \item \textbf{Sentido filosófico ou categorial}: investigação sobre que tipos de entidades e relações são admitidos no universo considerado.
+  \item \textbf{Sentido de engenharia do conhecimento}: especificação explícita de uma conceitualização, por meio de vocabulários, classes, relações, restrições e, eventualmente, axiomas formalizados.
+\end{enumerate}
+
+O método proposto começa frequentemente no primeiro nível e pode produzir artefatos no segundo. Nem toda descoberta ontológica precisa resultar imediatamente em OWL, RDF ou outro formalismo. Antes da formalização, pode existir uma distinção conceitual validada por contratos, schemas, tipos C++, invariantes, testes e cenários.
+
+\begin{alerta}[Cuidado com a reificação]
+Dar um nome a uma entidade não prova que ela exista como unidade operacional relevante. Uma classe, tabela ou caixa em um diagrama somente deve adquirir estatuto de domínio quando possuir identidade, relações, invariantes, ciclo de vida, responsabilidade ou efeito demonstrável.
+\end{alerta}
+
+\subsection{Correção de uma generalização do ensaio inicial}
+
+Muitos processos convencionais de engenharia começam pela compreensão de uma realidade relativamente estável e avançam para modelos, arquitetura e implementação. Contudo, seria incorreto opor rigidamente toda engenharia convencional ao processo aqui descrito. Prototipagem evolutiva, engenharia ontológica, ciência do design, desenvolvimento iterativo, modelagem orientada a domínio e pesquisa por construção já reconhecem, em graus diferentes, que compreensão e artefato podem coevoluir.
+
+A peculiaridade do \sister{} não está em ter descoberto que protótipos ensinam. Está na combinação específica de:
+
+\begin{itemize}
+  \item autonomia de subsistemas;
+  \item contratos de participação e integração;
+  \item autoridade explícita;
+  \item proveniência;
+  \item avaliação reflexiva;
+  \item materialização incremental;
+  \item uso de um Harness para tornar perguntas ontológicas executáveis;
+  \item projeções relacionais que podem assumir forma de grafos.
+\end{itemize}
+
+\section{Da representação à construção ontológica}
+
+\subsection{O fluxo representacional}
+
+Em um fluxo predominantemente representacional, a direção típica é:
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=7mm,
+  box/.style={draw=sisterblue,rounded corners,fill=sisterlightblue,minimum width=2.8cm,minimum height=8mm,align=center},
+  arr/.style={-{Latex[length=2mm]},thick,sisterdarkgray}
+]
+\node[box] (r) {realidade\\ domínio};
+\node[box,right=of r] (c) {compreensão};
+\node[box,right=of c] (m) {modelo};
+\node[box,right=of m] (a) {arquitetura};
+\node[box,right=of a] (i) {implementação};
+\draw[arr] (r)--(c);
+\draw[arr] (c)--(m);
+\draw[arr] (m)--(a);
+\draw[arr] (a)--(i);
+\end{tikzpicture}
+\end{center}
+
+Esse fluxo continua válido quando a realidade já é suficientemente conhecida e quando o problema principal consiste em representá-la com precisão e eficiência.
+
+\subsection{O fluxo experimental observado}
+
+No \sister{}, parte importante do trabalho segue um percurso recursivo:
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=8mm and 11mm,
+  box/.style={draw=sisterblue,rounded corners,fill=sisterlightblue,minimum width=3.3cm,minimum height=9mm,align=center},
+  arr/.style={-{Latex[length=2mm]},thick,sisterdarkgray}
+]
+\node[box] (p) {situação\\ problemática};
+\node[box,right=of p] (h) {hipótese\\ ontológica};
+\node[box,right=of h] (m) {materialização\\ mínima};
+\node[box,below=of m] (e) {execução\\ controlada};
+\node[box,left=of e] (o) {observação\\ estruturada};
+\node[box,left=of o] (v) {revisão e\\ estabilização};
+\draw[arr] (p)--(h);
+\draw[arr] (h)--(m);
+\draw[arr] (m)--(e);
+\draw[arr] (e)--(o);
+\draw[arr] (o)--(v);
+\draw[arr] (v) |- ([yshift=-5mm]p.south) -- (p.south);
+\end{tikzpicture}
+\end{center}
+
+A ontologia não aparece apenas como descrição anterior do mundo. Ela é parcialmente construída pela necessidade de intervir, observar e distinguir.
+
+\subsection{O que significa ``emergir''}
+
+Neste documento, dizer que algo \termo{emerge} não significa que apareça espontaneamente ou sem trabalho conceitual. Significa que sua necessidade se torna identificável por meio de contradições, insuficiências ou dependências observadas durante a materialização.
+
+Exemplos:
+
+\begin{itemize}
+  \item a fronteira arquitetural emerge quando o compartilhamento direto de tabelas destrói autonomia ou autoridade;
+  \item o contrato emerge quando uma API sintaticamente válida não basta para explicar finalidade, responsabilidade e revogação;
+  \item a capacidade emerge quando um endpoint deixa de ser tratado como função isolada e passa a ser relacionado a propósito, entradas, saídas, limites e evidências;
+  \item a proveniência emerge quando um resultado não pode ser aceito sem reconstruir sua origem e transformação;
+  \item o Harness emerge quando experimentos dispersos precisam de condições controladas, repetição e critérios comparáveis;
+  \item o grafo emerge quando consultas relevantes dependem de atravessar relações entre objetos heterogêneos.
+\end{itemize}
+
+\section{O domínio como descoberta operacional}
+
+\subsection{Domínio não é inventário de substantivos}
+
+Um domínio não se consolida porque substantivos foram transformados em tabelas. Ele se consolida quando entidades e relações passam a sustentar invariantes operacionais.
+
+No Nexo, por exemplo, atividades, projetos, evidências e necessidades adquirem significado de domínio quando se torna possível responder:
+
+\begin{itemize}
+  \item quem cria e quem responde por cada objeto;
+  \item como ele muda de estado;
+  \item de quais outros objetos depende;
+  \item quais decisões podem ser fundamentadas por ele;
+  \item quais informações podem atravessar fronteiras;
+  \item quais devem permanecer sob autoridade local;
+  \item como sua origem e suas alterações podem ser demonstradas.
+\end{itemize}
+
+\begin{principio}[Definição operacional de domínio]
+O domínio é a organização de identidades, relações, transformações, responsabilidades, invariantes e limites de autoridade que precisa permanecer semanticamente coerente enquanto o sistema opera.
+\end{principio}
+
+\subsection{Perguntas ontológicas como testes de domínio}
+
+A construção deve produzir perguntas de competência ou, em linguagem de engenharia, perguntas que o modelo precisa ser capaz de responder:
+
+\begin{lstlisting}
+O que e um subsistema?
+O que pertence a ele e o que apenas o referencia?
+O que pode atravessar sua fronteira?
+Quem pode autorizar essa passagem?
+Uma capacidade existe porque foi declarada ou demonstrada?
+O que distingue dado, contribuicao, evidencia e decisao?
+Quem pode converter uma avaliacao em mudanca operacional?
+\end{lstlisting}
+
+Uma entidade ou relação que não participa de nenhuma pergunta relevante deve ser tratada como hipótese fraca até que sua utilidade seja demonstrada.
+
+\section{A arquitetura como estabilização executável}
+
+A arquitetura não é reduzida a uma consequência tardia da ontologia. Ela também condiciona quais distinções podem ser observadas e testadas. A relação é bidirecional:
+
+\begin{principio}[Coformação]
+\centering
+\textbf{A ontologia orienta a arquitetura; a arquitetura expõe as insuficiências da ontologia.}
+\end{principio}
+
+No \sister{}, algumas estabilizações já adquiriram forma arquitetural:
+
+\begin{longtable}{P{5.0cm}P{8.4cm}}
+\toprule
+\textbf{Descoberta} & \textbf{Estabilização arquitetural} \\
+\midrule
+\endhead
+Autonomia não é isolamento absoluto & Subsistemas persistem seu próprio estado e cooperam por contratos explícitos. \\
+Autenticação não equivale a autorização & Identidade, participação, permissão e decisão são verificadas em camadas distintas. \\
+Existir na rede não equivale a participar & Gateway, registro, contrato, estado e autorização materializam condições diferentes. \\
+Uma API não constitui integração & Acordos declaram finalidade, capacidades, participantes, estado, responsabilidade, suspensão e auditoria. \\
+Resultado não equivale a evidência & Proveniência, contexto, critérios e autoridade precisam acompanhar o resultado. \\
+Avaliação não equivale a decisão & O motor avalia e recomenda; a autoridade competente decide; a transição registra o efeito. \\
+Interface não é fonte de verdade & Painéis, Kanban e grafos devem projetar objetos governados e persistidos. \\
+\bottomrule
+\end{longtable}
+
+\section{Harness: significado estabelecido e extensão proposta}
+
+\subsection{O significado estabelecido}
+
+Na engenharia de testes, um \textit{test harness} designa o ambiente e os elementos de suporte necessários para executar testes, como controladores, simuladores, stubs, drivers, dados e mecanismos de coleta de resultados. O termo não implica, por definição, investigação ontológica.
+
+Essa precisão é importante para não apropriar um conceito conhecido e atribuir-lhe silenciosamente outro significado.
+
+\subsection{O que já possui natureza de Harness no SisTer}
+
+A estrutura experimental do \sister{} reúne componentes típicos de um Harness:
+
+\begin{itemize}
+  \item scripts de inicialização e encerramento;
+  \item ambiente de banco de dados controlado;
+  \item migrações reproduzíveis;
+  \item gateway e fronteiras configuráveis;
+  \item certificados e identidades de laboratório;
+  \item subsistema de referência;
+  \item participantes simulados ou reais em quarentena;
+  \item fixtures e estados iniciais;
+  \item cenários de integração;
+  \item testes e gates;
+  \item registros de execução e evidências;
+  \item ferramentas de inspeção e observabilidade.
+\end{itemize}
+
+A descoberta relevante não é que ``o SisTer inteiro seja um Harness''. É que existe, ao redor da plataforma e de seus subsistemas, uma camada experimental com identidade própria que vinha sendo tratada apenas como infraestrutura auxiliar.
+
+\subsection{Harness de Experimentação Ontológica}
+
+Propõe-se o seguinte termo específico:
+
+\begin{principio}[Definição proposta]
+O \textbf{Harness de Experimentação Ontológica do SisTer} é o ambiente executável, controlado e reproduzível no qual hipóteses sobre entidades, relações, contratos, capacidades, autoridade e regulação são materializadas, submetidas a cenários e avaliadas por evidências.
+\end{principio}
+
+Sua extensão em relação a um Harness de testes comum está no objeto da avaliação. Ele testa simultaneamente:
+
+\begin{enumerate}
+  \item \textbf{a implementação}: o código realiza corretamente o comportamento especificado?
+  \item \textbf{a especificação}: as regras são completas, consistentes e verificáveis?
+  \item \textbf{a hipótese ontológica}: as entidades e relações propostas são suficientes para constituir o comportamento como sistema governável?
+\end{enumerate}
+
+\begin{principio}[Diferença decisiva]
+\centering
+\textbf{O Harness não testa somente se o sistema implementa corretamente um conceito; permite testar se o conceito é suficientemente consistente para existir como sistema.}
+\end{principio}
+
+\subsection{O Harness como aparato epistemológico}
+
+Chamar o Harness de aparato epistemológico não lhe confere capacidade autônoma de produzir verdade. Significa que ele organiza condições pelas quais afirmações podem ser examinadas.
+
+Cada experimento deve ligar:
+
+\begin{center}
+\begin{tikzpicture}[
+  node distance=6mm,
+  box/.style={draw=sisterdarkgray,rounded corners,fill=sistergray,minimum width=2.85cm,minimum height=8mm,align=center},
+  arr/.style={-{Latex[length=2mm]},thick,sisterblue}
+]
+\node[box] (h) {hipótese};
+\node[box,right=of h] (c) {cenário};
+\node[box,right=of c] (e) {execução};
+\node[box,right=of e] (r) {registro};
+\node[box,below=of r] (a) {avaliação};
+\node[box,left=of a] (d) {decisão};
+\node[box,left=of d] (v) {revisão};
+\draw[arr] (h)--(c);
+\draw[arr] (c)--(e);
+\draw[arr] (e)--(r);
+\draw[arr] (r)--(a);
+\draw[arr] (a)--(d);
+\draw[arr] (d)--(v);
+\draw[arr] (v) |- (h);
+\end{tikzpicture}
+\end{center}
+
+Sem hipótese explícita, o cenário é apenas demonstração. Sem observação estruturada, a execução é apenas ocorrência. Sem critério, o registro não se converte em avaliação. Sem autoridade, a avaliação não pode converter-se legitimamente em mudança.
+
+\section{O subsistema de referência no Harness}
+
+O subsistema de referência deve possuir domínio mínimo suficiente para provocar questões reais, mas não deve adquirir artificialmente a complexidade de um produto completo.
+
+Sua função é dupla:
+
+\begin{enumerate}
+  \item \textbf{prova técnica}: demonstrar registro, contrato, autenticação, autorização, execução, persistência, falha e recuperação;
+  \item \textbf{sonda ontológica}: revelar quais entidades, relações, invariantes e autoridades são necessárias para que a participação faça sentido.
+\end{enumerate}
+
+\begin{alerta}[Erro a evitar]
+Não se deve confundir ``mínimo ontologicamente suficiente'' com ``vazio de domínio''. Um subsistema sem propósito, estados, responsabilidade ou efeitos não testa participação; testa apenas transporte.
+\end{alerta}
+
+Perguntas que o subsistema de referência deve tornar executáveis incluem:
+
+\begin{itemize}
+  \item pode um subsistema existir sem capacidade declarada?
+  \item uma capacidade declarada e nunca demonstrada continua válida?
+  \item um acordo permanece ativo quando um participante é suspenso?
+  \item uma transformação produz dado, contribuição, evidência ou decisão?
+  \item o resultado pertence ao produtor, ao consumidor ou permanece vinculado ao acordo?
+  \item uma recomendação reflexiva pode alterar diretamente a operação?
+  \item qual autoridade converte observação em mudança?
+\end{itemize}
+
+\section{Reflexividade, cibernética e autoridade}
+
+\subsection{Da observabilidade à regulação}
+
+A reflexividade não deve ser implementada como uma funcionalidade genérica chamada ``refletir''. Ela emerge de relações formais:
+
+\begin{principio}[Cadeia reflexiva]
+\centering
+\textbf{propósito $\rightarrow$ comportamento esperado $\rightarrow$ comportamento observado $\rightarrow$ diferença $\rightarrow$ interpretação $\rightarrow$ recomendação $\rightarrow$ decisão autorizada $\rightarrow$ ação $\rightarrow$ nova observação}
+\end{principio}
+
+As capacidades podem ser distinguidas em níveis:
+
+\begin{longtable}{P{3.0cm}P{10.4cm}}
+\toprule
+\textbf{Nível} & \textbf{Capacidade} \\
+\midrule
+\endhead
+Observável & Registra o que ocorreu, com identidade, tempo, contexto e resultado. \\
+Avaliativo & Compara o observado com referência, contrato, propósito, invariante ou critério. \\
+Reflexivo & Trata sua própria estrutura, capacidades, contratos, critérios ou efeitos como objetos de avaliação. \\
+Recomendador & Produz proposição explicável de resposta, sem confundi-la com decisão. \\
+Cibernético & Participa da regulação futura mediante uma decisão autorizada e um ciclo de realimentação. \\
+\bottomrule
+\end{longtable}
+
+\subsection{A autoridade como condição ontológica}
+
+Entre observar e modificar existe uma fronteira de autoridade. A mesma evidência pode sustentar ações diferentes conforme o papel, o risco, o estado operacional e o contrato.
+
+Assim:
+
+\begin{itemize}
+  \item detectar não é decidir;
+  \item recomendar não é autorizar;
+  \item autorizar não é executar;
+  \item executar não é demonstrar efetividade;
+  \item demonstrar efetividade não elimina a necessidade de nova avaliação.
+\end{itemize}
+
+Essa separação impede que a reflexividade seja reduzida a automação opaca. Também aproxima o método da tradição cibernética segundo a qual a regulação eficaz depende de um modelo adequado do sistema regulado, sem concluir que qualquer modelo ou qualquer regulador seja suficiente.
+
+\section{A emergência dos grafos}
+
+\subsection{Por que as tabelas deixam de bastar como representação cognitiva}
+
+Tabelas relacionais continuam apropriadas para grande parte da persistência transacional. O problema não é sua incapacidade absoluta, mas a dificuldade de perceber topologias quando as perguntas exigem travessias heterogêneas.
+
+Considere o percurso:
+
+\begin{lstlisting}
+subsistema
+  -> oferece capacidade
+  -> participa de acordo
+  -> executa transformacao
+  -> produz contribuicao
+  -> gera evidencia
+  -> atende proposito
+  -> e avaliado por criterio
+  -> produz recomendacao
+  -> fundamenta decisao
+  -> altera configuracao
+\end{lstlisting}
+
+A unidade de compreensão deixa de ser apenas a linha de uma tabela. Passa a ser o caminho que conecta objetos de naturezas diferentes.
+
+\subsection{Knowledge Graph Engineering}
+
+\termo{Knowledge Graph Engineering} é uma expressão reconhecida para atividades de modelagem, construção, integração, validação, manutenção e publicação de grafos de conhecimento. Nesse contexto, ontologias podem fornecer vocabulário e restrições semânticas, enquanto o grafo registra entidades e relações concretas.
+
+Essa tradição oferece ao \sister{} fundamentos úteis para:
+
+\begin{itemize}
+  \item identidade global ou contextual;
+  \item relações tipadas;
+  \item vocabulários compartilhados;
+  \item proveniência;
+  \item validação estrutural;
+  \item consulta por travessias;
+  \item inferência controlada;
+  \item publicação de projeções interoperáveis.
+\end{itemize}
+
+\subsection{Engenharia Orientada a Grafos como hipótese do SisTer}
+
+O que emerge no \sister{} parece mais amplo que um único grafo de conhecimento. Existem topologias com semânticas diferentes:
+
+\begin{longtable}{P{3.5cm}P{5.2cm}P{4.7cm}}
+\toprule
+\textbf{Projeção} & \textbf{Relações centrais} & \textbf{Pergunta principal} \\
+\midrule
+\endhead
+Conhecimento & entidade, classe, conceito, relação & O que o SisTer reconhece sobre seu universo? \\
+Capacidades & subsistema, capacidade, limite, versão & Quem pode fazer o quê e sob quais condições? \\
+Integração & origem, transformação, destino, acordo & Como contribuições atravessam fronteiras? \\
+Proveniência & entidade, atividade, agente, derivação & De onde veio este resultado e como foi transformado? \\
+Autoridade & ator, papel, permissão, decisão, objeto & Quem pode decidir ou alterar o quê? \\
+Execução & tarefa, dependência, entrada, saída, estado & O que depende de quê e qual foi o percurso operacional? \\
+Reflexividade & propósito, critério, observação, avaliação, ação & Como o sistema relaciona conhecimento sobre si mesmo a ações futuras? \\
+Evolução & lacuna, ação, decisão, work package, evidência & Como uma descoberta se converte em mudança governada? \\
+\bottomrule
+\end{longtable}
+
+Propõe-se, provisoriamente:
+
+\begin{hipotese}[Hipótese de Engenharia Orientada a Grafos]
+A Engenharia Orientada a Grafos é a prática de tornar explícitas, tipadas, atravessáveis, verificáveis e, quando autorizado, executáveis as relações que constituem o sistema.
+\end{hipotese}
+
+Ela inclui práticas de Knowledge Graph Engineering, mas pode também abranger grafos de execução, dependência, autoridade e regulação que não precisam ser tratados como conhecimento declarativo no mesmo sentido.
+
+\subsection{Grafo conceitual, projeção e persistência}
+
+Três decisões não devem ser confundidas:
+
+\begin{enumerate}
+  \item \textbf{pensar relacionalmente}: modelar o sistema como entidades e relações tipadas;
+  \item \textbf{projetar um grafo}: produzir uma visão atravessável a partir de fontes governadas;
+  \item \textbf{persistir em banco em grafo}: escolher uma tecnologia específica como fonte operacional.
+\end{enumerate}
+
+O método recomenda começar pela primeira, demonstrar valor na segunda e adotar a terceira apenas quando consultas, volume, latência, evolução de esquema ou raciocínio justificarem a mudança.
+
+\begin{principio}[Autoridade da fonte]
+Toda projeção em grafo deve declarar suas fontes, versão, regra de derivação, atualização, identidade, perdas semânticas e autoridade. Divergência entre projeção e fonte deve ser detectável.
+\end{principio}
+
+\section{O ciclo da Engenharia Ontológica Experimental}
+
+O método é organizado em dez movimentos. Eles não precisam ocorrer linearmente, mas cada ciclo deve deixar rastros suficientes para reconstrução.
+
+\begin{longtable}{P{0.9cm}P{3.4cm}P{5.3cm}P{3.7cm}}
+\toprule
+\textbf{Nº} & \textbf{Movimento} & \textbf{Pergunta} & \textbf{Artefato mínimo} \\
+\midrule
+\endhead
+1 & Situação problemática & O que precisa ser compreendido, realizado ou regulado? & declaração do problema \\
+2 & Hipótese ontológica & Que entidades, relações e distinções parecem necessárias? & hipótese versionada \\
+3 & Perguntas de competência & O que o modelo deve permitir responder ou decidir? & conjunto de perguntas \\
+4 & Materialização mínima & Qual é o menor artefato capaz de tornar a hipótese operável? & contrato, tipo, schema ou componente \\
+5 & Cenário controlado & Em quais condições a hipótese será provocada? & cenário, fixtures e estado inicial \\
+6 & Execução & O que aconteceu sob essas condições? & recibo e registros de execução \\
+7 & Observação & Que fatos, falhas, ausências e efeitos foram produzidos? & evidências e proveniência \\
+8 & Avaliação & O observado confirma, contradiz ou não permite concluir? & avaliação explicável \\
+9 & Revisão e decisão & O que deve ser preservado, alterado, rejeitado ou investigado? & decisão autorizada \\
+10 & Estabilização & Que distinção deve ingressar em domínio, arquitetura, contrato ou método? & ADR, EFE, contrato, teste ou padrão \\
+\bottomrule
+\end{longtable}
+
+\subsection{Resultados possíveis}
+
+Uma hipótese não deve ser classificada apenas como ``passou'' ou ``falhou''. O resultado pode ser:
+
+\begin{itemize}
+  \item \textbf{confirmada provisoriamente}: os cenários previstos foram satisfeitos e não surgiu contradição relevante;
+  \item \textbf{refinada}: a distinção é útil, mas precisa de propriedades, estados ou relações adicionais;
+  \item \textbf{dividida}: uma entidade proposta encobria conceitos diferentes;
+  \item \textbf{fundida}: duas entidades não demonstraram identidade operacional própria;
+  \item \textbf{rejeitada}: a hipótese produz inconsistência, redundância ou não explica o comportamento;
+  \item \textbf{inconclusiva}: faltam cenário, observabilidade, critério ou capacidade de execução;
+  \item \textbf{local}: funciona no contexto testado, sem evidência de generalização;
+  \item \textbf{estabilizada}: foi incorporada a artefatos governantes e possui testes de regressão.
+\end{itemize}
+
+\section{Protocolo de experimento ontológico}
+
+Cada experimento deve possuir um registro semelhante ao seguinte:
+
+\begin{lstlisting}
+id: OE-EXP-001
+version: 1.0.0
+question: >
+  Uma integracao pode permanecer ativa quando um participante
+  perde a autorizacao operacional?
+
+hypothesis:
+  statement: >
+    A suspensao de qualquer participante impede novas execucoes,
+    preserva o historico e nao invalida evidencias ja produzidas.
+  entities:
+    - participant
+    - integration_agreement
+    - authorization
+    - execution
+    - evidence
+  relations:
+    - participant participates_in agreement
+    - authorization governs execution
+    - execution generated evidence
+
+scenario:
+  initial_state: active_agreement_with_two_authorized_participants
+  stimulus: suspend_source_participant
+  expected:
+    - new_execution_rejected
+    - previous_evidence_preserved
+    - reason_explainable
+
+observation:
+  sources:
+    - execution_receipt
+    - audit_log
+    - agreement_snapshot
+  provenance_required: true
+
+evaluation:
+  criteria:
+    - deterministic_rejection
+    - no_history_mutation
+    - authority_identified
+  outcomes:
+    - confirmed
+    - refined
+    - rejected
+    - inconclusive
+
+decision:
+  authority: engineering_owner
+  possible_effects:
+    - revise_contract
+    - revise_domain
+    - revise_implementation
+    - add_scenario
+\end{lstlisting}
+
+\subsection{Critério de qualidade do experimento}
+
+Um experimento é metodologicamente útil quando:
+
+\begin{itemize}
+  \item a hipótese poderia, em princípio, ser contradita;
+  \item o estado inicial é conhecido;
+  \item o estímulo é reproduzível;
+  \item a observação não depende apenas de interpretação retrospectiva;
+  \item os critérios são anteriores à decisão;
+  \item a evidência possui proveniência;
+  \item o efeito da decisão é versionado;
+  \item o cenário pode ser repetido após mudanças.
+\end{itemize}
+
+\section{Arquitetura mínima do Harness}
+
+Uma organização possível é:
+
+\begin{lstlisting}
+sister/
+  platform/                    # nucleo operacional
+  contracts/                   # contratos e schemas governados
+  reference-subsystem/         # participante minimo de dominio
+  engineering-center/          # plano de controle e projecoes
+  harness/
+    hypotheses/                # hipoteses ontologicas versionadas
+    scenarios/                 # cenarios executaveis
+    fixtures/                  # estados iniciais e dados controlados
+    simulators/                # participantes e dependencias simuladas
+    runners/                   # orquestracao das execucoes
+    observers/                 # captura estruturada
+    assertions/                # criterios tecnicos e ontologicos
+    evidence/                  # manifestos e indices locais
+    projections/               # grafos e outras visoes derivadas
+    reports/                   # avaliacoes e comparacoes
+\end{lstlisting}
+
+Essa estrutura é indicativa. A separação conceitual importa mais que a árvore de diretórios. Um mesmo componente pode servir a mais de uma função, desde que suas responsabilidades e saídas sejam explícitas.
+
+\subsection{Camadas funcionais}
+
+\begin{longtable}{P{3.2cm}P{6.0cm}P{3.9cm}}
+\toprule
+\textbf{Camada} & \textbf{Responsabilidade} & \textbf{Saída principal} \\
+\midrule
+\endhead
+Preparação & produzir ambiente, identidades, configuração, contratos e estado inicial & manifesto de ambiente \\
+Estimulação & submeter eventos, comandos, falhas e mudanças de estado & intenção de execução \\
+Execução & realizar o comportamento sob condições conhecidas & recibo de execução \\
+Observação & capturar fatos sem decidir seu significado & observações tipadas \\
+Proveniência & ligar entrada, atividade, agente, versão e saída & relações de derivação \\
+Avaliação & aplicar critérios e referências congeladas & finding ou atestação \\
+Decisão & registrar autoridade, justificativa e efeito permitido & decisão versionada \\
+Projeção & oferecer visões tabulares, temporais ou em grafo & snapshot derivado \\
+Repetição & reconstruir estado e comparar ciclos & relatório de regressão \\
+\bottomrule
+\end{longtable}
+
+\section{Programa inicial de experimentos para o SisTer}
+
+\subsection{OE-EXP-001 -- identidade de um subsistema}
+
+\textbf{Pergunta}: um subsistema é identificado por processo, instância, manifesto, autoridade ou continuidade histórica?
+
+\textbf{Objetivo}: impedir duplicação conceitual como a observada quando uma integração candidata e um participante de referência foram apresentados como dois sistemas sem que houvesse duas identidades reais de domínio.
+
+\textbf{Resultado esperado}: critérios explícitos para criar, registrar, instanciar e aposentar uma identidade de subsistema.
+
+\subsection{OE-EXP-002 -- capacidade declarada versus demonstrada}
+
+\textbf{Pergunta}: qual é o estado de uma capacidade que consta no manifesto, mas ainda não produziu execução válida e evidência?
+
+\textbf{Hipótese}: declaração cria uma capacidade candidata; demonstração e avaliação podem promovê-la a capacidade confiável dentro de um perfil e contexto.
+
+\subsection{OE-EXP-003 -- acordo bilateral e suspensão}
+
+\textbf{Pergunta}: quais efeitos a suspensão de um participante produz sobre novas execuções, histórico, evidências e consultas?
+
+\textbf{Objetivo}: validar a distinção entre estado do participante, estado do acordo e validade de evidências pretéritas.
+
+\subsection{OE-EXP-004 -- transformação, contribuição e evidência}
+
+\textbf{Pergunta}: em que momento o resultado de uma transformação deixa de ser apenas dado e passa a constituir contribuição ou evidência?
+
+\textbf{Objetivo}: impedir que qualquer saída computacional receba automaticamente estatuto epistêmico.
+
+\subsection{OE-EXP-005 -- recomendação reflexiva e autoridade}
+
+\textbf{Pergunta}: uma divergência observada pode gerar quais respostas em modos \texttt{shadow}, recomendação, aprovação e execução governada?
+
+\textbf{Objetivo}: validar a separação entre avaliação, recomendação, decisão e transição operacional.
+
+\subsection{OE-EXP-006 -- grafo de proveniência como projeção}
+
+\textbf{Pergunta}: é possível reconstruir o percurso de uma decisão a partir de fontes persistidas sem criar estado paralelo no grafo?
+
+\textbf{Objetivo}: demonstrar uma primeira projeção em grafo derivada de entidades, execuções, avaliações, agentes e decisões.
+
+\section{Relação com a EFE-SisTer/1.7 e o PDE}
+
+Este documento complementa a EFE-SisTer/1.7 em três pontos:
+
+\begin{enumerate}
+  \item oferece uma explicação metodológica para o surgimento de categorias já presentes na especificação;
+  \item distingue o Harness como infraestrutura experimental e instrumento de descoberta;
+  \item propõe grafos como projeções derivadas para capacidades, proveniência, autoridade, execução e reflexividade.
+\end{enumerate}
+
+Não modifica automaticamente funções, processos ou contratos. Uma descoberta somente ingressa na linha normativa quando percorre:
+
+\begin{principio}[Incorporação governada]
+\centering
+\textbf{experimento $\rightarrow$ evidência $\rightarrow$ avaliação $\rightarrow$ decisão $\rightarrow$ ADR/EFE/contrato/PDE $\rightarrow$ implementação $\rightarrow$ teste de regressão}
+\end{principio}
+
+O PDE deve receber lacunas e ações resultantes dos experimentos, mas não deve ser confundido com o próprio método. O PDE governa a evolução autorizada; o Harness produz condições e evidências para descobrir e avaliar o que pode precisar evoluir.
+
+\section{Riscos, limites e antídotos}
+
+\begin{longtable}{P{4.0cm}P{5.0cm}P{4.2cm}}
+\toprule
+\textbf{Risco} & \textbf{Manifestação} & \textbf{Antídoto} \\
+\midrule
+\endhead
+Ontologização excessiva & criar entidades e termos para qualquer detalhe & exigir pergunta, invariante, relação ou decisão que justifique a entidade \\
+Teoria sem execução & produzir documentos que não mudam cenários ou artefatos & vincular cada hipótese a uma materialização mínima \\
+Código sem hipótese & acumular protótipos sem pergunta explícita & registrar questão e resultado antes de promover a implementação \\
+Confundir teste com prova ontológica & concluir que testes verdes validam o conceito inteiro & separar conformidade técnica de suficiência conceitual \\
+Confundir grafo com banco & trocar tecnologia antes de demonstrar consultas e valor & começar por projeção derivada e benchmark \\
+Verdade paralela & painel ou grafo mantém estado próprio divergente & derivação determinística, snapshots, digests e verificação cruzada \\
+Automação de autoridade & recomendação altera operação sem decisão legítima & perfis de efeito, gates humanos e trilha de auditoria \\
+Generalização prematura & transformar descoberta local em regra universal & declarar escopo, contexto e limites de validade \\
+Harness virar produto & infraestrutura experimental acumula funções finalísticas & manter critérios de entrada, saída e descarte de componentes \\
+Subsistema de referência vazio & testar apenas HTTP e schemas & exigir propósito mínimo, estados, capacidade, autoridade e efeitos \\
+\bottomrule
+\end{longtable}
+
+\section{Critérios para validar o método}
+
+A Engenharia Ontológica Experimental de Sistemas deve ser avaliada pelos efeitos produzidos. Os seguintes critérios são propostos:
+
+\begin{enumerate}
+  \item \textbf{clareza}: reduz ambiguidades entre termos, identidades e responsabilidades;
+  \item \textbf{executabilidade}: converte perguntas conceituais em cenários reproduzíveis;
+  \item \textbf{rastreabilidade}: liga hipótese, código, execução, evidência, avaliação e decisão;
+  \item \textbf{economia}: evita implementar complexidade que não demonstrou necessidade;
+  \item \textbf{poder discriminante}: distingue falha de código, falha de especificação e insuficiência ontológica;
+  \item \textbf{governança}: preserva autoridade e explicabilidade das mudanças;
+  \item \textbf{regressão}: permite verificar se descobertas estabilizadas continuam válidas;
+  \item \textbf{transferência}: produz padrões reutilizáveis por outros subsistemas sem deformá-los;
+  \item \textbf{refutabilidade}: admite rejeição ou redução das próprias categorias metodológicas.
+\end{enumerate}
+
+\begin{alerta}[Critério de abandono]
+Se o método apenas renomear prototipagem, testes e modelagem sem melhorar decisões, rastreabilidade ou qualidade conceitual, ele não deve ser mantido como camada própria do SisTer.
+\end{alerta}
+
+\section{Consequências práticas imediatas}
+
+A persistência deste documento não exige uma grande refatoração. As primeiras ações podem ser pequenas:
+
+\begin{enumerate}
+  \item criar \texttt{harness/hypotheses} e \texttt{harness/scenarios};
+  \item registrar um único experimento piloto, preferencialmente OE-EXP-001;
+  \item produzir recibo de execução com versões, identidade, estado inicial e resultado;
+  \item separar assertions técnicas de avaliações ontológicas;
+  \item gerar uma projeção simples de proveniência sem banco em grafo;
+  \item comparar a projeção com as fontes persistidas;
+  \item registrar a decisão resultante em ADR ou PDE somente após avaliação;
+  \item repetir o cenário após a mudança.
+\end{enumerate}
+
+\begin{principio}[Unidade mínima de avanço]
+\centering
+\textbf{Uma pergunta ontológica, uma materialização mínima, um cenário reproduzível, uma evidência e uma decisão registrada.}
+\end{principio}
+
+\section{Conclusão}
+
+A peculiaridade dos sistemas que estamos construindo não precisa ser tratada como desvio da engenharia trivial. Ela pode indicar que estamos trabalhando em uma camada na qual parte das entidades, relações e fronteiras ainda precisa ser descoberta antes de ser estabilizada como especificação.
+
+O domínio emerge quando identificamos aquilo que deve permanecer semanticamente verdadeiro durante a operação.
+
+A arquitetura emerge quando essas distinções adquirem forma executável, limites e dependências.
+
+O Harness emerge quando hipóteses precisam ser provocadas sob condições controladas, observáveis e repetíveis.
+
+A reflexividade emerge quando o sistema relaciona propósito, comportamento, evidência, avaliação e decisão sobre sua própria operação ou materialização.
+
+A cibernética emerge quando essa avaliação participa da regulação futura mediante autoridade delimitada.
+
+Os grafos emergem quando percebemos que a constituição do sistema está nos caminhos que conectam capacidade, acordo, execução, evidência, propósito, avaliação e decisão.
+
+A contribuição metodológica não consiste em substituir engenharia de software por ontologia, nem tabelas por grafos, nem decisão humana por automação. Consiste em organizar uma prática na qual construir e compreender deixam de ser fases completamente separadas.
+
+\begin{principio}[Síntese final]
+\centering\Large
+\textbf{Construir, executar, observar, avaliar e compreender são partes do mesmo ato de engenharia --- desde que cada passagem seja explícita, reproduzível, versionada e governada.}
+\end{principio}
+
+\appendix
+\section{Vocabulário operacional inicial}
+
+\begin{longtable}{P{3.6cm}P{9.8cm}}
+\toprule
+\textbf{Termo} & \textbf{Definição operacional} \\
+\midrule
+\endhead
+Hipótese ontológica & Proposição versionada sobre entidades, relações, distinções ou invariantes necessárias para constituir o sistema. \\
+Materialização mínima & Menor artefato executável capaz de tornar uma hipótese observável sem antecipar complexidade não demonstrada. \\
+Experimento ontológico & Cenário controlado que submete uma hipótese ontológica a execução, observação e avaliação. \\
+Harness & Ambiente e conjunto de elementos de suporte que preparam, executam, observam e repetem cenários. \\
+Harness de Experimentação Ontológica & Extensão específica do SisTer na qual também se avalia a suficiência das distinções conceituais materializadas. \\
+Descoberta & Distinção cuja necessidade foi sustentada por observações e avaliação, ainda não necessariamente estabilizada. \\
+Estabilização & Incorporação autorizada de uma descoberta a domínio, arquitetura, contrato, processo, teste ou padrão. \\
+Projeção em grafo & Representação derivada e atravessável de relações persistidas ou governadas em fontes identificadas. \\
+Grafo de conhecimento & Grafo que representa entidades e relações com semântica, identidade, contexto e, eventualmente, inferência. \\
+Engenharia Orientada a Grafos & Hipótese metodológica para tornar relações constitutivas explícitas, tipadas, verificáveis e utilizáveis. \\
+Reflexividade & Capacidade de tratar aspectos da própria operação ou materialização como objetos de observação e avaliação. \\
+Regulação cibernética & Uso governado da avaliação para influenciar comportamento futuro por realimentação. \\
+Autoridade & Competência legitimamente atribuída para avaliar, decidir, autorizar, executar ou alterar determinado objeto ou estado. \\
+Evidência & Registro contextualizado e rastreável capaz de sustentar uma avaliação dentro de critérios declarados. \\
+\bottomrule
+\end{longtable}
+
+\section{Checklist de revisão de uma hipótese}
+
+\begin{enumerate}
+  \item Qual problema motivou a hipótese?
+  \item Que entidade, relação ou distinção está sendo proposta?
+  \item Que alternativas foram consideradas?
+  \item Que pergunta de competência ela permite responder?
+  \item Qual é sua materialização mínima?
+  \item Que cenário poderia contradizê-la?
+  \item Qual estado inicial será congelado?
+  \item Que observações serão capturadas?
+  \item Como a proveniência será preservada?
+  \item Quais critérios diferenciam confirmação, refinamento, rejeição e inconclusão?
+  \item Quem possui autoridade para decidir o efeito do resultado?
+  \item Que artefato governante deverá ser atualizado?
+  \item Que teste de regressão preservará a descoberta estabilizada?
+  \item A hipótese exige realmente um grafo ou apenas uma visão relacional mais clara?
+  \item A nova estrutura cria uma verdade paralela?
+\end{enumerate}
+
+\section{Referências}
+
+\begin{thebibliography}{99}
+
+\bibitem{gruber1993}
+GRUBER, Thomas R.
+\textit{A translation approach to portable ontology specifications}.
+Knowledge Acquisition, v. 5, n. 2, p. 199--220, 1993.
+DOI: \url{https://doi.org/10.1006/knac.1993.1008}.
+
+\bibitem{studer1998}
+STUDER, Rudi; BENJAMINS, V. Richard; FENSEL, Dieter.
+\textit{Knowledge engineering: principles and methods}.
+Data \& Knowledge Engineering, v. 25, n. 1--2, p. 161--197, 1998.
+DOI: \url{https://doi.org/10.1016/S0169-023X(97)00056-6}.
+
+\bibitem{methontology1997}
+FERNÁNDEZ-LÓPEZ, Mariano; GÓMEZ-PÉREZ, Asunción; JURISTO, Natalia.
+\textit{METHONTOLOGY: from ontological art towards ontological engineering}.
+In: AAAI Spring Symposium on Ontological Engineering. Stanford: AAAI, 1997.
+Disponível em: \url{https://oa.upm.es/5484/}.
+
+\bibitem{hevner2004}
+HEVNER, Alan R.; MARCH, Salvatore T.; PARK, Jinsoo; RAM, Sudha.
+\textit{Design science in information systems research}.
+MIS Quarterly, v. 28, n. 1, p. 75--105, 2004.
+DOI: \url{https://doi.org/10.2307/25148625}.
+
+\bibitem{simon1969}
+SIMON, Herbert A.
+\textit{The sciences of the artificial}.
+Cambridge, MA: MIT Press, 1969.
+
+\bibitem{conantashby1970}
+CONANT, Roger C.; ASHBY, W. Ross.
+\textit{Every good regulator of a system must be a model of that system}.
+International Journal of Systems Science, v. 1, n. 2, p. 89--97, 1970.
+DOI: \url{https://doi.org/10.1080/00207727008920220}.
+
+\bibitem{rdf2014}
+WORLD WIDE WEB CONSORTIUM.
+\textit{RDF 1.1 Concepts and Abstract Syntax}.
+W3C Recommendation, 25 fev. 2014.
+Disponível em: \url{https://www.w3.org/TR/rdf11-concepts/}.
+
+\bibitem{provo2013}
+WORLD WIDE WEB CONSORTIUM.
+\textit{PROV-O: The PROV Ontology}.
+W3C Recommendation, 30 abr. 2013.
+Disponível em: \url{https://www.w3.org/TR/prov-o/}.
+
+\bibitem{hogan2021}
+HOGAN, Aidan et al.
+\textit{Knowledge graphs}.
+ACM Computing Surveys, v. 54, n. 4, art. 71, p. 1--37, 2021.
+DOI: \url{https://doi.org/10.1145/3447772}.
+
+\bibitem{istqb}
+INTERNATIONAL SOFTWARE TESTING QUALIFICATIONS BOARD.
+\textit{ISTQB Glossary}.
+Vocabulário de termos de teste de software.
+Disponível em: \url{https://glossary.istqb.org/}.
+
+\bibitem{efe17}
+PROJETO SISTER.
+\textit{Especificação Funcional e de Engenharia do SisTer -- EFE-SisTer/1.7}.
+Documento interno, 3 ago. 2026.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Engenharia Ontológica Experimental de Sistemas: Harness, reflexividade e engenharia orientada a grafos no projeto SisTer.">
+  <meta name="theme-color" content="#1c4369">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Engenharia Ontológica Experimental de Sistemas — SisTer">
+  <meta property="og:description" content="Construir, executar, observar e compreender como partes do mesmo ato de engenharia.">
+  <title>Engenharia Ontológica Experimental — SisTer</title>
+  <link rel="icon" href="assets/sister-mark.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="assets/site.css">
+  <script src="assets/site.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+  <header class="site-header" data-header>
+    <div class="container header-inner">
+      <a class="brand" href="#inicio" aria-label="SisTer — início">
+        <span class="brand-mark" aria-hidden="true">S</span>
+        <span><strong>SisTer</strong><small>EOE-SisTer/1.0</small></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-principal" data-nav-toggle>
+        <span class="sr-only">Abrir navegação</span>
+        <span aria-hidden="true">☰</span>
+      </button>
+      <nav id="nav-principal" class="site-nav" aria-label="Navegação principal" data-nav>
+        <a href="#metodo">Método</a>
+        <a href="#harness">Harness</a>
+        <a href="#grafos">Grafos</a>
+        <a href="#experimentos">Experimentos</a>
+        <a href="#validacao">Validação</a>
+        <button class="theme-toggle" type="button" data-theme-toggle aria-label="Alternar tema">◐</button>
+      </nav>
+    </div>
+  </header>
+
+  <main id="conteudo">
+    <section class="hero" id="inicio">
+      <div class="container hero-grid">
+        <div>
+          <p class="eyebrow">Projeto SisTer · Método em validação</p>
+          <h1>Engenharia Ontológica Experimental de Sistemas</h1>
+          <p class="hero-subtitle">Harness, reflexividade e engenharia orientada a grafos no SisTer</p>
+          <p class="lead">Construir, executar, observar e compreender como partes do mesmo ato de engenharia.</p>
+          <div class="actions" aria-label="Ações principais">
+            <a class="button primary" href="documentos/engenharia_ontologica_experimental_sister_v1_0.pdf">Ler documento completo</a>
+            <a class="button secondary" href="documentos/engenharia_ontologica_experimental_sister_v1_0.tex">Baixar fonte LaTeX</a>
+          </div>
+          <div class="meta-row" aria-label="Metadados do documento">
+            <span>Versão 1.0</span><span>5 ago. 2026</span><span>GPL-3.0-or-later</span>
+          </div>
+        </div>
+        <aside class="thesis-card" aria-label="Tese central">
+          <span class="card-label">Tese central</span>
+          <p>No SisTer, domínio, arquitetura, contratos, Harness, reflexividade e grafos não são apenas pressupostos de projeto: são distinções progressivamente descobertas, materializadas e avaliadas pela experimentação.</p>
+        </aside>
+      </div>
+    </section>
+
+    <section class="section intro">
+      <div class="container narrow">
+        <p class="section-kicker">Uma hipótese metodológica, não uma proclamação disciplinar</p>
+        <h2>O código também participa da investigação</h2>
+        <p>O SisTer não parte sempre de um domínio completamente estabilizado. Artefatos mínimos são colocados em relação, tensões tornam pressupostos visíveis e algumas distinções passam a adquirir forma de domínio, contrato, fronteira, capacidade, autoridade ou evidência.</p>
+        <p>O método não substitui requisitos, modelagem ou arquitetura. Ele organiza a coevolução entre compreensão e materialização, preservando rastreabilidade e autoridade humana.</p>
+      </div>
+    </section>
+
+    <section class="section alt" id="metodo">
+      <div class="container">
+        <p class="section-kicker">Ciclo fundamental</p>
+        <h2>Da situação problemática à estabilização arquitetural</h2>
+        <ol class="cycle" aria-label="Ciclo da Engenharia Ontológica Experimental">
+          <li><strong>Situação problemática</strong><span>O que precisa ser compreendido, realizado ou regulado?</span></li>
+          <li><strong>Hipótese ontológica</strong><span>Que entidades, relações e distinções parecem necessárias?</span></li>
+          <li><strong>Materialização mínima</strong><span>Qual é o menor artefato capaz de tornar a hipótese operável?</span></li>
+          <li><strong>Execução controlada</strong><span>Em quais condições a hipótese será provocada?</span></li>
+          <li><strong>Observação</strong><span>Que fatos, ausências, falhas e efeitos foram produzidos?</span></li>
+          <li><strong>Avaliação</strong><span>O observado confirma, contradiz ou não permite concluir?</span></li>
+          <li><strong>Revisão ontológica</strong><span>O que deve ser preservado, alterado, dividido, fundido ou rejeitado?</span></li>
+          <li><strong>Estabilização</strong><span>Que distinção ingressa em domínio, arquitetura, contrato, teste ou método?</span></li>
+        </ol>
+      </div>
+    </section>
+
+    <section class="section" id="descobertas">
+      <div class="container">
+        <p class="section-kicker">Distinções que emergem pela experimentação</p>
+        <h2>O método aparece nos limites onde o trivial deixa de explicar</h2>
+        <div class="card-grid">
+          <article class="concept-card"><span>01</span><h3>Domínio</h3><p>Não é um inventário de substantivos. Consolida-se quando identidades, relações, responsabilidades, invariantes e limites de autoridade permanecem semanticamente coerentes durante a operação.</p></article>
+          <article class="concept-card"><span>02</span><h3>Arquitetura</h3><p>Estabiliza distinções como fronteiras executáveis. A ontologia orienta a arquitetura; a arquitetura expõe insuficiências da ontologia.</p></article>
+          <article class="concept-card"><span>03</span><h3>Contrato</h3><p>Surge quando uma API válida não basta para explicar finalidade, responsabilidade, estado, suspensão, revogação e evidência.</p></article>
+          <article class="concept-card"><span>04</span><h3>Harness</h3><p>Organiza condições controladas, repetíveis e observáveis para avaliar implementação, especificação e hipótese ontológica.</p></article>
+          <article class="concept-card"><span>05</span><h3>Reflexividade</h3><p>Relaciona propósito, comportamento esperado, comportamento observado, avaliação, recomendação, decisão e nova ação.</p></article>
+          <article class="concept-card"><span>06</span><h3>Grafos</h3><p>Tornam atravessáveis as relações entre subsistema, capacidade, acordo, execução, contribuição, evidência, avaliação, decisão e configuração.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section dark" id="harness">
+      <div class="container split">
+        <div>
+          <p class="section-kicker">Harness de Experimentação Ontológica</p>
+          <h2>O ambiente que torna perguntas ontológicas executáveis</h2>
+          <p class="lead-small">O Harness não testa somente se o sistema implementa corretamente um conceito; permite testar se o conceito é suficientemente consistente para existir como sistema governável.</p>
+          <div class="triple">
+            <div><strong>Implementação</strong><span>O código realiza corretamente o comportamento especificado?</span></div>
+            <div><strong>Especificação</strong><span>As regras são completas, consistentes e verificáveis?</span></div>
+            <div><strong>Hipótese ontológica</strong><span>As entidades e relações propostas constituem um comportamento governável?</span></div>
+          </div>
+        </div>
+        <div class="harness-stack" role="img" aria-label="Camadas funcionais do Harness">
+          <div><strong>Hipóteses e perguntas</strong><span>questões de competência, entidades, relações e invariantes</span></div>
+          <div><strong>Cenários e fixtures</strong><span>estado inicial, estímulos, participantes e restrições</span></div>
+          <div><strong>Execução controlada</strong><span>subsistema de referência, gateway, banco, contratos e simuladores</span></div>
+          <div><strong>Observação e evidência</strong><span>recibos, logs, snapshots, digests e proveniência</span></div>
+          <div><strong>Avaliação e decisão</strong><span>critérios, resultado, autoridade e efeito versionado</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="reflexividade">
+      <div class="container">
+        <p class="section-kicker">Reflexividade, cibernética e autoridade</p>
+        <h2>Observar não é decidir</h2>
+        <div class="reflexive-path" aria-label="Cadeia reflexiva">
+          <span>Propósito</span><i>→</i><span>Esperado</span><i>→</i><span>Observado</span><i>→</i><span>Diferença</span><i>→</i><span>Interpretação</span><i>→</i><span>Recomendação</span><i>→</i><span>Decisão autorizada</span><i>→</i><span>Ação</span><i>→</i><span>Nova observação</span>
+        </div>
+        <div class="authority-grid">
+          <p><strong>Detectar</strong> não é decidir.</p>
+          <p><strong>Recomendar</strong> não é autorizar.</p>
+          <p><strong>Autorizar</strong> não é executar.</p>
+          <p><strong>Executar</strong> não é demonstrar efetividade.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section alt" id="grafos">
+      <div class="container">
+        <p class="section-kicker">Engenharia Orientada a Grafos — hipótese de trabalho</p>
+        <h2>Relações explícitas, tipadas, atravessáveis e verificáveis</h2>
+        <div class="graph-path" aria-label="Exemplo de percurso relacional">
+          <span>Subsistema</span><b>oferece</b><span>Capacidade</span><b>participa</b><span>Acordo</span><b>governa</b><span>Execução</span><b>produz</b><span>Evidência</span><b>sustenta</b><span>Avaliação</span><b>fundamenta</b><span>Decisão</span>
+        </div>
+        <blockquote>O grafo é uma projeção verificável de relações governadas; não é uma verdade paralela nem uma justificativa automática para trocar a persistência relacional por um banco em grafo.</blockquote>
+        <div class="three-decisions">
+          <article><strong>1. Pensar relacionalmente</strong><p>Modelar entidades e relações tipadas.</p></article>
+          <article><strong>2. Projetar um grafo</strong><p>Produzir uma visão atravessável a partir de fontes governadas.</p></article>
+          <article><strong>3. Persistir em grafo</strong><p>Adotar tecnologia específica somente quando consultas e evidências justificarem.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="experimentos">
+      <div class="container">
+        <p class="section-kicker">Programa inicial</p>
+        <h2>Seis experimentos para começar pequeno</h2>
+        <div class="experiments">
+          <article><code>OE-EXP-001</code><h3>Identidade de um subsistema</h3><p>Testar o que torna um participante distinguível, responsável e governável.</p></article>
+          <article><code>OE-EXP-002</code><h3>Capacidade declarada versus demonstrada</h3><p>Verificar quando uma declaração passa a possuir evidência operacional suficiente.</p></article>
+          <article><code>OE-EXP-003</code><h3>Acordo bilateral e suspensão</h3><p>Observar efeitos de suspensão, preservação histórica e bloqueio de novas execuções.</p></article>
+          <article><code>OE-EXP-004</code><h3>Transformação, contribuição e evidência</h3><p>Distinguir resultado técnico, contribuição de domínio e evidência governada.</p></article>
+          <article><code>OE-EXP-005</code><h3>Recomendação reflexiva e autoridade</h3><p>Separar avaliação, recomendação, decisão legítima e efeito operacional.</p></article>
+          <article><code>OE-EXP-006</code><h3>Grafo de proveniência como projeção</h3><p>Gerar uma travessia verificável sem criar fonte de verdade paralela.</p></article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section dark" id="validacao">
+      <div class="container">
+        <p class="section-kicker">Critérios para validar — ou abandonar — o método</p>
+        <h2>A ideia só permanece se melhorar decisões reais</h2>
+        <div class="criteria-grid">
+          <span>Clareza</span><span>Executabilidade</span><span>Rastreabilidade</span><span>Economia</span><span>Poder discriminante</span><span>Governança</span><span>Regressão</span><span>Transferência</span><span>Refutabilidade</span>
+        </div>
+        <div class="abandonment">
+          <strong>Critério de abandono</strong>
+          <p>Se o método apenas renomear prototipagem, testes e modelagem sem melhorar decisões, rastreabilidade ou qualidade conceitual, ele não deve ser mantido como camada própria do SisTer.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section callout">
+      <div class="container narrow center">
+        <p class="section-kicker">Unidade mínima de avanço</p>
+        <h2>Uma pergunta, uma materialização, um cenário, uma evidência e uma decisão registrada.</h2>
+        <div class="actions centered">
+          <a class="button primary" href="documentos/engenharia_ontologica_experimental_sister_v1_0.pdf">Abrir PDF completo</a>
+          <a class="button secondary" href="https://github.com/jpereiratrindade/SisTer">Repositório no GitHub</a>
+          <a class="button secondary" href="https://gitlab.com/jpereiratrindade/sister">Repositório no GitLab</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <div><strong>SisTer</strong><p>Sistema Inteligente e Resiliência de SSE</p></div>
+      <div><p>EOE-SisTer/1.0 · Projeto SisTer</p><p>Conteúdo e código da página sob GPL-3.0-or-later.</p></div>
+    </div>
+  </footer>
+</body>
+</html>
