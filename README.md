@@ -1,3 +1,82 @@
+<!-- SISTER-PORTAL:START -->
+
+<div align="center">
+
+# SisTer
+
+## Sistema Inteligente e Resiliência de Sistemas e Ecossistemas
+
+**Pesquisa, engenharia e software para construir, integrar, observar e evoluir ecossistemas compostos por subsistemas autônomos.**
+
+### [Acessar o Portal do SisTer](https://jpereiratrindade.github.io/SisTer/)
+
+[![Portal](https://img.shields.io/badge/Portal-SisTer-174a72?style=for-the-badge)](https://jpereiratrindade.github.io/SisTer/)
+[![GitHub](https://img.shields.io/badge/Código-GitHub-24292f?style=for-the-badge&logo=github)](https://github.com/jpereiratrindade/SisTer)
+[![GitLab](https://img.shields.io/badge-Espelho-GitLab-fc6d26?style=for-the-badge&logo=gitlab)](https://gitlab.com/jpereiratrindade/sister)
+[![Licença](https://img.shields.io/badge/Licença-GPL--3.0--or--later-174a72?style=for-the-badge)](LICENSE)
+
+</div>
+
+---
+
+## Visão geral
+
+O **SisTer** é uma plataforma para construção e operação de ecossistemas de software formados por subsistemas autônomos.
+
+O projeto organiza a integração desses subsistemas por meio de:
+
+- contratos explícitos;
+- capacidades registradas;
+- fronteiras controladas;
+- evidências rastreáveis;
+- avaliação da operação;
+- decisões autorizadas de engenharia;
+- experimentos executáveis;
+- reflexão sobre o comportamento do próprio ecossistema.
+
+O SisTer reúne pesquisa, arquitetura e implementação em uma mesma trajetória de desenvolvimento. Hipóteses são materializadas em software, executadas em condições controladas, observadas e avaliadas. As distinções validadas passam a compor o domínio, a arquitetura, os contratos, os testes e o conhecimento operacional do sistema.
+
+## Comece por aqui
+
+| Recurso | Conteúdo |
+|---|---|
+| **[Portal do SisTer](https://jpereiratrindade.github.io/SisTer/)** | Visão geral, método, Harness, grafos, experimentos e validação |
+| **[Código no GitHub](https://github.com/jpereiratrindade/SisTer)** | Repositório principal de desenvolvimento |
+| **[Espelho no GitLab](https://gitlab.com/jpereiratrindade/sister)** | Espelho do projeto e pipeline GitLab Pages |
+| **[Documento completo](https://jpereiratrindade.github.io/SisTer/documentos/engenharia_ontologica_experimental_sister_v1_0.pdf)** | Engenharia Ontológica Experimental aplicada ao SisTer |
+| **[Licença](LICENSE)** | GNU General Public License v3 ou posterior |
+
+## Elementos centrais
+
+| Elemento | Função no SisTer |
+|---|---|
+| **Subsistemas** | Implementam capacidades próprias e preservam sua autonomia |
+| **Contratos** | Definem finalidade, participantes, responsabilidades, estados e evidências |
+| **Gateway** | Organiza a exposição e o acesso aos componentes do ecossistema |
+| **Centro de Engenharia** | Apoia avaliação, autorização e evolução da arquitetura |
+| **Harness experimental** | Executa hipóteses e produz observações controladas |
+| **Reflexividade** | Relaciona propósito, comportamento esperado e operação observada |
+| **Grafos** | Representam relações entre entidades, capacidades, contratos e evidências |
+
+## Tecnologia e desenvolvimento
+
+O SisTer adota:
+
+- C++ como linguagem principal;
+- interfaces web para interação e observação;
+- integração por contratos;
+- arquitetura modular;
+- rastreabilidade de decisões e evidências;
+- execução local e controlada;
+- software livre sob a licença GPLv3.
+
+<!-- SISTER-PORTAL:END -->
+
+
+---
+
+## Documentação anterior do projeto
+
 # SisTer
 
 SisTer e um teste de plataforma federativa de convergencia territorial orientada por contratos.
