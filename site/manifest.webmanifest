@@ -1,0 +1,11 @@
+{
+  "name": "Engenharia Ontológica Experimental — SisTer",
+  "short_name": "EOE-SisTer",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1c4369",
+  "icons": [
+    {"src": "assets/sister-mark.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable"}
+  ]
+}
