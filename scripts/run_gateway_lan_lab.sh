@@ -60,12 +60,24 @@ sister_load_env "$ENV_NAME"
 if [[ $PREPARE -eq 1 ]]; then
   "$ROOT_DIR/scripts/db/up.sh" "$ENV_NAME"
   "$ROOT_DIR/scripts/db/migrate.sh" "$ENV_NAME"
+
+  # PostgreSQL é a autoridade dos usuários locais.
+  "$ROOT_DIR/scripts/auth/userctl.sh" \
+    --environment "$ENV_NAME" \
+    sync-runtime "$RUN_DIR/auth-users.tsv"
+
   cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build"
   cmake --build "$ROOT_DIR/build" --target sisterd --parallel
 elif [[ ! -x "$ROOT_DIR/build/apps/sisterd/sisterd" ]]; then
   echo "tested sisterd artifact is missing" >&2
   exit 1
+else
+  # Em --no-prepare, o banco já deve estar operacional.
+  "$ROOT_DIR/scripts/auth/userctl.sh" \
+    --environment "$ENV_NAME" \
+    sync-runtime "$RUN_DIR/auth-users.tsv"
 fi
+
 "$ROOT_DIR/scripts/create_gateway_lab_certificate.sh" "$GATEWAY_ALLOWED_HOST"
 
 rm -f "$SISTERD_SOCKET"
