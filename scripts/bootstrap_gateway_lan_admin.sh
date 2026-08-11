@@ -17,7 +17,6 @@ fi
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RUN_DIR="$ROOT_DIR/.run/gateway"
-AUTH_FILE="$RUN_DIR/auth-users.tsv"
 cd "$ROOT_DIR"
 
 if [[ -f "$RUN_DIR/lan-sisterd.pid" || -f "$RUN_DIR/haproxy.pid" ]]; then
@@ -30,7 +29,7 @@ echo "=== Bootstrap administrativo do SisTer ==="
 echo
 echo "Ambiente: $ENVIRONMENT"
 echo "Autoridade persistente: PostgreSQL / sister_users"
-echo "Cache de runtime: $AUTH_FILE"
+echo "Backend de autenticação: PostgreSQL"
 echo
 
 scripts/db/up.sh "$ENVIRONMENT"
@@ -63,14 +62,9 @@ scripts/auth/userctl.sh \
   --environment "$ENVIRONMENT" \
   create "$EMAIL" "$NAME" admin
 
-scripts/auth/userctl.sh \
-  --environment "$ENVIRONMENT" \
-  sync-runtime "$AUTH_FILE"
-
-chmod 600 "$AUTH_FILE"
 
 echo
 echo "Administrador persistente criado: $EMAIL"
 echo "A identidade foi gravada em sister_users."
-echo "O arquivo auth-users.tsv foi regenerado como cache de runtime."
+echo "O perfil dev-lan autenticará diretamente no PostgreSQL."
 echo "Agora inicie o perfil dev-lan."

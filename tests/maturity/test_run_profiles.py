@@ -45,6 +45,15 @@ class RunProfileTests(unittest.TestCase):
         self.assertEqual(["sister_reference"], profile["subsystems"]["projects"])
         self.assertEqual("block", profile["subsystems"]["failure_policy"])
 
+    def test_managed_execution_uses_postgresql_authentication(self) -> None:
+        serve = (ROOT / "scripts" / "app" / "serve.sh").read_text(encoding="utf-8")
+        lan = (ROOT / "scripts" / "run_gateway_lan_lab.sh").read_text(encoding="utf-8")
+
+        self.assertIn('SISTER_AUTH_BACKEND="${SISTER_AUTH_BACKEND:-postgresql}"', serve)
+        self.assertIn('SISTER_AUTH_BACKEND=postgresql', lan)
+        self.assertNotIn('sync-runtime "$RUN_DIR/auth-users.tsv"', lan)
+        self.assertNotIn('SISTER_AUTH_FILE="$RUN_DIR/auth-users.tsv"', lan)
+
     def test_environment_summary_redacts_database_credentials(self) -> None:
         completed = subprocess.run(
             [

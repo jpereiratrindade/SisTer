@@ -69,9 +69,11 @@ fica na linha de comando. Depois inicie o gateway:
 ./scripts/run_gateway_lan_lab.sh
 ```
 
-Na página `/login`, use exatamente o e-mail e a senha criados acima. O arquivo
-usado pelo processo é `.run/gateway/auth-users.tsv`; uma conta existente no
-ambiente `dev` não é compartilhada automaticamente com o `lan-lab`.
+Na página `/login`, use exatamente o e-mail e a senha criados acima. O
+`dev-lan` usa `SISTER_AUTH_BACKEND=postgresql`: o `sisterd` consulta
+`sister_users` e `sister_sessions` diretamente. Não existe sincronização de
+credenciais para `.run/gateway/auth-users.tsv`. A mesma identidade persistente
+é reutilizada entre `dev-reference` e `dev-lan` no ambiente `dev`.
 
 Se o gateway já estiver rodando, pare-o antes do bootstrap:
 

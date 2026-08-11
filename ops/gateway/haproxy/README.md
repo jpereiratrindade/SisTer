@@ -72,8 +72,9 @@ instale essa CA como autoridade de teste. Libere TCP 8443 somente na rede de
 teste, se o firewall do laptop bloquear a interface. O endereço final é
 `https://sister-gateway.test:8443`.
 
-O login do `lan-lab` usa `.run/gateway/auth-users.tsv` e o bootstrap HTTP fica
-desativado. Antes do primeiro início, crie a conta pelo terminal:
+O login do `lan-lab` usa PostgreSQL diretamente por
+`SISTER_AUTH_BACKEND=postgresql`; o bootstrap HTTP fica desativado. Antes do
+primeiro início, crie a conta persistente pelo terminal:
 
 ```bash
 ./scripts/bootstrap_gateway_lan_admin.sh \

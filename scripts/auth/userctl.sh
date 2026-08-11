@@ -53,7 +53,7 @@ read_password() {
   read -r -s -p 'Nova senha: ' first; printf '\n'
   read -r -s -p 'Confirme a senha: ' second; printf '\n'
   [[ "$first" == "$second" ]] || { echo 'As senhas não coincidem.' >&2; exit 1; }
-  [[ ${#first} -ge 8 ]] || { echo 'A senha precisa ter ao menos 8 caracteres.' >&2; exit 1; }
+  [[ ${#first} -ge 12 ]] || { echo 'A senha precisa ter ao menos 12 caracteres.' >&2; exit 1; }
   PASSWORD="$first"
 }
 make_credentials() {

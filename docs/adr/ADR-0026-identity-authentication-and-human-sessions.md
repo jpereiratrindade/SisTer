@@ -15,9 +15,12 @@ usuário SisTer, manter sessões opacas e aplicar autorização interna por
 capacidades. Sessões, vínculos, capacidades e auditoria deverão ser
 persistidos no PostgreSQL quando o modo institucional for implementado.
 
-O `AuthStore` baseado em arquivo permanece permitido para desenvolvimento,
-bootstrap offline e emergência controlada. Ele não é a arquitetura definitiva
-de identidade nem fonte de verdade dos contratos de participação.
+O `AuthStore` oferece dois backends explícitos durante a implementação
+incremental: `postgresql`, usado pelas execuções gerenciadas do SisTer, e
+`file`, mantido para testes isolados, bootstrap legado e emergência controlada.
+No backend PostgreSQL, `sister_users` é a autoridade de identidade e
+`sister_sessions` é a autoridade de sessões humanas; nenhum arquivo TSV
+intermediário participa do login.
 
 ## Fronteiras
 
@@ -35,7 +38,8 @@ claims do provedor: capacidades SisTer são resolvidas e auditadas localmente.
 
 ## Consequências
 
-- o fluxo atual com `AuthStore` pode continuar sem bloquear o MVP-01;
+- `SISTER_AUTH_BACKEND=postgresql` é o caminho canônico das execuções gerenciadas;
+- `SISTER_AUTH_BACKEND=file` permanece compatível apenas para contextos isolados explicitamente escolhidos;
 - a migração futura para OIDC ocorre em um adaptador de identidade;
 - `participation.propose` continua exigindo capacidade SisTer explícita;
 - `sisterctl` não deve pedir ou armazenar senhas;
