@@ -61,10 +61,6 @@ if [[ $PREPARE -eq 1 ]]; then
   "$ROOT_DIR/scripts/db/up.sh" "$ENV_NAME"
   "$ROOT_DIR/scripts/db/migrate.sh" "$ENV_NAME"
 
-  # PostgreSQL é a autoridade dos usuários locais.
-  "$ROOT_DIR/scripts/auth/userctl.sh" \
-    --environment "$ENV_NAME" \
-    sync-runtime "$RUN_DIR/auth-users.tsv"
 
   cmake -S "$ROOT_DIR" -B "$ROOT_DIR/build"
   cmake --build "$ROOT_DIR/build" --target sisterd --parallel
@@ -72,10 +68,7 @@ elif [[ ! -x "$ROOT_DIR/build/apps/sisterd/sisterd" ]]; then
   echo "tested sisterd artifact is missing" >&2
   exit 1
 else
-  # Em --no-prepare, o banco já deve estar operacional.
-  "$ROOT_DIR/scripts/auth/userctl.sh" \
-    --environment "$ENV_NAME" \
-    sync-runtime "$RUN_DIR/auth-users.tsv"
+  : # Em --no-prepare, o banco e o artefato sisterd já devem estar operacionais.
 fi
 
 "$ROOT_DIR/scripts/create_gateway_lab_certificate.sh" "$GATEWAY_ALLOWED_HOST"
@@ -91,7 +84,7 @@ fi
   SISTER_LISTENER_MODE=systemd-unix \
   SISTER_ACTIVATED_SOCKET_PATH="$SISTERD_SOCKET" \
   SISTER_WEB_ROOT="$ROOT_DIR/web" \
-  SISTER_AUTH_FILE="$RUN_DIR/auth-users.tsv" \
+  SISTER_AUTH_BACKEND=postgresql \
   SISTER_ENABLE_HTTP_BOOTSTRAP=false \
   SISTER_ENABLE_LEGACY_PROXY=false \
   SISTER_ENABLE_LEGACY_WEBSOCKET_PROXY=false \

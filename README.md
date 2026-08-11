@@ -285,13 +285,15 @@ no catalogo vigente. Consulte a [ADR-0022](docs/adr/ADR-0022-reference-subsystem
 
 ### Identidade local e bootstrap administrativo
 
-No perfil `dev-lan`, as identidades locais persistentes são armazenadas no
-PostgreSQL, na tabela `sister_users`. Reiniciar o SisTer, trocar o perfil de
-execução ou regenerar o gateway não deve remover essas identidades.
+As execuções gerenciadas por `run_all.sh` usam PostgreSQL como backend de
+autenticação humana. Identidades ficam em `sister_users` e sessões opacas em
+`sister_sessions`; reiniciar o SisTer ou trocar `dev-reference` por `dev-lan`
+não recria essas estruturas nem perde usuários.
 
-O arquivo `.run/gateway/auth-users.tsv` é uma projeção de runtime gerada a
-partir do PostgreSQL. Ele pode ser reconstruído e não deve ser tratado como
-fonte persistente de identidade.
+O backend é explícito por `SISTER_AUTH_BACKEND=postgresql`. O armazenamento
+legado por arquivo permanece disponível somente quando `SISTER_AUTH_BACKEND=file`
+é selecionado, principalmente para testes isolados e procedimentos compatíveis.
+O perfil `dev-lan` não gera nem consome `.run/gateway/auth-users.tsv`.
 
 O bootstrap HTTP permanece desativado no perfil `dev-lan`. Em uma instalação
 sem administrador, pare o gateway LAN e crie explicitamente a primeira conta:
@@ -302,8 +304,9 @@ sem administrador, pare o gateway LAN e crie explicitamente a primeira conta:
   "Administrador SisTer" admin@example.org
 ```
 
-O comando solicita a senha de forma oculta, grava o administrador em
-`sister_users` e regenera o cache de autenticação usado pelo runtime.
+O comando solicita a senha de forma oculta e grava o administrador diretamente
+em `sister_users`. O `sisterd` autentica esse usuário no PostgreSQL, sem etapa de
+sincronização para arquivo intermediário.
 
 A administração persistente de usuários locais pode ser feita pelo terminal:
 
@@ -320,13 +323,10 @@ A administração persistente de usuários locais pode ser feita pelo terminal:
 ```
 
 As senhas são derivadas com PBKDF2-HMAC-SHA256, sal aleatório e 210000
-iterações. A execução normal do SisTer não cria, apaga nem redefine
-credenciais; o bootstrap inicial é uma operação administrativa explícita.
-
-> **Estado de transição:** o PostgreSQL é a origem persistente usada pelo fluxo
-> `dev-lan`, enquanto o `sisterd` ainda consome `auth-users.tsv` por meio do
-> `AuthStore`. Até a consolidação dessa camada no PostgreSQL, alterações que
-> precisem sobreviver à reinicialização devem ser feitas por `userctl.sh`.
+iterações. Tokens de sessão são armazenados somente pelo hash SHA-256 em
+`sister_sessions`, com expiração de oito horas e revogação explícita no logout.
+A execução normal do SisTer não cria, apaga nem redefine credenciais; o
+bootstrap inicial é uma operação administrativa explícita.
 
 O procedimento de certificado, `/etc/hosts`, proxy, acesso LAN e login está em
 [`docs/operations/GATEWAY_LAN_LAB.md`](docs/operations/GATEWAY_LAN_LAB.md).
