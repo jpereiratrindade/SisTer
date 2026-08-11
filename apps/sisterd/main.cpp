@@ -76,6 +76,7 @@ struct ServerConfig {
     bool activatedUnixListener = false;
     std::filesystem::path activatedSocketPath = "/run/sister/sisterd.sock";
     std::filesystem::path authFile = ".run/auth-users.tsv";
+    std::string authBackend = "file";
     std::filesystem::path maturityRoot = ".run/maturity";
     std::string databaseUrl;
     bool production = true;
@@ -136,8 +137,13 @@ struct AppState {
     std::mutex authMutex;
     std::mutex dbMutex;
 
-    AppState(const std::filesystem::path& authFile, const std::string& databaseUrl)
-        : auth(authFile), db(databaseUrl), participation(db) {}
+    AppState(
+        const std::filesystem::path& authFile,
+        const std::string& databaseUrl,
+        const std::string& authBackend)
+        : auth(authFile, authBackend == "postgresql" ? databaseUrl : std::string{}),
+          db(databaseUrl),
+          participation(db) {}
 };
 
 class UniqueFd {
@@ -269,6 +275,7 @@ ServerConfig loadConfig(int argc, char** argv) {
 
     config.bindHost = environment("SISTER_BIND_HOST").value_or("127.0.0.1");
     config.authFile = environment("SISTER_AUTH_FILE").value_or(".run/auth-users.tsv");
+    config.authBackend = lowercase(environment("SISTER_AUTH_BACKEND").value_or("file"));
     config.maturityRoot = environment("SISTER_MATURITY_ROOT").value_or(".run/maturity");
     config.databaseUrl = environment("SISTER_DATABASE_URL").value_or("");
 
@@ -279,6 +286,13 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.requireSameOrigin = parseBool(
         environment("SISTER_REQUIRE_SAME_ORIGIN").value_or(config.production ? "true" : "false"),
         config.production);
+    if (config.authBackend != "file" && config.authBackend != "postgresql") {
+        throw std::runtime_error("invalid SISTER_AUTH_BACKEND: " + config.authBackend);
+    }
+    if (config.authBackend == "postgresql" && config.databaseUrl.empty()) {
+        throw std::runtime_error("SISTER_AUTH_BACKEND=postgresql requires SISTER_DATABASE_URL");
+    }
+
     config.httpBootstrapEnabled = parseBool(
         environment("SISTER_ENABLE_HTTP_BOOTSTRAP").value_or(config.production ? "false" : "true"),
         !config.production);
@@ -1498,8 +1512,8 @@ ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig
         const std::string dbStatus = state.db.connected() ? "connected" : "not_connected";
         return {true, false,
             "{\"status\":\"ok\",\"service\":\"sisterd\",\"version\":\"" SISTER_VERSION
-            "\",\"database\":\"" +
-            dbStatus + "\"}"};
+            "\",\"database\":\"" + dbStatus +
+            "\",\"auth_backend\":\"" + std::string(state.auth.backendName()) + "\"}"};
     }
 
     if (path == "/api/systems") {
@@ -1812,7 +1826,7 @@ void handleClient(
                     ? std::string() : request.body.substr(first + 1, last - first - 1);
             };
             const std::optional<sisterd::AuthenticatedPrincipal> principal = actor
-                ? std::optional<sisterd::AuthenticatedPrincipal>(sisterd::AuthenticatedPrincipal{actor->id, "AuthStore"})
+                ? std::optional<sisterd::AuthenticatedPrincipal>(sisterd::AuthenticatedPrincipal{actor->id, std::string(state.auth.backendName())})
                 : std::nullopt;
             const auto result = state.participation.propose(
                 principal ? &*principal : nullptr,
@@ -2489,7 +2503,7 @@ int main(int argc, char** argv) {
     }
     UniqueFd server(acquiredListener.fd);
 
-    AppState state(config.authFile, config.databaseUrl);
+    AppState state(config.authFile, config.databaseUrl, config.authBackend);
     sisterd::security::LoginRateLimiter rateLimiter;
 
     {
@@ -2499,6 +2513,7 @@ int main(int argc, char** argv) {
                   << " web_root=" << config.canonicalWebRoot.string()
                   << " workers=" << config.workerThreads
                   << " env=" << (config.production ? "production" : "development")
+                  << " auth_backend=" << state.auth.backendName()
                   << " http_bootstrap=" << (config.httpBootstrapEnabled ? "enabled" : "disabled")
                   << " legacy_proxy=" << (config.legacyProxyEnabled ? "enabled" : "disabled")
                   << " legacy_websocket_proxy="

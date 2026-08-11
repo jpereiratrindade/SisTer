@@ -51,6 +51,8 @@ int main() {
 
     {
         sisterd::AuthStore auth(authFile);
+        expect(!auth.databaseBacked(), "file auth should remain the default backend");
+        expect(auth.backendName() == "file", "file auth backend should be observable");
         expect(auth.bootstrapOpen(), "new store should accept bootstrap");
 
         const auto registered = auth.registerAdmin(

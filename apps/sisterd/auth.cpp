@@ -5,6 +5,10 @@
 #include <openssl/rand.h>
 #include <openssl/sha.h>
 
+#ifdef SISTER_HAVE_LIBPQ
+#include <libpq-fe.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <charconv>
@@ -73,7 +77,10 @@ std::string sha256(const std::string& value) {
     return hexEncode(digest.data(), digest.size());
 }
 
-std::string passwordHash(const std::string& password, const std::string& saltHex) {
+std::string passwordHash(
+    const std::string& password,
+    const std::string& saltHex,
+    int iterations = passwordIterations) {
     const auto salt = hexDecode(saltHex);
     std::array<unsigned char, 32> output{};
     if (salt.empty() ||
@@ -82,7 +89,7 @@ std::string passwordHash(const std::string& password, const std::string& saltHex
             static_cast<int>(password.size()),
             salt.data(),
             static_cast<int>(salt.size()),
-            passwordIterations,
+            iterations,
             EVP_sha256(),
             static_cast<int>(output.size()),
             output.data()) != 1) {
@@ -122,14 +129,37 @@ bool validUuid(const std::string& value) {
 
 } // namespace
 
-AuthStore::AuthStore(std::filesystem::path path)
-    : path_(std::move(path)), sessionsPath_(path_.string() + ".sessions") {
+AuthStore::AuthStore(
+    std::filesystem::path path,
+    std::string databaseUrl)
+    : path_(std::move(path)),
+      sessionsPath_(path_.string() + ".sessions"),
+      databaseUrl_(std::move(databaseUrl)) {
+    if (databaseBacked()) {
+        connectDatabase();
+        if (!ensureDatabaseConnected()) {
+            throw std::runtime_error("database-backed authentication is unavailable");
+        }
+        return;
+    }
     load();
     loadSessions();
 }
 
+AuthStore::~AuthStore() {
+    disconnectDatabase();
+}
+
 std::string AuthStore::normalizeIdentity(std::string identity) {
     return normalizeEmail(std::move(identity));
+}
+
+bool AuthStore::databaseBacked() const noexcept {
+    return !databaseUrl_.empty();
+}
+
+std::string_view AuthStore::backendName() const noexcept {
+    return databaseBacked() ? "postgresql" : "file";
 }
 
 void AuthStore::load() {
@@ -249,6 +279,7 @@ void AuthStore::saveSessions() const {
 
 bool AuthStore::bootstrapOpen() const {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseBootstrapOpen();
     return users_.empty();
 }
 
@@ -267,6 +298,7 @@ std::optional<AuthResult> AuthStore::registerAdmin(
     const std::string& rawEmail,
     const std::string& password) {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseRegisterAdmin(name, rawEmail, password);
     const auto created = bootstrapAdminUnlocked(name, rawEmail, password);
     if (!created) return std::nullopt;
     return createSession(users_.back());
@@ -277,6 +309,7 @@ std::optional<AuthUser> AuthStore::bootstrapAdmin(
     const std::string& rawEmail,
     const std::string& password) {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseBootstrapAdmin(name, rawEmail, password);
     return bootstrapAdminUnlocked(name, rawEmail, password);
 }
 
@@ -303,6 +336,7 @@ std::optional<AuthResult> AuthStore::login(
     const std::string& rawEmail,
     const std::string& password) {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseLogin(rawEmail, password);
     const auto email = normalizeEmail(rawEmail);
     const auto found = std::find_if(users_.begin(), users_.end(), [&](const StoredUser& user) {
         return user.publicUser.email == email;
@@ -319,6 +353,7 @@ std::optional<AuthResult> AuthStore::login(
 
 std::vector<AuthUser> AuthStore::users() const {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseUsers();
     std::vector<AuthUser> result;
     result.reserve(users_.size());
     for (const auto& user : users_) result.push_back(user.publicUser);
@@ -332,6 +367,7 @@ std::optional<AuthUser> AuthStore::createUser(
     const std::string& role,
     std::string* errorOut) {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseCreateUser(rawName, rawEmail, password, role, errorOut);
     const auto name = trim(rawName);
     const auto email = normalizeEmail(rawEmail);
     const bool duplicate = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
@@ -378,6 +414,7 @@ std::optional<AuthUser> AuthStore::updateUser(
     const std::string& optionalPassword,
     std::string* errorOut) {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseUpdateUser(id, rawName, rawEmail, role, optionalPassword, errorOut);
     const auto name = trim(rawName);
     const auto email = normalizeEmail(rawEmail);
     const auto target = std::find_if(users_.begin(), users_.end(), [&](const StoredUser& user) {
@@ -444,6 +481,7 @@ bool AuthStore::deleteUser(
     const std::string& currentActorId,
     std::string* errorOut) {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseDeleteUser(id, currentActorId, errorOut);
     const auto target = std::find_if(users_.begin(), users_.end(), [&](const StoredUser& user) {
         return user.publicUser.id == id;
     });
@@ -489,6 +527,7 @@ std::optional<AuthUser> AuthStore::importUser(
     const std::string& password,
     const std::string& role) {
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseImportUser(id, name, rawEmail, password, role);
     const auto email = normalizeEmail(rawEmail);
     const bool duplicate = std::any_of(users_.begin(), users_.end(), [&](const StoredUser& user) {
         return user.publicUser.id == id || user.publicUser.email == email;
@@ -513,6 +552,7 @@ std::optional<AuthUser> AuthStore::importUser(
 std::optional<AuthUser> AuthStore::userForToken(const std::string& token) {
     if (token.empty()) return std::nullopt;
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) return databaseUserForToken(token);
     const auto session_token_hash = sha256(token);
     const auto session = sessionsByTokenHash_.find(session_token_hash);
     if (session == sessionsByTokenHash_.end()) return std::nullopt;
@@ -530,9 +570,559 @@ std::optional<AuthUser> AuthStore::userForToken(const std::string& token) {
 void AuthStore::logout(const std::string& token) {
     if (token.empty()) return;
     std::lock_guard lock(mutex_);
+    if (databaseBacked()) {
+        databaseLogout(token);
+        return;
+    }
     const auto session_token_hash = sha256(token);
     sessionsByTokenHash_.erase(session_token_hash);
     saveSessions();
+}
+
+
+void AuthStore::connectDatabase() {
+    if (!databaseBacked() || databaseConn_ != nullptr) return;
+#ifdef SISTER_HAVE_LIBPQ
+    databaseConn_ = PQconnectdb(databaseUrl_.c_str());
+    if (databaseConn_ == nullptr || PQstatus(databaseConn_) != CONNECTION_OK) {
+        if (databaseConn_ != nullptr) {
+            PQfinish(databaseConn_);
+            databaseConn_ = nullptr;
+        }
+    }
+#else
+    throw std::runtime_error(
+        "PostgreSQL authentication requested but sisterd was built without libpq");
+#endif
+}
+
+void AuthStore::disconnectDatabase() {
+#ifdef SISTER_HAVE_LIBPQ
+    if (databaseConn_ != nullptr) {
+        PQfinish(databaseConn_);
+        databaseConn_ = nullptr;
+    }
+#else
+    databaseConn_ = nullptr;
+#endif
+}
+
+bool AuthStore::ensureDatabaseConnected() const {
+    if (!databaseBacked()) return false;
+#ifdef SISTER_HAVE_LIBPQ
+    if (databaseConn_ == nullptr) {
+        const_cast<AuthStore*>(this)->connectDatabase();
+    }
+    if (databaseConn_ == nullptr) return false;
+    if (PQstatus(databaseConn_) == CONNECTION_OK) return true;
+    PQreset(databaseConn_);
+    return PQstatus(databaseConn_) == CONNECTION_OK;
+#else
+    return false;
+#endif
+}
+
+bool AuthStore::databaseBootstrapOpen() const {
+#ifdef SISTER_HAVE_LIBPQ
+    if (!ensureDatabaseConnected()) return false;
+    PGresult* result = PQexec(
+        databaseConn_,
+        "SELECT NOT EXISTS (SELECT 1 FROM sister_users)");
+    const bool open = PQresultStatus(result) == PGRES_TUPLES_OK &&
+        PQntuples(result) == 1 && std::string(PQgetvalue(result, 0, 0)) == "t";
+    PQclear(result);
+    return open;
+#else
+    return false;
+#endif
+}
+
+std::optional<AuthUser> AuthStore::databaseBootstrapAdmin(
+    const std::string& rawName,
+    const std::string& rawEmail,
+    const std::string& password) {
+#ifdef SISTER_HAVE_LIBPQ
+    const auto name = trim(rawName);
+    const auto email = normalizeEmail(rawEmail);
+    if (name.size() < 2 || password.size() < 12 || email.find('@') == std::string::npos ||
+        !validField(name) || !validField(email) || !ensureDatabaseConnected()) {
+        return std::nullopt;
+    }
+
+    const std::string id = randomUuid();
+    const std::string salt = randomHex(16);
+    const std::string hash = passwordHash(password, salt);
+    const std::string iterations = std::to_string(passwordIterations);
+    const char* values[] = {
+        id.c_str(), email.c_str(), name.c_str(), salt.c_str(), hash.c_str(), iterations.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "INSERT INTO sister_users "
+        "(user_id,email,full_name,global_role,password_salt,password_hash,password_iterations,active,updated_at) "
+        "SELECT $1,$2,$3,'admin',$4,$5,$6::integer,true,now() "
+        "WHERE NOT EXISTS (SELECT 1 FROM sister_users) "
+        "RETURNING user_id, full_name, email, global_role",
+        6, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        PQclear(result);
+        return std::nullopt;
+    }
+    AuthUser user{PQgetvalue(result, 0, 0), PQgetvalue(result, 0, 1),
+                  PQgetvalue(result, 0, 2), PQgetvalue(result, 0, 3)};
+    PQclear(result);
+    return user;
+#else
+    (void)rawName; (void)rawEmail; (void)password;
+    return std::nullopt;
+#endif
+}
+
+std::optional<AuthResult> AuthStore::databaseRegisterAdmin(
+    const std::string& name,
+    const std::string& email,
+    const std::string& password) {
+#ifdef SISTER_HAVE_LIBPQ
+    if (!ensureDatabaseConnected()) return std::nullopt;
+    PGresult* transaction = PQexec(databaseConn_, "BEGIN");
+    const bool began = PQresultStatus(transaction) == PGRES_COMMAND_OK;
+    PQclear(transaction);
+    if (!began) return std::nullopt;
+
+    const auto created = databaseBootstrapAdmin(name, email, password);
+    if (!created) {
+        transaction = PQexec(databaseConn_, "ROLLBACK");
+        PQclear(transaction);
+        return std::nullopt;
+    }
+
+    const std::string token = randomHex(32);
+    const std::string tokenHash = sha256(token);
+    const std::string sessionId = randomUuid();
+    const char* values[] = {sessionId.c_str(), created->id.c_str(), tokenHash.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "INSERT INTO sister_sessions "
+        "(session_id,user_id,session_token_hash,issued_at,expires_at) "
+        "VALUES ($1,$2,$3,now(),now() + interval '8 hours')",
+        3, nullptr, values, nullptr, nullptr, 0);
+    const bool inserted = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    if (!inserted) {
+        transaction = PQexec(databaseConn_, "ROLLBACK");
+        PQclear(transaction);
+        return std::nullopt;
+    }
+
+    transaction = PQexec(databaseConn_, "COMMIT");
+    const bool committed = PQresultStatus(transaction) == PGRES_COMMAND_OK;
+    PQclear(transaction);
+    if (!committed) return std::nullopt;
+    return AuthResult{*created, token};
+#else
+    (void)name; (void)email; (void)password;
+    return std::nullopt;
+#endif
+}
+
+std::optional<AuthResult> AuthStore::databaseLogin(
+    const std::string& rawEmail,
+    const std::string& password) {
+#ifdef SISTER_HAVE_LIBPQ
+    if (!ensureDatabaseConnected()) return std::nullopt;
+    const std::string email = normalizeEmail(rawEmail);
+    const char* values[] = {email.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "SELECT user_id, full_name, email, global_role, password_salt, password_hash, password_iterations "
+        "FROM sister_users "
+        "WHERE lower(email)=lower($1) AND active AND password_hash IS NOT NULL LIMIT 1",
+        1, nullptr, values, nullptr, nullptr, 0);
+
+    const bool found = PQresultStatus(result) == PGRES_TUPLES_OK && PQntuples(result) == 1;
+    const std::string fallbackSalt(32, '0');
+    std::string salt = fallbackSalt;
+    std::string expected(64, '0');
+    int iterations = passwordIterations;
+    AuthUser user;
+    if (found) {
+        user = {PQgetvalue(result, 0, 0), PQgetvalue(result, 0, 1),
+                PQgetvalue(result, 0, 2), PQgetvalue(result, 0, 3)};
+        salt = PQgetvalue(result, 0, 4);
+        expected = PQgetvalue(result, 0, 5);
+        const std::string iterationText = PQgetvalue(result, 0, 6);
+        const auto [ptr, error] = std::from_chars(
+            iterationText.data(), iterationText.data() + iterationText.size(), iterations);
+        if (error != std::errc{} || ptr != iterationText.data() + iterationText.size() ||
+            iterations < 10000 || iterations > 2000000) {
+            iterations = passwordIterations;
+        }
+    }
+    PQclear(result);
+
+    const std::string candidate = passwordHash(password, salt, iterations);
+    const bool valid = found && candidate.size() == expected.size() &&
+        CRYPTO_memcmp(candidate.data(), expected.data(), candidate.size()) == 0;
+    if (!valid) return std::nullopt;
+
+    const std::string token = randomHex(32);
+    const std::string tokenHash = sha256(token);
+    const std::string sessionId = randomUuid();
+    const char* sessionValues[] = {sessionId.c_str(), user.id.c_str(), tokenHash.c_str()};
+    result = PQexecParams(
+        databaseConn_,
+        "INSERT INTO sister_sessions "
+        "(session_id,user_id,session_token_hash,issued_at,expires_at) "
+        "VALUES ($1,$2,$3,now(),now() + interval '8 hours')",
+        3, nullptr, sessionValues, nullptr, nullptr, 0);
+    const bool sessionCreated = PQresultStatus(result) == PGRES_COMMAND_OK;
+    PQclear(result);
+    if (!sessionCreated) return std::nullopt;
+    return AuthResult{user, token};
+#else
+    (void)rawEmail; (void)password;
+    return std::nullopt;
+#endif
+}
+
+std::optional<AuthUser> AuthStore::databaseUserForToken(const std::string& token) {
+#ifdef SISTER_HAVE_LIBPQ
+    if (!ensureDatabaseConnected()) return std::nullopt;
+    const std::string tokenHash = sha256(token);
+    const char* values[] = {tokenHash.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "SELECT u.user_id, u.full_name, u.email, u.global_role "
+        "FROM sister_sessions s JOIN sister_users u ON u.user_id=s.user_id "
+        "WHERE s.session_token_hash=$1 AND s.revoked_at IS NULL "
+        "AND s.expires_at > now() AND u.active LIMIT 1",
+        1, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        PQclear(result);
+        return std::nullopt;
+    }
+    AuthUser user{PQgetvalue(result, 0, 0), PQgetvalue(result, 0, 1),
+                  PQgetvalue(result, 0, 2), PQgetvalue(result, 0, 3)};
+    PQclear(result);
+    return user;
+#else
+    (void)token;
+    return std::nullopt;
+#endif
+}
+
+std::vector<AuthUser> AuthStore::databaseUsers() const {
+    std::vector<AuthUser> users;
+#ifdef SISTER_HAVE_LIBPQ
+    if (!ensureDatabaseConnected()) return users;
+    PGresult* result = PQexec(
+        databaseConn_,
+        "SELECT user_id, full_name, email, global_role "
+        "FROM sister_users WHERE active ORDER BY lower(email), user_id");
+    if (PQresultStatus(result) != PGRES_TUPLES_OK) {
+        PQclear(result);
+        return users;
+    }
+    users.reserve(static_cast<std::size_t>(PQntuples(result)));
+    for (int row = 0; row < PQntuples(result); ++row) {
+        users.push_back({PQgetvalue(result, row, 0), PQgetvalue(result, row, 1),
+                         PQgetvalue(result, row, 2), PQgetvalue(result, row, 3)});
+    }
+    PQclear(result);
+#endif
+    return users;
+}
+
+std::optional<AuthUser> AuthStore::databaseCreateUser(
+    const std::string& rawName,
+    const std::string& rawEmail,
+    const std::string& password,
+    const std::string& role,
+    std::string* errorOut) {
+#ifdef SISTER_HAVE_LIBPQ
+    const std::string name = trim(rawName);
+    const std::string email = normalizeEmail(rawEmail);
+    const bool validRole = role == "admin" || role == "user" || role == "registered_user" ||
+        role == "researcher" || role == "project_lead" || role == "guest";
+    if (name.size() < 2 || !validField(name)) {
+        if (errorOut) *errorOut = "O nome deve ter no mínimo 2 caracteres válidos.";
+        return std::nullopt;
+    }
+    if (email.find('@') == std::string::npos || !validField(email)) {
+        if (errorOut) *errorOut = "Formato de e-mail inválido.";
+        return std::nullopt;
+    }
+    if (password.size() < 12) {
+        if (errorOut) *errorOut = "A senha temporária deve ter no mínimo 12 caracteres.";
+        return std::nullopt;
+    }
+    if (!validRole) {
+        if (errorOut) *errorOut = "Papel de usuário inválido.";
+        return std::nullopt;
+    }
+    if (!ensureDatabaseConnected()) {
+        if (errorOut) *errorOut = "Banco de identidades indisponível.";
+        return std::nullopt;
+    }
+
+    const std::string id = randomUuid();
+    const std::string salt = randomHex(16);
+    const std::string hash = passwordHash(password, salt);
+    const std::string iterations = std::to_string(passwordIterations);
+    const char* values[] = {id.c_str(), email.c_str(), name.c_str(), role.c_str(),
+                            salt.c_str(), hash.c_str(), iterations.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "INSERT INTO sister_users "
+        "(user_id,email,full_name,global_role,password_salt,password_hash,password_iterations,active,updated_at) "
+        "VALUES ($1,$2,$3,$4,$5,$6,$7::integer,true,now()) "
+        "RETURNING user_id, full_name, email, global_role",
+        7, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        const char* sqlState = PQresultErrorField(result, PG_DIAG_SQLSTATE);
+        if (errorOut) {
+            *errorOut = sqlState != nullptr && std::string(sqlState) == "23505"
+                ? "E-mail já cadastrado." : "Não foi possível persistir o usuário.";
+        }
+        PQclear(result);
+        return std::nullopt;
+    }
+    AuthUser user{PQgetvalue(result, 0, 0), PQgetvalue(result, 0, 1),
+                  PQgetvalue(result, 0, 2), PQgetvalue(result, 0, 3)};
+    PQclear(result);
+    return user;
+#else
+    (void)rawName; (void)rawEmail; (void)password; (void)role;
+    if (errorOut) *errorOut = "Banco de identidades indisponível.";
+    return std::nullopt;
+#endif
+}
+
+std::optional<AuthUser> AuthStore::databaseUpdateUser(
+    const std::string& id,
+    const std::string& rawName,
+    const std::string& rawEmail,
+    const std::string& role,
+    const std::string& optionalPassword,
+    std::string* errorOut) {
+#ifdef SISTER_HAVE_LIBPQ
+    const std::string name = trim(rawName);
+    const std::string email = normalizeEmail(rawEmail);
+    const bool validRole = role == "admin" || role == "user" || role == "registered_user" ||
+        role == "researcher" || role == "project_lead" || role == "guest";
+    if (name.size() < 2 || !validField(name)) {
+        if (errorOut) *errorOut = "O nome deve ter no mínimo 2 caracteres válidos.";
+        return std::nullopt;
+    }
+    if (email.find('@') == std::string::npos || !validField(email)) {
+        if (errorOut) *errorOut = "Formato de e-mail inválido.";
+        return std::nullopt;
+    }
+    if (!validRole) {
+        if (errorOut) *errorOut = "Papel de usuário inválido.";
+        return std::nullopt;
+    }
+    if (!optionalPassword.empty() && optionalPassword.size() < 12) {
+        if (errorOut) *errorOut = "A nova senha temporária deve ter no mínimo 12 caracteres.";
+        return std::nullopt;
+    }
+    if (!ensureDatabaseConnected()) {
+        if (errorOut) *errorOut = "Banco de identidades indisponível.";
+        return std::nullopt;
+    }
+
+    const char* idValue[] = {id.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "SELECT global_role FROM sister_users WHERE user_id=$1 AND active",
+        1, nullptr, idValue, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        if (errorOut) *errorOut = "Usuário não encontrado.";
+        PQclear(result);
+        return std::nullopt;
+    }
+    const std::string currentRole = PQgetvalue(result, 0, 0);
+    PQclear(result);
+
+    const char* duplicateValues[] = {email.c_str(), id.c_str()};
+    result = PQexecParams(
+        databaseConn_,
+        "SELECT 1 FROM sister_users WHERE lower(email)=lower($1) AND user_id<>$2 LIMIT 1",
+        2, nullptr, duplicateValues, nullptr, nullptr, 0);
+    const bool duplicate = PQresultStatus(result) == PGRES_TUPLES_OK && PQntuples(result) > 0;
+    PQclear(result);
+    if (duplicate) {
+        if (errorOut) *errorOut = "E-mail já cadastrado para outra pessoa.";
+        return std::nullopt;
+    }
+
+    if (currentRole == "admin" && role != "admin") {
+        result = PQexec(databaseConn_,
+            "SELECT count(*) FROM sister_users WHERE active AND global_role='admin'");
+        const bool soleAdmin = PQresultStatus(result) == PGRES_TUPLES_OK &&
+            PQntuples(result) == 1 && std::string(PQgetvalue(result, 0, 0)) == "1";
+        PQclear(result);
+        if (soleAdmin) {
+            if (errorOut) *errorOut = "Não é possível alterar o papel do único administrador do sistema.";
+            return std::nullopt;
+        }
+    }
+
+    if (optionalPassword.empty()) {
+        const char* values[] = {id.c_str(), name.c_str(), email.c_str(), role.c_str()};
+        result = PQexecParams(
+            databaseConn_,
+            "UPDATE sister_users SET full_name=$2,email=$3,global_role=$4,updated_at=now() "
+            "WHERE user_id=$1 AND active RETURNING user_id,full_name,email,global_role",
+            4, nullptr, values, nullptr, nullptr, 0);
+    } else {
+        const std::string salt = randomHex(16);
+        const std::string hash = passwordHash(optionalPassword, salt);
+        const std::string iterations = std::to_string(passwordIterations);
+        const char* values[] = {id.c_str(), name.c_str(), email.c_str(), role.c_str(),
+                                salt.c_str(), hash.c_str(), iterations.c_str()};
+        result = PQexecParams(
+            databaseConn_,
+            "WITH updated AS ("
+            " UPDATE sister_users SET full_name=$2,email=$3,global_role=$4,password_salt=$5,"
+            " password_hash=$6,password_iterations=$7::integer,updated_at=now() "
+            " WHERE user_id=$1 AND active RETURNING user_id,full_name,email,global_role"
+            "), revoked AS ("
+            " UPDATE sister_sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL"
+            ") SELECT user_id,full_name,email,global_role FROM updated",
+            7, nullptr, values, nullptr, nullptr, 0);
+    }
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        const char* sqlState = PQresultErrorField(result, PG_DIAG_SQLSTATE);
+        if (errorOut) {
+            *errorOut = sqlState != nullptr && std::string(sqlState) == "23505"
+                ? "E-mail já cadastrado para outra pessoa." : "Não foi possível persistir a atualização.";
+        }
+        PQclear(result);
+        return std::nullopt;
+    }
+    AuthUser user{PQgetvalue(result, 0, 0), PQgetvalue(result, 0, 1),
+                  PQgetvalue(result, 0, 2), PQgetvalue(result, 0, 3)};
+    PQclear(result);
+    return user;
+#else
+    (void)id; (void)rawName; (void)rawEmail; (void)role; (void)optionalPassword;
+    if (errorOut) *errorOut = "Banco de identidades indisponível.";
+    return std::nullopt;
+#endif
+}
+
+bool AuthStore::databaseDeleteUser(
+    const std::string& id,
+    const std::string& currentActorId,
+    std::string* errorOut) {
+#ifdef SISTER_HAVE_LIBPQ
+    if (id == currentActorId) {
+        if (errorOut) *errorOut = "Você não pode excluir a sua própria conta logada.";
+        return false;
+    }
+    if (!ensureDatabaseConnected()) {
+        if (errorOut) *errorOut = "Banco de identidades indisponível.";
+        return false;
+    }
+    const char* values[] = {id.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "SELECT global_role FROM sister_users WHERE user_id=$1 AND active",
+        1, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        if (errorOut) *errorOut = "Usuário não encontrado.";
+        PQclear(result);
+        return false;
+    }
+    const std::string role = PQgetvalue(result, 0, 0);
+    PQclear(result);
+    if (role == "admin") {
+        result = PQexec(databaseConn_,
+            "SELECT count(*) FROM sister_users WHERE active AND global_role='admin'");
+        const bool soleAdmin = PQresultStatus(result) == PGRES_TUPLES_OK &&
+            PQntuples(result) == 1 && std::string(PQgetvalue(result, 0, 0)) == "1";
+        PQclear(result);
+        if (soleAdmin) {
+            if (errorOut) *errorOut = "Não é possível excluir o único administrador do sistema.";
+            return false;
+        }
+    }
+
+    result = PQexecParams(
+        databaseConn_,
+        "WITH disabled AS ("
+        " UPDATE sister_users SET active=false,updated_at=now() WHERE user_id=$1 AND active RETURNING user_id"
+        "), revoked AS ("
+        " UPDATE sister_sessions SET revoked_at=now() WHERE user_id=$1 AND revoked_at IS NULL"
+        ") SELECT user_id FROM disabled",
+        1, nullptr, values, nullptr, nullptr, 0);
+    const bool disabled = PQresultStatus(result) == PGRES_TUPLES_OK && PQntuples(result) == 1;
+    PQclear(result);
+    if (!disabled && errorOut) *errorOut = "Não foi possível excluir o usuário.";
+    return disabled;
+#else
+    (void)id; (void)currentActorId;
+    if (errorOut) *errorOut = "Banco de identidades indisponível.";
+    return false;
+#endif
+}
+
+std::optional<AuthUser> AuthStore::databaseImportUser(
+    const std::string& id,
+    const std::string& rawName,
+    const std::string& rawEmail,
+    const std::string& password,
+    const std::string& role) {
+#ifdef SISTER_HAVE_LIBPQ
+    const std::string name = trim(rawName);
+    const std::string email = normalizeEmail(rawEmail);
+    const bool validRole = role == "admin" || role == "user" || role == "registered_user" ||
+        role == "researcher" || role == "project_lead" || role == "guest";
+    if (!validUuid(id) || name.size() < 2 || password.size() < 12 ||
+        email.find('@') == std::string::npos || !validRole ||
+        !validField(name) || !validField(email) || !ensureDatabaseConnected()) {
+        return std::nullopt;
+    }
+    const std::string salt = randomHex(16);
+    const std::string hash = passwordHash(password, salt);
+    const std::string iterations = std::to_string(passwordIterations);
+    const char* values[] = {id.c_str(), email.c_str(), name.c_str(), role.c_str(),
+                            salt.c_str(), hash.c_str(), iterations.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "INSERT INTO sister_users "
+        "(user_id,email,full_name,global_role,password_salt,password_hash,password_iterations,active,updated_at) "
+        "VALUES ($1,$2,$3,$4,$5,$6,$7::integer,true,now()) "
+        "RETURNING user_id,full_name,email,global_role",
+        7, nullptr, values, nullptr, nullptr, 0);
+    if (PQresultStatus(result) != PGRES_TUPLES_OK || PQntuples(result) != 1) {
+        PQclear(result);
+        return std::nullopt;
+    }
+    AuthUser user{PQgetvalue(result, 0, 0), PQgetvalue(result, 0, 1),
+                  PQgetvalue(result, 0, 2), PQgetvalue(result, 0, 3)};
+    PQclear(result);
+    return user;
+#else
+    (void)id; (void)rawName; (void)rawEmail; (void)password; (void)role;
+    return std::nullopt;
+#endif
+}
+
+void AuthStore::databaseLogout(const std::string& token) {
+#ifdef SISTER_HAVE_LIBPQ
+    if (!ensureDatabaseConnected()) return;
+    const std::string tokenHash = sha256(token);
+    const char* values[] = {tokenHash.c_str()};
+    PGresult* result = PQexecParams(
+        databaseConn_,
+        "UPDATE sister_sessions SET revoked_at=now() "
+        "WHERE session_token_hash=$1 AND revoked_at IS NULL",
+        1, nullptr, values, nullptr, nullptr, 0);
+    PQclear(result);
+#else
+    (void)token;
+#endif
 }
 
 } // namespace sisterd
