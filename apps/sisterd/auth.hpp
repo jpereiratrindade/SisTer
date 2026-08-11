@@ -5,8 +5,11 @@
 #include <mutex>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
+
+struct pg_conn;
 
 namespace sisterd {
 
@@ -24,9 +27,17 @@ struct AuthResult {
 
 class AuthStore {
 public:
-    explicit AuthStore(std::filesystem::path path);
+    explicit AuthStore(
+        std::filesystem::path path,
+        std::string databaseUrl = {});
+    ~AuthStore();
+
+    AuthStore(const AuthStore&) = delete;
+    AuthStore& operator=(const AuthStore&) = delete;
 
     [[nodiscard]] static std::string normalizeIdentity(std::string identity);
+    [[nodiscard]] bool databaseBacked() const noexcept;
+    [[nodiscard]] std::string_view backendName() const noexcept;
 
     bool bootstrapOpen() const;
     std::optional<AuthUser> bootstrapAdmin(
@@ -79,6 +90,8 @@ private:
 
     std::filesystem::path path_;
     std::filesystem::path sessionsPath_;
+    std::string databaseUrl_;
+    mutable pg_conn* databaseConn_ = nullptr;
     mutable std::mutex mutex_;
     std::vector<StoredUser> users_;
     std::unordered_map<std::string, Session> sessionsByTokenHash_;
@@ -92,6 +105,48 @@ private:
         const std::string& email,
         const std::string& password);
     AuthResult createSession(const StoredUser& user);
+
+    void connectDatabase();
+    void disconnectDatabase();
+    [[nodiscard]] bool ensureDatabaseConnected() const;
+    [[nodiscard]] bool databaseBootstrapOpen() const;
+    std::optional<AuthUser> databaseBootstrapAdmin(
+        const std::string& name,
+        const std::string& email,
+        const std::string& password);
+    std::optional<AuthResult> databaseRegisterAdmin(
+        const std::string& name,
+        const std::string& email,
+        const std::string& password);
+    std::optional<AuthResult> databaseLogin(
+        const std::string& email,
+        const std::string& password);
+    std::optional<AuthUser> databaseUserForToken(const std::string& token);
+    std::vector<AuthUser> databaseUsers() const;
+    std::optional<AuthUser> databaseCreateUser(
+        const std::string& name,
+        const std::string& email,
+        const std::string& password,
+        const std::string& role,
+        std::string* errorOut);
+    std::optional<AuthUser> databaseUpdateUser(
+        const std::string& id,
+        const std::string& name,
+        const std::string& email,
+        const std::string& role,
+        const std::string& optionalPassword,
+        std::string* errorOut);
+    bool databaseDeleteUser(
+        const std::string& id,
+        const std::string& currentActorId,
+        std::string* errorOut);
+    std::optional<AuthUser> databaseImportUser(
+        const std::string& id,
+        const std::string& name,
+        const std::string& email,
+        const std::string& password,
+        const std::string& role);
+    void databaseLogout(const std::string& token);
 };
 
 } // namespace sisterd
