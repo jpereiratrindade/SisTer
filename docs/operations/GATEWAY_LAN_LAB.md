@@ -1,3 +1,17 @@
+
+<!-- SISTER-INFRA-LEGACY-GATEWAY:BEGIN -->
+> [!WARNING]
+> **Documento legado de transição.** O gateway operacional do ecossistema foi
+> transferido para o repositório `Sister-Infra`. Este documento e os scripts
+> associados permanecem no SisTer temporariamente para reprodução de baselines,
+> testes e migração controlada. Para novas execuções LAN, use:
+>
+> ```bash
+> cd ../sister-infra
+> ./bin/sister-infra up --profile lan
+> ```
+<!-- SISTER-INFRA-LEGACY-GATEWAY:END -->
+
 # Teste do gateway pela rede local
 
 Este procedimento permite acessar o SisTer de outro equipamento da mesma rede

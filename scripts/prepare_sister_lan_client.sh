@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# SISTER-INFRA-LEGACY-GATEWAY
+# Legado de transição: a execução operacional de gateway/TLS/LAN do ecossistema
+# pertence ao repositório Sister-Infra. Este script permanece temporariamente
+# para reprodução de baselines e testes históricos; não ampliar sua responsabilidade.
 set -Eeuo pipefail
 
 GATEWAY_IP="${1:-}"
