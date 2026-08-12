@@ -1,4 +1,8 @@
 #!/usr/bin/env bash
+# SISTER-INFRA-COMPONENT-ENTRYPOINT
+# O perfil dev-core é a fronteira suportada para execução isolada do núcleo e
+# para orquestração externa pelo Sister-Infra. Não adicionar aqui responsabilidade
+# nova por TLS/HAProxy/exposição do ecossistema.
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

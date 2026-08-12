@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+# SISTER-INFRA-LEGACY-GATEWAY
+# Legado de transição: o rendering/configuração operacional do gateway do
+# ecossistema pertence ao Sister-Infra. Mantido aqui para testes e baselines.
 import argparse
 import ipaddress
 import json

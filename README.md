@@ -1,3 +1,37 @@
+
+<!-- SISTER-INFRA-BOUNDARY:BEGIN -->
+> [!IMPORTANT]
+> **Fronteira operacional:** a exposição HTTPS/LAN do ecossistema, o HAProxy,
+> o TLS de borda e a execução conjunta de SisTer + Nexo pertencem ao repositório
+> **Sister-Infra**. Este repositório continua responsável pelo núcleo SisTer,
+> seus contratos, governança, persistência, qualidade e execução isolada.
+
+## Execução e infraestrutura do ecossistema
+
+Para desenvolver ou validar somente o núcleo SisTer:
+
+```bash
+./scripts/run_all.sh --profile dev-core
+```
+
+Para levantar SisTer + Nexo + gateway único em laboratório LAN, use o repositório
+irmão `sister-infra`:
+
+```bash
+cd ../sister-infra
+./bin/sister-infra up --profile lan
+./bin/sister-infra verify --profile lan
+```
+
+Os scripts de gateway mantidos neste repositório permanecem temporariamente como
+**legado de transição**, para reprodução de baselines e testes históricos. Novas
+automações de exposição, TLS, preparação de clientes LAN e promoção operacional
+devem ser implementadas em `Sister-Infra`, não no núcleo SisTer.
+
+Repositório público de referência:
+`git@github.com:jpereiratrindade/Sister-Infra.git`.
+<!-- SISTER-INFRA-BOUNDARY:END -->
+
 <!-- SISTER-PORTAL:START -->
 
 <div align="center">

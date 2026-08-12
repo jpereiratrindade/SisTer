@@ -1,3 +1,11 @@
+
+<!-- SISTER-INFRA-LEGACY-OPS:BEGIN -->
+> [!WARNING]
+> Esta implementação de gateway permanece no SisTer como baseline/teste de
+> transição. A responsabilidade operacional por HAProxy, TLS e exposição do
+> ecossistema pertence agora ao repositório `Sister-Infra`.
+<!-- SISTER-INFRA-LEGACY-OPS:END -->
+
 # HAProxy de laboratório — SEC-03B/03C/ISO-01
 
 Este diretório contém somente fontes versionadas. Configuração renderizada,
