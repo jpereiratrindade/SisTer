@@ -10,7 +10,14 @@ source scripts/lib/compose.sh
 source scripts/lib/podman_db.sh
 
 sister_load_env "$ENV_NAME"
-if sister_compose_available; then
+if [[ -n "${SISTER_DB_DATA_DIR:-}" ]]; then
+  if command -v podman >/dev/null 2>&1; then
+    sister_podman_destroy
+  else
+    echo "SISTER_DB_DATA_DIR requires podman for this incremental contract" >&2
+    exit 1
+  fi
+elif sister_compose_available; then
   sister_compose down -v
 elif command -v podman >/dev/null 2>&1; then
   sister_podman_destroy
@@ -19,4 +26,8 @@ else
   exit 1
 fi
 sister_print_env
-echo "Destroyed database container and volume for ${SISTER_ENV}."
+if [[ -n "${SISTER_DB_DATA_DIR:-}" ]]; then
+  echo "Destroyed database container for ${SISTER_ENV}; bind-mounted data was preserved."
+else
+  echo "Destroyed database container and volume for ${SISTER_ENV}."
+fi

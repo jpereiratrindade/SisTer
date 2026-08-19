@@ -6,6 +6,38 @@ if [[ -f ".env" ]]; then
   set +a
 fi
 
+sister_validate_db_data_dir() {
+  if [[ -z "${SISTER_DB_DATA_DIR:-}" ]]; then
+    return 0
+  fi
+
+  case "$SISTER_DB_DATA_DIR" in
+    /*)
+      ;;
+    *)
+      echo "Error: SISTER_DB_DATA_DIR must be an absolute path" >&2
+      return 1
+      ;;
+  esac
+
+  case "$SISTER_DB_DATA_DIR" in
+    /|/var|/var/home|/home|/run|/run/media)
+      echo "Error: refusing unsafe SISTER_DB_DATA_DIR=${SISTER_DB_DATA_DIR}" >&2
+      return 1
+      ;;
+  esac
+
+  export SISTER_DB_DATA_DIR
+}
+
+sister_db_storage_mode() {
+  if [[ -n "${SISTER_DB_DATA_DIR:-}" ]]; then
+    printf '%s\n' "bind"
+  else
+    printf '%s\n' "legacy-volume"
+  fi
+}
+
 sister_load_env() {
   local env_name="${1:-dev}"
   if [[ -z "${SISTER_DB_PASSWORD:-}" ]]; then
@@ -40,15 +72,25 @@ sister_load_env() {
       return 1
       ;;
   esac
+
+  sister_validate_db_data_dir
 }
 
 sister_print_env() {
+  local storage_mode
+  local data_dir
+
+  storage_mode="$(sister_db_storage_mode)"
+  data_dir="${SISTER_DB_DATA_DIR:-<not configured>}"
+
   cat <<MSG
 SisTer environment: ${SISTER_ENV}
   COMPOSE_PROJECT_NAME=${COMPOSE_PROJECT_NAME}
   SISTER_DB_CONTAINER=${SISTER_DB_CONTAINER}
   SISTER_DB_PORT=${SISTER_DB_PORT}
   SISTER_DB_VOLUME=${SISTER_DB_VOLUME}
+  SISTER_DB_STORAGE=${storage_mode}
+  SISTER_DB_DATA_DIR=${data_dir}
   SISTER_DATABASE_URL=<configured; credentials redacted>
   SISTER_APP_PORT=${SISTER_APP_PORT}
   SISTER_BIND_HOST=${SISTER_BIND_HOST}

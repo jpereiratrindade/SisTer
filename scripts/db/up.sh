@@ -15,7 +15,14 @@ source scripts/lib/podman_db.sh
 source scripts/lib/db_wait.sh
 
 sister_load_env "$ENV_NAME"
-if sister_compose_available; then
+if [[ -n "${SISTER_DB_DATA_DIR:-}" ]]; then
+  if command -v podman >/dev/null 2>&1; then
+    sister_podman_up
+  else
+    echo "SISTER_DB_DATA_DIR requires podman for this incremental contract" >&2
+    exit 1
+  fi
+elif sister_compose_available; then
   if command -v podman-compose >/dev/null 2>&1 && command -v podman >/dev/null 2>&1 \
     && podman container exists "$SISTER_DB_CONTAINER"; then
     if [[ "$(podman inspect --format '{{.State.Running}}' "$SISTER_DB_CONTAINER")" == "true" ]]; then
