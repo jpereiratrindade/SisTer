@@ -10,7 +10,14 @@ source scripts/lib/compose.sh
 source scripts/lib/podman_db.sh
 
 sister_load_env "$ENV_NAME"
-if sister_compose_available; then
+if [[ -n "${SISTER_DB_DATA_DIR:-}" ]]; then
+  if command -v podman >/dev/null 2>&1; then
+    sister_podman_down
+  else
+    echo "SISTER_DB_DATA_DIR requires podman for this incremental contract" >&2
+    exit 1
+  fi
+elif sister_compose_available; then
   sister_compose down
 elif command -v podman >/dev/null 2>&1; then
   sister_podman_down
