@@ -2,6 +2,11 @@
 
 Contrato comum de subsistema do SisTer.
 
+> [!NOTE]
+> **Enquadramento Constitutivo e de Compatibilidade (SIS-FDBK-01):**
+> O contrato `sister.subsystem/1.0.0` especifica o **binding HTTP histórico de integração** entre o `sisterd` e processos de subsistemas. Ele é mantido para compatibilidade operacional e testes de baseline.
+> Conforme o Documento Fundacional v0.2.0 e o ARC-01, a fronteira ontológica do participante SisTer é **semântica e independente de transporte**. Ter um servidor HTTP próprio é uma escolha de binding local de engenharia, não uma exigência ontológica para participar do SisTer.
+
 Esta versão define a superfície mínima para que um subsistema seja integrado de
 forma governada, testável e independente de regras específicas no núcleo.
 
