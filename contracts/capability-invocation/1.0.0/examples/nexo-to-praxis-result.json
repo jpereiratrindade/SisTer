@@ -1,0 +1,21 @@
+{
+  "schema": "sister.capability-invocation-result/1.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "invocation_id": "inv-nexo-praxis-001",
+  "request_id": "request-nexo-praxis-001",
+  "responding_participant_id": "sister_praxis",
+  "status": "succeeded",
+  "result": {
+    "assessment": "conformant",
+    "applied_rules": ["praxis-rule-example-001"]
+  },
+  "decision": {
+    "authority": "sister_praxis",
+    "outcome": "allowed",
+    "reason": "O método atende às regras declaradas no exemplo ARC-01."
+  },
+  "evidence_refs": ["evidence:praxis-assessment-example-001"],
+  "receipt_ref": "receipt:nexo-praxis-example-001",
+  "completed_at": "2026-08-25T12:00:02Z"
+}

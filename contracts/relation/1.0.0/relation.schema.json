@@ -1,0 +1,148 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/relation/1.0.0/relation.schema.json",
+  "title": "SisTer Relation Draft",
+  "description": "DRAFT / NOT RUNTIME-NORMATIVE governed relation definition.",
+  "x-sister-contract-status": "DRAFT",
+  "x-sister-runtime-normative": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contract_status",
+    "runtime_normative",
+    "relation_id",
+    "version",
+    "purpose",
+    "state",
+    "participants",
+    "capability_grants",
+    "authority_boundaries",
+    "governance",
+    "evidence_policy",
+    "provenance"
+  ],
+  "properties": {
+    "schema": {"const": "sister.relation/1.0.0"},
+    "contract_status": {"const": "DRAFT"},
+    "runtime_normative": {"const": false},
+    "relation_id": {"type": "string", "pattern": "^rel-[a-z0-9-]{3,96}$"},
+    "version": {"$ref": "#/$defs/semantic-version"},
+    "purpose": {"type": "string", "minLength": 8, "maxLength": 500},
+    "state": {"enum": ["proposed", "accepted", "suspended", "ended"]},
+    "participants": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 32,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["participant_id", "roles"],
+        "properties": {
+          "participant_id": {"$ref": "#/$defs/participant-id"},
+          "roles": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,79}$"},
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "capability_grants": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["caller", "target", "capability_id", "version", "contract_ref", "purposes"],
+        "properties": {
+          "caller": {"$ref": "#/$defs/participant-id"},
+          "target": {"$ref": "#/$defs/participant-id"},
+          "capability_id": {
+            "type": "string",
+            "pattern": "^[a-z][a-z0-9_]*(\\.[a-z][a-z0-9_]*){2,5}$"
+          },
+          "version": {"$ref": "#/$defs/semantic-version"},
+          "contract_ref": {"$ref": "#/$defs/contract-reference"},
+          "purposes": {
+            "type": "array",
+            "minItems": 1,
+            "items": {"type": "string", "minLength": 8, "maxLength": 500},
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "authority_boundaries": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["scope", "authority_participant_id", "responsibility", "non_transferable"],
+        "properties": {
+          "scope": {"type": "string", "minLength": 3, "maxLength": 160},
+          "authority_participant_id": {"$ref": "#/$defs/participant-id"},
+          "responsibility": {"type": "string", "minLength": 8, "maxLength": 500},
+          "non_transferable": {"type": "boolean"}
+        }
+      }
+    },
+    "governance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["proposed_by", "accepted_by"],
+      "properties": {
+        "proposed_by": {"$ref": "#/$defs/participant-id"},
+        "accepted_by": {
+          "type": "array",
+          "items": {"$ref": "#/$defs/participant-id"},
+          "uniqueItems": true
+        }
+      }
+    },
+    "evidence_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["required", "custodian_participant_id", "retention_rule"],
+      "properties": {
+        "required": {
+          "type": "array",
+          "minItems": 1,
+          "items": {"type": "string", "minLength": 3, "maxLength": 240},
+          "uniqueItems": true
+        },
+        "custodian_participant_id": {"$ref": "#/$defs/participant-id"},
+        "retention_rule": {"type": "string", "minLength": 8, "maxLength": 500}
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_ref", "recorded_at"],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 3, "maxLength": 500},
+        "recorded_at": {"type": "string", "format": "date-time"},
+        "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    }
+  },
+  "$defs": {
+    "participant-id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+    "semantic-version": {
+      "type": "string",
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?$"
+    },
+    "contract-reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema_id", "version"],
+      "properties": {
+        "schema_id": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]+$"},
+        "version": {"$ref": "#/$defs/semantic-version"},
+        "digest": {"type": "string", "pattern": "^sha256:[a-f0-9]{64}$"}
+      }
+    }
+  }
+}

@@ -1,0 +1,38 @@
+{
+  "schema": "sister.participant/2.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "participant_id": "sister_reference",
+  "name": "Invalid reference participant",
+  "version": "0.1.0",
+  "owner": "ARC-01 test",
+  "identity": {
+    "stable_id": "sister_reference",
+    "declared_by": "ARC-01 test"
+  },
+  "authority_scopes": [
+    {
+      "scope": "reference.transform",
+      "responsibility": "Produce a deterministic reference transformation.",
+      "decision_owner": "sister_reference"
+    }
+  ],
+  "capabilities": [
+    {
+      "capability_id": "reference.transform.execute",
+      "version": "1.0.0",
+      "purpose": "Execute a deterministic reference transformation.",
+      "input_contract": {"schema_id": "reference.input", "version": "1.0.0"},
+      "output_contract": {"schema_id": "reference.output", "version": "1.0.0"},
+      "decision_authority": {"scope": "reference.transform", "owner": "sister_reference"},
+      "side_effect": "none",
+      "evidence_requirements": ["deterministic result"]
+    }
+  ],
+  "relation_roles": ["reference-provider"],
+  "provenance": {
+    "source_ref": "negative test",
+    "declared_at": "2026-08-25T12:00:00Z"
+  },
+  "transport": {"kind": "forbidden-in-arc01"}
+}

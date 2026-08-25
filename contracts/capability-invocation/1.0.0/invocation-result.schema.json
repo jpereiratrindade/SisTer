@@ -1,0 +1,69 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/capability-invocation/1.0.0/invocation-result.schema.json",
+  "title": "SisTer Capability Invocation Result Draft",
+  "description": "DRAFT / NOT RUNTIME-NORMATIVE semantic capability result.",
+  "x-sister-contract-status": "DRAFT",
+  "x-sister-runtime-normative": false,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "contract_status",
+    "runtime_normative",
+    "invocation_id",
+    "request_id",
+    "responding_participant_id",
+    "status",
+    "completed_at",
+    "evidence_refs"
+  ],
+  "properties": {
+    "schema": {"const": "sister.capability-invocation-result/1.0.0"},
+    "contract_status": {"const": "DRAFT"},
+    "runtime_normative": {"const": false},
+    "invocation_id": {"type": "string", "pattern": "^inv-[a-z0-9-]{8,96}$"},
+    "request_id": {"type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$"},
+    "responding_participant_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+    "status": {"enum": ["succeeded", "denied", "failed", "expired", "cancelled"]},
+    "result": {},
+    "error": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["code", "message", "responsible_participant_id"],
+      "properties": {
+        "code": {"type": "string", "pattern": "^[a-z][a-z0-9_.-]{2,79}$"},
+        "message": {"type": "string", "minLength": 1, "maxLength": 500},
+        "responsible_participant_id": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "retryable": {"type": "boolean"}
+      }
+    },
+    "decision": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authority", "outcome", "reason"],
+      "properties": {
+        "authority": {"type": "string", "pattern": "^[a-z][a-z0-9_]{2,63}$"},
+        "outcome": {"enum": ["allowed", "denied", "not_applicable"]},
+        "reason": {"type": "string", "minLength": 3, "maxLength": 500}
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {"type": "string", "minLength": 3, "maxLength": 500},
+      "uniqueItems": true
+    },
+    "receipt_ref": {"type": "string", "minLength": 3, "maxLength": 500},
+    "completed_at": {"type": "string", "format": "date-time"}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "succeeded"}}, "required": ["status"]},
+      "then": {"required": ["result"], "not": {"required": ["error"]}}
+    },
+    {
+      "if": {"properties": {"status": {"enum": ["denied", "failed", "expired", "cancelled"]}}, "required": ["status"]},
+      "then": {"required": ["error"], "not": {"required": ["result"]}}
+    }
+  ]
+}

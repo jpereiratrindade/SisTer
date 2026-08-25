@@ -1,0 +1,54 @@
+{
+  "schema": "sister.participant/2.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "participant_id": "sister_nexo",
+  "name": "SisTer Nexo",
+  "version": "0.1.0",
+  "owner": "Equipe SisTer Nexo",
+  "identity": {
+    "stable_id": "sister_nexo",
+    "declared_by": "Equipe SisTer Nexo"
+  },
+  "authority_scopes": [
+    {
+      "scope": "nexo.projects",
+      "responsibility": "Decidir acesso e preservar o estado dos projetos do Nexo.",
+      "decision_owner": "sister_nexo"
+    }
+  ],
+  "capabilities": [
+    {
+      "capability_id": "nexo.projects.read",
+      "version": "1.0.0",
+      "purpose": "Consultar projetos autorizados pelo domínio do Nexo.",
+      "input_contract": {
+        "schema_id": "nexo.projects-query",
+        "version": "1.0.0"
+      },
+      "output_contract": {
+        "schema_id": "nexo.projects-result",
+        "version": "1.0.0"
+      },
+      "decision_authority": {
+        "scope": "nexo.projects.access",
+        "owner": "sister_nexo"
+      },
+      "side_effect": "none",
+      "preconditions": ["subject recognized by Nexo policy"],
+      "evidence_requirements": ["decision attributable to Nexo"]
+    }
+  ],
+  "relation_roles": ["project-authority", "capability-provider"],
+  "state_declarations": [
+    {
+      "state_id": "participant.available",
+      "meaning": "O participante declara estar disponível para avaliação de prontidão.",
+      "declared_by": "sister_nexo"
+    }
+  ],
+  "provenance": {
+    "source_ref": "sister-nexo participant declaration",
+    "declared_at": "2026-08-25T12:00:00Z"
+  }
+}

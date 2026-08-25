@@ -1,0 +1,59 @@
+{
+  "schema": "sister.relation/1.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "relation_id": "rel-nexo-praxis-method",
+  "version": "1.0.0",
+  "purpose": "Permitir que o Nexo solicite avaliações metodológicas ao Praxis sem transferir autoridade de domínio.",
+  "state": "proposed",
+  "participants": [
+    {
+      "participant_id": "sister_nexo",
+      "roles": ["method-requester", "project-authority"]
+    },
+    {
+      "participant_id": "sister_praxis",
+      "roles": ["method-evaluator", "capability-provider"]
+    }
+  ],
+  "capability_grants": [
+    {
+      "caller": "sister_nexo",
+      "target": "sister_praxis",
+      "capability_id": "praxis.method.assess",
+      "version": "1.0.0",
+      "contract_ref": {
+        "schema_id": "praxis.method-assessment-input",
+        "version": "1.0.0"
+      },
+      "purposes": ["Avaliar método associado a projeto autorizado pelo Nexo."]
+    }
+  ],
+  "authority_boundaries": [
+    {
+      "scope": "nexo.project.authorization",
+      "authority_participant_id": "sister_nexo",
+      "responsibility": "Autorizar acesso ao projeto e decidir o uso do resultado.",
+      "non_transferable": true
+    },
+    {
+      "scope": "praxis.method.assessment",
+      "authority_participant_id": "sister_praxis",
+      "responsibility": "Produzir e explicar a avaliação metodológica.",
+      "non_transferable": true
+    }
+  ],
+  "governance": {
+    "proposed_by": "sister_nexo",
+    "accepted_by": []
+  },
+  "evidence_policy": {
+    "required": ["invocation receipt", "applied rule set", "assessment result"],
+    "custodian_participant_id": "sister_nexo",
+    "retention_rule": "Preservar referências suficientes para reconstruir a responsabilidade da composição."
+  },
+  "provenance": {
+    "source_ref": "ARC-01 relation example",
+    "recorded_at": "2026-08-25T12:00:00Z"
+  }
+}

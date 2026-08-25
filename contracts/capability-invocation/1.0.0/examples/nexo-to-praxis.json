@@ -1,0 +1,34 @@
+{
+  "schema": "sister.capability-invocation/1.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "invocation_id": "inv-nexo-praxis-001",
+  "request_id": "request-nexo-praxis-001",
+  "caller_participant_id": "sister_nexo",
+  "target_participant_id": "sister_praxis",
+  "capability": {
+    "capability_id": "praxis.method.assess",
+    "version": "1.0.0"
+  },
+  "relation_id": "rel-nexo-praxis-method",
+  "subject_assertion": {
+    "issuer": "sister_identity_authority",
+    "subject_id": "researcher-001",
+    "audience": "sister_praxis",
+    "issued_at": "2026-08-25T12:00:00Z",
+    "expires_at": "2026-08-25T12:01:00Z",
+    "integrity_ref": "assertion:example-not-operational",
+    "claims": {"affiliation": "research-group-example"}
+  },
+  "purpose": "Avaliar o método associado a um projeto autorizado pelo Nexo.",
+  "contract_ref": {
+    "schema_id": "praxis.method-assessment-input",
+    "version": "1.0.0"
+  },
+  "arguments": {
+    "method_ref": "method:example-001",
+    "criteria": ["reproducibility", "traceability"]
+  },
+  "deadline_at": "2026-08-25T12:00:10Z",
+  "evidence_context": ["evidence:method-example-001"]
+}

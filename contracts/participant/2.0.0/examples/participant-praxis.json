@@ -1,0 +1,47 @@
+{
+  "schema": "sister.participant/2.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "participant_id": "sister_praxis",
+  "name": "SisTer Praxis",
+  "version": "0.1.0",
+  "owner": "Equipe SisTer Praxis",
+  "identity": {
+    "stable_id": "sister_praxis",
+    "declared_by": "Equipe SisTer Praxis"
+  },
+  "authority_scopes": [
+    {
+      "scope": "praxis.method.assessment",
+      "responsibility": "Produzir avaliação metodológica sem assumir a decisão do solicitante.",
+      "decision_owner": "sister_praxis"
+    }
+  ],
+  "capabilities": [
+    {
+      "capability_id": "praxis.method.assess",
+      "version": "1.0.0",
+      "purpose": "Avaliar um método segundo regras declaradas pelo Praxis.",
+      "input_contract": {
+        "schema_id": "praxis.method-assessment-input",
+        "version": "1.0.0"
+      },
+      "output_contract": {
+        "schema_id": "praxis.method-assessment-result",
+        "version": "1.0.0"
+      },
+      "decision_authority": {
+        "scope": "praxis.method.assessment",
+        "owner": "sister_praxis"
+      },
+      "side_effect": "none",
+      "preconditions": ["method description conforms to the input contract"],
+      "evidence_requirements": ["assessment identifies the applied rule set"]
+    }
+  ],
+  "relation_roles": ["method-evaluator", "capability-provider"],
+  "provenance": {
+    "source_ref": "sister-praxis participant declaration",
+    "declared_at": "2026-08-25T12:00:00Z"
+  }
+}

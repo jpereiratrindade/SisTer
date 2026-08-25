@@ -32,6 +32,19 @@ o contrato comum. A classificação completa está em
 
 Versoes estabilizadas devem ser copiadas para `contracts/versions/vX.Y.Z/`.
 
+## Drafts ARC-01 — sem vigência no runtime
+
+Os contratos abaixo são propostas de engenharia explicitamente marcadas como
+**DRAFT / NOT RUNTIME-NORMATIVE**:
+
+- `participant/2.0.0/`;
+- `capability-invocation/1.0.0/`;
+- `relation/1.0.0/`.
+
+Eles não substituem `subsystem/1.0.0`, não autorizam participação e não possuem
+consumidor operacional. A compatibilidade está documentada em
+[`compatibility/SUBSYSTEM_1.0.0_TO_ARC01_DRAFTS.md`](compatibility/SUBSYSTEM_1.0.0_TO_ARC01_DRAFTS.md).
+
 ## Fronteira de compartilhamento
 
 Cada sistema integrante deve declarar no manifesto:

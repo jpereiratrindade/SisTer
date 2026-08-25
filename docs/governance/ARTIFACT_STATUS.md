@@ -41,6 +41,14 @@ Nenhum candidato em quarentena pode:
 - servir como evidência de prontidão do núcleo;
 - tornar-se autorizado apenas porque responde a uma rota histórica.
 
+## Drafts de arquitetura sem vigência operacional
+
+`sister.participant/2.0.0`, `sister.capability-invocation/1.0.0` e
+`sister.relation/1.0.0` são drafts do ARC-01. Eles não são normativos para o
+runtime, não substituem `sister.subsystem/1.0.0` e não autorizam integração,
+rota, persistência ou execução. Seu propósito é estabilizar a semântica antes
+de qualquer experimento de transporte.
+
 ## Regra de precedência
 
 Em conflito, prevalecem nesta ordem:

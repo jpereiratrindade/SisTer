@@ -1,0 +1,21 @@
+{
+  "schema": "sister.capability-invocation/1.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "invocation_id": "inv-invalid-endpoint-001",
+  "request_id": "request-invalid-endpoint-001",
+  "caller_participant_id": "sister_nexo",
+  "target_participant_id": "sister_praxis",
+  "capability": {
+    "capability_id": "praxis.method.assess",
+    "version": "1.0.0"
+  },
+  "purpose": "Negative ARC-01 example with an implementation detail.",
+  "contract_ref": {
+    "schema_id": "praxis.method-assessment-input",
+    "version": "1.0.0"
+  },
+  "arguments": {"method_ref": "method:invalid"},
+  "deadline_at": "2026-08-25T12:00:10Z",
+  "endpoint": "/forbidden-in-arc01"
+}

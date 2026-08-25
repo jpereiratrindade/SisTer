@@ -1,0 +1,42 @@
+{
+  "schema": "sister.relation/1.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "relation_id": "rel-invalid-intermediary",
+  "version": "1.0.0",
+  "purpose": "Negative ARC-01 example with a mandatory technical intermediary.",
+  "state": "proposed",
+  "participants": [
+    {"participant_id": "sister_nexo", "roles": ["caller"]},
+    {"participant_id": "sister_praxis", "roles": ["target"]}
+  ],
+  "capability_grants": [
+    {
+      "caller": "sister_nexo",
+      "target": "sister_praxis",
+      "capability_id": "praxis.method.assess",
+      "version": "1.0.0",
+      "contract_ref": {"schema_id": "praxis.method-assessment-input", "version": "1.0.0"},
+      "purposes": ["Exercise rejection of an implementation-specific intermediary."]
+    }
+  ],
+  "authority_boundaries": [
+    {
+      "scope": "praxis.method.assessment",
+      "authority_participant_id": "sister_praxis",
+      "responsibility": "Own the method assessment decision.",
+      "non_transferable": true
+    }
+  ],
+  "governance": {"proposed_by": "sister_nexo", "accepted_by": []},
+  "evidence_policy": {
+    "required": ["assessment result"],
+    "custodian_participant_id": "sister_nexo",
+    "retention_rule": "Keep evidence for the duration of the governed relation."
+  },
+  "provenance": {
+    "source_ref": "negative test",
+    "recorded_at": "2026-08-25T12:00:00Z"
+  },
+  "mandatory_intermediary": "forbidden-in-arc01"
+}
