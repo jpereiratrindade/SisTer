@@ -8,11 +8,14 @@ add_executable(
     db.cpp
     participation_service.cpp
     api/maturity_routes.cpp
+    ecosystem/ecosystem_view.cpp
     http/content_length.cpp
     runtime/connection_thread_pool.cpp
     runtime/listener.cpp
     security/login_rate_limiter.cpp
 )
+
+target_include_directories(sisterd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 if(PostgreSQL_FOUND)
     target_compile_definitions(sisterd PRIVATE SISTER_HAVE_LIBPQ=1)

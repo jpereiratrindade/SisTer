@@ -57,7 +57,31 @@ load_deployment_binding() {
   export SISTER_RUNTIME_PORT="$port"
 }
 
+derive_ecosystem_projection() {
+  local resolved="${SISTER_RESOLVED_DEPLOYMENT_FILE:-}"
+  [[ -n "$resolved" && -f "$resolved" ]] || return 0
+  command -v jq >/dev/null 2>&1 || return 0
+
+  mkdir -p "$ROOT_DIR/.run"
+  local projection_file="$ROOT_DIR/.run/ecosystem_projection.tsv"
+  jq -r '
+    "META\t" + (.composition_id // "") + "\t" + (.deployment_id // "") + "\t" + (.status // "NOT_CONFIGURED"),
+    ( (.components // [])[] |
+      "PARTICIPANT\t" +
+      (.component_id // "") + "\t" +
+      (.system_id // "") + "\t" +
+      (.runtime.transport // "") + "\t" +
+      (.runtime.listen // "") + "\t" +
+      ((.runtime.port // 0) | tostring) + "\t" +
+      (.probe.health_path // "") + "\t" +
+      (.gateway.host // "")
+    )
+  ' "$resolved" > "$projection_file"
+  export SISTER_ECOSYSTEM_PROJECTION_FILE="$projection_file"
+}
+
 load_deployment_binding
+derive_ecosystem_projection
 
 PORT="${SISTER_RUNTIME_PORT:-$SISTER_APP_PORT}"
 BIN="$ROOT_DIR/build/apps/sisterd/sisterd"

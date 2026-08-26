@@ -198,6 +198,14 @@ add_test(
         ${CMAKE_SOURCE_DIR}/web)
 
 add_test(
+    NAME sisterd_ecosystem_api_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_ecosystem_api_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)
+
+add_test(
     NAME sister_maturity_contract_tests
     COMMAND
         ${Python3_EXECUTABLE} -m unittest discover

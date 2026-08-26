@@ -2,6 +2,7 @@
 #include "db.hpp"
 #include "participation_service.hpp"
 #include "api/maturity_routes.hpp"
+#include "ecosystem/ecosystem_view.hpp"
 #include "http/content_length.hpp"
 #include "runtime/connection_thread_pool.hpp"
 #include "runtime/listener.hpp"
@@ -94,8 +95,7 @@ struct ServerConfig {
     uint16_t referencePort = 19001;
     std::string internalProxyToken;
     std::string extraConnectSrc;
-    std::string nexoPublicUrl;
-    uint16_t nexoPort = 0;
+    std::filesystem::path ecosystemProjectionFile;
     int subsystemHealthTimeoutMilliseconds = 800;
 };
 
@@ -342,25 +342,12 @@ ServerConfig loadConfig(int argc, char** argv) {
         1, std::numeric_limits<uint16_t>::max(), "SISTER_REFERENCE_PORT");
     config.internalProxyToken = environment("SISTER_INTERNAL_PROXY_TOKEN").value_or("");
     config.extraConnectSrc = environment("SISTER_EXTRA_CONNECT_SRC").value_or("");
-    config.nexoPublicUrl = environment("SISTER_NEXO_PUBLIC_URL").value_or("");
-    if (!config.nexoPublicUrl.empty()) {
-        if (!config.nexoPublicUrl.starts_with("https://") || config.nexoPublicUrl.find_first_of("\r\n\t") != std::string::npos) {
-            throw std::runtime_error("SISTER_NEXO_PUBLIC_URL must be an HTTPS URL");
-        }
-        while (config.nexoPublicUrl.size() > 8 && config.nexoPublicUrl.back() == '/') {
-            config.nexoPublicUrl.pop_back();
-        }
-    }
-    if (const auto nexoPort = environment("SISTER_NEXO_PORT"); nexoPort && !nexoPort->empty()) {
-        config.nexoPort = parseInteger<uint16_t>(
-            *nexoPort, 1024, std::numeric_limits<uint16_t>::max(), "SISTER_NEXO_PORT");
+    if (const auto projectionFile = environment("SISTER_ECOSYSTEM_PROJECTION_FILE"); projectionFile && !projectionFile->empty()) {
+        config.ecosystemProjectionFile = *projectionFile;
     }
     config.subsystemHealthTimeoutMilliseconds = parseInteger<int>(
         environment("SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS").value_or("800"),
         100, 5'000, "SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS");
-    if (!config.nexoPublicUrl.empty() && config.nexoPort == 0) {
-        throw std::runtime_error("SISTER_NEXO_PUBLIC_URL requires SISTER_NEXO_PORT");
-    }
     if (config.referenceSubsystemEnabled && config.internalProxyToken.size() < 32) {
         throw std::runtime_error(
             "SISTER_ENABLE_REFERENCE_SUBSYSTEM requires SISTER_INTERNAL_PROXY_TOKEN");
@@ -1394,70 +1381,11 @@ int statusFromRawHttpResponse(std::string_view response) {
     return status;
 }
 
-struct SubsystemHealthObservation {
-    bool online = false;
-    int httpStatus = 0;
-    std::string detail = "not_observed";
-};
-
-SubsystemHealthObservation observeLoopbackHealth(
-    uint16_t port,
-    std::string_view path,
-    int timeoutMilliseconds) noexcept {
-    try {
-        if (path.empty() || path.front() != '/' ||
-            path.find_first_of("\r\n") != std::string_view::npos) {
-            return {false, 0, "invalid_health_path"};
-        }
-
-        auto upstream = connectLoopback(port, timeoutMilliseconds);
-        const std::string request =
-            "GET " + std::string(path) + " HTTP/1.1\r\n"
-            "Host: 127.0.0.1:" + std::to_string(port) + "\r\n"
-            "Accept: application/json\r\n"
-            "Connection: close\r\n\r\n";
-        if (!sendAll(upstream.get(), request)) {
-            return {false, 0, "health_request_send_failed"};
-        }
-
-        std::string response;
-        response.reserve(4 * 1024);
-        std::array<char, 4 * 1024> buffer{};
-        while (response.find("\r\n\r\n") == std::string::npos) {
-            const auto count = recv(upstream.get(), buffer.data(), buffer.size(), 0);
-            if (count == 0) break;
-            if (count < 0) {
-                if (errno == EINTR) continue;
-                if (errno == EAGAIN || errno == EWOULDBLOCK) {
-                    return {false, 0, "health_response_timeout"};
-                }
-                return {false, 0, "health_response_read_failed"};
-            }
-            if (response.size() + static_cast<std::size_t>(count) > kMaxHeaderBytes) {
-                return {false, 0, "health_response_headers_too_large"};
-            }
-            response.append(buffer.data(), static_cast<std::size_t>(count));
-        }
-
-        if (!response.starts_with("HTTP/1.") ||
-            response.find("\r\n\r\n") == std::string::npos) {
-            return {false, 0, "invalid_health_response"};
-        }
-
-        const int status = statusFromRawHttpResponse(response);
-        return {status == 200, status, status == 200 ? "ok" : "http_" + std::to_string(status)};
-    } catch (const std::exception& error) {
-        return {false, 0, error.what()};
-    }
-}
-
 constexpr std::string_view kFallbackContracts = R"([
   {"name":"Subsystem Manifest","version":"1.0.0","required":"Sim"},
   {"name":"Reference Subsystem","version":"0.1.0","required":"Para validacao funcional, operacional e de seguranca"},
   {"name":"Evidence","version":"0.1.0","required":"Para resultado promovido"}
 ])";
-
-constexpr std::string_view kFallbackSystems = R"([])";
 
 constexpr std::string_view kFallbackDiagnostics = R"([
   {"service":"Contract Registry","status":"operacional","score":100},
@@ -1514,25 +1442,16 @@ ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig
             "\",\"auth_backend\":\"" + std::string(state.auth.backendName()) + "\"}"};
     }
 
+    if (path == "/api/ecosystem") {
+        auto view = sister::ecosystem::parseProjectionFile(config.ecosystemProjectionFile);
+        sister::ecosystem::observeEcosystemHealth(view, config.subsystemHealthTimeoutMilliseconds);
+        return {true, false, sister::ecosystem::serializeEcosystemViewJson(view)};
+    }
+
     if (path == "/api/systems") {
-        std::string systems(kFallbackSystems);
-        if (!config.nexoPublicUrl.empty()) {
-            const auto health = observeLoopbackHealth(
-                config.nexoPort, "/api/health", config.subsystemHealthTimeoutMilliseconds);
-            systems.clear();
-            systems += R"([
-  {"id":"sister_nexo","name":"SisTer Nexo","version":"0.1.0","owner":"Equipe SisTer Nexo","type":"Governança e articulação institucional","status":"Conectado","description":"Subsistema do ecossistema dedicado à governança de atividades, projetos, evidências, pesquisa, publicações e auditoria.","contract":"sister-nexo.integration/1.0.0","governance_contract":"Acordo bilateral SisTer–Nexo","access_mode":"gateway_ecosystem_host","access_url":")";
-            systems += jsonEscape(config.nexoPublicUrl + "/");
-            systems += R"(","health_status":")";
-            systems += health.online ? "online" : "offline";
-            systems += R"(","health_observed_by":"sisterd","health_http_status":)";
-            systems += std::to_string(health.httpStatus);
-            systems += R"(,"health_detail":")";
-            systems += jsonEscape(health.detail);
-            systems += R"(","access_restricted":true,"public_scope":"Saúde, interface de autenticação e metadados públicos autorizados","restricted_scope":"Governança, atividades, evidências, pesquisa, publicações e auditoria","private_scope":"Credenciais, banco de dados e dados internos do Nexo","domains":["governance","activities","evidence","research","publications","audit"],"modes":["healthy","degraded","unavailable"],"exports":["governance","activities","evidence","research","publications","audit"],"policy":["contrato_bilateral","gateway_unico","autonomia_de_dados","acesso_autenticado","auditoria"]}
-])";
-        }
-        return {true, false, std::move(systems)};
+        auto view = sister::ecosystem::parseProjectionFile(config.ecosystemProjectionFile);
+        sister::ecosystem::observeEcosystemHealth(view, config.subsystemHealthTimeoutMilliseconds);
+        return {true, false, sister::ecosystem::serializeSystemsCompatibilityJson(view)};
     }
     if (path == "/api/contracts") {
         return {true, false, std::string(kFallbackContracts)};
@@ -2364,7 +2283,7 @@ void handleClient(
             std::string_view capability;
             std::string_view resource = "sister-control-plane";
             std::string_view purpose = "governed_api_access";
-            if (request.path == "/api/systems") capability = "subsystem.manifest.read";
+            if (request.path == "/api/systems" || request.path == "/api/ecosystem") capability = "subsystem.manifest.read";
             else if (request.path == "/api/v1/engineering/operational-base/current") {
                 capability = "engineering.operational-base.read";
             }

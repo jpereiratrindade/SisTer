@@ -171,31 +171,31 @@
         <div class="page-heading">
           <div>
             <span class="eyebrow">Visão do ecossistema</span>
-            <h2>Sistemas que convergem no território</h2>
-            <p>Uma leitura objetiva dos subsistemas, seus vínculos e sua prontidão operacional.</p>
+            <h2>Projeção operacional declarativa</h2>
+            <p>Uma leitura objetiva dos participantes, seus bindings e sua prontidão operacional observada.</p>
           </div>
-          <button class="primary-action" type="button" id="validate-button" data-admin-only hidden>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4 4L19 6"/></svg>
-            Validar ecossistema
+          <button class="primary-action" type="button" id="validate-button">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/></svg>
+            Atualizar estado
           </button>
         </div>
 
         <div class="dashboard">
           <article class="metric">
-            <strong id="system-count">0</strong>
-            <span>Subsistemas conectados</span>
+            <strong id="participant-count">0</strong>
+            <span>Participantes</span>
           </article>
-          <article class="metric" data-admin-only hidden>
-            <strong id="signed-contract-count">0</strong>
-            <span>Contratos ativos</span>
+          <article class="metric">
+            <strong id="operational-count">0</strong>
+            <span>Operacionais</span>
           </article>
-          <article class="metric" data-admin-only hidden>
-            <strong id="evidence-count">0</strong>
-            <span>Evidências recentes</span>
+          <article class="metric">
+            <strong id="published-count">0</strong>
+            <span>Publicados</span>
           </article>
-          <article class="metric" data-admin-only hidden>
-            <strong id="integration-compliance">N/D</strong>
-            <span>Conformidade</span>
+          <article class="metric">
+            <strong id="deployment-status">N/D</strong>
+            <span>Deployment</span>
           </article>
         </div>
 
@@ -203,12 +203,12 @@
           <div class="panel-header">
             <div>
               <span class="section-kicker">Rede federada</span>
-              <h3>Subsistemas</h3>
+              <h3>Participantes</h3>
             </div>
             <label class="search-field">
-              <span class="sr-only">Filtrar subsistemas</span>
+              <span class="sr-only">Filtrar participantes</span>
               <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg>
-              <input id="system-filter" type="search" placeholder="Buscar subsistema">
+              <input id="system-filter" type="search" placeholder="Buscar participante">
             </label>
           </div>
           <div class="system-grid" id="systems-grid"></div>

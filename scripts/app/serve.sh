@@ -34,6 +34,26 @@ esac
 mkdir -p .run
 scripts/app/stop.sh "$ENV_NAME" --core-only >/dev/null
 
+if [[ -z "${SISTER_ECOSYSTEM_PROJECTION_FILE:-}" && -n "${SISTER_RESOLVED_DEPLOYMENT_FILE:-}" && -f "${SISTER_RESOLVED_DEPLOYMENT_FILE:-}" ]]; then
+  if command -v jq >/dev/null 2>&1; then
+    PROJECTION_FILE="$ROOT_DIR/.run/ecosystem_projection.tsv"
+    jq -r '
+      "META\t" + (.composition_id // "") + "\t" + (.deployment_id // "") + "\t" + (.status // "NOT_CONFIGURED"),
+      ( (.components // [])[] |
+        "PARTICIPANT\t" +
+        (.component_id // "") + "\t" +
+        (.system_id // "") + "\t" +
+        (.runtime.transport // "") + "\t" +
+        (.runtime.listen // "") + "\t" +
+        ((.runtime.port // 0) | tostring) + "\t" +
+        (.probe.health_path // "") + "\t" +
+        (.gateway.host // "")
+      )
+    ' "$SISTER_RESOLVED_DEPLOYMENT_FILE" > "$PROJECTION_FILE"
+    export SISTER_ECOSYSTEM_PROJECTION_FILE="$PROJECTION_FILE"
+  fi
+fi
+
 LOG_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.log"
 PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
 
@@ -45,6 +65,8 @@ SISTERD_ENV=(
   SISTER_REFERENCE_PORT="${SISTER_REFERENCE_PORT:-19001}"
   SISTER_INTERNAL_PROXY_TOKEN="${SISTER_INTERNAL_PROXY_TOKEN:-}"
   SISTER_EXTRA_CONNECT_SRC="${SISTER_EXTRA_CONNECT_SRC:-}"
+  SISTER_ECOSYSTEM_PROJECTION_FILE="${SISTER_ECOSYSTEM_PROJECTION_FILE:-}"
+  SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS="${SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS:-800}"
 )
 if command -v setsid >/dev/null 2>&1; then
   setsid env "${SISTERD_ENV[@]}" ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &

@@ -67,7 +67,7 @@ def run_health_server(port, stop, ready, requests):
                         break
                     raw += chunk
                 requests.append(raw.decode("iso-8859-1"))
-                body = b'{"service":"sister-nexo","status":"ok"}'
+                body = b'{"status":"ok"}'
                 connection.sendall(
                     b"HTTP/1.1 200 OK\r\n"
                     b"Content-Type: application/json\r\n"
@@ -77,27 +77,44 @@ def run_health_server(port, stop, ready, requests):
                 )
 
 
-def find_nexo(payload):
-    systems = json.loads(payload)
-    return next(system for system in systems if system["id"] == "sister_nexo")
+def write_projection(path, participants):
+    lines = ["META\ttest-comp\ttest-dep\tREADY"]
+    for p in participants:
+        lines.append(
+            f"PARTICIPANT\t{p['component_id']}\t{p['system_id']}\t{p['transport']}\t{p['listen']}\t{p['port']}\t{p['health_path']}\t{p.get('gateway_host', '')}"
+        )
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
 def main():
     executable, web_root = sys.argv[1:3]
     sister_port = reserve_port()
-    nexo_port = reserve_port()
+    target_port = reserve_port()
     stop = threading.Event()
     ready = threading.Event()
     observed_requests = []
     mock = threading.Thread(
         target=run_health_server,
-        args=(nexo_port, stop, ready, observed_requests),
+        args=(target_port, stop, ready, observed_requests),
         daemon=True,
     )
     mock.start()
     assert ready.wait(timeout=2)
 
     with tempfile.TemporaryDirectory(prefix="sister-system-health-") as temporary:
+        projection_file = Path(temporary) / "projection.tsv"
+        write_projection(projection_file, [
+            {
+                "component_id": "service_a",
+                "system_id": "system_a",
+                "transport": "tcp",
+                "listen": "127.0.0.1",
+                "port": target_port,
+                "health_path": "/api/health",
+                "gateway_host": "service-a-gateway.test",
+            }
+        ])
+
         environment = os.environ.copy()
         environment.update({
             "SISTER_ENV": "development",
@@ -105,8 +122,7 @@ def main():
             "SISTER_AUTH_FILE": str(Path(temporary) / "auth.tsv"),
             "SISTER_DATABASE_URL": "",
             "SISTER_COOKIE_SECURE": "false",
-            "SISTER_NEXO_PUBLIC_URL": "https://nexo-gateway.test:8443",
-            "SISTER_NEXO_PORT": str(nexo_port),
+            "SISTER_ECOSYSTEM_PROJECTION_FILE": str(projection_file),
             "SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS": "300",
         })
         process = subprocess.Popen(
@@ -129,16 +145,15 @@ def main():
             status, _, payload = request(sister_port, "GET", "/api/systems", cookie=cookie)
             assert status == 200, (status, payload)
             systems = json.loads(payload)
-            assert all(
-                system["id"] != "sister_reference"
-                for system in systems
-            ), systems
-            nexo = find_nexo(payload)
-            assert nexo["health_status"] == "online", nexo
-            assert nexo["health_observed_by"] == "sisterd", nexo
-            assert nexo["health_http_status"] == 200, nexo
-            assert nexo["health_detail"] == "ok", nexo
-            assert "health_url" not in nexo, nexo
+            assert len(systems) == 1, systems
+            system = systems[0]
+            assert system["id"] == "system_a"
+            assert system["component_id"] == "service_a"
+            assert system["health_status"] == "online", system
+            assert system["health_observed_by"] == "sisterd", system
+            assert system["health_http_status"] == 200, system
+            assert system["health_detail"] == "ok", system
+            assert "health_url" not in system, system
             assert observed_requests and observed_requests[-1].startswith(
                 "GET /api/health HTTP/1.1\r\n"
             ), observed_requests
@@ -150,14 +165,11 @@ def main():
             status, _, payload = request(sister_port, "GET", "/api/systems", cookie=cookie)
             assert status == 200, (status, payload)
             systems = json.loads(payload)
-            assert all(
-                system["id"] != "sister_reference"
-                for system in systems
-            ), systems
-            nexo = find_nexo(payload)
-            assert nexo["health_status"] == "offline", nexo
-            assert nexo["health_observed_by"] == "sisterd", nexo
-            assert nexo["health_http_status"] == 0, nexo
+            assert len(systems) == 1, systems
+            system = systems[0]
+            assert system["health_status"] == "offline", system
+            assert system["health_observed_by"] == "sisterd", system
+            assert system["health_http_status"] == 0, system
         finally:
             stop.set()
             mock.join(timeout=1)
@@ -172,6 +184,9 @@ def main():
     empty_sister_port = reserve_port()
 
     with tempfile.TemporaryDirectory(prefix="sister-system-empty-") as temporary:
+        empty_projection_file = Path(temporary) / "empty_projection.tsv"
+        write_projection(empty_projection_file, [])
+
         environment = os.environ.copy()
         environment.update({
             "SISTER_ENV": "development",
@@ -179,7 +194,7 @@ def main():
             "SISTER_AUTH_FILE": str(Path(temporary) / "auth.tsv"),
             "SISTER_DATABASE_URL": "",
             "SISTER_COOKIE_SECURE": "false",
-            "SISTER_NEXO_PUBLIC_URL": "",
+            "SISTER_ECOSYSTEM_PROJECTION_FILE": str(empty_projection_file),
             "SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS": "300",
         })
 
@@ -232,7 +247,7 @@ def main():
     assert "system.health_url" not in app_js
     assert "referenceSubsystemFallback" not in app_js
     assert "Subsistema de Referência" not in app_js
-    assert "Nenhum subsistema federado disponível" in app_js
+    assert "Nenhum participante federado disponível" in app_js
     print("sisterd_system_catalog_health_tests ok")
 
 

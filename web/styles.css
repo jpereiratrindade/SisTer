@@ -827,15 +827,53 @@ h1 {
   grid-template-columns: auto minmax(0, 1fr) auto;
   grid-template-areas:
     "mark identity status"
-    "mark description description"
-    ". data-reference data-reference"
+    ". facts facts"
     ". actions actions";
-  gap: 7px 12px;
+  gap: 10px 12px;
   min-height: 150px;
   padding: 15px;
   border-radius: 9px;
   box-shadow: none;
   transition: border-color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.system-facts {
+  grid-area: facts;
+  display: grid;
+  gap: 5px;
+  font-size: .75rem;
+  color: #52677e;
+  margin: 4px 0;
+}
+
+.system-facts > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.system-facts span {
+  color: var(--muted);
+  font-size: .7rem;
+  font-weight: 700;
+}
+
+.system-facts strong {
+  color: var(--ink);
+  font-weight: 600;
+  font-size: .75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.system-facts code {
+  font-family: monospace;
+  font-size: .72rem;
+  background: var(--soft, #f4f8fb);
+  padding: 1px 4px;
+  border-radius: 3px;
 }
 
 .system-card:hover {
