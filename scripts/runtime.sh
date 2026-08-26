@@ -71,6 +71,12 @@ status_runtime() {
   fi
 }
 
+health_runtime() {
+  curl --fail --silent --show-error \
+    "http://127.0.0.1:${PORT}/api/health"
+  printf '\n'
+}
+
 case "${1:-status}" in
   start) start_runtime ;;
   stop) stop_runtime ;;
@@ -79,8 +85,9 @@ case "${1:-status}" in
     start_runtime
     ;;
   status) status_runtime ;;
+  health) health_runtime ;;
   *)
-    echo "usage: $0 start|stop|restart|status" >&2
+    echo "usage: $0 start|stop|restart|status|health" >&2
     exit 64
     ;;
 esac

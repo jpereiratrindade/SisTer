@@ -1,0 +1,40 @@
+{
+  "schema": "sister.component/1.0.0",
+  "component_id": "sister",
+  "system_id": "sister",
+  "deployment_role": "system",
+  "semantic_contract": "sister.subsystem/1.0.0",
+  "build": {
+    "driver": "cmake-ninja/1",
+    "source": ".",
+    "build_dir": "build",
+    "configuration": "Release",
+    "tests": {
+      "driver": "ctest/1"
+    },
+    "artifacts": [
+      {
+        "id": "sisterd",
+        "path": "build/apps/sisterd/sisterd",
+        "executable": true
+      },
+      {
+        "id": "sisterctl",
+        "path": "build/apps/sisterctl/sisterctl",
+        "executable": true
+      }
+    ]
+  },
+  "runtime": {
+    "schema": "sister.runtime/1.0.0",
+    "entrypoint": "scripts/runtime.sh",
+    "actions": [
+      "start",
+      "stop",
+      "restart",
+      "status",
+      "health"
+    ],
+    "state_policy": "persistent-external"
+  }
+}
