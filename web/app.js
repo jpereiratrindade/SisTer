@@ -49,6 +49,7 @@ function normalizeParticipant(p) {
   const port = p.runtime?.port || 0;
   const healthPath = p.probe?.health_path || "";
   const gatewayHost = p.gateway?.host || "";
+  const gatewayPublicUrl = p.gateway?.public_url || p.gateway?.publicUrl || "";
   const healthStatus = p.health?.status || p.health_status || "not_observed";
   const healthHttpStatus = p.health?.http_status ?? p.health_http_status ?? 0;
   const healthDetail = p.health?.detail || p.health_detail || "not_observed";
@@ -60,7 +61,11 @@ function normalizeParticipant(p) {
     name: componentId.toUpperCase(),
     runtime: { transport, listen, port },
     probe: { healthPath },
-    gateway: { host: gatewayHost },
+    gateway: {
+      host: gatewayHost,
+      publicUrl: gatewayPublicUrl,
+      public_url: gatewayPublicUrl
+    },
     health: {
       status: healthStatus,
       httpStatus: healthHttpStatus,
@@ -214,9 +219,11 @@ function renderSystems(filter = "") {
       ? `<code>${escapeHtml(system.probe.healthPath)}</code>`
       : `<span class="muted">Não declarado</span>`;
 
-    const gatewayInfo = system.gateway.host
-      ? `<span>${escapeHtml(system.gateway.host)}</span>`
-      : `<span class="muted">Não publicado</span>`;
+    const gatewayInfo = system.gateway.publicUrl
+      ? `<a href="${escapeHtml(system.gateway.publicUrl)}" target="_blank" rel="noreferrer" class="gateway-link">${escapeHtml(system.gateway.host)} ↗</a>`
+      : system.gateway.host
+        ? `<span>${escapeHtml(system.gateway.host)}</span>`
+        : `<span class="muted">Não publicado</span>`;
 
     return `
       <article class="system-card">
@@ -236,6 +243,7 @@ function renderSystems(filter = "") {
         </div>
         <div class="system-actions">
           <button class="text-link" type="button" data-participant-id="${escapeHtml(system.systemId)}">Ver detalhes →</button>
+          ${system.gateway.publicUrl ? `<a class="text-link gateway-direct" href="${escapeHtml(system.gateway.publicUrl)}" target="_blank" rel="noreferrer">Abrir ↗</a>` : ""}
         </div>
       </article>
     `;
@@ -474,9 +482,14 @@ function showSystemDetails(systemId) {
   let accessAction = `<span class="dialog-action dialog-action--disabled">Acesso via gateway não disponível</span>`;
 
   if (system.gateway.host) {
-    gatewaySection = `<div><span>Gateway Host</span><strong>${escapeHtml(system.gateway.host)}</strong></div>`;
-    const gatewayUrl = `//${system.gateway.host}${window.location.port ? ":" + window.location.port : ""}/`;
-    accessAction = `<a class="dialog-action" href="${gatewayUrl}" target="_blank" rel="noreferrer">Acessar via Gateway (${escapeHtml(system.gateway.host)}) ↗</a>`;
+    gatewaySection = `
+      <div><span>Gateway Host</span><strong>${escapeHtml(system.gateway.host)}</strong></div>
+      <div><span>Public URL</span><strong>${system.gateway.publicUrl ? `<code>${escapeHtml(system.gateway.publicUrl)}</code>` : '<span class="muted">Não declarada</span>'}</strong></div>
+    `;
+  }
+
+  if (system.gateway.publicUrl) {
+    accessAction = `<a class="dialog-action" href="${escapeHtml(system.gateway.publicUrl)}" target="_blank" rel="noreferrer">Acessar via Gateway (${escapeHtml(system.gateway.host || system.componentId)}) ↗</a>`;
   }
 
   const contentEl = qs("#system-dialog-content");

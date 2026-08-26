@@ -82,7 +82,7 @@ def write_projection(path, meta, participants):
     ]
     for p in participants:
         lines.append(
-            f"PARTICIPANT\t{p['component_id']}\t{p['system_id']}\t{p['transport']}\t{p['listen']}\t{p['port']}\t{p['health_path']}\t{p.get('gateway_host', '')}"
+            f"PARTICIPANT\t{p['component_id']}\t{p['system_id']}\t{p['transport']}\t{p['listen']}\t{p['port']}\t{p['health_path']}\t{p.get('gateway_host', '')}\t{p.get('gateway_public_url', '')}"
         )
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
@@ -128,6 +128,7 @@ def main():
                 "port": alpha_port,
                 "health_path": "/api/health",
                 "gateway_host": "alpha-gateway.test",
+                "gateway_public_url": "https://alpha-gateway.test:9443",
             },
             {
                 "component_id": "beta",
@@ -137,6 +138,7 @@ def main():
                 "port": beta_port,
                 "health_path": "/api/health",
                 "gateway_host": "beta-gateway.test",
+                "gateway_public_url": "https://beta-gateway.test:9443",
             },
             {
                 "component_id": "gamma",
@@ -146,6 +148,7 @@ def main():
                 "port": gamma_port,
                 "health_path": "/health",
                 "gateway_host": "",
+                "gateway_public_url": "",
             },
         ]
         meta = {
@@ -202,26 +205,29 @@ def main():
             assert "beta" in systems_by_id
             assert "gamma" in systems_by_id
 
-            # Check alpha: online, published
+            # Check alpha: online, published with public_url
             alpha = systems_by_id["alpha"]
             assert alpha["system_id"] == "participant_alpha"
             assert alpha["health"]["status"] == "online"
             assert alpha["health"]["http_status"] == 200
             assert alpha["health"]["detail"] == "ok"
             assert alpha["gateway"]["host"] == "alpha-gateway.test"
+            assert alpha["gateway"]["public_url"] == "https://alpha-gateway.test:9443"
 
-            # Check beta: offline (connection refused / closed)
+            # Check beta: offline, published with public_url
             beta = systems_by_id["beta"]
             assert beta["system_id"] == "participant_beta"
             assert beta["health"]["status"] == "offline"
             assert beta["gateway"]["host"] == "beta-gateway.test"
+            assert beta["gateway"]["public_url"] == "https://beta-gateway.test:9443"
 
-            # Check gamma: online, not published (empty gateway host)
+            # Check gamma: online, not published (empty gateway host / public_url)
             gamma = systems_by_id["gamma"]
             assert gamma["system_id"] == "participant_gamma"
             assert gamma["health"]["status"] == "online"
             assert gamma["health"]["http_status"] == 200
             assert gamma["gateway"]["host"] == ""
+            assert not gamma["gateway"].get("public_url")
 
             # Check summary statistics
             participants_count = len(ecosystem["systems"])
@@ -238,7 +244,9 @@ def main():
             assert len(compat_systems) == 3
             compat_by_id = {s["component_id"]: s for s in compat_systems}
             assert compat_by_id["alpha"]["health_status"] == "online"
+            assert compat_by_id["alpha"]["gateway"]["public_url"] == "https://alpha-gateway.test:9443"
             assert compat_by_id["beta"]["health_status"] == "offline"
+            assert compat_by_id["beta"]["gateway"]["public_url"] == "https://beta-gateway.test:9443"
             assert compat_by_id["gamma"]["health_status"] == "online"
 
             # WEB-09: Extensibility test - add 'delta' only to projection file without code modification
@@ -261,6 +269,7 @@ def main():
                     "port": delta_port,
                     "health_path": "/api/health",
                     "gateway_host": "delta-gateway.test",
+                    "gateway_public_url": "https://delta-gateway.test:9443",
                 }
             ]
             write_projection(projection_file, meta, extended_participants)
@@ -277,6 +286,7 @@ def main():
             assert delta["system_id"] == "participant_delta"
             assert delta["health"]["status"] == "online"
             assert delta["gateway"]["host"] == "delta-gateway.test"
+            assert delta["gateway"]["public_url"] == "https://delta-gateway.test:9443"
 
             new_participants_count = len(ecosystem_delta["systems"])
             new_operational_count = sum(1 for s in ecosystem_delta["systems"] if s["health"]["status"] == "online")
@@ -295,7 +305,14 @@ def main():
                     process.kill()
                     process.wait(timeout=5)
 
-    print("sisterd_ecosystem_api_tests (WEB-08 and WEB-09) ok")
+    # Section 10 & 12: Validate Home frontend rules against URL synthesis
+    app_js = (Path(web_root) / "app.js").read_text(encoding="utf-8")
+    assert "window.location.port" not in app_js, "app.js sintetiza porta da janela"
+    assert "window.location.protocol" not in app_js, "app.js sintetiza protocolo da janela"
+    assert ":8443" not in app_js, "app.js contém porta hardcoded"
+    assert "system.gateway.publicUrl" in app_js or "gatewayPublicUrl" in app_js
+
+    print("sisterd_ecosystem_api_tests (public_url and delta) ok")
 
 
 if __name__ == "__main__":

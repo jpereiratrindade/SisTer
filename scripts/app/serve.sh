@@ -47,7 +47,8 @@ if [[ -z "${SISTER_ECOSYSTEM_PROJECTION_FILE:-}" && -n "${SISTER_RESOLVED_DEPLOY
         (.runtime.listen // "") + "\t" +
         ((.runtime.port // 0) | tostring) + "\t" +
         (.probe.health_path // "") + "\t" +
-        (.gateway.host // "")
+        (.gateway.host // "") + "\t" +
+        (.gateway.public_url // "")
       )
     ' "$SISTER_RESOLVED_DEPLOYMENT_FILE" > "$PROJECTION_FILE"
     export SISTER_ECOSYSTEM_PROJECTION_FILE="$PROJECTION_FILE"

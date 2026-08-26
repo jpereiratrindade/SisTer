@@ -74,7 +74,8 @@ derive_ecosystem_projection() {
       (.runtime.listen // "") + "\t" +
       ((.runtime.port // 0) | tostring) + "\t" +
       (.probe.health_path // "") + "\t" +
-      (.gateway.host // "")
+      (.gateway.host // "") + "\t" +
+      (.gateway.public_url // "")
     )
   ' "$resolved" > "$projection_file"
   export SISTER_ECOSYSTEM_PROJECTION_FILE="$projection_file"

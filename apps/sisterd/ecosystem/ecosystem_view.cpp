@@ -212,6 +212,7 @@ EcosystemView parseProjection(std::string_view content) {
             }
             if (tokens.size() > 6) p.probe.healthPath = std::string(tokens[6]);
             if (tokens.size() > 7) p.gateway.host = std::string(tokens[7]);
+            if (tokens.size() > 8) p.gateway.publicUrl = std::string(tokens[8]);
 
             view.systems.push_back(std::move(p));
         }
@@ -327,8 +328,11 @@ std::string serializeEcosystemViewJson(const EcosystemView& view) {
         json += "        \"health_path\": \"" + jsonEscape(s.probe.healthPath) + "\"\n";
         json += "      },\n";
         json += "      \"gateway\": {\n";
-        json += "        \"host\": \"" + jsonEscape(s.gateway.host) + "\"\n";
-        json += "      },\n";
+        json += "        \"host\": \"" + jsonEscape(s.gateway.host) + "\"";
+        if (!s.gateway.publicUrl.empty()) {
+            json += ",\n        \"public_url\": \"" + jsonEscape(s.gateway.publicUrl) + "\"";
+        }
+        json += "\n      },\n";
         json += "      \"health\": {\n";
         json += "        \"status\": \"" + jsonEscape(s.health.status) + "\",\n";
         json += "        \"http_status\": " + std::to_string(s.health.httpStatus) + ",\n";
@@ -360,8 +364,11 @@ std::string serializeSystemsCompatibilityJson(const EcosystemView& view) {
         json += "      \"health_path\": \"" + jsonEscape(s.probe.healthPath) + "\"\n";
         json += "      },\n";
         json += "    \"gateway\": {\n";
-        json += "      \"host\": \"" + jsonEscape(s.gateway.host) + "\"\n";
-        json += "    },\n";
+        json += "      \"host\": \"" + jsonEscape(s.gateway.host) + "\"";
+        if (!s.gateway.publicUrl.empty()) {
+            json += ",\n      \"public_url\": \"" + jsonEscape(s.gateway.publicUrl) + "\"";
+        }
+        json += "\n    },\n";
         json += "    \"health_status\": \"" + jsonEscape(s.health.status) + "\",\n";
         json += "    \"health_observed_by\": \"sisterd\",\n";
         json += "    \"health_http_status\": " + std::to_string(s.health.httpStatus) + ",\n";

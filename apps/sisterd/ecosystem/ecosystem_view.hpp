@@ -20,6 +20,7 @@ struct Probe {
 
 struct GatewayPublication {
     std::string host;
+    std::string publicUrl;
 };
 
 struct HealthObservation {
