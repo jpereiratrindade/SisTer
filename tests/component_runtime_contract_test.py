@@ -176,6 +176,15 @@ class ComponentRuntimeContractTest(unittest.TestCase):
             list(self.component_validator.iter_errors(invalid))
         )
 
+    def test_official_component_consumes_resolved_binding(self):
+        descriptor = load(ROOT / ".sister" / "component.json")
+        self.component_validator.validate(descriptor)
+
+        runtime = (ROOT / descriptor["runtime"]["entrypoint"]).read_text()
+        self.assertIn("SISTER_RESOLVED_DEPLOYMENT_FILE", runtime)
+        self.assertIn(".components[] | select(.system_id == $id)", runtime)
+        self.assertIn("SISTER_COMPONENT_CONFIG_FILE", runtime)
+
 
 
 if __name__ == "__main__":

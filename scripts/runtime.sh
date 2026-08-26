@@ -10,17 +10,54 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd -P)"
 cd "$ROOT_DIR"
 
 ENV_NAME="${SISTER_RUNTIME_ENV:-dev}"
+COMPONENT_CONFIG="${SISTER_COMPONENT_CONFIG_FILE:-$ROOT_DIR/.env}"
 
-if [[ -f .env ]]; then
+if [[ -f "$COMPONENT_CONFIG" ]]; then
   set -a
   # shellcheck disable=SC1091
-  source .env
+  source "$COMPONENT_CONFIG"
   set +a
 fi
 
 # shellcheck disable=SC1091
 source scripts/lib/sister_env.sh
 sister_load_env "$ENV_NAME"
+
+load_deployment_binding() {
+  local resolved="${SISTER_RESOLVED_DEPLOYMENT_FILE:-}"
+  [[ -n "$resolved" ]] || return 0
+  [[ -f "$resolved" ]] || {
+    echo "[FAIL] deployment resolvido ausente: $resolved" >&2
+    return 1
+  }
+  command -v jq >/dev/null 2>&1 || {
+    echo "[FAIL] jq é necessário para consumir deployment resolvido" >&2
+    return 1
+  }
+
+  local system_id transport listen port
+  system_id="$(jq -er '.system_id' "$ROOT_DIR/.sister/component.json")"
+  transport="$(jq -er --arg id "$system_id" \
+    '.components[] | select(.system_id == $id) | .runtime.transport' \
+    "$resolved")"
+  [[ "$transport" == "tcp" ]] || {
+    echo "[FAIL] runtime SisTer ainda requer binding TCP" >&2
+    return 1
+  }
+  listen="$(jq -er --arg id "$system_id" \
+    '.components[] | select(.system_id == $id) | .runtime.listen' \
+    "$resolved")"
+  port="$(jq -er --arg id "$system_id" \
+    '.components[] | select(.system_id == $id) | .runtime.port' \
+    "$resolved")"
+  [[ "$listen" == "127.0.0.1" ]] || {
+    echo "[FAIL] runtime SisTer exige TCP loopback; atual=$listen" >&2
+    return 1
+  }
+  export SISTER_RUNTIME_PORT="$port"
+}
+
+load_deployment_binding
 
 PORT="${SISTER_RUNTIME_PORT:-$SISTER_APP_PORT}"
 BIN="$ROOT_DIR/build/apps/sisterd/sisterd"
