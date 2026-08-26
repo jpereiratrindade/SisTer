@@ -1,90 +1,5 @@
-const referenceSubsystemFallback = {
-  id: "sister_reference",
-  name: "Subsistema de Referência SisTer",
-  version: "0.1.0",
-  owner: "Centro de Engenharia SisTer",
-
-  type: "Bancada controlada de referência",
-  status: "Laboratório",
-
-  description:
-    "Participante canônico e controlado do SisTer, com cenário ambiental sintético, persistência, API, interface web e modos de falha configuráveis para testar contratos, identidade mediada, execução autorizada, evidências, reflexividade e resiliência.",
-
-  contract: "sister.subsystem/1.0.0",
-
-  /*
-   * Interface humana do laboratório.
-   *
-   * Enquanto a rota governada pelo gateway ainda não estiver implementada,
-   * o ambiente local é acessado diretamente pela porta do protótipo.
-   */
-  accessUrl: "http://127.0.0.1:19101/",
-  healthUrl: "http://127.0.0.1:19101/health",
-
-  accessMode:
-    "Interface local de laboratório; integração técnica mediada e governada pelo SisTer",
-
-  accessRestricted: false,
-
-  publicScope:
-    "Interface web local, identidade, manifesto, saúde e capacidades declaradas",
-
-  restrictedScope:
-    "Execuções mediadas, produção de evidências e comparação entre comportamento esperado e observado",
-
-  privateScope:
-    "Persistência local, configuração dos ensaios e cenários controlados de falha",
-
-  domains: [
-    "referencia",
-    "cenario_ambiental_sintetico",
-    "observacoes",
-    "execucoes",
-    "evidencias"
-  ],
-
-  modes: [
-    "healthy",
-    "degraded",
-    "unavailable",
-    "delayed",
-    "invalid_response",
-    "incorrect_result",
-    "partial_failure"
-  ],
-
-  exports: [
-    "identity",
-    "manifest",
-    "health",
-    "capabilities",
-    "echo",
-    "observations",
-    "daily_summary",
-    "executions"
-  ],
-
-  policy: [
-    "laboratorio",
-    "loopback",
-    "proveniencia",
-    "identidade_mediada",
-    "integracao_governada",
-    "falhas_configuraveis",
-    "sem_producao"
-  ],
-
-  infra: {
-    availability: "local governada",
-    response: "HTTP",
-    storage: "SQLite local",
-    lastCheck: "tempo real",
-    signal: "ok"
-  }
-};
-
 const state = {
-  systems: [referenceSubsystemFallback],
+  systems: [],
   contracts: [
     {
       name: "System Manifest",
@@ -201,10 +116,10 @@ async function loadSystems() {
     const response = await fetch("/api/systems", { cache: "no-store" });
     if (!response.ok) throw new Error(`HTTP ${response.status}`);
     const systems = await response.json();
-    if (!Array.isArray(systems) || systems.length === 0) throw new Error("empty systems catalog");
+    if (!Array.isArray(systems)) throw new Error("invalid systems catalog");
     state.systems = systems.map(normalizeSystem);
   } catch {
-    state.systems = [normalizeSystem(referenceSubsystemFallback)];
+    state.systems = [];
   }
 }
 
@@ -392,45 +307,75 @@ function drawMap() {
   ctx.bezierCurveTo(600, 150, 730, 245, 1100, 206);
   ctx.stroke();
 
-  const plots = [
-    { x: 455, y: 145, w: 260, h: 86, color: "#d5e8f4", label: "Subsistema de Referência" }
-  ];
+  ctx.fillStyle = "#536a80";
+  ctx.font = "900 13px Avenir, sans-serif";
+  ctx.fillText(
+    "Camadas: observacoes, evidencias, infraestrutura e contexto espacial",
+    24,
+    34
+  );
 
-  plots.forEach((plot) => {
-    ctx.fillStyle = plot.color;
+  const systems = state.systems.slice(0, 4);
+
+  if (systems.length === 0) {
+    ctx.fillStyle = "#536a80";
+    ctx.font = "700 18px Avenir, sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(
+      "Nenhum subsistema federado disponível",
+      w / 2,
+      h / 2
+    );
+    ctx.textAlign = "start";
+    ctx.textBaseline = "alphabetic";
+    return;
+  }
+
+  const boxWidth = 220;
+  const boxHeight = 74;
+  const gap = 22;
+  const totalWidth =
+    systems.length * boxWidth + (systems.length - 1) * gap;
+  const startX = Math.max(24, (w - totalWidth) / 2);
+  const y = 150;
+
+  systems.forEach((system, index) => {
+    const x = startX + index * (boxWidth + gap);
+    const rawLabel = system.name || system.id || "Subsistema";
+    const label =
+      rawLabel.length > 25
+        ? `${rawLabel.slice(0, 24)}…`
+        : rawLabel;
+
+    ctx.fillStyle = "#d5e8f4";
     ctx.strokeStyle = "#062d55";
     ctx.lineWidth = 2;
     ctx.beginPath();
-    ctx.roundRect(plot.x, plot.y, plot.w, plot.h, 10);
+    ctx.roundRect(x, y, boxWidth, boxHeight, 10);
     ctx.fill();
     ctx.stroke();
+
     ctx.fillStyle = "#09254b";
-    ctx.font = "900 17px Avenir, sans-serif";
-    ctx.fillText(plot.label, plot.x + 18, plot.y + 44);
-  });
-
-  const points = [
-    { x: 425, y: 188, label: "SC", color: "#1a7dc4" },
-    { x: 715, y: 188, label: "SS", color: "#7367b7" }
-  ];
-
-  points.forEach((point) => {
-    ctx.fillStyle = point.color;
-    ctx.beginPath();
-    ctx.arc(point.x, point.y, 13, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#fff";
-    ctx.font = "900 11px Avenir, sans-serif";
+    ctx.font = "900 16px Avenir, sans-serif";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillText(point.label, point.x, point.y);
+    ctx.fillText(label, x + boxWidth / 2, y + boxHeight / 2);
   });
+
+  if (state.systems.length > systems.length) {
+    ctx.fillStyle = "#536a80";
+    ctx.font = "700 13px Avenir, sans-serif";
+    ctx.textAlign = "center";
+    ctx.fillText(
+      `+${state.systems.length - systems.length} subsistema(s)`,
+      w / 2,
+      y + boxHeight + 32
+    );
+  }
 
   ctx.textAlign = "start";
   ctx.textBaseline = "alphabetic";
-  ctx.fillStyle = "#536a80";
-  ctx.font = "900 13px Avenir, sans-serif";
-  ctx.fillText("Camadas: observacoes, evidencias, infraestrutura e contexto espacial", 24, 34);
 }
 
 function showToast(message) {
@@ -442,6 +387,11 @@ function showToast(message) {
 }
 
 function validateSample() {
+  if (state.systems.length === 0) {
+    showToast("Nenhum subsistema federado disponível para validação.");
+    return;
+  }
+
   const invalid = state.systems.filter((system) => {
     return !system.id || !system.name || !system.contract || system.domains.length === 0 || !system.policy.includes("proveniencia");
   });

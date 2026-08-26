@@ -1457,9 +1457,7 @@ constexpr std::string_view kFallbackContracts = R"([
   {"name":"Evidence","version":"0.1.0","required":"Para resultado promovido"}
 ])";
 
-constexpr std::string_view kFallbackSystems = R"([
-  {"id":"sister_reference","name":"SisTer Reference Subsystem","type":"Referencia controlada","status":"Validacao","contract":"sister.subsystem/1.0.0","access_mode":"authenticated_reverse_proxy","access_url":"/integrations/reference/","health_status":"unknown","health_observed_by":"sisterd"}
-])";
+constexpr std::string_view kFallbackSystems = R"([])";
 
 constexpr std::string_view kFallbackDiagnostics = R"([
   {"service":"Contract Registry","status":"operacional","score":100},
@@ -1521,9 +1519,8 @@ ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig
         if (!config.nexoPublicUrl.empty()) {
             const auto health = observeLoopbackHealth(
                 config.nexoPort, "/api/health", config.subsystemHealthTimeoutMilliseconds);
-            systems.pop_back();
-            systems.pop_back();
-            systems += R"(,
+            systems.clear();
+            systems += R"([
   {"id":"sister_nexo","name":"SisTer Nexo","version":"0.1.0","owner":"Equipe SisTer Nexo","type":"Governança e articulação institucional","status":"Conectado","description":"Subsistema do ecossistema dedicado à governança de atividades, projetos, evidências, pesquisa, publicações e auditoria.","contract":"sister-nexo.integration/1.0.0","governance_contract":"Acordo bilateral SisTer–Nexo","access_mode":"gateway_ecosystem_host","access_url":")";
             systems += jsonEscape(config.nexoPublicUrl + "/");
             systems += R"(","health_status":")";

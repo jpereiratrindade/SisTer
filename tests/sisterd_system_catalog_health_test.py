@@ -128,6 +128,11 @@ def main():
 
             status, _, payload = request(sister_port, "GET", "/api/systems", cookie=cookie)
             assert status == 200, (status, payload)
+            systems = json.loads(payload)
+            assert all(
+                system["id"] != "sister_reference"
+                for system in systems
+            ), systems
             nexo = find_nexo(payload)
             assert nexo["health_status"] == "online", nexo
             assert nexo["health_observed_by"] == "sisterd", nexo
@@ -144,6 +149,11 @@ def main():
 
             status, _, payload = request(sister_port, "GET", "/api/systems", cookie=cookie)
             assert status == 200, (status, payload)
+            systems = json.loads(payload)
+            assert all(
+                system["id"] != "sister_reference"
+                for system in systems
+            ), systems
             nexo = find_nexo(payload)
             assert nexo["health_status"] == "offline", nexo
             assert nexo["health_observed_by"] == "sisterd", nexo
@@ -159,10 +169,70 @@ def main():
                     process.kill()
                     process.wait(timeout=5)
 
+    empty_sister_port = reserve_port()
+
+    with tempfile.TemporaryDirectory(prefix="sister-system-empty-") as temporary:
+        environment = os.environ.copy()
+        environment.update({
+            "SISTER_ENV": "development",
+            "SISTER_BIND_HOST": "127.0.0.1",
+            "SISTER_AUTH_FILE": str(Path(temporary) / "auth.tsv"),
+            "SISTER_DATABASE_URL": "",
+            "SISTER_COOKIE_SECURE": "false",
+            "SISTER_NEXO_PUBLIC_URL": "",
+            "SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS": "300",
+        })
+
+        process = subprocess.Popen(
+            [executable, str(empty_sister_port), web_root],
+            env=environment,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
+            text=True,
+        )
+
+        try:
+            wait_for_server(empty_sister_port, process)
+
+            status, headers, payload = request(
+                empty_sister_port,
+                "POST",
+                "/api/auth/register",
+                {
+                    "name": "Empty Catalog Admin",
+                    "email": "empty-catalog@test.invalid",
+                    "password": "empty-catalog-password",
+                },
+            )
+            assert status == 201, (status, payload)
+            cookie = headers["Set-Cookie"].split(";", 1)[0]
+
+            status, _, payload = request(
+                empty_sister_port,
+                "GET",
+                "/api/systems",
+                cookie=cookie,
+            )
+            assert status == 200, (status, payload)
+
+            systems = json.loads(payload)
+            assert systems == [], systems
+        finally:
+            if process.poll() is None:
+                process.send_signal(signal.SIGINT)
+                try:
+                    process.wait(timeout=5)
+                except subprocess.TimeoutExpired:
+                    process.kill()
+                    process.wait(timeout=5)
+
     app_js = (Path(web_root) / "app.js").read_text(encoding="utf-8")
     assert "checkSystemHealth" not in app_js
     assert 'mode: "cors"' not in app_js
     assert "system.health_url" not in app_js
+    assert "referenceSubsystemFallback" not in app_js
+    assert "Subsistema de Referência" not in app_js
+    assert "Nenhum subsistema federado disponível" in app_js
     print("sisterd_system_catalog_health_tests ok")
 
 
