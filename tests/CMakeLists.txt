@@ -55,6 +55,11 @@ add_test(
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/arc01_contract_test.py)
 
 add_test(
+    NAME component_runtime_contract_tests
+    COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/component_runtime_contract_test.py)
+
+
+add_test(
     NAME participation_persistence_tests
     COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/participation_persistence_test.py)
 

@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/runtime/1.0.0/runtime.schema.json",
+  "title": "SisTer Installed Runtime Contract",
+  "description": "Contrato normativo do ciclo de vida de um runtime instalado. Declara como um componente já qualificado pode ser iniciado, parado e observado por operações tipadas, sem declarar binding ou transporte de implantação.",
+  "x-sister-contract-status": "NORMATIVE",
+  "x-sister-runtime-normative": true,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "entrypoint",
+    "actions",
+    "state_policy"
+  ],
+  "properties": {
+    "schema": {
+      "const": "sister.runtime/1.0.0"
+    },
+    "entrypoint": {
+      "$ref": "#/$defs/relative-safe-path"
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 5,
+      "maxItems": 6,
+      "uniqueItems": true,
+      "items": {
+        "enum": [
+          "start",
+          "stop",
+          "restart",
+          "status",
+          "health",
+          "readiness"
+        ]
+      },
+      "allOf": [
+        {
+          "contains": {
+            "const": "start"
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "const": "stop"
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "const": "restart"
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "const": "status"
+          },
+          "minContains": 1,
+          "maxContains": 1
+        },
+        {
+          "contains": {
+            "const": "health"
+          },
+          "minContains": 1,
+          "maxContains": 1
+        }
+      ]
+    },
+    "state_policy": {
+      "enum": [
+        "stateless",
+        "persistent-external"
+      ]
+    }
+  },
+  "$defs": {
+    "relative-safe-path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)[A-Za-z0-9._/-]+$"
+    }
+  }
+}

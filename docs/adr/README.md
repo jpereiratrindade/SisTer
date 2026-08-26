@@ -31,6 +31,7 @@ Consulte [Status dos artefatos](../governance/ARTIFACT_STATUS.md).
 - [ADR-0025 - Limite de persistência da participação no MVP-01](./ADR-0025-mvp01-participation-persistence-boundary.md)
 - [ADR-0026 - Arquitetura de identidade, autenticação e sessões humanas](./ADR-0026-identity-authentication-and-human-sessions.md)
 - [ADR-0027 - Separação entre plano de controle e plano de participação](./ADR-0027-control-plane-vs-participation-plane.md)
+- [ADR-0028 - Fronteira entre componente, runtime e implantação](./ADR-0028-composable-component-runtime-deployment-boundary.md)
 - [ADR-REF-01 - Perfis e autoridade da reflexividade operacional](./ADR-REF-01-reflexivity-profiles-and-authority.md)
 - [ADR-CPP-01 - Abstração eficiente e polimorfismo no núcleo C++](./ADR-CPP-01-efficient-abstraction-and-polymorphism.md)
 - [ADR-VEC-01 - Análise vetorial como capacidade analítica derivada](./ADR-VEC-01-derived-vector-analysis.md)

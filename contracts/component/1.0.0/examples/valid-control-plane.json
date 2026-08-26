@@ -1,0 +1,14 @@
+{
+  "schema": "sister.component/1.0.0",
+  "component_id": "infra",
+  "system_id": "sister_infra",
+  "deployment_role": "control_plane",
+  "build": {
+    "driver": "source-only/1",
+    "source": ".",
+    "tests": {
+      "driver": "none/1"
+    },
+    "artifacts": []
+  }
+}

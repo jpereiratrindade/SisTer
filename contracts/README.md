@@ -11,6 +11,10 @@ Esta pasta e a fonte de verdade dos contratos de integracao do SisTer.
 - `subsystem/1.0.0/`: contrato comum `sister.subsystem/1.0.0` para
   manifestos, saúde, prontidão, capacidades, identidade interna, erros,
   auditoria e superfície técnica de subsistemas.
+- `component/1.0.0/`: contrato `sister.component/1.0.0` para qualificação
+  de componentes autodescritos, sem binding concreto nem auto-admissão.
+- `runtime/1.0.0/`: contrato `sister.runtime/1.0.0` para ciclo de vida e
+  observação por operações tipadas, sem impor transporte de implantação.
 - `participation/1.0.0/`: proposta de participação, capacidades, contribuições,
   alocação de autoridade, envelope de fronteira e assessment conceitual do
   MVP-01; não representa autorização operacional.

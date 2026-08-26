@@ -1,0 +1,211 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/component/1.0.0/component.schema.json",
+  "title": "SisTer Composable Component Contract",
+  "description": "Contrato normativo de implantação para componentes autodescritos. Define qualificação e runtime sem incorporar binding local, identidade relacional, autorização de implantação ou comandos shell arbitrários.",
+  "x-sister-contract-status": "NORMATIVE",
+  "x-sister-runtime-normative": true,
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "component_id",
+    "system_id",
+    "deployment_role",
+    "build"
+  ],
+  "properties": {
+    "schema": {
+      "const": "sister.component/1.0.0"
+    },
+    "component_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{1,63}$"
+    },
+    "system_id": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9_]{2,63}$"
+    },
+    "deployment_role": {
+      "enum": [
+        "control_plane",
+        "system"
+      ]
+    },
+    "semantic_contract": {
+      "type": "string",
+      "pattern": "^sister\\.[a-z0-9_.-]+/[0-9]+\\.[0-9]+\\.[0-9]+$"
+    },
+    "build": {
+      "$ref": "#/$defs/build"
+    },
+    "runtime": {
+      "$ref": "../../runtime/1.0.0/runtime.schema.json"
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "deployment_role": {
+            "const": "system"
+          }
+        },
+        "required": [
+          "deployment_role"
+        ]
+      },
+      "then": {
+        "required": [
+          "semantic_contract",
+          "runtime"
+        ]
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "build": {
+            "properties": {
+              "driver": {
+                "const": "cmake-ninja/1"
+              }
+            },
+            "required": [
+              "driver"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "build": {
+            "required": [
+              "build_dir",
+              "configuration"
+            ],
+            "properties": {
+              "artifacts": {
+                "minItems": 1
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "build": {
+            "properties": {
+              "driver": {
+                "const": "source-only/1"
+              }
+            },
+            "required": [
+              "driver"
+            ]
+          }
+        }
+      },
+      "then": {
+        "properties": {
+          "build": {
+            "properties": {
+              "tests": {
+                "properties": {
+                  "driver": {
+                    "const": "none/1"
+                  }
+                }
+              },
+              "artifacts": {
+                "maxItems": 0
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "relative-safe-path": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 240,
+      "pattern": "^(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*//)[A-Za-z0-9._/-]+$"
+    },
+    "artifact": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "path",
+        "executable"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]{1,79}$"
+        },
+        "path": {
+          "$ref": "#/$defs/relative-safe-path"
+        },
+        "executable": {
+          "type": "boolean"
+        }
+      }
+    },
+    "build": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "driver",
+        "source",
+        "tests",
+        "artifacts"
+      ],
+      "properties": {
+        "driver": {
+          "enum": [
+            "cmake-ninja/1",
+            "source-only/1"
+          ]
+        },
+        "source": {
+          "const": "."
+        },
+        "build_dir": {
+          "$ref": "#/$defs/relative-safe-path"
+        },
+        "configuration": {
+          "enum": [
+            "Release"
+          ]
+        },
+        "tests": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "driver"
+          ],
+          "properties": {
+            "driver": {
+              "enum": [
+                "ctest/1",
+                "none/1"
+              ]
+            }
+          }
+        },
+        "artifacts": {
+          "type": "array",
+          "maxItems": 32,
+          "items": {
+            "$ref": "#/$defs/artifact"
+          }
+        }
+      }
+    }
+  }
+}
