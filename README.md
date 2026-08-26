@@ -55,20 +55,78 @@ Repositório público de referência:
 
 ## Visão geral
 
-O **SisTer** é uma plataforma para construção e operação de ecossistemas de software formados por subsistemas autônomos.
+O **SisTer** é um paradigma e uma infraestrutura constitutiva para composição de
+sistemas autônomos, transparentes e reflexivos.
 
-O projeto organiza a integração desses subsistemas por meio de:
+O núcleo não presume quais domínios ou sistemas participarão do ecossistema.
+Cada sistema declara quem é, sobre o que possui autoridade, o que pode oferecer
+e quais contratos aceita para se relacionar com outros participantes.
+
+A implantação seleciona componentes compatíveis, aplica política, resolve
+bindings concretos e materializa a composição sem transferir aos demais
+participantes a autoridade, o estado, a história ou a responsabilidade próprios
+de cada sistema.
+
+O SisTer organiza essa composição por meio de:
 
 - contratos explícitos;
-- capacidades registradas;
-- fronteiras controladas;
+- capacidades declaradas;
+- fronteiras de autoridade;
 - evidências rastreáveis;
-- avaliação da operação;
-- decisões autorizadas de engenharia;
+- relações governadas;
+- qualificação de componentes;
+- runtimes observáveis e independentes de transporte;
+- decisões autorizadas de implantação;
 - experimentos executáveis;
 - reflexão sobre o comportamento do próprio ecossistema.
 
-O SisTer reúne pesquisa, arquitetura e implementação em uma mesma trajetória de desenvolvimento. Hipóteses são materializadas em software, executadas em condições controladas, observadas e avaliadas. As distinções validadas passam a compor o domínio, a arquitetura, os contratos, os testes e o conhecimento operacional do sistema.
+O SisTer reúne pesquisa, arquitetura e implementação em uma mesma trajetória de
+desenvolvimento. Hipóteses são materializadas em software, executadas em
+condições controladas, observadas e avaliadas. As distinções validadas passam a
+compor o domínio, a arquitetura, os contratos, os testes e o conhecimento
+operacional do ecossistema.
+
+## Princípio constitutivo
+
+> **Nenhum sistema precisa conhecer antecipadamente quais outros sistemas
+> comporão o ecossistema. Cada sistema precisa conhecer explicitamente quem é,
+> sobre o que possui autoridade, o que pode oferecer e quais contratos
+> semânticos, operacionais e relacionais aceita para interagir com outros
+> sistemas.**
+
+A implantação decide quais sistemas serão compostos e atribui os bindings
+necessários. O SisTer observa as relações resultantes sem assumir a autoridade
+interna dos participantes.
+
+A arquitetura separa quatro responsabilidades:
+
+```text
+PARTICIPANT
+    quem sou e pelo que respondo
+
+COMPONENT
+    como meu software é qualificado
+
+RUNTIME
+    como meu artefato vive e é observado
+
+DEPLOYMENT
+    se, onde e como sou composto
+```
+
+Essa separação implica:
+
+```text
+autodescrição   != auto-admissão
+descoberta      != confiança
+compatibilidade != autorização
+runtime         != transporte
+binding         != identidade
+composição      != perda de autonomia
+```
+
+A decisão está registrada na
+[ADR-0028](docs/adr/ADR-0028-composable-component-runtime-deployment-boundary.md).
 
 ## Comece por aqui
 
@@ -84,9 +142,13 @@ O SisTer reúne pesquisa, arquitetura e implementação em uma mesma trajetória
 
 | Elemento | Função no SisTer |
 |---|---|
-| **Subsistemas** | Implementam capacidades próprias e preservam sua autonomia |
-| **Contratos** | Definem finalidade, participantes, responsabilidades, estados e evidências |
-| **Gateway** | Organiza a exposição e o acesso aos componentes do ecossistema |
+| **Participantes** | Preservam identidade, autoridade, estado, história e responsabilidade próprios |
+| **Capacidades** | Tornam explícito o que cada participante pode oferecer sem transferir autoridade |
+| **Relações** | Governam finalidade, papéis, responsabilidades, contratos e evidências entre participantes |
+| **Componentes** | Descrevem como uma árvore de software pode ser qualificada para composição |
+| **Runtime** | Define ciclo de vida e observação por operações semânticas, sem impor transporte |
+| **Implantação** | Seleciona, admite e conecta componentes, resolve bindings e materializa releases |
+| **Gateway** | Materializa a borda HTTP/TLS quando exigida pela implantação; não define a identidade dos participantes |
 | **Centro de Engenharia** | Apoia avaliação, autorização e evolução da arquitetura |
 | **Harness experimental** | Executa hipóteses e produz observações controladas |
 | **Reflexividade** | Relaciona propósito, comportamento esperado e operação observada |
@@ -109,7 +171,13 @@ O SisTer adota:
 
 ---
 
-## Documentação anterior do projeto
+## Documentação histórica preservada
+
+> [!NOTE]
+> As seções abaixo preservam formulações e procedimentos de fases anteriores do
+> projeto. Quando houver conflito conceitual com a arquitetura corrente, prevalecem
+> os contratos normativos vigentes e as ADRs mais recentes, em especial a
+> [ADR-0028](docs/adr/ADR-0028-composable-component-runtime-deployment-boundary.md).
 
 # SisTer
 
