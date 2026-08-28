@@ -1,0 +1,70 @@
+\documentclass[11pt,a4paper,oneside]{book}
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{fancyhdr}
+\usepackage{lastpage}
+\usepackage{enumitem}
+\geometry{margin=2.5cm}
+
+\newcommand{\DocVersion}{0.1.0}
+\newcommand{\DocDate}{2026-08-28}
+\newcommand{\DocStatus}{PROPOSIÇÃO ARQUITETURAL E CIENTÍFICA}
+
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{SisTer --- REA / RIT}
+\fancyhead[R]{Registro Evolutivo de Princípios v\DocVersion}
+\fancyfoot[C]{Página \thepage\ de \pageref{LastPage}}
+
+\hypersetup{
+  pdftitle={Registro Evolutivo de Princípios REA/RIT},
+  pdfauthor={Projeto SisTer},
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue
+}
+
+\begin{document}
+\frontmatter
+
+\begin{titlepage}
+\centering
+\vspace*{3cm}
+{\Huge\bfseries Registro Evolutivo de Princípios REA/RIT\par}
+\vspace{1cm}
+{\Large Reflexive Engineering Attitude, Integridade Temporal e SisTer\par}
+\vfill
+{\large Versão \DocVersion\par}
+{\large \DocDate\par}
+{\large \DocStatus\par}
+\vfill
+\begin{quote}
+Este registro preserva princípios que emergem da evolução reflexiva do SisTer.
+Princípios não são projetados retrospectivamente sobre formulações anteriores:
+sua genealogia, revisão e eventual substituição devem permanecer explícitas.
+\end{quote}
+\vfill
+\end{titlepage}
+
+\tableofcontents
+
+\chapter*{Regra de leitura}
+\addcontentsline{toc}{chapter}{Regra de leitura}
+Os princípios deste registro são fontes normativas em evolução. Cada princípio
+possui identidade estável, versão, estado e genealogia. O índice de princípios
+é derivado automaticamente das fontes em \texttt{principios/}.
+
+\mainmatter
+\input{generated/principios_index.tex}
+
+\backmatter
+\chapter*{Nota de versionamento}
+\addcontentsline{toc}{chapter}{Nota de versionamento}
+Esta versão inaugura a categoria documental ``Registro Evolutivo de Princípios
+REA/RIT''. Alterações futuras devem preservar a história dos princípios e usar
+versionamento semântico conforme \texttt{docs/rea-rit/README.md}.
+
+\end{document}

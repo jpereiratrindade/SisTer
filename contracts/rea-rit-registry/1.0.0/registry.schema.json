@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/rea-rit-registry/1.0.0/registry.schema.json",
+  "title": "SisTer REA/RIT Registry 1.0.0",
+  "description": "Representação de máquina derivada do Registro Evolutivo de Princípios REA/RIT.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema",
+    "source_of_truth",
+    "principles"
+  ],
+  "properties": {
+    "schema": {
+      "const": "sister.rearit.registry/1.0.0"
+    },
+    "source_of_truth": {
+      "const": "docs/rea-rit/principios/*.tex"
+    },
+    "principles": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "key",
+          "id",
+          "version",
+          "status",
+          "title",
+          "date",
+          "origin",
+          "supersedes",
+          "superseded_by",
+          "source",
+          "source_sha256"
+        ],
+        "properties": {
+          "key": {
+            "type": "string",
+            "pattern": "^REARIT-P[0-9]{3}@[0-9]+\\.[0-9]+\\.[0-9]+$"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^REARIT-P[0-9]{3}$"
+          },
+          "version": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)\\.(0|[1-9][0-9]*)$"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PROPOSTO",
+              "ACEITO",
+              "REVISADO",
+              "DEPRECIADO",
+              "SUPERSEDIDO"
+            ]
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "date": {
+            "type": "string",
+            "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+          },
+          "origin": {
+            "type": "string",
+            "minLength": 1
+          },
+          "supersedes": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "pattern": "^REARIT-P[0-9]{3}@[0-9]+\\.[0-9]+\\.[0-9]+$"
+              }
+            ]
+          },
+          "superseded_by": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "string",
+                "pattern": "^REARIT-P[0-9]{3}@[0-9]+\\.[0-9]+\\.[0-9]+$"
+              }
+            ]
+          },
+          "source": {
+            "type": "string",
+            "pattern": "^docs/rea-rit/principios/[^/]+\\.tex$"
+          },
+          "source_sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          }
+        }
+      }
+    }
+  }
+}

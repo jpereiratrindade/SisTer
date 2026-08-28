@@ -1,0 +1,19 @@
+{
+  "principles": [
+    {
+      "date": "2026-08-28",
+      "id": "REARIT-P001",
+      "key": "REARIT-P001@0.1.0",
+      "origin": "SisTer Infra / OPS-07A0",
+      "source": "docs/rea-rit/principios/principio_manutencao_reflexiva_automatizavel_v0.1.0.tex",
+      "source_sha256": "c278061707850ab78043cbc5f8b605dbc2c030192e7261f59fe03d8a12f1125f",
+      "status": "PROPOSTO",
+      "superseded_by": null,
+      "supersedes": null,
+      "title": "Princípio da Manutenção Reflexiva Automatizável",
+      "version": "0.1.0"
+    }
+  ],
+  "schema": "sister.rearit.registry/1.0.0",
+  "source_of_truth": "docs/rea-rit/principios/*.tex"
+}

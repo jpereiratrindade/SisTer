@@ -1,0 +1,266 @@
+% REARIT-ID: REARIT-P001
+% REARIT-VERSION: 0.1.0
+% REARIT-STATUS: PROPOSTO
+% REARIT-TITLE: Princípio da Manutenção Reflexiva Automatizável
+% REARIT-DATE: 2026-08-28
+% REARIT-ORIGIN: SisTer Infra / OPS-07A0
+% REARIT-SUPERSEDES:
+% REARIT-SUPERSEDED-BY:
+
+\chapter{REARIT-P001 --- Princípio da Manutenção Reflexiva Automatizável}
+
+\begin{center}
+\textbf{Versão 0.1.0 --- PROPOSTO}\\
+Origem reflexiva: SisTer Infra / OPS-07A0
+\end{center}
+
+\section{Natureza desta formulação}
+
+Este princípio é registrado como formulação emergente da construção do control
+plane operacional do SisTer. Ele não deve ser interpretado como afirmação de
+que REA ou RIT sempre possuíram, desde suas formulações anteriores, exatamente
+este enunciado.
+
+A genealogia relevante é:
+
+\begin{quote}
+práticas operacionais inicialmente concretas
+$\rightarrow$
+reconciliação declarativa
+$\rightarrow$
+separação entre DEV, LAB e PROD
+$\rightarrow$
+auditoria do bootstrap histórico
+$\rightarrow$
+identificação de conhecimento duplicado e manutenção manual
+$\rightarrow$
+formulação do princípio.
+\end{quote}
+
+Sua legitimidade depende tanto de coerência conceitual com REA/RIT quanto de
+sua capacidade de explicar e orientar transformações observáveis no SisTer.
+
+\section{Enunciado normativo}
+
+\begin{quote}
+\textbf{Toda operação recorrente deve ser automatizável; toda automação deve ser
+idempotente quando aplicável; toda transformação deve possuir preflight,
+autoridade explícita quando necessária, verificação posterior e evidência; todo
+conhecimento que puder ser derivado de declarações autoritativas não deve ser
+mantido manualmente em uma segunda representação.}
+
+\medskip
+
+\textbf{A manutenção deve observar invariantes e estado factual, detectar
+deriva, inconsistência, obsolescência ou perda de coerência, determinar a menor
+ação admissível, executá-la apenas dentro da autoridade disponível, verificar
+seus efeitos e preservar a genealogia causal da transição. Quando evidência ou
+autoridade forem insuficientes, o sistema deve falhar fechado.}
+\end{quote}
+
+\section{Expressão operacional}
+
+\begin{verbatim}
+automação
+!=
+execução cega
+
+automação reflexiva
+=
+observar
++ comparar
++ explicar
++ validar autoridade
++ agir minimamente
++ verificar
++ registrar evidência
+\end{verbatim}
+
+A automação reflexiva não elimina julgamento ou autoridade. Ela torna explícita
+a fronteira entre o que pode ser derivado automaticamente e o que exige decisão
+legítima externa.
+
+\section{Relação com REA}
+
+A REA organiza a atitude reflexiva em torno da capacidade de perceber,
+interpretar e revisar. Aplicada à manutenção, essa orientação implica:
+
+\begin{enumerate}
+  \item \textbf{perceber}: observar estado factual e invariantes, sem confundir
+  declaração com realidade;
+  \item \textbf{interpretar}: comparar o estado observado com a intenção
+  autoritativa e explicar a diferença;
+  \item \textbf{revisar}: selecionar a menor transformação admissível, dentro da
+  autoridade disponível, e reavaliar o estado após agir.
+\end{enumerate}
+
+Assim, manutenção não é uma sequência de comandos predefinidos, mas um ciclo
+reflexivo governado por evidência.
+
+\section{Relação com RIT}
+
+A Integridade Temporal exige que uma transição preserve simultaneamente:
+
+\begin{itemize}
+  \item \textbf{identidade retrospectiva}: ser capaz de reconstruir de onde o
+  sistema veio;
+  \item \textbf{plasticidade prospectiva}: permitir mudança sem destruir a
+  capacidade de evolução;
+  \item \textbf{proveniência}: registrar causas, artefatos, decisões e
+  evidências relevantes;
+  \item \textbf{legitimidade da transição}: distinguir transformação
+  tecnicamente possível de transformação efetivamente autorizada.
+\end{itemize}
+
+Uma automação que modifica estado sem preservar essas propriedades pode ser
+eficiente, mas não é temporalmente íntegra.
+
+\section{Invariantes decorrentes}
+
+\subsection*{P001-I1 --- Automatizabilidade do recorrente}
+Operações recorrentes não devem depender de memória procedural humana quando
+seus passos puderem ser formalizados e verificados.
+
+\subsection*{P001-I2 --- Idempotência quando aplicável}
+A repetição da mesma intenção sobre um estado já convergido não deve produzir
+nova transformação material desnecessária.
+
+\subsection*{P001-I3 --- Preflight}
+Toda transformação deve validar previamente as condições necessárias para agir.
+
+\subsection*{P001-I4 --- Autoridade explícita}
+Transformações que excedam a autoridade do contexto operacional devem falhar
+fechado até que autoridade suficiente seja apresentada.
+
+\subsection*{P001-I5 --- Ação mínima}
+Entre ações capazes de restabelecer coerência, deve ser escolhida a menor ação
+compatível com os invariantes e com a autoridade disponível.
+
+\subsection*{P001-I6 --- Verificação posterior}
+Execução bem-sucedida de um comando não constitui evidência suficiente de que a
+intenção foi materializada.
+
+\subsection*{P001-I7 --- Evidência}
+A transformação deve produzir evidência suficiente para explicar o que foi
+observado, decidido, executado e verificado.
+
+\subsection*{P001-I8 --- Não duplicação de autoridade}
+Conhecimento derivável de uma fonte declarativa autoritativa não deve ser
+mantido manualmente em uma representação concorrente.
+
+\subsection*{P001-I9 --- Fail-closed}
+Ausência de evidência ou autoridade necessária deve impedir a transformação,
+não ser silenciosamente interpretada como autorização.
+
+\section{Consequências de engenharia}
+
+O princípio favorece arquiteturas baseadas em estado desejado e reconciliação:
+
+\begin{verbatim}
+OBSERVE
+  |
+  v
+COMPARE
+  |
+  v
+EXPLAIN
+  |
+  v
+AUTHORITY
+  |
+  v
+MINIMAL ACT
+  |
+  v
+VERIFY
+  |
+  v
+EVIDENCE
+\end{verbatim}
+
+Consequências práticas:
+
+\begin{itemize}
+  \item check e plan devem ser observacionais;
+  \item bootstrap deve materializar pré-condições de forma idempotente;
+  \item repair deve atuar apenas sobre deriva comprovada;
+  \item apply deve possuir autoridade delimitada pelo modo operacional;
+  \item estado já convergido deve resultar em \texttt{NO\_OP};
+  \item artefatos derivados devem ser regenerados, não editados como segunda
+  fonte de verdade;
+  \item transições relevantes devem preservar genealogia causal suficiente para
+  auditoria e rollback.
+\end{itemize}
+
+\section{Aplicação inicial: SisTer Infra / OPS-07A0}
+
+A auditoria do OPS-07A0 encontrou um bootstrap histórico
+(\texttt{setup\_sister\_infra.sh}) que carregava conhecimento concreto de
+componentes, portas, hosts e materializações já substituídas por contratos e
+declarações autoritativas.
+
+O achado sugere a seguinte fronteira operacional:
+
+\begin{verbatim}
+check
+  = observar sem corrigir
+
+bootstrap
+  = materializar precondicoes locais derivaveis
+    de forma idempotente
+
+doctor
+  = diagnosticar o ambiente operacional
+
+repair
+  = corrigir drift comprovado e autorizado
+\end{verbatim}
+
+O bootstrap histórico não deve ser modernizado como segunda implementação do
+control plane. Sua história permanece preservada pelo Git, enquanto a
+manutenção ativa deve convergir para mecanismos derivados das declarações
+canônicas.
+
+\section{Critérios de teste do princípio}
+
+Uma aplicação que reivindique conformidade com REARIT-P001 deve ser capaz de
+responder, por evidência:
+
+\begin{enumerate}
+  \item Qual fonte define a intenção autoritativa?
+  \item Qual estado factual foi observado?
+  \item Qual diferença foi detectada?
+  \item Por que a ação escolhida é a menor admissível?
+  \item Qual autoridade permitiu a transformação?
+  \item O que foi efetivamente modificado?
+  \item Como o estado posterior foi verificado?
+  \item Qual evidência preserva a genealogia da transição?
+  \item O que acontece quando evidência ou autoridade são insuficientes?
+\end{enumerate}
+
+\section{Hipóteses abertas}
+
+Esta versão ainda não fixa:
+
+\begin{itemize}
+  \item um schema universal de evidência operacional;
+  \item a granularidade mínima de genealogia exigida para todos os subsistemas;
+  \item a relação normativa definitiva entre \texttt{check}, \texttt{doctor},
+  \texttt{bootstrap} e \texttt{repair};
+  \item quais classes de operação são inerentemente não idempotentes.
+\end{itemize}
+
+Esses pontos permanecem explícitos como questões abertas, e não devem ser
+preenchidos retrospectivamente como se já estivessem resolvidos.
+
+\section{Referências conceituais}
+
+A formulação dialoga com tradições de cibernética, controle por realimentação,
+engenharia de confiabilidade, configuração declarativa, idempotência e
+auditabilidade. Entre referências de base para aprofundamento posterior estão
+Ashby (\emph{An Introduction to Cybernetics}, 1956), Wiener
+(\emph{Cybernetics}, 1948), a disciplina de Site Reliability Engineering e a
+semântica de idempotência consolidada em protocolos de sistemas distribuídos.
+
+Essas referências contextualizam o princípio, mas não substituem a genealogia
+empírica de sua emergência dentro do SisTer.
