@@ -1,0 +1,169 @@
+% REARIT-ID: REARIT-P005
+% REARIT-VERSION: 0.1.0
+% REARIT-STATUS: PROPOSTO
+% REARIT-TITLE: Princípio da Autonomia Delegada por Fronteiras
+% REARIT-DATE: 2026-08-28
+% REARIT-ORIGIN: SisTer Infra / OPS-07A2-CLOSE
+% REARIT-SUPERSEDES:
+% REARIT-SUPERSEDED-BY:
+
+\chapter{REARIT-P005 --- Princípio da Autonomia Delegada por Fronteiras}
+
+\begin{center}
+\textbf{Versão 0.1.0 --- PROPOSTO}\\
+Origem reflexiva: SisTer Infra / OPS-07A2-CLOSE
+\end{center}
+
+\section{Natureza desta formulação}
+
+Este princípio emerge da prática de colaboração entre operadores humanos e
+agentes autônomos de engenharia no ecossistema SisTer. A experiência demonstrou
+que a delegação técnica fragmentada em sucessivas microautorizações introduz
+ruído, satura o operador com decisões mecânicas e quebra o contexto de
+raciocínio do agente. Por outro lado, a autonomia sem fronteiras explícitas
+induz ampliações silenciosas de escopo e mutações arbitrárias.
+
+A genealogia relevante é:
+
+\begin{quote}
+microautorizações pontuais e frequentes\\
+$\rightarrow$\\
+fadiga de decisão do operador e perda de foco arquitetural\\
+$\rightarrow$\\
+necessidade de preflight e escopo explícito\\
+$\rightarrow$\\
+formulação da missão com autoridade vinculada\\
+$\rightarrow$\\
+formulação do princípio da autonomia delegada por fronteiras.
+\end{quote}
+
+\section{Enunciado normativo}
+
+\begin{quote}
+\textbf{Toda tarefa técnica delegada a um agente ou processo autônomo DEVE ser
+formulada como uma Missão com fronteiras explícitas.}
+
+\medskip
+
+\textbf{A missão DEVE definir: Objective, Baseline, Authorized scope,
+Invariants, Forbidden, Authority mode, Required gates, Definition of Done e
+Escalate only on.}
+
+\medskip
+
+\textbf{O agente executa autonomamente dentro dessas fronteiras e escala
+exclusivamente nas condições de: AUTHORITY\_BOUNDARY, GATE\_FAILURE ou
+MATERIAL\_AMBIGUITY.}
+
+\medskip
+
+\textbf{Descobertas não bloqueantes tornam-se FOLLOW-UP, HARDENING,
+TECHNICAL\_DEBT ou ARCHITECTURAL\_FINDING e NÃO reabrem a missão.}
+\end{quote}
+
+\paragraph{Regra de ouro de conduta:}
+\begin{quote}
+\textit{Não pedir autorização para executar algo que a missão já autorizou.
+Não ampliar silenciosamente a missão.
+Não transformar uma possibilidade de melhoria em bloqueador quando ela não viola um gate.}
+\end{quote}
+
+\paragraph{Ciclo de vida da delegação:}
+\begin{center}
+\texttt{DEFINE $\rightarrow$ DELEGATE $\rightarrow$ EXECUTE $\rightarrow$ VERIFY $\rightarrow$ CLOSE}
+\end{center}
+
+Condição de parada inequívoca:
+\begin{center}
+\texttt{todos os gates satisfeitos $\rightarrow$ MISSÃO = DONE}
+\end{center}
+
+\section{Relação com REA}
+
+O princípio ancora-se no tripé do REA:
+\begin{itemize}
+  \item \textbf{Perceber}: O agente observa continuamente o estado factual, os
+    invariantes definidos e as saídas das suítes de teste;
+  \item \textbf{Interpretar}: Distingue com rigor o que constitui violação de
+    gate (bloqueador) do que constitui oportunidade de evolução futura (follow-up);
+  \item \textbf{Revisar}: Ajusta implementações para cumprir os gates sem
+    reabrir decisões conceituais já consolidadas pela missão.
+\end{itemize}
+
+\section{Relação com RIT}
+
+\begin{itemize}
+  \item \textbf{Identidade Retrospectiva}: A baseline da missão e o histórico
+    imutável do Git garantem que o ponto de partida seja inequívoco;
+  \item \textbf{Plasticidade Prospectiva}: O agente possui liberdade técnica
+    para conceber, implementar e refatorar a solução dentro das fronteiras;
+  \item \textbf{Proveniência}: Toda alteração é ligada aos gates contratuais da
+    missão e registrada em commits lógicos com testes associados;
+  \item \textbf{Legitimidade da Transição}: A transição de estado só é legítima
+    quando todos os gates requeridos são satisfeitos, sem concessões implícitas.
+\end{itemize}
+
+\section{Invariantes decorrentes}
+
+\begin{itemize}
+  \item \textbf{INV-P005-01 (Fechamento por Definição)}: Quando o Definition of
+    Done é atingido e todos os gates passam, a missão encerra-se formalmente
+    como DONE;
+  \item \textbf{INV-P005-02 (Anti-Microautorização)}: Nenhuma consulta intermediária
+    ao operador é emitida para etapas contidas no escopo autorizado;
+  \item \textbf{INV-P005-03 (Escalação Exclusiva)}: A execução autônoma é suspensa
+    apenas diante de violação de fronteira de autoridade, falha irrecuperável de
+    gate ou ambiguidade material incontornável;
+  \item \textbf{INV-P005-04 (Isolamento de Follow-ups)}: Oportunidades de
+    melhoria descobertas durante a execução são registradas como notas
+    futuras, sem desviar ou postergar a conclusão da missão.
+\end{itemize}
+
+\section{Consequências de engenharia}
+
+A engenharia orientada por missões delimitadas promove:
+\begin{enumerate}
+  \item Alta eficiência cognitiva para o operador, que atua na especificação de
+    fronteiras e revisão de resultados consolidados;
+  \item Raciocínio arquitetural profundo do agente, que planeja e executa
+    transições completas sem perda de estado entre turnos;
+  \item Evidências auditáveis e reprodutíveis em relatórios únicos consolidados;
+  \item Eliminação de desvios de escopo (\textit{scope creep}) não documentados.
+\end{enumerate}
+
+\section{Aplicações conhecidas}
+
+\begin{itemize}
+  \item \textbf{SisTer Infra / OPS-07A2-CLOSE}: Missão de fechamento da
+    convergência de autoridade TLS, com refatorações, remoção de código legado,
+    higienização de repositório e materialização de protocolos em execução contínua;
+  \item \textbf{SisTer Infra / docs/operations/agent-missions.md}: Definição do
+    protocolo operacional de missões para agentes de desenvolvimento.
+\end{itemize}
+
+\section{Critérios de teste}
+
+Uma interação técnica demonstra aderência ao REARIT-P005 se:
+\begin{itemize}
+  \item A solicitação inicial define claramente objetivo, fronteiras e critérios
+    de parada;
+  \item O executor conclui as ações autorizadas sem interrupções triviais;
+  \item Todos os gates são testados contra código e ambiente antes da conclusão;
+  \item O resultado é formalizado em relatório único com evidências.
+\end{itemize}
+
+\section{Hipóteses abertas}
+
+\begin{itemize}
+  \item Como estruturar missões compostas ou multi-agente preservando a
+    autonomia de cada fronteira delegada?
+  \item Qual o limiar formal entre ajuste corretivo legítimo dentro do escopo
+    e reabertura arquitetural que exigiria nova missão?
+\end{itemize}
+
+\section{Histórico de evolução}
+
+\begin{itemize}
+  \item \textbf{0.1.0} (2026-08-28): Formulação inicial proposta a partir da
+    experiência operacional no SisTer Infra (OPS-07A2-CLOSE).
+\end{itemize}
