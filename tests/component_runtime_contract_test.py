@@ -185,6 +185,25 @@ class ComponentRuntimeContractTest(unittest.TestCase):
         self.assertIn(".components[] | select(.system_id == $id)", runtime)
         self.assertIn("SISTER_COMPONENT_CONFIG_FILE", runtime)
 
+    def test_sibling_atmos_component_contract_if_present(self):
+        atmos_path = ROOT.parent / "sister-atmos" / ".sister" / "component.json"
+        if not atmos_path.is_file():
+            self.skipTest("sister-atmos repository not found at sibling path")
+
+        descriptor = load(atmos_path)
+        self.component_validator.validate(descriptor)
+        self.assertEqual("atmos", descriptor["component_id"])
+        self.assertEqual("sister_atmos", descriptor["system_id"])
+        self.assertEqual("system", descriptor["deployment_role"])
+        self.assertEqual("sister.subsystem/1.0.0", descriptor["semantic_contract"])
+        self.assertEqual("cmake-ninja/1", descriptor["build"]["driver"])
+        self.assertEqual("sister.runtime/1.0.0", descriptor["runtime"]["schema"])
+        self.assertEqual("scripts/runtime.sh", descriptor["runtime"]["entrypoint"])
+        self.assertTrue(
+            {"start", "stop", "restart", "status", "health"}.issubset(
+                set(descriptor["runtime"]["actions"])
+            )
+        )
 
 
 if __name__ == "__main__":

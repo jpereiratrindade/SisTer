@@ -68,6 +68,7 @@ class Arc01ContractTest(unittest.TestCase):
 
         cls.nexo = load(PARTICIPANT / "examples/participant-nexo.json")
         cls.praxis = load(PARTICIPANT / "examples/participant-praxis.json")
+        cls.atmos = load(PARTICIPANT / "examples/participant-atmos.json")
         cls.invocation = load(INVOCATION / "examples/nexo-to-praxis.json")
         cls.result = load(INVOCATION / "examples/nexo-to-praxis-result.json")
         cls.relation = load(
@@ -83,6 +84,7 @@ class Arc01ContractTest(unittest.TestCase):
     def test_valid_examples(self):
         self.participant_validator.validate(self.nexo)
         self.participant_validator.validate(self.praxis)
+        self.participant_validator.validate(self.atmos)
         self.invocation_validator.validate(self.invocation)
         self.result_validator.validate(self.result)
         self.relation_validator.validate(self.relation)
@@ -90,6 +92,7 @@ class Arc01ContractTest(unittest.TestCase):
         for instance in (
             self.nexo,
             self.praxis,
+            self.atmos,
             self.invocation,
             self.result,
             self.relation,

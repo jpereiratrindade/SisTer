@@ -18,6 +18,7 @@ os contratos estão documentadas na
   decisória, efeitos e evidências de uma capacidade;
 - `examples/participant-nexo.json`: participante com capacidade de leitura;
 - `examples/participant-praxis.json`: participante com capacidade de avaliação;
+- `examples/participant-atmos.json`: participante com capacidade de inteligência atmosférica e análise de precipitação;
 - `examples/invalid-participant-with-transport.json`: prova negativa de que
   detalhes de transporte não pertencem ao manifesto semântico.
 

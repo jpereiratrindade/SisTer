@@ -1,0 +1,47 @@
+{
+  "schema": "sister.subsystem.manifest/1.0.0",
+  "system_id": "sister_atmos",
+  "name": "SisTer Atmos",
+  "version": "0.2.0-a2",
+  "contract": "sister.subsystem/1.0.0",
+  "adapter_version": "1.0.0",
+  "mount_path": "/integrations/atmos/",
+  "audience": "sister_atmos",
+  "transport": {
+    "http": true,
+    "websocket": false,
+    "internal_endpoint": "http://127.0.0.1:8095"
+  },
+  "technical_endpoints": {
+    "manifest": "/manifest",
+    "health": "/health",
+    "readiness": "/ready",
+    "capabilities": "/capabilities",
+    "identity": "/identity",
+    "echo": "/echo"
+  },
+  "capabilities": [
+    "atmos.status.read",
+    "atmos.location.search",
+    "atmos.precipitation.analyze"
+  ],
+  "capability_offers": [
+    {
+      "capability": "atmos.precipitation.analyze",
+      "method": "POST",
+      "endpoint": "/api/analyses/precipitation",
+      "input": {
+        "schema": "sister.atmos.precipitation-query/1.0.0",
+        "fields": ["latitude", "longitude", "start_date", "end_date", "requested_product"]
+      },
+      "output": {
+        "schema": "sister.atmos.precipitation-result/1.0.0",
+        "fields": ["data_points", "provenance"]
+      },
+      "observable_success": "Status 200 with daily precipitation and source provenance"
+    }
+  ],
+  "data_ownership": "exclusive",
+  "audit_level": "domain_relevant_operations",
+  "production_eligible": false
+}

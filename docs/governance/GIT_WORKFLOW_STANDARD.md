@@ -4,7 +4,7 @@
 **Versão:** 1.0.0  
 **Data:** 2026-08-25  
 **Status:** `NORMATIVO / PADRÃO DE ENGENHARIA`  
-**Escopo:** Todos os repositórios e participantes do ecossistema SisTer (`SisTer`, `sister-infra`, `sister-praxis`, `sister-nexo`, `sister-urt`, etc.)
+**Escopo:** Todos os repositórios e participantes do ecossistema SisTer (`SisTer`, `sister-infra`, `sister-praxis`, `sister-nexo`, `sister-urt`, `sister-atmos`, etc.)
 
 ---
 

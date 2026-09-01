@@ -1,0 +1,54 @@
+{
+  "schema": "sister.participant/2.0.0",
+  "contract_status": "DRAFT",
+  "runtime_normative": false,
+  "participant_id": "sister_atmos",
+  "name": "SisTer Atmos",
+  "version": "0.2.0-a2",
+  "owner": "Equipe SisTer Atmos",
+  "identity": {
+    "stable_id": "sister_atmos",
+    "declared_by": "Equipe SisTer Atmos"
+  },
+  "authority_scopes": [
+    {
+      "scope": "atmos.climate_intelligence",
+      "responsibility": "Análise climática, inteligência meteorológica e indexação territorial.",
+      "decision_owner": "sister_atmos"
+    }
+  ],
+  "capabilities": [
+    {
+      "capability_id": "atmos.precipitation.analyze",
+      "version": "1.0.0",
+      "purpose": "Executar análise pontual e espacial de precipitação com proveniência.",
+      "input_contract": {
+        "schema_id": "atmos.precipitation-query",
+        "version": "1.0.0"
+      },
+      "output_contract": {
+        "schema_id": "atmos.precipitation-result",
+        "version": "1.0.0"
+      },
+      "decision_authority": {
+        "scope": "atmos.climate_intelligence",
+        "owner": "sister_atmos"
+      },
+      "side_effect": "none",
+      "preconditions": ["parameters conform to requested date range and territorial bounds"],
+      "evidence_requirements": ["analysis payload includes provider provenance"]
+    }
+  ],
+  "relation_roles": ["climate-intelligence-provider", "capability-provider"],
+  "state_declarations": [
+    {
+      "state_id": "participant.ready",
+      "meaning": "O participante declara prontidão operacional sobre suas capacidades declaradas correntes (READY != COMPLETE).",
+      "declared_by": "sister_atmos"
+    }
+  ],
+  "provenance": {
+    "source_ref": "sister-atmos participant declaration",
+    "declared_at": "2026-09-01T12:00:00Z"
+  }
+}

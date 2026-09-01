@@ -4,6 +4,9 @@ components:
   - id: sister-nexo
     label: SisTer Nexo
     governance_status: quarantined
+  - id: sister-atmos
+    label: SisTer Atmos
+    governance_status: quarantined
   - id: sister-clima
     label: Sister-Clima
     governance_status: quarantined
