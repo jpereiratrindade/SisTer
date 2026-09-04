@@ -28,7 +28,7 @@ a { color: var(--accent); font-weight: 700; text-decoration: none; }
 .engineering-tabs a.active, .engineering-tabs a:hover { color: var(--accent); border-bottom: 3px solid var(--accent); }
 
 .summary { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 26px; }
-.summary article, .details, .capabilities-section, .contracts-section, .operation-section, .assessment-section, .curation-section {
+.summary article, .details, .ecosystem-section, .capabilities-section, .contracts-section, .operation-section, .assessment-section, .curation-section {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -58,7 +58,21 @@ h2 { margin: 3px 0 0; font-size: 24px; letter-spacing: 0; }
 .section-help { margin: 6px 0 0; color: var(--muted); }
 .readonly { flex: none; color: var(--muted); font-size: 12px; border: 1px solid var(--line); border-radius: 999px; padding: 5px 10px; }
 
-.capabilities-section, .contracts-section, .operation-section, .assessment-section, .curation-section { padding: 18px; }
+.ecosystem-section, .capabilities-section, .contracts-section, .operation-section, .assessment-section, .curation-section { padding: 18px; }
+.ecosystem-section { margin-bottom: 25px; }
+.ecosystem-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 12px; }
+.ecosystem-summary article { padding: 13px; border-radius: 8px; background: var(--accent-soft); }
+.ecosystem-summary span,.ecosystem-summary strong { display: block; }
+.ecosystem-summary span { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.ecosystem-summary strong { margin-top: 5px; overflow-wrap: anywhere; }
+.ecosystem-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ecosystem-card { padding: 16px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfc; }
+.ecosystem-card h3 { margin: 0 0 12px; }
+.ecosystem-card dl { display: grid; gap: 8px; margin: 0; }
+.ecosystem-card dl div { display: grid; grid-template-columns: 75px minmax(0, 1fr); gap: 8px; }
+.ecosystem-card dt { color: var(--muted); font-size: 10px; font-weight: 800; text-transform: uppercase; }
+.ecosystem-card dd { margin: 0; overflow-wrap: anywhere; font-size: 12px; }
+.ecosystem-empty { color: var(--muted); }
 .capabilities-section { margin-bottom: 25px; }
 .capability-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
 .capability-card { min-height: 220px; padding: 18px; border: 1px solid var(--line); border-radius: 8px; background: #fbfcfc; cursor: pointer; }
@@ -151,6 +165,6 @@ h2 { margin: 3px 0 0; font-size: 24px; letter-spacing: 0; }
   .engineering-header { display: block; }
   .engineering-header a { display: inline-block; margin-top: 15px; }
   .engineering-tabs { overflow-x: auto; }
-  .summary, .capability-grid, .contracts-grid, .operation-map, .assessment-grid, .details-grid, .curation-grid { grid-template-columns: 1fr; }
+  .summary, .ecosystem-summary, .ecosystem-grid, .capability-grid, .contracts-grid, .operation-map, .assessment-grid, .details-grid, .curation-grid { grid-template-columns: 1fr; }
   .source-counts { grid-template-columns: 1fr; }
 }

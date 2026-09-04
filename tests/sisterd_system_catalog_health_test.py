@@ -161,6 +161,7 @@ def main():
             stop.set()
             mock.join(timeout=2)
             assert not mock.is_alive()
+            time.sleep(0.55)  # bounded health snapshot expires deterministically
 
             status, _, payload = request(sister_port, "GET", "/api/systems", cookie=cookie)
             assert status == 200, (status, payload)
@@ -247,7 +248,8 @@ def main():
     assert "system.health_url" not in app_js
     assert "referenceSubsystemFallback" not in app_js
     assert "Subsistema de Referência" not in app_js
-    assert "Nenhum participante federado disponível" in app_js
+    assert "/api/v1/workspace" in app_js
+    assert "/api/ecosystem" not in app_js
     print("sisterd_system_catalog_health_tests ok")
 
 

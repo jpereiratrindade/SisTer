@@ -38,6 +38,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <random>
@@ -136,6 +137,12 @@ struct AppState {
     sisterd::ParticipationService participation;
     std::mutex authMutex;
     std::mutex dbMutex;
+    std::mutex ecosystemMutex;
+    std::shared_ptr<const sister::ecosystem::EcosystemView> ecosystemSnapshot;
+    std::filesystem::path ecosystemSnapshotSource;
+    std::filesystem::file_time_type ecosystemSnapshotWriteTime{};
+    bool ecosystemSnapshotHasWriteTime = false;
+    Clock::time_point ecosystemObservedAt{};
 
     AppState(
         const std::filesystem::path& authFile,
@@ -1107,6 +1114,8 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
     if (role == "admin") {
         return {
             "session.self.read",
+            "workspace.resources.read",
+            "engineering.ecosystem.read",
             "engineering.plan.read",
             "engineering.operational-base.read",
             "engineering.integration.decide",
@@ -1126,13 +1135,13 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
     if (role == "researcher" || role == "project_lead") {
         return {
             "session.self.read",
-            "subsystem.manifest.read",
+            "workspace.resources.read",
             "reference.identity.read",
             "reference.echo.execute"
         };
     }
     if (role == "user" || role == "registered_user" || role == "guest") {
-        return {"session.self.read"};
+        return {"session.self.read", "workspace.resources.read"};
     }
     return {}; // Unknown roles fail closed.
 }
@@ -1396,7 +1405,45 @@ constexpr std::string_view kFallbackDiagnostics = R"([
   {"service":"PostgreSQL/pgvector","status":"planejado","score":20}
 ])";
 
-ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig& config) {
+std::shared_ptr<const sister::ecosystem::EcosystemView> observedEcosystem(
+    AppState& state,
+    const ServerConfig& config) {
+    constexpr auto healthFreshness = std::chrono::milliseconds(500);
+    std::lock_guard lock(state.ecosystemMutex);
+
+    std::error_code error;
+    const auto writeTime = std::filesystem::last_write_time(
+        config.ecosystemProjectionFile, error);
+    const bool hasWriteTime = !error;
+    const bool sourceChanged = !state.ecosystemSnapshot ||
+        state.ecosystemSnapshotSource != config.ecosystemProjectionFile ||
+        state.ecosystemSnapshotHasWriteTime != hasWriteTime ||
+        (hasWriteTime && state.ecosystemSnapshotWriteTime != writeTime);
+    const auto now = Clock::now();
+    const bool healthExpired = !state.ecosystemSnapshot ||
+        now - state.ecosystemObservedAt >= healthFreshness;
+
+    if (sourceChanged || healthExpired) {
+        auto view = sourceChanged
+            ? sister::ecosystem::parseProjectionFile(config.ecosystemProjectionFile)
+            : *state.ecosystemSnapshot;
+        sister::ecosystem::observeEcosystemHealth(
+            view, config.subsystemHealthTimeoutMilliseconds);
+        state.ecosystemSnapshot =
+            std::make_shared<const sister::ecosystem::EcosystemView>(std::move(view));
+        state.ecosystemSnapshotSource = config.ecosystemProjectionFile;
+        state.ecosystemSnapshotHasWriteTime = hasWriteTime;
+        if (hasWriteTime) state.ecosystemSnapshotWriteTime = writeTime;
+        state.ecosystemObservedAt = now;
+    }
+    return state.ecosystemSnapshot;
+}
+
+ApiPayload routeApi(
+    const std::string& path,
+    AppState& state,
+    const ServerConfig& config,
+    const sisterd::AuthUser* actor) {
     constexpr std::string_view artifactPrefix = "/api/v1/engineering/artifacts/";
     if (path.starts_with(artifactPrefix)) {
         const auto relative = path.substr(artifactPrefix.size());
@@ -1443,15 +1490,28 @@ ApiPayload routeApi(const std::string& path, AppState& state, const ServerConfig
     }
 
     if (path == "/api/ecosystem") {
-        auto view = sister::ecosystem::parseProjectionFile(config.ecosystemProjectionFile);
-        sister::ecosystem::observeEcosystemHealth(view, config.subsystemHealthTimeoutMilliseconds);
-        return {true, false, sister::ecosystem::serializeEcosystemViewJson(view)};
+        const auto view = observedEcosystem(state, config);
+        return {true, false, sister::ecosystem::serializeEcosystemViewJson(*view)};
     }
 
     if (path == "/api/systems") {
-        auto view = sister::ecosystem::parseProjectionFile(config.ecosystemProjectionFile);
-        sister::ecosystem::observeEcosystemHealth(view, config.subsystemHealthTimeoutMilliseconds);
-        return {true, false, sister::ecosystem::serializeSystemsCompatibilityJson(view)};
+        const auto view = observedEcosystem(state, config);
+        return {true, false, sister::ecosystem::serializeSystemsCompatibilityJson(*view)};
+    }
+    if (path == "/api/v1/workspace") {
+        if (!actor) return {false, false, "{}"};
+        std::vector<std::string_view> accessClasses{"authenticated"};
+        if (actor->role == "researcher" || actor->role == "project_lead" ||
+            actor->role == "admin") {
+            accessClasses.emplace_back("research");
+        }
+        if (actor->role == "admin") {
+            accessClasses.emplace_back("engineering");
+            accessClasses.emplace_back("admin");
+        }
+        const auto view = observedEcosystem(state, config);
+        return {true, false,
+            sister::ecosystem::serializeWorkspaceViewJson(*view, accessClasses)};
     }
     if (path == "/api/contracts") {
         return {true, false, std::string(kFallbackContracts)};
@@ -2283,7 +2343,10 @@ void handleClient(
             std::string_view capability;
             std::string_view resource = "sister-control-plane";
             std::string_view purpose = "governed_api_access";
-            if (request.path == "/api/systems" || request.path == "/api/ecosystem") capability = "subsystem.manifest.read";
+            if (request.path == "/api/v1/workspace") capability = "workspace.resources.read";
+            else if (request.path == "/api/systems" || request.path == "/api/ecosystem") {
+                capability = "engineering.ecosystem.read";
+            }
             else if (request.path == "/api/v1/engineering/operational-base/current") {
                 capability = "engineering.operational-base.read";
             }
@@ -2303,7 +2366,7 @@ void handleClient(
                     requestId, peer, isHead, requestStart)) return;
         }
 
-        const auto payload = routeApi(request.path, state, config);
+        const auto payload = routeApi(request.path, state, config, actor ? &*actor : nullptr);
         if (!payload.found) {
             sendResponse(clientFd, jsonError(404, "Not Found", "Recurso não encontrado."),
                          config, requestId, isHead);
@@ -2339,11 +2402,18 @@ void handleClient(
         return;
     }
 
-    if (request.path == "/admin/users" || request.path == "/admin/maturity") {
-        const std::string_view capability = request.path == "/admin/users"
-            ? "identity.users.manage" : "maturity.evidence.read";
-        const std::string_view resource = request.path == "/admin/users"
-            ? "sister-identities" : "sister-maturity";
+    const bool engineeringRoute = request.path == "/engineering" ||
+        request.path.starts_with("/engineering/");
+    if (request.path == "/admin/users" || request.path == "/admin/maturity" ||
+        engineeringRoute) {
+        const std::string_view capability = engineeringRoute
+            ? "engineering.ecosystem.read"
+            : request.path == "/admin/users"
+                ? "identity.users.manage" : "maturity.evidence.read";
+        const std::string_view resource = engineeringRoute
+            ? "sister-engineering"
+            : request.path == "/admin/users"
+                ? "sister-identities" : "sister-maturity";
         if (!authorizeOrReject(
                 clientFd, actor, capability, resource, "administrative_interface",
                 request, config, requestId, peer, isHead, requestStart)) return;

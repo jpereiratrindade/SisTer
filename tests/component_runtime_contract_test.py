@@ -63,6 +63,20 @@ class ComponentRuntimeContractTest(unittest.TestCase):
     def test_valid_system_component(self):
         self.component_validator.validate(load(EXAMPLES / "valid-system.json"))
 
+    def test_interaction_surface_is_semantic_and_transport_neutral(self):
+        component = load(EXAMPLES / "valid-system.json")
+        component["interaction_surfaces"] = [{
+            "surface_id": "example-work",
+            "label": "Example",
+            "purpose": "Executar trabalho do domínio Example",
+            "path": "/",
+            "access_class": "research",
+        }]
+        self.component_validator.validate(component)
+        surface = self.component_schema["$defs"]["interaction-surface"]
+        self.assertNotIn("public_url", property_names(surface))
+        self.assertNotIn("port", property_names(surface))
+
     def test_valid_source_only_control_plane(self):
         self.component_validator.validate(
             load(EXAMPLES / "valid-control-plane.json")

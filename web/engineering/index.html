@@ -13,13 +13,21 @@
       <nav class="engineering-nav"><a href="/admin/maturity">Maturidade</a><a href="/">Voltar ao SisTer</a></nav>
     </header>
     <nav class="engineering-tabs" aria-label="Visões do Centro de Engenharia">
-      <a class="active" href="#capabilities">Capacidades</a><a href="#contracts">Contratos</a><a href="#operation">Ciclo</a><a href="#assessment">Avaliação</a><a href="#authority">Decisão</a>
+      <a class="active" href="#ecosystem">Ecossistema</a><a href="#capabilities">Capacidades</a><a href="#contracts">Contratos</a><a href="#operation">Ciclo</a><a href="#assessment">Avaliação</a><a href="#authority">Decisão</a>
     </nav>
     <section class="summary" aria-label="Estado atual do sistema">
       <article><span>Capacidades conhecidas</span><strong id="capabilities-summary">-</strong></article>
       <article><span>Propósito vigente</span><strong id="purpose-title">-</strong></article>
       <article><span>Processo aprovado</span><strong id="process-title">-</strong></article>
       <article><span>Conhecimento produzido</span><strong id="recommendation-state">-</strong></article>
+    </section>
+    <section id="ecosystem" class="ecosystem-section" aria-labelledby="ecosystem-title">
+      <div class="section-title">
+        <div><span class="eyebrow">PROJEÇÃO OPERACIONAL</span><h2 id="ecosystem-title">Ecossistema implantado</h2><p class="section-help">Topologia, bindings, probes, publicação e health observados sob demanda.</p></div>
+        <button type="button" id="refresh-ecosystem">Atualizar</button>
+      </div>
+      <div id="ecosystem-summary" class="ecosystem-summary"></div>
+      <div id="ecosystem-grid" class="ecosystem-grid"></div>
     </section>
     <section id="operational-diagnostic" class="operational-diagnostic" aria-label="Diagnóstico da base operacional reflexiva">
       <div>

@@ -27,6 +27,7 @@ async function initializePublicBoundary() {
       return;
     }
     if (!response.ok) throw new Error();
+    window.__sisterUser = await response.json();
     loadAuthenticatedApplication();
   } catch {
     showPublicHome();

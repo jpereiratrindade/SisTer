@@ -29,6 +29,14 @@ struct HealthObservation {
     std::string detail = "not_observed";
 };
 
+struct InteractionSurface {
+    std::string surfaceId;
+    std::string label;
+    std::string purpose;
+    std::string publicUrl;
+    std::string accessClass;
+};
+
 struct EcosystemParticipant {
     std::string componentId;
     std::string systemId;
@@ -36,6 +44,7 @@ struct EcosystemParticipant {
     Probe probe;
     GatewayPublication gateway;
     HealthObservation health;
+    std::vector<InteractionSurface> interactionSurfaces;
 };
 
 struct EcosystemView {
@@ -69,5 +78,10 @@ std::string serializeEcosystemViewJson(const EcosystemView& view);
 
 // Serializes EcosystemView systems to JSON (/api/systems compatibility)
 std::string serializeSystemsCompatibilityJson(const EcosystemView& view);
+
+// Serializes only complete, navigable surfaces authorized for the actor.
+std::string serializeWorkspaceViewJson(
+    const EcosystemView& view,
+    const std::vector<std::string_view>& allowedAccessClasses);
 
 } // namespace sister::ecosystem

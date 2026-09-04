@@ -84,6 +84,10 @@ def write_projection(path, meta, participants):
         lines.append(
             f"PARTICIPANT\t{p['component_id']}\t{p['system_id']}\t{p['transport']}\t{p['listen']}\t{p['port']}\t{p['health_path']}\t{p.get('gateway_host', '')}\t{p.get('gateway_public_url', '')}"
         )
+        for surface in p.get("interaction_surfaces", []):
+            lines.append(
+                f"SURFACE\t{p['component_id']}\t{surface['surface_id']}\t{surface['label']}\t{surface['purpose']}\t{surface.get('public_url', '')}\t{surface['access_class']}"
+            )
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
@@ -129,6 +133,13 @@ def main():
                 "health_path": "/api/health",
                 "gateway_host": "alpha-gateway.test",
                 "gateway_public_url": "https://alpha-gateway.test:9443",
+                "interaction_surfaces": [{
+                    "surface_id": "alpha-work",
+                    "label": "Alpha",
+                    "purpose": "Executar trabalho Alpha",
+                    "public_url": "https://alpha-gateway.test:9443",
+                    "access_class": "authenticated",
+                }],
             },
             {
                 "component_id": "beta",
@@ -139,6 +150,13 @@ def main():
                 "health_path": "/api/health",
                 "gateway_host": "beta-gateway.test",
                 "gateway_public_url": "https://beta-gateway.test:9443",
+                "interaction_surfaces": [{
+                    "surface_id": "beta-admin",
+                    "label": "Beta Admin",
+                    "purpose": "Administrar Beta",
+                    "public_url": "https://beta-gateway.test:9443",
+                    "access_class": "engineering",
+                }],
             },
             {
                 "component_id": "gamma",
@@ -188,6 +206,46 @@ def main():
             })
             assert status == 201, (status, payload)
             cookie = headers["Set-Cookie"].split(";", 1)[0]
+
+            status, _, _ = request(sister_port, "POST", "/api/admin/users", {
+                "name": "Workspace User",
+                "email": "workspace-user@test.invalid",
+                "password": "workspace-user-password",
+                "role": "user",
+            }, cookie)
+            assert status == 201, status
+            status, headers, _ = request(sister_port, "POST", "/api/auth/login", {
+                "email": "workspace-user@test.invalid",
+                "password": "workspace-user-password",
+            })
+            assert status == 200, status
+            user_cookie = headers["Set-Cookie"].split(";", 1)[0]
+
+            status, _, workspace_payload = request(
+                sister_port, "GET", "/api/v1/workspace", cookie=user_cookie
+            )
+            assert status == 200, (status, workspace_payload)
+            workspace = json.loads(workspace_payload)
+            assert workspace["schema"] == "sister.workspace-view/1.0.0"
+            assert [surface["surface_id"] for surface in workspace["surfaces"]] == ["alpha-work"]
+            assert workspace["surfaces"][0]["participant_id"] == "participant_alpha"
+            assert workspace["surfaces"][0]["public_url"] == "https://alpha-gateway.test:9443"
+            serialized_workspace = json.dumps(workspace)
+            for internal_field in ("runtime", "listen", "port", "probe", "health_path", "deployment"):
+                assert internal_field not in serialized_workspace, serialized_workspace
+
+            status, _, admin_workspace_payload = request(
+                sister_port, "GET", "/api/v1/workspace", cookie=cookie
+            )
+            assert status == 200
+            assert [surface["surface_id"] for surface in json.loads(admin_workspace_payload)["surfaces"]] == [
+                "alpha-work", "beta-admin"
+            ]
+
+            assert request(sister_port, "GET", "/api/ecosystem", cookie=user_cookie)[0] == 403
+            assert request(sister_port, "GET", "/engineering/", cookie=user_cookie)[0] == 403
+            assert request(sister_port, "GET", "/engineering/app.js", cookie=user_cookie)[0] == 403
+            assert request(sister_port, "GET", "/engineering/", cookie=cookie)[0] == 200
 
             # WEB-08: Test GET /api/ecosystem
             status, _, payload = request(sister_port, "GET", "/api/ecosystem", cookie=cookie)
@@ -270,6 +328,13 @@ def main():
                     "health_path": "/api/health",
                     "gateway_host": "delta-gateway.test",
                     "gateway_public_url": "https://delta-gateway.test:9443",
+                    "interaction_surfaces": [{
+                        "surface_id": "delta-work",
+                        "label": "Delta",
+                        "purpose": "Executar trabalho Delta",
+                        "public_url": "https://delta-gateway.test:9443",
+                        "access_class": "authenticated",
+                    }],
                 }
             ]
             write_projection(projection_file, meta, extended_participants)
@@ -295,6 +360,14 @@ def main():
             assert new_operational_count == 3
             assert new_published_count == 3
 
+            status, _, workspace_delta_payload = request(
+                sister_port, "GET", "/api/v1/workspace", cookie=user_cookie
+            )
+            assert status == 200
+            assert [surface["surface_id"] for surface in json.loads(workspace_delta_payload)["surfaces"]] == [
+                "alpha-work", "delta-work"
+            ]
+
         finally:
             stop_event.set()
             if process.poll() is None:
@@ -310,7 +383,8 @@ def main():
     assert "window.location.port" not in app_js, "app.js sintetiza porta da janela"
     assert "window.location.protocol" not in app_js, "app.js sintetiza protocolo da janela"
     assert ":8443" not in app_js, "app.js contém porta hardcoded"
-    assert "system.gateway.publicUrl" in app_js or "gatewayPublicUrl" in app_js
+    assert "surface.public_url" in app_js
+    assert "/api/ecosystem" not in app_js
 
     print("sisterd_ecosystem_api_tests (public_url and delta) ok")
 

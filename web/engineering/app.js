@@ -63,6 +63,47 @@ const esc = value => {
   return div.innerHTML;
 };
 
+function healthLabel(status) {
+  if (status === "online") return "online";
+  if (status === "offline") return "offline";
+  return "não observado";
+}
+
+function renderEcosystem(ecosystem) {
+  const systems = Array.isArray(ecosystem?.systems) ? ecosystem.systems : [];
+  const online = systems.filter(system => system.health?.status === "online").length;
+  const published = systems.filter(system => Boolean(system.gateway?.public_url)).length;
+  $("#ecosystem-summary").innerHTML = `
+    <article><span>Composição</span><strong>${esc(ecosystem?.composition_id || "não configurada")}</strong></article>
+    <article><span>Deployment</span><strong>${esc(ecosystem?.deployment_status || "não configurado")}</strong></article>
+    <article><span>Health</span><strong>${online}/${systems.length} online</strong></article>
+    <article><span>Publicação</span><strong>${published}/${systems.length} publicados</strong></article>`;
+
+  $("#ecosystem-grid").innerHTML = systems.length ? systems.map(system => `
+    <article class="ecosystem-card">
+      <div><span class="eyebrow">${esc(system.component_id)}</span><h3>${esc(system.system_id)}</h3></div>
+      <dl>
+        <div><dt>Runtime</dt><dd>${esc(system.runtime?.transport || "-")} · ${esc(system.runtime?.listen || "-")}:${esc(system.runtime?.port || "-")}</dd></div>
+        <div><dt>Probe</dt><dd>${esc(system.probe?.health_path || "não declarado")}</dd></div>
+        <div><dt>Health</dt><dd>${esc(healthLabel(system.health?.status))} · ${esc(system.health?.detail || "-")}</dd></div>
+        <div><dt>Gateway</dt><dd>${esc(system.gateway?.public_url || system.gateway?.host || "não publicado")}</dd></div>
+      </dl>
+    </article>`).join("") : `<p class="ecosystem-empty">Nenhum componente declarado na projeção operacional.</p>`;
+}
+
+async function loadEcosystem() {
+  const button = $("#refresh-ecosystem");
+  if (button) button.disabled = true;
+  try {
+    const response = await fetch("/api/ecosystem", {cache: "no-store"});
+    renderEcosystem(response.ok ? await response.json() : null);
+  } catch {
+    renderEcosystem(null);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
 function statusLabel(status) {
   return {
     APPROVED: "aprovado",
@@ -381,5 +422,8 @@ async function fetchJsonOrFallback(url, fallback) {
   return fallback;
 }
 
-fetchJsonOrFallback("/api/v1/engineering/operational-base/current", emptyOperationalBase)
-  .then(render);
+$("#refresh-ecosystem")?.addEventListener("click", loadEcosystem);
+Promise.all([
+  fetchJsonOrFallback("/api/v1/engineering/operational-base/current", emptyOperationalBase),
+  loadEcosystem()
+]).then(([operationalBase]) => render(operationalBase));

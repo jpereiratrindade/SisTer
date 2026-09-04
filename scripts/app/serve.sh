@@ -39,16 +39,24 @@ if [[ -z "${SISTER_ECOSYSTEM_PROJECTION_FILE:-}" && -n "${SISTER_RESOLVED_DEPLOY
     PROJECTION_FILE="$ROOT_DIR/.run/ecosystem_projection.tsv"
     jq -r '
       "META\t" + (.composition_id // "") + "\t" + (.deployment_id // "") + "\t" + (.status // "NOT_CONFIGURED"),
-      ( (.components // [])[] |
-        "PARTICIPANT\t" +
-        (.component_id // "") + "\t" +
-        (.system_id // "") + "\t" +
-        (.runtime.transport // "") + "\t" +
-        (.runtime.listen // "") + "\t" +
-        ((.runtime.port // 0) | tostring) + "\t" +
-        (.probe.health_path // "") + "\t" +
-        (.gateway.host // "") + "\t" +
-        (.gateway.public_url // "")
+      ( (.components // [])[] as $component |
+        ("PARTICIPANT\t" +
+          ($component.component_id // "") + "\t" +
+          ($component.system_id // "") + "\t" +
+          ($component.runtime.transport // "") + "\t" +
+          ($component.runtime.listen // "") + "\t" +
+          (($component.runtime.port // 0) | tostring) + "\t" +
+          ($component.probe.health_path // "") + "\t" +
+          ($component.gateway.host // "") + "\t" +
+          ($component.gateway.public_url // "")),
+        (($component.interaction_surfaces // [])[] |
+          "SURFACE\t" +
+          ($component.component_id // "") + "\t" +
+          (.surface_id // "") + "\t" +
+          (.label // "") + "\t" +
+          (.purpose // "") + "\t" +
+          (.public_url // "") + "\t" +
+          (.access_class // ""))
       )
     ' "$SISTER_RESOLVED_DEPLOYMENT_FILE" > "$PROJECTION_FILE"
     export SISTER_ECOSYSTEM_PROJECTION_FILE="$PROJECTION_FILE"

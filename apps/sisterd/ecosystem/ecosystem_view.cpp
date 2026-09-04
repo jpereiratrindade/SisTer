@@ -215,6 +215,23 @@ EcosystemView parseProjection(std::string_view content) {
             if (tokens.size() > 8) p.gateway.publicUrl = std::string(tokens[8]);
 
             view.systems.push_back(std::move(p));
+        } else if (tokens[0] == "SURFACE") {
+            // tokens: SURFACE, component_id, surface_id, label, purpose, public_url, access_class
+            if (tokens.size() < 7) continue;
+            const auto participant = std::find_if(
+                view.systems.begin(), view.systems.end(),
+                [&](const EcosystemParticipant& item) {
+                    return item.componentId == tokens[1];
+                });
+            if (participant == view.systems.end()) continue;
+
+            InteractionSurface surface;
+            surface.surfaceId = std::string(tokens[2]);
+            surface.label = std::string(tokens[3]);
+            surface.purpose = std::string(tokens[4]);
+            surface.publicUrl = std::string(tokens[5]);
+            surface.accessClass = std::string(tokens[6]);
+            participant->interactionSurfaces.push_back(std::move(surface));
         }
     }
 
@@ -382,6 +399,46 @@ std::string serializeSystemsCompatibilityJson(const EcosystemView& view) {
     }
     if (!view.systems.empty()) json += "\n";
     json += "]";
+    return json;
+}
+
+std::string serializeWorkspaceViewJson(
+    const EcosystemView& view,
+    const std::vector<std::string_view>& allowedAccessClasses) {
+    std::string json = "{\n  \"schema\": \"sister.workspace-view/1.0.0\",\n  \"surfaces\": [";
+    bool first = true;
+
+    for (const auto& participant : view.systems) {
+        for (const auto& surface : participant.interactionSurfaces) {
+            const bool authorized = std::find(
+                allowedAccessClasses.begin(), allowedAccessClasses.end(),
+                surface.accessClass) != allowedAccessClasses.end();
+            const bool complete = !surface.surfaceId.empty() &&
+                !participant.systemId.empty() && !surface.label.empty() &&
+                !surface.purpose.empty() && !surface.publicUrl.empty() &&
+                surface.publicUrl.find_first_of("\r\n\t") == std::string::npos &&
+                (surface.publicUrl.starts_with("https://") ||
+                 surface.publicUrl.starts_with("http://"));
+            if (!authorized || !complete) continue;
+
+            if (!first) json += ',';
+            first = false;
+            const std::string availability = participant.health.status == "online"
+                ? "available"
+                : participant.health.status == "offline" ? "unavailable" : "unknown";
+            json += "\n    {\n";
+            json += "      \"surface_id\": \"" + jsonEscape(surface.surfaceId) + "\",\n";
+            json += "      \"participant_id\": \"" + jsonEscape(participant.systemId) + "\",\n";
+            json += "      \"label\": \"" + jsonEscape(surface.label) + "\",\n";
+            json += "      \"purpose\": \"" + jsonEscape(surface.purpose) + "\",\n";
+            json += "      \"public_url\": \"" + jsonEscape(surface.publicUrl) + "\",\n";
+            json += "      \"availability\": \"" + availability + "\"\n";
+            json += "    }";
+        }
+    }
+
+    if (!first) json += "\n  ";
+    json += "]\n}";
     return json;
 }
 

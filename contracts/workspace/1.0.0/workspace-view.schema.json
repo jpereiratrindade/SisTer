@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/workspace/1.0.0/workspace-view.schema.json",
+  "title": "SisTer Workspace View 1.0.0",
+  "description": "Projeção mínima das superfícies navegáveis autorizadas para o ator autenticado.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "surfaces"],
+  "properties": {
+    "schema": {"const": "sister.workspace-view/1.0.0"},
+    "surfaces": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "surface_id",
+          "participant_id",
+          "label",
+          "purpose",
+          "public_url",
+          "availability"
+        ],
+        "properties": {
+          "surface_id": {"type": "string", "minLength": 1},
+          "participant_id": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "purpose": {"type": "string", "minLength": 1},
+          "public_url": {"type": "string", "pattern": "^https?://"},
+          "availability": {"enum": ["available", "unavailable", "unknown"]}
+        }
+      }
+    }
+  }
+}

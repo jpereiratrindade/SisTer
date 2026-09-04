@@ -41,6 +41,13 @@
     },
     "runtime": {
       "$ref": "../../runtime/1.0.0/runtime.schema.json"
+    },
+    "interaction_surfaces": {
+      "type": "array",
+      "maxItems": 16,
+      "items": {
+        "$ref": "#/$defs/interaction-surface"
+      }
     }
   },
   "allOf": [
@@ -129,6 +136,45 @@
     }
   ],
   "$defs": {
+    "interaction-surface": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "surface_id",
+        "label",
+        "purpose",
+        "path",
+        "access_class"
+      ],
+      "properties": {
+        "surface_id": {
+          "type": "string",
+          "pattern": "^[a-z][a-z0-9_.-]{1,79}$"
+        },
+        "label": {
+          "type": "string",
+          "minLength": 2,
+          "maxLength": 80
+        },
+        "purpose": {
+          "type": "string",
+          "minLength": 8,
+          "maxLength": 240
+        },
+        "path": {
+          "type": "string",
+          "pattern": "^/(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))[^\\r\\n\\t]*$"
+        },
+        "access_class": {
+          "enum": [
+            "authenticated",
+            "research",
+            "engineering",
+            "admin"
+          ]
+        }
+      }
+    },
     "relative-safe-path": {
       "type": "string",
       "minLength": 1,
