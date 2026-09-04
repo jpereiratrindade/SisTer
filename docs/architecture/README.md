@@ -18,6 +18,7 @@ Este diretório reúne documentos de referência arquitetural do SisTer.
 - [Centro de Engenharia do SisTer](./MATURITY_DASHBOARD.md)
 - [Gates de maturidade](./maturity-gates.md)
 - [Arquitetura SGR](./sgr/)
+- [SisTer Web — superfície relacional e projeções](./SISTER-WEB-RELATIONAL-SURFACE-001_v0.1.0.md)
 
 Decisões arquiteturais formais ficam em [docs/adr](../adr/).
 
