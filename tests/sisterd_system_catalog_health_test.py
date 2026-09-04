@@ -249,7 +249,7 @@ def main():
     assert "referenceSubsystemFallback" not in app_js
     assert "Subsistema de Referência" not in app_js
     assert "/api/v1/workspace" in app_js
-    assert "/api/ecosystem" not in app_js
+    assert 'fetch("/api/ecosystem"' not in app_js
     print("sisterd_system_catalog_health_tests ok")
 
 

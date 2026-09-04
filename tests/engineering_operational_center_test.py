@@ -43,7 +43,9 @@ def main() -> None:
     assert "/api/ecosystem" in app
     assert "Ecossistema implantado" in index
     assert "/api/v1/workspace" in home_app
-    assert "/api/ecosystem" not in home_app
+    assert 'fetch("/api/ecosystem"' not in home_app
+    assert "/api/v1/ecosystem/semantic" in home_app
+    assert 'if (viewName === "ecosystem") loadSemanticEcosystem()' in home_app
     assert "/api/contracts" not in home_app
     assert "/api/evidence" not in home_app
     assert "/api/diagnostics" not in home_app
@@ -55,6 +57,11 @@ def main() -> None:
     assert "window.__sisterUser" in public_app
     for participant_id in ("nexo", "praxis", "urt", "atmos"):
         assert participant_id not in home_app.lower()
+    visibility_sources = home_app + read("apps/sisterd/ecosystem/ecosystem_view.cpp") + read("apps/sisterd/ecosystem/semantic_view.cpp")
+    for participant_id in ("sister", "nexo", "praxis", "urt", "atmos"):
+        assert f'== "{participant_id}"' not in visibility_sources.lower()
+        assert f'!= "{participant_id}"' not in visibility_sources.lower()
+    assert '"maxItems": 0' in read("contracts/ecosystem-semantic/1.0.0/semantic-view.schema.json")
     assert "no-store, no-cache, must-revalidate, max-age=0" in main_cpp
     assert "Clear-Site-Data" in main_cpp
     assert "decideIntegration" in db_hpp

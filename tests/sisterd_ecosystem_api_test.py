@@ -47,7 +47,7 @@ def wait_for_server(port, process):
     raise AssertionError("sisterd did not become ready")
 
 
-def run_mock_health_server(port, stop_event, ready_event, probe_path="/api/health"):
+def run_mock_health_server(port, stop_event, ready_event, probe_path="/api/health", requests=None):
     with socket.socket() as listener:
         listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         listener.bind(("127.0.0.1", port))
@@ -66,6 +66,8 @@ def run_mock_health_server(port, stop_event, ready_event, probe_path="/api/healt
                     if not chunk:
                         break
                     raw += chunk
+                if requests is not None:
+                    requests.append(raw.split(b" ", 2)[1].decode("ascii"))
                 body = b'{"status":"ok"}'
                 connection.sendall(
                     b"HTTP/1.1 200 OK\r\n"
@@ -91,6 +93,19 @@ def write_projection(path, meta, participants):
     Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
 
 
+def write_semantic_projection(path, participants, revision="fixture-r1"):
+    lines = [f"META\tsister.semantic-ecosystem-source/1.0.0\t{revision}"]
+    for participant in participants:
+        lines.append(
+            f"PARTICIPANT\t{participant['participant_id']}\t{participant['label']}\t{participant['declared_state']}\t{participant['authority_scope']}\t{participant['provenance_ref']}"
+        )
+        for capability in participant.get("capabilities", []):
+            lines.append(
+                f"CAPABILITY\t{participant['participant_id']}\t{capability['capability_id']}\t{capability['label']}\t{capability['authority_scope']}"
+            )
+    Path(path).write_text("\n".join(lines) + "\n", encoding="utf-8")
+
+
 def main():
     executable, web_root = sys.argv[1:3]
     sister_port = reserve_port()
@@ -99,17 +114,18 @@ def main():
     beta_port = reserve_port()  # Beta will NOT have a running mock server (simulates offline)
 
     stop_event = threading.Event()
+    probe_requests = []
     alpha_ready = threading.Event()
     gamma_ready = threading.Event()
 
     alpha_mock = threading.Thread(
         target=run_mock_health_server,
-        args=(alpha_port, stop_event, alpha_ready, "/api/health"),
+        args=(alpha_port, stop_event, alpha_ready, "/api/health", probe_requests),
         daemon=True,
     )
     gamma_mock = threading.Thread(
         target=run_mock_health_server,
-        args=(gamma_port, stop_event, gamma_ready, "/health"),
+        args=(gamma_port, stop_event, gamma_ready, "/health", probe_requests),
         daemon=True,
     )
 
@@ -120,10 +136,21 @@ def main():
 
     with tempfile.TemporaryDirectory(prefix="sister-ecosystem-test-") as temporary:
         projection_file = Path(temporary) / "projection.tsv"
+        semantic_projection_file = Path(temporary) / "semantic-projection.tsv"
         auth_file = Path(temporary) / "auth.tsv"
 
         # WEB-08: Initial 3 fixtures: alpha (online, published), beta (offline, published), gamma (online, not published)
         initial_participants = [
+            {
+                "component_id": "core",
+                "system_id": "participant_core",
+                "transport": "unix",
+                "listen": "/run/core.sock",
+                "port": 0,
+                "health_path": "",
+                "gateway_host": "",
+                "gateway_public_url": "",
+            },
             {
                 "component_id": "alpha",
                 "system_id": "participant_alpha",
@@ -150,13 +177,6 @@ def main():
                 "health_path": "/api/health",
                 "gateway_host": "beta-gateway.test",
                 "gateway_public_url": "https://beta-gateway.test:9443",
-                "interaction_surfaces": [{
-                    "surface_id": "beta-admin",
-                    "label": "Beta Admin",
-                    "purpose": "Administrar Beta",
-                    "public_url": "https://beta-gateway.test:9443",
-                    "access_class": "engineering",
-                }],
             },
             {
                 "component_id": "gamma",
@@ -175,6 +195,33 @@ def main():
             "status": "READY",
         }
         write_projection(projection_file, meta, initial_participants)
+        semantic_participants = [
+            {
+                "participant_id": "participant_alpha",
+                "label": "Alpha",
+                "declared_state": "active",
+                "authority_scope": "alpha-owner",
+                "provenance_ref": "urn:test:alpha:r1",
+                "capabilities": [{
+                    "capability_id": "alpha.work.execute",
+                    "label": "Executar trabalho Alpha",
+                    "authority_scope": "alpha-owner",
+                }],
+            },
+            {
+                "participant_id": "participant_beta",
+                "label": "Beta",
+                "declared_state": "active",
+                "authority_scope": "beta-owner",
+                "provenance_ref": "urn:test:beta:r1",
+                "capabilities": [{
+                    "capability_id": "beta.analysis.read",
+                    "label": "Consultar análise Beta",
+                    "authority_scope": "beta-owner",
+                }],
+            },
+        ]
+        write_semantic_projection(semantic_projection_file, semantic_participants)
 
         environment = os.environ.copy()
         environment.update({
@@ -184,6 +231,7 @@ def main():
             "SISTER_DATABASE_URL": "",
             "SISTER_COOKIE_SECURE": "false",
             "SISTER_ECOSYSTEM_PROJECTION_FILE": str(projection_file),
+            "SISTER_SEMANTIC_ECOSYSTEM_PROJECTION_FILE": str(semantic_projection_file),
             "SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS": "300",
         })
 
@@ -225,6 +273,7 @@ def main():
                 sister_port, "GET", "/api/v1/workspace", cookie=user_cookie
             )
             assert status == 200, (status, workspace_payload)
+            assert probe_requests == [], probe_requests
             workspace = json.loads(workspace_payload)
             assert workspace["schema"] == "sister.workspace-view/1.0.0"
             assert [surface["surface_id"] for surface in workspace["surfaces"]] == ["alpha-work"]
@@ -239,8 +288,39 @@ def main():
             )
             assert status == 200
             assert [surface["surface_id"] for surface in json.loads(admin_workspace_payload)["surfaces"]] == [
-                "alpha-work", "beta-admin"
+                "alpha-work"
             ]
+            assert probe_requests == [], probe_requests
+            assert request(sister_port, "GET", "/api/v1/ecosystem/semantic")[0] == 401
+
+            status, _, semantic_payload = request(
+                sister_port, "GET", "/api/v1/ecosystem/semantic", cookie=user_cookie
+            )
+            assert status == 200, (status, semantic_payload)
+            semantic = json.loads(semantic_payload)
+            assert semantic["schema"] == "sister.semantic-ecosystem-view/1.0.0"
+            assert semantic["source_status"] == "authoritative"
+            assert [item["participant_id"] for item in semantic["participants"]] == [
+                "participant_alpha", "participant_beta"
+            ]
+            assert semantic["relations"] == []
+            assert semantic["relations_status"] == "not_available"
+            serialized_semantic = json.dumps(semantic)
+            for operational_field in ("runtime", "listen", "port", "probe", "health", "deployment", "gateway"):
+                assert operational_field not in serialized_semantic, serialized_semantic
+            assert probe_requests == [], probe_requests
+
+            semantic_projection_file.unlink()
+            status, _, empty_semantic_payload = request(
+                sister_port, "GET", "/api/v1/ecosystem/semantic", cookie=user_cookie
+            )
+            assert status == 200
+            empty_semantic = json.loads(empty_semantic_payload)
+            assert empty_semantic["source_status"] == "unavailable"
+            assert empty_semantic["participants"] == []
+            assert empty_semantic["relations"] == []
+            assert probe_requests == [], probe_requests
+            write_semantic_projection(semantic_projection_file, semantic_participants)
 
             assert request(sister_port, "GET", "/api/ecosystem", cookie=user_cookie)[0] == 403
             assert request(sister_port, "GET", "/engineering/", cookie=user_cookie)[0] == 403
@@ -256,12 +336,13 @@ def main():
             assert ecosystem["composition_id"] == "test-composition"
             assert ecosystem["deployment_id"] == "test-deployment"
             assert ecosystem["deployment_status"] == "READY"
-            assert len(ecosystem["systems"]) == 3, ecosystem
+            assert len(ecosystem["systems"]) == 4, ecosystem
 
             systems_by_id = {s["component_id"]: s for s in ecosystem["systems"]}
             assert "alpha" in systems_by_id
             assert "beta" in systems_by_id
             assert "gamma" in systems_by_id
+            assert "core" in systems_by_id
 
             # Check alpha: online, published with public_url
             alpha = systems_by_id["alpha"]
@@ -291,28 +372,31 @@ def main():
             participants_count = len(ecosystem["systems"])
             operational_count = sum(1 for s in ecosystem["systems"] if s["health"]["status"] == "online")
             published_count = sum(1 for s in ecosystem["systems"] if bool(s["gateway"].get("host")))
-            assert participants_count == 3
+            assert participants_count == 4
             assert operational_count == 2
             assert published_count == 2
+            assert probe_requests == ["/api/health", "/health"], probe_requests
 
             # WEB-04: Test GET /api/systems compatibility
+            probes_before_compatible_view = len(probe_requests)
             status, _, sys_payload = request(sister_port, "GET", "/api/systems", cookie=cookie)
             assert status == 200, (status, sys_payload)
             compat_systems = json.loads(sys_payload)
-            assert len(compat_systems) == 3
+            assert len(compat_systems) == 4
             compat_by_id = {s["component_id"]: s for s in compat_systems}
             assert compat_by_id["alpha"]["health_status"] == "online"
             assert compat_by_id["alpha"]["gateway"]["public_url"] == "https://alpha-gateway.test:9443"
             assert compat_by_id["beta"]["health_status"] == "offline"
             assert compat_by_id["beta"]["gateway"]["public_url"] == "https://beta-gateway.test:9443"
             assert compat_by_id["gamma"]["health_status"] == "online"
+            assert len(probe_requests) == probes_before_compatible_view, probe_requests
 
             # WEB-09: Extensibility test - add 'delta' only to projection file without code modification
             delta_port = reserve_port()
             delta_ready = threading.Event()
             delta_mock = threading.Thread(
                 target=run_mock_health_server,
-                args=(delta_port, stop_event, delta_ready, "/api/health"),
+                args=(delta_port, stop_event, delta_ready, "/api/health", probe_requests),
                 daemon=True,
             )
             delta_mock.start()
@@ -343,7 +427,7 @@ def main():
             status, _, payload_delta = request(sister_port, "GET", "/api/ecosystem", cookie=cookie)
             assert status == 200, (status, payload_delta)
             ecosystem_delta = json.loads(payload_delta)
-            assert len(ecosystem_delta["systems"]) == 4, ecosystem_delta
+            assert len(ecosystem_delta["systems"]) == 5, ecosystem_delta
 
             delta_by_id = {s["component_id"]: s for s in ecosystem_delta["systems"]}
             assert "delta" in delta_by_id
@@ -356,7 +440,7 @@ def main():
             new_participants_count = len(ecosystem_delta["systems"])
             new_operational_count = sum(1 for s in ecosystem_delta["systems"] if s["health"]["status"] == "online")
             new_published_count = sum(1 for s in ecosystem_delta["systems"] if bool(s["gateway"].get("host")))
-            assert new_participants_count == 4
+            assert new_participants_count == 5
             assert new_operational_count == 3
             assert new_published_count == 3
 
@@ -366,6 +450,24 @@ def main():
             assert status == 200
             assert [surface["surface_id"] for surface in json.loads(workspace_delta_payload)["surfaces"]] == [
                 "alpha-work", "delta-work"
+            ]
+
+            # T2: a new semantic participant requires only a source update.
+            semantic_delta = semantic_participants + [{
+                "participant_id": "participant_delta",
+                "label": "Delta",
+                "declared_state": "active",
+                "authority_scope": "delta-owner",
+                "provenance_ref": "urn:test:delta:r2",
+                "capabilities": [],
+            }]
+            write_semantic_projection(semantic_projection_file, semantic_delta, "fixture-r2")
+            status, _, semantic_delta_payload = request(
+                sister_port, "GET", "/api/v1/ecosystem/semantic", cookie=user_cookie
+            )
+            assert status == 200
+            assert [item["participant_id"] for item in json.loads(semantic_delta_payload)["participants"]] == [
+                "participant_alpha", "participant_beta", "participant_delta"
             ]
 
         finally:
@@ -384,7 +486,10 @@ def main():
     assert "window.location.protocol" not in app_js, "app.js sintetiza protocolo da janela"
     assert ":8443" not in app_js, "app.js contém porta hardcoded"
     assert "surface.public_url" in app_js
-    assert "/api/ecosystem" not in app_js
+    assert 'fetch("/api/ecosystem"' not in app_js
+    assert 'fetch("/api/systems"' not in app_js
+    assert 'if (viewName === "ecosystem") loadSemanticEcosystem()' in app_js
+    assert "await loadWorkspace();" in app_js
 
     print("sisterd_ecosystem_api_tests (public_url and delta) ok")
 

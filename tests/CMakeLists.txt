@@ -212,6 +212,12 @@ add_test(
         ${CMAKE_CURRENT_SOURCE_DIR}/ecosystem_projection_renderer_test.py)
 
 add_test(
+    NAME semantic_ecosystem_contract_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/semantic_ecosystem_contract_test.py)
+
+add_test(
     NAME sister_maturity_contract_tests
     COMMAND
         ${Python3_EXECUTABLE} -m unittest discover
