@@ -49,6 +49,10 @@
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11 12 4l8 7v8a1 1 0 0 1-1 1h-5v-6h-4v6H5a1 1 0 0 1-1-1v-8Z"/></svg>
           Início
         </button>
+        <button class="nav-link" type="button" data-view="ecosystem">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="18" cy="18" r="2"/><path d="m8 11 8-4M8 13l8 4"/></svg>
+          Ecossistema
+        </button>
         <a class="nav-link" href="/admin/users" data-admin-only hidden>
           <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20v-2a5 5 0 0 1 5-5h2a5 5 0 0 1 5 5v2M17 10h4M19 8v4"/></svg>
           Equipe
@@ -164,6 +168,26 @@
             </div>
           </div>
           <div class="workspace-resource-grid" id="workspace-resources"></div>
+        </section>
+      </section>
+
+      <section class="view" id="view-ecosystem" aria-label="Ecossistema">
+        <div class="page-heading">
+          <div>
+            <span class="eyebrow">Projeção semântica</span>
+            <h2>Ecossistema</h2>
+            <p>Participantes e capacidades sustentados por fontes autoritativas vigentes.</p>
+          </div>
+        </div>
+
+        <section class="panel semantic-ecosystem-panel">
+          <div class="panel-header">
+            <div>
+              <span class="section-kicker">Fatos declarados</span>
+              <h3>Participantes e capacidades</h3>
+            </div>
+          </div>
+          <div id="semantic-ecosystem" class="semantic-participant-list" aria-live="polite"></div>
         </section>
       </section>
 
