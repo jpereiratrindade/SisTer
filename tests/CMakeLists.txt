@@ -206,6 +206,14 @@ add_test(
         ${CMAKE_SOURCE_DIR}/web)
 
 add_test(
+    NAME workspace_surface_propagation_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/workspace_surface_propagation_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)
+
+add_test(
     NAME ecosystem_projection_renderer_tests
     COMMAND
         ${Python3_EXECUTABLE}
