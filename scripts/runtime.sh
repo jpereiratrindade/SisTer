@@ -64,20 +64,8 @@ derive_ecosystem_projection() {
 
   mkdir -p "$ROOT_DIR/.run"
   local projection_file="$ROOT_DIR/.run/ecosystem_projection.tsv"
-  jq -r '
-    "META\t" + (.composition_id // "") + "\t" + (.deployment_id // "") + "\t" + (.status // "NOT_CONFIGURED"),
-    ( (.components // [])[] |
-      "PARTICIPANT\t" +
-      (.component_id // "") + "\t" +
-      (.system_id // "") + "\t" +
-      (.runtime.transport // "") + "\t" +
-      (.runtime.listen // "") + "\t" +
-      ((.runtime.port // 0) | tostring) + "\t" +
-      (.probe.health_path // "") + "\t" +
-      (.gateway.host // "") + "\t" +
-      (.gateway.public_url // "")
-    )
-  ' "$resolved" > "$projection_file"
+  "$ROOT_DIR/scripts/app/render-ecosystem-projection.sh" \
+    "$resolved" "$projection_file"
   export SISTER_ECOSYSTEM_PROJECTION_FILE="$projection_file"
 }
 
