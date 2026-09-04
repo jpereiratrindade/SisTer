@@ -463,6 +463,13 @@ O `sisterd` suporta diversas variáveis de ambiente para configuração avançad
 - `SISTER_REFERENCE_PORT`: porta loopback da referencia (padrao `19001`).
 - `SISTER_INTERNAL_PROXY_TOKEN`: segredo efemero exigido quando a referencia
   esta habilitada; `run_all.sh` gera um valor novo para cada execucao.
+- `SISTER_ECOSYSTEM_PROJECTION_FILE`: snapshot declarativo/operacional
+  materializado pela infraestrutura; Workspace reutiliza somente as superfícies
+  declaradas e Engenharia observa health sob demanda.
+- `SISTER_SEMANTIC_ECOSYSTEM_PROJECTION_FILE`: snapshot semântico compacto
+  materializado por fonte competente conforme
+  `contracts/ecosystem-semantic/1.0.0/`; ausente ou inválido resulta em projeção
+  vazia, sem inferência a partir do deployment.
 - `SISTER_COOKIE_SECURE`, `SISTER_HSTS`, `SISTER_REQUIRE_SAME_ORIGIN`: Controles de segurança (ativos por padrão em `production`).
 
 Os dados territoriais (objetos geoespaciais) ainda são demonstrativos. Sistemas,

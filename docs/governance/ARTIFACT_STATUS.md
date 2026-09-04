@@ -8,6 +8,9 @@ repositório não significa vigência operacional nem autorização de integraç
 Artefatos que governam a baseline atual:
 
 - `contracts/subsystem/1.0.0/`: contrato comum de subsistemas;
+- `contracts/workspace/1.0.0/`: contrato da projeção de superfícies autorizadas;
+- `contracts/ecosystem-semantic/1.0.0/`: contrato da projeção semântica
+  fail-closed, sem transferir autoridade dos participantes;
 - `reference/sister-reference/`: implementação normativa de referência;
 - `docs/adr/ADR-0022-reference-subsystem-validation-boundary.md`;
 - `docs/governance/SUBSYSTEM_CONFORMANCE.md`;
