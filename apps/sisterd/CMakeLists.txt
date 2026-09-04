@@ -9,6 +9,7 @@ add_executable(
     participation_service.cpp
     api/maturity_routes.cpp
     ecosystem/ecosystem_view.cpp
+    ecosystem/semantic_view.cpp
     http/content_length.cpp
     runtime/connection_thread_pool.cpp
     runtime/listener.cpp

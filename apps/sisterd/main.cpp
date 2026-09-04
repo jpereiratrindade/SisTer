@@ -3,6 +3,7 @@
 #include "participation_service.hpp"
 #include "api/maturity_routes.hpp"
 #include "ecosystem/ecosystem_view.hpp"
+#include "ecosystem/semantic_view.hpp"
 #include "http/content_length.hpp"
 #include "runtime/connection_thread_pool.hpp"
 #include "runtime/listener.hpp"
@@ -97,6 +98,7 @@ struct ServerConfig {
     std::string internalProxyToken;
     std::string extraConnectSrc;
     std::filesystem::path ecosystemProjectionFile;
+    std::filesystem::path semanticEcosystemProjectionFile;
     int subsystemHealthTimeoutMilliseconds = 800;
 };
 
@@ -138,11 +140,17 @@ struct AppState {
     std::mutex authMutex;
     std::mutex dbMutex;
     std::mutex ecosystemMutex;
-    std::shared_ptr<const sister::ecosystem::EcosystemView> ecosystemSnapshot;
+    std::shared_ptr<const sister::ecosystem::EcosystemView> ecosystemDeclarativeSnapshot;
+    std::shared_ptr<const sister::ecosystem::EcosystemView> ecosystemOperationalSnapshot;
     std::filesystem::path ecosystemSnapshotSource;
     std::filesystem::file_time_type ecosystemSnapshotWriteTime{};
     bool ecosystemSnapshotHasWriteTime = false;
     Clock::time_point ecosystemObservedAt{};
+    std::mutex semanticEcosystemMutex;
+    std::shared_ptr<const sister::ecosystem::SemanticView> semanticEcosystemSnapshot;
+    std::filesystem::path semanticEcosystemSnapshotSource;
+    std::filesystem::file_time_type semanticEcosystemSnapshotWriteTime{};
+    bool semanticEcosystemSnapshotHasWriteTime = false;
 
     AppState(
         const std::filesystem::path& authFile,
@@ -351,6 +359,10 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.extraConnectSrc = environment("SISTER_EXTRA_CONNECT_SRC").value_or("");
     if (const auto projectionFile = environment("SISTER_ECOSYSTEM_PROJECTION_FILE"); projectionFile && !projectionFile->empty()) {
         config.ecosystemProjectionFile = *projectionFile;
+    }
+    if (const auto projectionFile = environment("SISTER_SEMANTIC_ECOSYSTEM_PROJECTION_FILE");
+        projectionFile && !projectionFile->empty()) {
+        config.semanticEcosystemProjectionFile = *projectionFile;
     }
     config.subsystemHealthTimeoutMilliseconds = parseInteger<int>(
         environment("SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS").value_or("800"),
@@ -1115,6 +1127,7 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
         return {
             "session.self.read",
             "workspace.resources.read",
+            "ecosystem.semantic.read",
             "engineering.ecosystem.read",
             "engineering.plan.read",
             "engineering.operational-base.read",
@@ -1136,12 +1149,13 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
         return {
             "session.self.read",
             "workspace.resources.read",
+            "ecosystem.semantic.read",
             "reference.identity.read",
             "reference.echo.execute"
         };
     }
     if (role == "user" || role == "registered_user" || role == "guest") {
-        return {"session.self.read", "workspace.resources.read"};
+        return {"session.self.read", "workspace.resources.read", "ecosystem.semantic.read"};
     }
     return {}; // Unknown roles fail closed.
 }
@@ -1405,38 +1419,78 @@ constexpr std::string_view kFallbackDiagnostics = R"([
   {"service":"PostgreSQL/pgvector","status":"planejado","score":20}
 ])";
 
+bool refreshDeclarativeEcosystemLocked(AppState& state, const ServerConfig& config) {
+    std::error_code error;
+    const auto writeTime = std::filesystem::last_write_time(
+        config.ecosystemProjectionFile, error);
+    const bool hasWriteTime = !error;
+    const bool sourceChanged = !state.ecosystemDeclarativeSnapshot ||
+        state.ecosystemSnapshotSource != config.ecosystemProjectionFile ||
+        state.ecosystemSnapshotHasWriteTime != hasWriteTime ||
+        (hasWriteTime && state.ecosystemSnapshotWriteTime != writeTime);
+    if (!sourceChanged) return false;
+
+    state.ecosystemDeclarativeSnapshot =
+        std::make_shared<const sister::ecosystem::EcosystemView>(
+            sister::ecosystem::parseProjectionFile(config.ecosystemProjectionFile));
+    state.ecosystemOperationalSnapshot.reset();
+    state.ecosystemSnapshotSource = config.ecosystemProjectionFile;
+    state.ecosystemSnapshotHasWriteTime = hasWriteTime;
+    if (hasWriteTime) state.ecosystemSnapshotWriteTime = writeTime;
+    return true;
+}
+
+std::shared_ptr<const sister::ecosystem::EcosystemView> declarativeEcosystem(
+    AppState& state,
+    const ServerConfig& config) {
+    std::lock_guard lock(state.ecosystemMutex);
+    refreshDeclarativeEcosystemLocked(state, config);
+    return state.ecosystemDeclarativeSnapshot;
+}
+
 std::shared_ptr<const sister::ecosystem::EcosystemView> observedEcosystem(
     AppState& state,
     const ServerConfig& config) {
     constexpr auto healthFreshness = std::chrono::milliseconds(500);
     std::lock_guard lock(state.ecosystemMutex);
-
-    std::error_code error;
-    const auto writeTime = std::filesystem::last_write_time(
-        config.ecosystemProjectionFile, error);
-    const bool hasWriteTime = !error;
-    const bool sourceChanged = !state.ecosystemSnapshot ||
-        state.ecosystemSnapshotSource != config.ecosystemProjectionFile ||
-        state.ecosystemSnapshotHasWriteTime != hasWriteTime ||
-        (hasWriteTime && state.ecosystemSnapshotWriteTime != writeTime);
+    const bool sourceChanged = refreshDeclarativeEcosystemLocked(state, config);
     const auto now = Clock::now();
-    const bool healthExpired = !state.ecosystemSnapshot ||
+    const bool healthExpired = !state.ecosystemOperationalSnapshot ||
         now - state.ecosystemObservedAt >= healthFreshness;
 
     if (sourceChanged || healthExpired) {
-        auto view = sourceChanged
-            ? sister::ecosystem::parseProjectionFile(config.ecosystemProjectionFile)
-            : *state.ecosystemSnapshot;
+        auto view = *state.ecosystemDeclarativeSnapshot;
         sister::ecosystem::observeEcosystemHealth(
             view, config.subsystemHealthTimeoutMilliseconds);
-        state.ecosystemSnapshot =
+        state.ecosystemOperationalSnapshot =
             std::make_shared<const sister::ecosystem::EcosystemView>(std::move(view));
-        state.ecosystemSnapshotSource = config.ecosystemProjectionFile;
-        state.ecosystemSnapshotHasWriteTime = hasWriteTime;
-        if (hasWriteTime) state.ecosystemSnapshotWriteTime = writeTime;
         state.ecosystemObservedAt = now;
     }
-    return state.ecosystemSnapshot;
+    return state.ecosystemOperationalSnapshot;
+}
+
+std::shared_ptr<const sister::ecosystem::SemanticView> semanticEcosystem(
+    AppState& state,
+    const ServerConfig& config) {
+    std::lock_guard lock(state.semanticEcosystemMutex);
+    std::error_code error;
+    const auto writeTime = std::filesystem::last_write_time(
+        config.semanticEcosystemProjectionFile, error);
+    const bool hasWriteTime = !error;
+    const bool sourceChanged = !state.semanticEcosystemSnapshot ||
+        state.semanticEcosystemSnapshotSource != config.semanticEcosystemProjectionFile ||
+        state.semanticEcosystemSnapshotHasWriteTime != hasWriteTime ||
+        (hasWriteTime && state.semanticEcosystemSnapshotWriteTime != writeTime);
+    if (sourceChanged) {
+        state.semanticEcosystemSnapshot =
+            std::make_shared<const sister::ecosystem::SemanticView>(
+                sister::ecosystem::parseSemanticProjectionFile(
+                    config.semanticEcosystemProjectionFile));
+        state.semanticEcosystemSnapshotSource = config.semanticEcosystemProjectionFile;
+        state.semanticEcosystemSnapshotHasWriteTime = hasWriteTime;
+        if (hasWriteTime) state.semanticEcosystemSnapshotWriteTime = writeTime;
+    }
+    return state.semanticEcosystemSnapshot;
 }
 
 ApiPayload routeApi(
@@ -1498,6 +1552,10 @@ ApiPayload routeApi(
         const auto view = observedEcosystem(state, config);
         return {true, false, sister::ecosystem::serializeSystemsCompatibilityJson(*view)};
     }
+    if (path == "/api/v1/ecosystem/semantic") {
+        const auto view = semanticEcosystem(state, config);
+        return {true, false, sister::ecosystem::serializeSemanticViewJson(*view)};
+    }
     if (path == "/api/v1/workspace") {
         if (!actor) return {false, false, "{}"};
         std::vector<std::string_view> accessClasses{"authenticated"};
@@ -1509,7 +1567,7 @@ ApiPayload routeApi(
             accessClasses.emplace_back("engineering");
             accessClasses.emplace_back("admin");
         }
-        const auto view = observedEcosystem(state, config);
+        const auto view = declarativeEcosystem(state, config);
         return {true, false,
             sister::ecosystem::serializeWorkspaceViewJson(*view, accessClasses)};
     }
@@ -2344,6 +2402,9 @@ void handleClient(
             std::string_view resource = "sister-control-plane";
             std::string_view purpose = "governed_api_access";
             if (request.path == "/api/v1/workspace") capability = "workspace.resources.read";
+            else if (request.path == "/api/v1/ecosystem/semantic") {
+                capability = "ecosystem.semantic.read";
+            }
             else if (request.path == "/api/systems" || request.path == "/api/ecosystem") {
                 capability = "engineering.ecosystem.read";
             }

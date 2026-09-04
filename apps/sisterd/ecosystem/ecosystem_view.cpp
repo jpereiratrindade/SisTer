@@ -423,16 +423,15 @@ std::string serializeWorkspaceViewJson(
 
             if (!first) json += ',';
             first = false;
-            const std::string availability = participant.health.status == "online"
-                ? "available"
-                : participant.health.status == "offline" ? "unavailable" : "unknown";
             json += "\n    {\n";
             json += "      \"surface_id\": \"" + jsonEscape(surface.surfaceId) + "\",\n";
             json += "      \"participant_id\": \"" + jsonEscape(participant.systemId) + "\",\n";
             json += "      \"label\": \"" + jsonEscape(surface.label) + "\",\n";
             json += "      \"purpose\": \"" + jsonEscape(surface.purpose) + "\",\n";
             json += "      \"public_url\": \"" + jsonEscape(surface.publicUrl) + "\",\n";
-            json += "      \"availability\": \"" + availability + "\"\n";
+            // This is semantic availability of a complete, authorized surface;
+            // operational reachability belongs exclusively to Engineering.
+            json += "      \"availability\": \"available\"\n";
             json += "    }";
         }
     }

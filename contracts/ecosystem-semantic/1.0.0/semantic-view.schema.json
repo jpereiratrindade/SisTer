@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.local/contracts/ecosystem-semantic/1.0.0/semantic-view.schema.json",
+  "title": "SisTer Semantic Ecosystem View 1.0.0",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema", "source_status", "source_revision", "participants", "relations", "relations_status"],
+  "properties": {
+    "schema": {"const": "sister.semantic-ecosystem-view/1.0.0"},
+    "source_status": {"enum": ["authoritative", "not_configured", "unavailable", "invalid"]},
+    "source_revision": {"type": "string"},
+    "participants": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["participant_id", "label", "declared_state", "authority_scope", "provenance_ref", "capabilities"],
+        "properties": {
+          "participant_id": {"type": "string", "minLength": 1},
+          "label": {"type": "string", "minLength": 1},
+          "declared_state": {"type": "string", "minLength": 1},
+          "authority_scope": {"type": "string", "minLength": 1},
+          "provenance_ref": {"type": "string", "minLength": 1},
+          "capabilities": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["capability_id", "label", "authority_scope"],
+              "properties": {
+                "capability_id": {"type": "string", "minLength": 1},
+                "label": {"type": "string", "minLength": 1},
+                "authority_scope": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      }
+    },
+    "relations": {"type": "array", "maxItems": 0},
+    "relations_status": {"const": "not_available"}
+  }
+}
