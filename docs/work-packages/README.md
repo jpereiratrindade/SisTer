@@ -27,6 +27,7 @@ correspondente com:
 - [WP-FED-01 - Registro governado de sistemas e capacidades](./WP-FED-01-system-registry.md)
 - [WP-SGE-PLAN-01 - Primeiro ciclo de planejamento reflexivo](./WP-SGE-PLAN-01.md)
 - [SISTER-WEB-UX-001 v0.2.0 — Projeções de usuário, ecossistema e engenharia](./SISTER-WEB-UX-001_v0.2.0.md)
+- [SISTER-WEB-QUALIFICATION-HERMETICITY-001 v0.1.0 — Qualificação hermética dos testes de superfície](./SISTER-WEB-QUALIFICATION-HERMETICITY-001_v0.1.0.md)
 
 ## Convergência de release
 
