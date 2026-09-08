@@ -74,9 +74,18 @@ derive_ecosystem_projection
 
 PORT="${SISTER_RUNTIME_PORT:-$SISTER_APP_PORT}"
 BIN="$ROOT_DIR/build/apps/sisterd/sisterd"
+PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
+IDENTITY_TOOL="$ROOT_DIR/scripts/app/process_identity.py"
 
 health_ok() {
   curl -fsS "http://127.0.0.1:${PORT}/api/health" >/dev/null 2>&1
+}
+
+runtime_owned() {
+  python3 "$IDENTITY_TOOL" validate \
+    --pid-file "$PID_FILE" \
+    --environment "$ENV_NAME" \
+    --executable "$BIN" >/dev/null 2>&1
 }
 
 start_runtime() {
@@ -86,8 +95,12 @@ start_runtime() {
   }
 
   if health_ok; then
-    echo "[PASS] SisTer runtime já está saudável em 127.0.0.1:${PORT}"
-    return 0
+    if runtime_owned; then
+      echo "[PASS] SisTer runtime desta release já está saudável em 127.0.0.1:${PORT}"
+      return 0
+    fi
+    echo "[FAIL] binding 127.0.0.1:${PORT} está ocupado por runtime que não pertence a esta release" >&2
+    exit 4
   fi
 
   echo "[runtime] Garantindo banco SisTer..."
@@ -97,7 +110,11 @@ start_runtime() {
 
   echo "[runtime] Iniciando sisterd qualificado sem rebuild..."
   ./scripts/app/serve.sh "$ENV_NAME" "$PORT" --no-build
-  ./scripts/app/smoke.sh "$PORT"
+  if ! ./scripts/app/smoke.sh "$PORT"; then
+    echo "[FAIL] smoke pós-start falhou; compensando runtime recém-iniciado" >&2
+    ./scripts/app/stop.sh "$ENV_NAME" --core-only >/dev/null 2>&1 || true
+    exit 3
+  fi
 
   health_ok || {
     echo "[FAIL] SisTer runtime não ficou saudável" >&2
@@ -113,8 +130,11 @@ stop_runtime() {
 }
 
 status_runtime() {
-  if health_ok; then
+  if runtime_owned && health_ok; then
     echo "[UP] SisTer installed runtime 127.0.0.1:${PORT}"
+  elif health_ok; then
+    echo "[DRIFT] 127.0.0.1:${PORT} responde, mas o runtime não pertence a esta release" >&2
+    exit 1
   else
     echo "[DOWN] SisTer installed runtime"
     exit 1
@@ -122,6 +142,10 @@ status_runtime() {
 }
 
 health_runtime() {
+  runtime_owned || {
+    echo "[FAIL] runtime ativo não pertence a esta release" >&2
+    exit 1
+  }
   curl --fail --silent --show-error \
     "http://127.0.0.1:${PORT}/api/health"
   printf '\n'

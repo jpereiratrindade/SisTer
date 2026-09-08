@@ -4,7 +4,7 @@ set -euo pipefail
 PORT="${1:-8000}"
 
 home_html="$(curl -fsS "http://127.0.0.1:${PORT}/")"
-grep -q "Transformar sinais dispersos em compreensão compartilhada" <<<"$home_html"
+grep -q "Conhecimento integrado para territórios mais resilientes" <<<"$home_html"
 grep -q "sistemas inteligentes de" <<<"$home_html"
 grep -q "Projeto Plataforma Colaborativa Sul da Embrapa" <<<"$home_html"
 grep -q 'href="https://www.embrapa.br/"' <<<"$home_html"
@@ -17,6 +17,10 @@ then
   echo "Public home exposes a federated system name." >&2
   exit 1
 fi
+
+home_css="$(curl -fsS "http://127.0.0.1:${PORT}/home-experience.css")"
+grep -q "experience-public-home" <<<"$home_css"
+
 public_javascript="$(curl -fsS "http://127.0.0.1:${PORT}/public.js")"
 if grep -Eq \
   "MorfoCampo|DroneOps|CampoNode|Sister-Clima|Sister-Studio|Radar-Sister" \
