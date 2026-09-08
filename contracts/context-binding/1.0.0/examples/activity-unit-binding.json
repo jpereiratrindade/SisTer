@@ -1,0 +1,20 @@
+{
+  "schema": "sister.context-binding/1.0.0",
+  "binding_id": "binding-example-001",
+  "relation": "has_context",
+  "subject": {
+    "authority": "authority-alpha",
+    "kind": "research.activity",
+    "id": "ACT-001"
+  },
+  "object": {
+    "authority": "authority-beta",
+    "kind": "experimental.unit",
+    "id": "UNIT-017"
+  },
+  "declared_by": "authority-alpha",
+  "provenance_ref": "urn:example:binding:001",
+  "evidence_refs": [
+    "urn:example:evidence:001"
+  ]
+}

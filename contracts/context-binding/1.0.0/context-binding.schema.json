@@ -1,0 +1,57 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://sister.dev/contracts/context-binding/1.0.0/context-binding.schema.json",
+  "title": "SisTer Context Binding",
+  "description": "Vínculo factual e atribuível entre duas referências contextuais federadas.",
+  "type": "object",
+  "required": [
+    "schema",
+    "binding_id",
+    "relation",
+    "subject",
+    "object",
+    "declared_by"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": "sister.context-binding/1.0.0"
+    },
+    "binding_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]*$"
+    },
+    "relation": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^[A-Za-z][A-Za-z0-9._:-]*$"
+    },
+    "subject": {
+      "$ref": "../../context-reference/1.0.0/context-reference.schema.json#/$defs/reference"
+    },
+    "object": {
+      "$ref": "../../context-reference/1.0.0/context-reference.schema.json#/$defs/reference"
+    },
+    "declared_by": {
+      "$ref": "../../context-reference/1.0.0/context-reference.schema.json#/$defs/reference/properties/authority"
+    },
+    "provenance_ref": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 1024
+    },
+    "evidence_refs": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "maxLength": 1024
+      }
+    }
+  }
+}
