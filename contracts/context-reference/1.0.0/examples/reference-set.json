@@ -1,0 +1,20 @@
+{
+  "schema": "sister.context-reference/1.0.0",
+  "refs": [
+    {
+      "authority": "authority-alpha",
+      "kind": "project",
+      "id": "project-001"
+    },
+    {
+      "authority": "authority-alpha",
+      "kind": "research_activity",
+      "id": "activity-001"
+    },
+    {
+      "authority": "authority-beta",
+      "kind": "unit",
+      "id": "unit-001"
+    }
+  ]
+}
