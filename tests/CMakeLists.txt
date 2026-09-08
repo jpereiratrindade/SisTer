@@ -205,6 +205,8 @@ add_test(
         $<TARGET_FILE:sisterd>
         ${CMAKE_SOURCE_DIR}/web)
 
+# Component-local only. The explicit workspace_atmos_integration_witness.py
+# requires external checkouts and must remain outside qualification CTest.
 add_test(
     NAME workspace_surface_propagation_tests
     COMMAND

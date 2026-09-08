@@ -304,3 +304,21 @@ separadamente:
 ```bash
 ./bin/sister-infra lifecycle run --target lab
 ```
+
+## Execução explícita do witness multi-repositório
+
+O CTest padrão mantém `workspace_surface_propagation_tests` autocontido.
+O Infra mantém a regressão em `tests/deployment_resolver_test.py`.
+O witness real está fora do CTest de qualificação e exige dependências explícitas;
+ausência de arquivos ou falha de integração resulta em erro, nunca sucesso/skip.
+
+```bash
+python3 SisTer/tests/workspace_atmos_integration_witness.py \
+  --sister-root "$PWD/SisTer" \
+  --infra-root "$PWD/sister-infra" \
+  --atmos-root "$PWD/sister-atmos" \
+  --sisterd "$PWD/SisTer/build/apps/sisterd/sisterd"
+```
+
+A composição workstation vigente do Infra também precisa ter seus participantes
+locais disponíveis, conforme os caminhos declarados nela.
