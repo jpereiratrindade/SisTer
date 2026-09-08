@@ -40,6 +40,7 @@ function showAuthenticatedIdentity(user) {
   qsa("[data-admin-only]").forEach((item) => {
     item.hidden = user.role !== "admin";
   });
+  renderHomeContext();
 }
 
 function availabilityLabel(value) {
@@ -48,31 +49,64 @@ function availabilityLabel(value) {
   return "Disponibilidade não observada";
 }
 
+function readableRole(value) {
+  const role = String(value || "").trim();
+  if (!role) return "Não declarado";
+  return role.replace(/[_-]+/g, " ");
+}
+
+function renderHomeContext() {
+  const user = state.currentUser;
+  if (!user) return;
+  const firstName = String(user.name || "").trim().split(/\s+/)[0] || "usuário";
+  const greeting = qs("#home-greeting");
+  const name = qs("#home-context-name");
+  const role = qs("#home-context-role");
+  if (greeting) greeting.textContent = `Olá, ${firstName}.`;
+  if (name) name.textContent = user.name || "Não declarada";
+  if (role) role.textContent = readableRole(user.role);
+}
+
 function renderWorkspace() {
   const container = qs("#workspace-resources");
   if (!container) return;
 
-  if (state.surfaces.length === 0) {
+  const total = state.surfaces.length;
+  const available = state.surfaces.filter((surface) => surface.availability === "available").length;
+  const resourceSummary = qs("#home-context-resources");
+  if (resourceSummary) {
+    resourceSummary.textContent = total === 0
+      ? "0"
+      : `${available} disponíveis · ${total} visíveis`;
+  }
+
+  if (total === 0) {
     container.innerHTML = `
-      <article class="workspace-empty">
+      <article class="workspace-empty experience-workspace-empty">
         <h4>Nenhum recurso disponível para este perfil</h4>
         <p>Recursos aparecem aqui somente quando possuem finalidade, endereço público e autorização declarados.</p>
       </article>`;
     return;
   }
 
-  container.innerHTML = state.surfaces.map((surface) => `
-    <article class="workspace-resource-card">
-      <span class="system-mark" aria-hidden="true">${escapeHtml(initials(surface.label))}</span>
-      <div>
-        <h4>${escapeHtml(surface.label)}</h4>
-        <p>${escapeHtml(surface.purpose)}</p>
-        <span class="workspace-availability" data-availability="${escapeHtml(surface.availability)}">
-          ${escapeHtml(availabilityLabel(surface.availability))}
-        </span>
-      </div>
-      <a class="primary-action" href="${escapeHtml(surface.public_url)}">Abrir</a>
-    </article>`).join("");
+  container.innerHTML = state.surfaces.map((surface) => {
+    const label = surface.label || "Participante";
+    const purpose = surface.purpose || "Capacidade declarada para este contexto.";
+    return `
+      <article class="workspace-resource-card experience-surface-card">
+        <div class="experience-surface-provider">
+          <span class="system-mark" aria-hidden="true">${escapeHtml(initials(label))}</span>
+          <div><span>Fornecido por</span><strong>${escapeHtml(label)}</strong></div>
+        </div>
+        <div class="experience-surface-content">
+          <h4>${escapeHtml(purpose)}</h4>
+          <span class="workspace-availability" data-availability="${escapeHtml(surface.availability)}">
+            ${escapeHtml(availabilityLabel(surface.availability))}
+          </span>
+        </div>
+        <a class="primary-action" href="${escapeHtml(surface.public_url)}">Abrir</a>
+      </article>`;
+  }).join("");
 }
 
 function renderSemanticEcosystem() {
@@ -162,6 +196,9 @@ async function init() {
   qs("#auth-logout")?.addEventListener("click", logout);
   qsa("button.nav-link[data-view]").forEach((button) => {
     button.addEventListener("click", () => openView(button.dataset.view));
+  });
+  qsa("[data-open-view]").forEach((button) => {
+    button.addEventListener("click", () => openView(button.dataset.openView));
   });
   await loadWorkspace();
 }
