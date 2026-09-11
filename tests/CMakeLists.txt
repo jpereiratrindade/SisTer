@@ -233,3 +233,18 @@ add_test(
         ${Python3_EXECUTABLE} -m unittest discover
         -s ${CMAKE_CURRENT_SOURCE_DIR}/maturity
         -p test_*.py)
+
+
+add_test(
+    NAME sisterd_context_projection_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sisterd_context_projection_test.py
+        $<TARGET_FILE:sisterd>
+        ${CMAKE_SOURCE_DIR}/web)
+
+add_test(
+    NAME sister_experience_visual_contract_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/sister_experience_visual_contract_test.py)

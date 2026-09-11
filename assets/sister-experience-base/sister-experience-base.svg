@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1672" height="941" viewBox="0 0 1672 941"
+     role="img" aria-labelledby="canonical-title canonical-description"
+     data-canonical-size="1672x941">
+  <title id="canonical-title">Pessoa situada em um ambiente computacional</title>
+  <desc id="canonical-description">Imagem basal canônica do ecossistema federado e semântico SisTer.</desc>
+
+  <metadata>
+    SisTer canonical visual base. The linked reference PNG is the absolute pixel authority.
+    Named semantic regions provide stable, versionable geometry and an editable transcription layer.
+  </metadata>
+
+  <style>
+    .semantic-region { fill: transparent; stroke: none; pointer-events: bounding-box; }
+    .vector-transcription { visibility: hidden; font-family: Montserrat, "Noto Sans", sans-serif; fill: #071f4b; }
+    .vector-transcription .display { font-size: 44px; font-weight: 800; letter-spacing: -1.8px; }
+    .vector-transcription .subtitle { font-size: 20px; font-weight: 500; }
+    .vector-transcription .module { font-size: 26px; font-weight: 800; }
+    .vector-transcription .verb { font-size: 17px; font-weight: 500; }
+    .vector-transcription .label { font-size: 14px; font-weight: 800; }
+    .vector-transcription .micro { font-size: 11px; font-weight: 500; }
+  </style>
+
+  <!-- Pixel-authoritative composite. Kept as a linked local raster so the SVG remains diffable. -->
+  <g id="background" data-layer="pixel-authority">
+    <image id="reference-raster" x="0" y="0" width="1672" height="941"
+           preserveAspectRatio="none" href="reference.png" xlink:href="reference.png"/>
+  </g>
+
+  <!-- Stable semantic geometry. These named regions are intentionally visually transparent. -->
+  <g id="title" data-bounds="24 16 610 146">
+    <title>Título e subtítulo</title>
+    <rect class="semantic-region" x="24" y="16" width="610" height="146"/>
+    <g class="vector-transcription" aria-hidden="true">
+      <text class="display" x="27" y="56">Pessoa situada em um</text>
+      <text class="display" x="27" y="101">ambiente computacional</text>
+      <text class="subtitle" x="28" y="133">No ecossistema SisTer, contexto vem antes da capacidade.</text>
+    </g>
+  </g>
+
+  <g id="left-principles" data-bounds="20 171 260 535">
+    <title>Texto introdutório, princípios e anotação esquerda</title>
+    <rect class="semantic-region" x="20" y="171" width="260" height="535"/>
+    <g class="vector-transcription" aria-hidden="true">
+      <text class="subtitle" x="28" y="194">Dados, pessoas, territórios</text>
+      <text class="label" x="70" y="340">Territórios mais justos e sustentáveis</text>
+      <text class="label" x="70" y="396">Decisões baseadas em evidências</text>
+      <text class="label" x="70" y="449">Conhecimento que gera valor público</text>
+      <text class="label" x="70" y="504">Pessoas no centro</text>
+    </g>
+  </g>
+
+  <g id="ecosystem" data-bounds="220 35 1242 650">
+    <title>Ecossistema computacional e relações semânticas orbitais</title>
+    <rect class="semantic-region" x="220" y="35" width="1242" height="650"/>
+
+    <g id="sister" data-bounds="680 36 310 130">
+      <title>SisTer compõe o ambiente</title>
+      <rect class="semantic-region" x="680" y="36" width="310" height="130"/>
+      <g class="vector-transcription" aria-hidden="true">
+        <text class="module" x="798" y="76">SisTer</text>
+        <text class="verb" x="798" y="98">compõe o ambiente</text>
+      </g>
+    </g>
+
+    <g id="urt" data-bounds="290 184 370 129">
+      <title>URT observa</title>
+      <rect class="semantic-region" x="290" y="184" width="370" height="129"/>
+      <g class="vector-transcription" aria-hidden="true">
+        <text class="module" x="392" y="224">URT</text>
+        <text class="verb" x="393" y="247">observa</text>
+      </g>
+    </g>
+
+    <g id="atmos" data-bounds="1050 184 390 129">
+      <title>Atmos interpreta</title>
+      <rect class="semantic-region" x="1050" y="184" width="390" height="129"/>
+      <g class="vector-transcription" aria-hidden="true">
+        <text class="module" x="1157" y="224">Atmos</text>
+        <text class="verb" x="1157" y="247">interpreta</text>
+      </g>
+    </g>
+
+    <g id="nexo" data-bounds="222 460 378 132">
+      <title>Nexo apoia decisão</title>
+      <rect class="semantic-region" x="222" y="460" width="378" height="132"/>
+      <g class="vector-transcription" aria-hidden="true">
+        <text class="module" x="328" y="502">Nexo</text>
+        <text class="verb" x="328" y="525">apoia decisão</text>
+      </g>
+    </g>
+
+    <g id="praxis" data-bounds="1120 455 348 129">
+      <title>Praxis avalia</title>
+      <rect class="semantic-region" x="1120" y="455" width="348" height="129"/>
+      <g class="vector-transcription" aria-hidden="true">
+        <text class="module" x="1220" y="496">Praxis</text>
+        <text class="verb" x="1220" y="519">avalia</text>
+      </g>
+    </g>
+
+    <g id="context-core" data-bounds="605 168 485 508">
+      <title>Núcleo humano-contextual</title>
+      <rect class="semantic-region" x="605" y="168" width="485" height="508"/>
+
+      <g id="person" data-bounds="756 170 169 110">
+        <title>Pessoa — Quem é, o que pesquisa, com quem colabora</title>
+        <rect class="semantic-region" x="756" y="170" width="169" height="110"/>
+        <g class="vector-transcription" aria-hidden="true">
+          <text class="label" x="814" y="232">Pessoa</text>
+          <text class="micro" x="778" y="254">Quem é, o que pesquisa,</text>
+          <text class="micro" x="794" y="270">com quem colabora</text>
+        </g>
+      </g>
+
+      <g id="role" data-bounds="608 288 137 102"><title>Papel — Qual é sua função no ecossistema</title><rect class="semantic-region" x="608" y="288" width="137" height="102"/></g>
+      <g id="project" data-bounds="944 286 140 105"><title>Projeto — O que busca realizar</title><rect class="semantic-region" x="944" y="286" width="140" height="105"/></g>
+      <g id="activity" data-bounds="608 458 137 116"><title>Atividade — Em que está trabalhando agora</title><rect class="semantic-region" x="608" y="458" width="137" height="116"/></g>
+      <g id="territory-context" data-bounds="977 459 138 115"><title>Território — Onde, em que contexto socioambiental</title><rect class="semantic-region" x="977" y="459" width="138" height="115"/></g>
+      <g id="period" data-bounds="751 594 175 82"><title>Período — Quando, em que horizonte</title><rect class="semantic-region" x="751" y="594" width="175" height="82"/></g>
+    </g>
+  </g>
+
+  <g id="territory" data-bounds="0 536 1672 405">
+    <title>Território e mundo real conectado</title>
+    <rect class="semantic-region" x="0" y="536" width="1672" height="405"/>
+    <g class="vector-transcription" aria-hidden="true">
+      <text class="label" x="672" y="797">ECOSSISTEMA FEDERADO E SEMÂNTICO</text>
+      <text class="micro" x="662" y="819">CAPACIDADES QUE SE CONECTAM PELO CONTEXTO</text>
+    </g>
+  </g>
+
+  <g id="right-principles" data-bounds="1478 29 182 452">
+    <title>Mapa do Brasil, manifesto e princípios da direita</title>
+    <rect class="semantic-region" x="1478" y="29" width="182" height="452"/>
+    <g class="vector-transcription" aria-hidden="true">
+      <text class="label" x="1487" y="216">TERRITÓRIOS MAIS INTELIGENTES</text>
+      <text class="label" x="1487" y="241">PESSOAS MAIS FORTES</text>
+      <text class="label" x="1487" y="266">FUTUROS MAIS JUSTOS</text>
+    </g>
+  </g>
+
+  <g id="footer-brand" data-bounds="28 837 1632 86">
+    <title>Marca SisTer e assinatura territorial</title>
+    <rect class="semantic-region" x="28" y="837" width="1632" height="86"/>
+  </g>
+</svg>

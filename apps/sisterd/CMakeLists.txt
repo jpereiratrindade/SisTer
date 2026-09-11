@@ -14,6 +14,7 @@ add_executable(
     runtime/connection_thread_pool.cpp
     runtime/listener.cpp
     security/login_rate_limiter.cpp
+    identity/internal_assertion.cpp
 )
 
 target_include_directories(sisterd PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})

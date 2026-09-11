@@ -1,0 +1,19 @@
+{
+  "canonical_size": [
+    1672,
+    941
+  ],
+  "reference": "assets/sister-experience-base/reference.png",
+  "candidate": "assets/sister-experience-base/sister-experience-base.png",
+  "mae_rgb_0_255": 0.0,
+  "rmse_rgb_0_255": 0.0,
+  "rmse_normalized": 0.0,
+  "psnr_db": "infinity",
+  "global_ssim": 1.0,
+  "dhash_distance_64": 0,
+  "changed_pixels": 0,
+  "changed_pixels_percent": 0.0,
+  "changed_pixels_over_delta_8": 0,
+  "max_channel_delta": 0,
+  "pixel_exact": true
+}

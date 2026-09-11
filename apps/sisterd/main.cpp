@@ -2,6 +2,7 @@
 #include "db.hpp"
 #include "participation_service.hpp"
 #include "api/maturity_routes.hpp"
+#include "identity/internal_assertion.hpp"
 #include "ecosystem/ecosystem_view.hpp"
 #include "ecosystem/semantic_view.hpp"
 #include "http/content_length.hpp"
@@ -95,6 +96,11 @@ struct ServerConfig {
     int upstreamTimeoutMilliseconds = 5'000;
     bool referenceSubsystemEnabled = false;
     uint16_t referencePort = 19001;
+    bool nexoContextProjectionEnabled = false;
+    uint16_t nexoPort = 0;
+    std::filesystem::path internalIdentityPrivateKeyFile;
+    std::string internalIdentityKeyId;
+    int internalIdentityTtlSeconds = 60;
     std::string internalProxyToken;
     std::string extraConnectSrc;
     std::filesystem::path ecosystemProjectionFile;
@@ -355,6 +361,42 @@ ServerConfig loadConfig(int argc, char** argv) {
     config.referencePort = parseInteger<uint16_t>(
         environment("SISTER_REFERENCE_PORT").value_or("19001"),
         1, std::numeric_limits<uint16_t>::max(), "SISTER_REFERENCE_PORT");
+
+    config.nexoContextProjectionEnabled = parseBool(
+        environment("SISTER_ENABLE_NEXO_CONTEXT_PROJECTION").value_or("false"), false);
+    if (config.nexoContextProjectionEnabled) {
+        const auto nexoPort = environment("SISTER_NEXO_PORT");
+        if (!nexoPort || nexoPort->empty()) {
+            throw std::runtime_error(
+                "SISTER_ENABLE_NEXO_CONTEXT_PROJECTION requires SISTER_NEXO_PORT");
+        }
+        config.nexoPort = parseInteger<uint16_t>(
+            *nexoPort, 1, std::numeric_limits<uint16_t>::max(), "SISTER_NEXO_PORT");
+
+        const auto privateKey = environment("SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE");
+        if (!privateKey || privateKey->empty()) {
+            throw std::runtime_error(
+                "SISTER_ENABLE_NEXO_CONTEXT_PROJECTION requires "
+                "SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE");
+        }
+        config.internalIdentityPrivateKeyFile = *privateKey;
+        if (!config.internalIdentityPrivateKeyFile.is_absolute()) {
+            throw std::runtime_error(
+                "SISTER_INTERNAL_IDENTITY_PRIVATE_KEY_FILE must be absolute");
+        }
+
+        const auto keyId = environment("SISTER_INTERNAL_IDENTITY_KEY_ID");
+        if (!keyId || keyId->empty()) {
+            throw std::runtime_error(
+                "SISTER_ENABLE_NEXO_CONTEXT_PROJECTION requires "
+                "SISTER_INTERNAL_IDENTITY_KEY_ID");
+        }
+        config.internalIdentityKeyId = *keyId;
+        config.internalIdentityTtlSeconds = parseInteger<int>(
+            environment("SISTER_INTERNAL_IDENTITY_TTL_SECONDS").value_or("60"),
+            1, 300, "SISTER_INTERNAL_IDENTITY_TTL_SECONDS");
+    }
+
     config.internalProxyToken = environment("SISTER_INTERNAL_PROXY_TOKEN").value_or("");
     config.extraConnectSrc = environment("SISTER_EXTRA_CONNECT_SRC").value_or("");
     if (const auto projectionFile = environment("SISTER_ECOSYSTEM_PROJECTION_FILE"); projectionFile && !projectionFile->empty()) {
@@ -1127,6 +1169,7 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
         return {
             "session.self.read",
             "workspace.resources.read",
+            "workspace.context.read",
             "ecosystem.semantic.read",
             "engineering.ecosystem.read",
             "engineering.plan.read",
@@ -1149,13 +1192,14 @@ std::vector<std::string> capabilitiesForRole(const std::string& role) {
         return {
             "session.self.read",
             "workspace.resources.read",
+            "workspace.context.read",
             "ecosystem.semantic.read",
             "reference.identity.read",
             "reference.echo.execute"
         };
     }
     if (role == "user" || role == "registered_user" || role == "guest") {
-        return {"session.self.read", "workspace.resources.read", "ecosystem.semantic.read"};
+        return {"session.self.read", "workspace.resources.read", "workspace.context.read", "ecosystem.semantic.read"};
     }
     return {}; // Unknown roles fail closed.
 }
@@ -1663,6 +1707,83 @@ bool authorizeOrReject(
     const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(Clock::now() - requestStart);
     logEvent("info", requestId, peer, request.method, request.path, status, elapsed, reason);
     return false;
+}
+
+std::string signedReadFromLoopbackSubsystem(
+    uint16_t port,
+    std::string_view upstreamPath,
+    std::string_view subject,
+    std::string_view audience,
+    std::string_view capability,
+    std::string_view purpose,
+    std::string_view requestId,
+    const ServerConfig& config) {
+    if (upstreamPath.empty() || !upstreamPath.starts_with('/') ||
+        upstreamPath.find('\r') != std::string_view::npos ||
+        upstreamPath.find('\n') != std::string_view::npos) {
+        throw std::runtime_error("invalid signed subsystem path");
+    }
+    if (config.internalIdentityPrivateKeyFile.empty() ||
+        config.internalIdentityKeyId.empty()) {
+        throw std::runtime_error("signed subsystem identity is not configured");
+    }
+
+    auto provider = std::make_shared<sisterd::identity::FileKeyProvider>(
+        config.internalIdentityPrivateKeyFile, config.internalIdentityKeyId);
+    sisterd::identity::AssertionSigner signer(provider);
+
+    const auto nowPoint = std::chrono::system_clock::now();
+    const auto now = std::chrono::duration_cast<std::chrono::seconds>(
+        nowPoint.time_since_epoch()).count();
+
+    sisterd::identity::InternalAssertionClaims claims{
+        "sisterd",
+        std::string(subject),
+        std::string(audience),
+        {std::string(capability)},
+        std::string(purpose),
+        now,
+        now + config.internalIdentityTtlSeconds,
+        sisterd::identity::randomAssertionId(),
+        std::string(requestId),
+    };
+
+    const auto assertion = signer.sign(claims);
+    auto upstream = connectLoopback(port, config.upstreamTimeoutMilliseconds);
+
+    std::ostringstream outbound;
+    outbound << "GET " << upstreamPath << " HTTP/1.1\r\n"
+             << "Host: 127.0.0.1:" << port << "\r\n"
+             << "Authorization: Sister-Assertion "
+             << safeProxyHeaderValue(assertion, 16 * 1024) << "\r\n"
+             << "X-Request-ID: " << safeProxyHeaderValue(requestId, 128) << "\r\n"
+             << "Accept: application/json\r\n"
+             << "Connection: close\r\n\r\n";
+
+    if (!sendAll(upstream.get(), outbound.str())) {
+        throw std::runtime_error("cannot send signed subsystem request");
+    }
+
+    std::string response;
+    response.reserve(16 * 1024);
+    char buffer[16 * 1024];
+    for (;;) {
+        const auto count = recv(upstream.get(), buffer, sizeof(buffer), 0);
+        if (count == 0) break;
+        if (count < 0) {
+            if (errno == EINTR) continue;
+            if (errno == EAGAIN || errno == EWOULDBLOCK) {
+                throw std::runtime_error("signed subsystem response timeout");
+            }
+            throw std::runtime_error("cannot read signed subsystem response");
+        }
+        if (response.size() + static_cast<std::size_t>(count) >
+            kMaxProxyResponseBytes) {
+            throw std::runtime_error("signed subsystem response exceeds limit");
+        }
+        response.append(buffer, static_cast<std::size_t>(count));
+    }
+    return response;
 }
 
 void handleClient(
@@ -2386,6 +2507,17 @@ void handleClient(
         return;
     }
 
+    if (request.path == "/api/v1/context-projection" &&
+        !config.nexoContextProjectionEnabled) {
+        sendResponse(clientFd, jsonError(404, "Not Found", "Recurso não encontrado."),
+                     config, requestId, isHead);
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+            Clock::now() - requestStart);
+        logEvent("warn", requestId, peer, request.method, request.path, 404, elapsed,
+                 "nexo context projection disabled by execution profile");
+        return;
+    }
+
     // --- General API routes ---
     if (request.path.starts_with("/api/")) {
         if (request.method != "GET" && request.method != "HEAD") {
@@ -2401,7 +2533,12 @@ void handleClient(
             std::string_view capability;
             std::string_view resource = "sister-control-plane";
             std::string_view purpose = "governed_api_access";
-            if (request.path == "/api/v1/workspace") capability = "workspace.resources.read";
+            if (request.path == "/api/v1/context-projection") {
+                capability = "workspace.context.read";
+                resource = "sister_nexo";
+                purpose = "research_operations";
+            }
+            else if (request.path == "/api/v1/workspace") capability = "workspace.resources.read";
             else if (request.path == "/api/v1/ecosystem/semantic") {
                 capability = "ecosystem.semantic.read";
             }
@@ -2425,6 +2562,64 @@ void handleClient(
             if (!authorizeOrReject(
                     clientFd, actor, capability, resource, purpose, request, config,
                     requestId, peer, isHead, requestStart)) return;
+        }
+
+        if (request.path == "/api/v1/context-projection") {
+            if (!request.query.empty()) {
+                sendResponse(clientFd,
+                    jsonError(400, "Bad Request", "Query não permitida nesta projeção."),
+                    config, requestId, isHead);
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    Clock::now() - requestStart);
+                logEvent("warn", requestId, peer, request.method, request.path, 400, elapsed,
+                         "context_projection_query_rejected");
+                return;
+            }
+
+            try {
+                const auto raw = signedReadFromLoopbackSubsystem(
+                    config.nexoPort,
+                    "/api/v1/context-projection",
+                    actor->id,
+                    "sister_nexo",
+                    "nexo.context.read",
+                    "research_operations",
+                    requestId,
+                    config);
+                const auto upstreamStatus = statusFromRawHttpResponse(raw);
+                if (upstreamStatus != 200) {
+                    sendResponse(clientFd,
+                        jsonError(502, "Bad Gateway",
+                                  "Nexo recusou ou não produziu a projeção contextual."),
+                        config, requestId, isHead);
+                    const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        Clock::now() - requestStart);
+                    logEvent("warn", requestId, peer, request.method, request.path, 502, elapsed,
+                             "context_projection_upstream_rejected");
+                    return;
+                }
+
+                const HttpResponse response{
+                    200,
+                    "OK",
+                    rawHttpBody(raw),
+                    "application/json; charset=utf-8",
+                    {{"Cache-Control", "no-store"}}
+                };
+                sendResponse(clientFd, response, config, requestId, isHead);
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    Clock::now() - requestStart);
+                logEvent("info", requestId, peer, request.method, request.path, 200, elapsed);
+            } catch (const std::exception&) {
+                sendResponse(clientFd,
+                    jsonError(502, "Bad Gateway", "Projeção contextual do Nexo indisponível."),
+                    config, requestId, isHead);
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                    Clock::now() - requestStart);
+                logEvent("warn", requestId, peer, request.method, request.path, 502, elapsed,
+                         "context_projection_transport_failure");
+            }
+            return;
         }
 
         const auto payload = routeApi(request.path, state, config, actor ? &*actor : nullptr);
