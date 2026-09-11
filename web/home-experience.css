@@ -13,7 +13,14 @@
 
 /* SISTER-ECOSYSTEM-CANVAS — interactive reconstruction of the visual reference */
 .public-mode .system-layout {
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: "workspace";
+  min-height: 100dvh;
+}
+
+.public-mode .workspace {
+  min-height: 0;
 }
 
 .public-mode .topbar,
@@ -30,8 +37,9 @@
   --eco-green: #0b843d;
   position: relative;
   isolation: isolate;
-  min-height: max(100vh, 860px);
-  overflow: hidden;
+  min-height: 100dvh;
+  overflow-x: hidden;
+  overflow-y: auto;
   color: var(--eco-navy);
   background: #eff8fc;
 }
@@ -120,7 +128,7 @@
   z-index: 2;
   display: grid;
   grid-template-columns: minmax(245px, 20%) minmax(760px, 63%) minmax(180px, 17%);
-  min-height: max(100vh, 860px);
+  min-height: 100dvh;
 }
 
 .ecosystem-intro {
@@ -209,7 +217,7 @@
 .ecosystem-orbit {
   position: relative;
   min-width: 0;
-  height: min(760px, calc(100vh - 78px));
+  height: min(760px, calc(100dvh - 78px));
   min-height: 705px;
   margin-top: 24px;
 }
