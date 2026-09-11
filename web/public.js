@@ -62,7 +62,7 @@ function openEcosystemSystem(systemKey) {
       <span>Capacidades</span>
       <ul>${system.capabilities.map((capability) => `<li>${capability}</li>`).join("")}</ul>
     </div>
-    <a class="dialog-action" href="/login">Entrar para acessar ${system.name}</a>`;
+    <a class="dialog-action" href="/_sister/open/${systemKey}">Explorar ${system.name}</a>`;
 
   if (typeof dialog.showModal === "function") dialog.showModal();
   else dialog.setAttribute("open", "");
