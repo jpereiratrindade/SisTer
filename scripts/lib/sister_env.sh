@@ -73,6 +73,35 @@ sister_load_env() {
       ;;
   esac
 
+  if [[ "${SISTER_RUNTIME_MODE:-}" == "dev-preview" ]]; then
+    [[ -n "${SISTER_RUNTIME_INSTANCE_ID:-}" ]] || {
+      echo "Error: SISTER_RUNTIME_INSTANCE_ID is required in dev-preview" >&2
+      return 1
+    }
+    [[ "${SISTER_RUNTIME_INSTANCE_ID}" =~ ^[a-zA-Z0-9._-]+$ ]] || {
+      echo "Error: invalid SISTER_RUNTIME_INSTANCE_ID" >&2
+      return 1
+    }
+    [[ "${SISTER_PREVIEW_DB_PORT:-}" =~ ^[0-9]+$ ]] || {
+      echo "Error: SISTER_PREVIEW_DB_PORT is required in dev-preview" >&2
+      return 1
+    }
+    [[ -n "${SISTER_RUNTIME_DATA_DIR:-}" ]] || {
+      echo "Error: SISTER_RUNTIME_DATA_DIR is required in dev-preview" >&2
+      return 1
+    }
+
+    export COMPOSE_PROJECT_NAME="sister-preview-${SISTER_RUNTIME_INSTANCE_ID}"
+    export SISTER_DB_CONTAINER="sister-preview-${SISTER_RUNTIME_INSTANCE_ID}-db"
+    export SISTER_DB_PORT="$SISTER_PREVIEW_DB_PORT"
+    export SISTER_DB_VOLUME="sister_preview_${SISTER_RUNTIME_INSTANCE_ID}_pgdata"
+    export SISTER_DB_DATA_DIR="${SISTER_RUNTIME_DATA_DIR}/postgresql"
+    export SISTER_DATABASE_URL="postgresql://sister:${SISTER_DB_PASSWORD}@localhost:${SISTER_DB_PORT}/sister"
+    export SISTER_DEV_DATABASE_URL="$SISTER_DATABASE_URL"
+    export SISTER_DEV_DB_PORT="$SISTER_DB_PORT"
+    export SISTER_BIND_HOST="127.0.0.1"
+  fi
+
   sister_validate_db_data_dir
 }
 

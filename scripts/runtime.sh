@@ -11,6 +11,7 @@ cd "$ROOT_DIR"
 
 ENV_NAME="${SISTER_RUNTIME_ENV:-dev}"
 COMPONENT_CONFIG="${SISTER_COMPONENT_CONFIG_FILE:-$ROOT_DIR/.env}"
+ACTION="${1:-status}"
 
 if [[ -f "$COMPONENT_CONFIG" ]]; then
   set -a
@@ -18,6 +19,80 @@ if [[ -f "$COMPONENT_CONFIG" ]]; then
   source "$COMPONENT_CONFIG"
   set +a
 fi
+
+RUNTIME_MODE="${SISTER_RUNTIME_MODE:-installed}"
+RUNTIME_RUN_DIR="$ROOT_DIR/.run"
+PREVIEW_DB_PORT_FILE=""
+
+configure_preview_identity() {
+  [[ "$RUNTIME_MODE" == "dev-preview" ]] || return 0
+
+  local required value state_dir data_dir
+  for required in \
+    SISTER_RUNTIME_INSTANCE_ID \
+    SISTER_RUNTIME_STATE_DIR \
+    SISTER_RUNTIME_RUN_DIR \
+    SISTER_RUNTIME_DATA_DIR; do
+    value="${!required:-}"
+    [[ -n "$value" ]] || {
+      echo "[FAIL] DEV Preview requer $required" >&2
+      return 1
+    }
+  done
+  [[ "${SISTER_RUNTIME_CLEANUP_SCOPE:-}" == "preview-only" ]] || {
+    echo "[FAIL] DEV Preview requer SISTER_RUNTIME_CLEANUP_SCOPE=preview-only" >&2
+    return 1
+  }
+  [[ "$SISTER_RUNTIME_INSTANCE_ID" =~ ^[a-zA-Z0-9._-]+$ ]] || {
+    echo "[FAIL] identidade de DEV Preview inválida" >&2
+    return 1
+  }
+  for required in \
+    SISTER_RUNTIME_STATE_DIR \
+    SISTER_RUNTIME_RUN_DIR \
+    SISTER_RUNTIME_DATA_DIR; do
+    value="${!required}"
+    [[ "$value" == /* ]] || {
+      echo "[FAIL] $required deve ser absoluto em DEV Preview" >&2
+      return 1
+    }
+  done
+
+  state_dir="$(realpath -m -- "$SISTER_RUNTIME_STATE_DIR")"
+  data_dir="$(realpath -m -- "$SISTER_RUNTIME_DATA_DIR")"
+  [[ "$data_dir" == "$state_dir"/* ]] || {
+    echo "[FAIL] SISTER_RUNTIME_DATA_DIR deve pertencer ao state dir do Preview" >&2
+    return 1
+  }
+
+  RUNTIME_RUN_DIR="$(realpath -m -- "$SISTER_RUNTIME_RUN_DIR")"
+  mkdir -p -- "$RUNTIME_RUN_DIR" "$state_dir" "$data_dir"
+  PREVIEW_DB_PORT_FILE="$RUNTIME_RUN_DIR/postgresql.port"
+
+  if [[ "$ACTION" == "start" || "$ACTION" == "restart" ]]; then
+    python3 - "$PREVIEW_DB_PORT_FILE" <<'PY'
+import socket
+import sys
+from pathlib import Path
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+Path(sys.argv[1]).write_text(f"{port}\n", encoding="utf-8")
+PY
+  elif [[ ! -s "$PREVIEW_DB_PORT_FILE" ]]; then
+    printf '%s\n' "1" >"$PREVIEW_DB_PORT_FILE"
+  fi
+
+  SISTER_PREVIEW_DB_PORT="$(<"$PREVIEW_DB_PORT_FILE")"
+  [[ "$SISTER_PREVIEW_DB_PORT" =~ ^[0-9]+$ ]] || {
+    echo "[FAIL] porta PostgreSQL inválida no estado do Preview" >&2
+    return 1
+  }
+  export SISTER_PREVIEW_DB_PORT
+}
+
+configure_preview_identity
 
 # shellcheck disable=SC1091
 source scripts/lib/sister_env.sh
@@ -62,8 +137,8 @@ derive_ecosystem_projection() {
   [[ -n "$resolved" && -f "$resolved" ]] || return 0
   command -v jq >/dev/null 2>&1 || return 0
 
-  mkdir -p "$ROOT_DIR/.run"
-  local projection_file="$ROOT_DIR/.run/ecosystem_projection.tsv"
+  mkdir -p "$RUNTIME_RUN_DIR"
+  local projection_file="$RUNTIME_RUN_DIR/ecosystem_projection.tsv"
   "$ROOT_DIR/scripts/app/render-ecosystem-projection.sh" \
     "$resolved" "$projection_file"
   export SISTER_ECOSYSTEM_PROJECTION_FILE="$projection_file"
@@ -74,7 +149,7 @@ derive_ecosystem_projection
 
 PORT="${SISTER_RUNTIME_PORT:-$SISTER_APP_PORT}"
 BIN="$ROOT_DIR/build/apps/sisterd/sisterd"
-PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
+PID_FILE="$RUNTIME_RUN_DIR/sisterd-${ENV_NAME}.pid"
 IDENTITY_TOOL="$ROOT_DIR/scripts/app/process_identity.py"
 
 health_ok() {
@@ -125,7 +200,17 @@ start_runtime() {
 }
 
 stop_runtime() {
-  ./scripts/app/stop.sh "$ENV_NAME" >/dev/null 2>&1 || true
+  if [[ "$RUNTIME_MODE" == "dev-preview" ]]; then
+    ./scripts/app/stop.sh "$ENV_NAME" --core-only >/dev/null 2>&1 || true
+    ./scripts/db/destroy.sh "$ENV_NAME" >/dev/null 2>&1 || true
+    if command -v podman >/dev/null 2>&1 && [[ -d "$SISTER_RUNTIME_DATA_DIR" ]]; then
+      podman unshare chown -R 0:0 -- "$SISTER_RUNTIME_DATA_DIR" >/dev/null 2>&1 || true
+      chmod -R u+rwX -- "$SISTER_RUNTIME_DATA_DIR" >/dev/null 2>&1 || true
+    fi
+    rm -f -- "$PREVIEW_DB_PORT_FILE"
+  else
+    ./scripts/app/stop.sh "$ENV_NAME" >/dev/null 2>&1 || true
+  fi
   echo "[PASS] SisTer installed runtime parado; dados persistentes preservados"
 }
 
@@ -151,7 +236,7 @@ health_runtime() {
   printf '\n'
 }
 
-case "${1:-status}" in
+case "$ACTION" in
   start) start_runtime ;;
   stop) stop_runtime ;;
   restart)

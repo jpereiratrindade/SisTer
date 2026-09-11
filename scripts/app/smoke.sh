@@ -4,12 +4,14 @@ set -euo pipefail
 PORT="${1:-8000}"
 
 home_html="$(curl -fsS "http://127.0.0.1:${PORT}/")"
-grep -q "Conhecimento integrado para territórios mais resilientes" <<<"$home_html"
-grep -q "sistemas inteligentes de" <<<"$home_html"
-grep -q "Projeto Plataforma Colaborativa Sul da Embrapa" <<<"$home_html"
-grep -q 'href="https://www.embrapa.br/"' <<<"$home_html"
-grep -q 'Carta-anual-2024-2025.pdf#page=13' <<<"$home_html"
-grep -q 'rel="noopener noreferrer"' <<<"$home_html"
+grep -q "Pessoa situada em um" <<<"$home_html"
+grep -q "ambiente computacional" <<<"$home_html"
+grep -q "contexto vem antes da capacidade" <<<"$home_html"
+grep -q "Ecossistema federado e semântico" <<<"$home_html"
+grep -q 'data-system="urt"' <<<"$home_html"
+grep -q 'data-system="atmos"' <<<"$home_html"
+grep -q 'data-system="nexo"' <<<"$home_html"
+grep -q 'data-system="praxis"' <<<"$home_html"
 if grep -Eq \
   "MorfoCampo|DroneOps|CampoNode|Sister-Clima|Sister-Studio|Radar-Sister" \
   <<<"$home_html"
@@ -20,6 +22,17 @@ fi
 
 home_css="$(curl -fsS "http://127.0.0.1:${PORT}/home-experience.css")"
 grep -q "experience-public-home" <<<"$home_css"
+grep -q "Canonical desktop projection" <<<"$home_css"
+grep -q 'sister-experience-reference.png' <<<"$home_css"
+
+reference_status="$(
+  curl -sS -o /dev/null -w '%{http_code}' \
+    "http://127.0.0.1:${PORT}/assets/sister-experience-reference.png"
+)"
+if [[ "$reference_status" != "200" ]]; then
+  echo "Expected canonical SisTer experience asset; received ${reference_status}." >&2
+  exit 1
+fi
 
 public_javascript="$(curl -fsS "http://127.0.0.1:${PORT}/public.js")"
 if grep -Eq \

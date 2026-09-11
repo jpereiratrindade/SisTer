@@ -14,10 +14,11 @@ if [[ ! "$ENV_NAME" =~ ^[a-z0-9][a-z0-9-]*$ ]]; then
   exit 3
 fi
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+RUNTIME_RUN_DIR="${SISTER_RUNTIME_RUN_DIR:-$ROOT_DIR/.run}"
 if [[ $CORE_ONLY -eq 0 && -f "$ROOT_DIR/.run/executions/active-${ENV_NAME}.json" ]]; then
   exec python3 "$ROOT_DIR/scripts/app/execution_lifecycle.py" stop --environment "$ENV_NAME"
 fi
-PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
+PID_FILE="$RUNTIME_RUN_DIR/sisterd-${ENV_NAME}.pid"
 EXECUTABLE="$ROOT_DIR/build/apps/sisterd/sisterd"
 IDENTITY_TOOL="$ROOT_DIR/scripts/app/process_identity.py"
 

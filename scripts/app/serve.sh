@@ -31,20 +31,21 @@ case "$BUILD_MODE" in
     ;;
 esac
 
-mkdir -p .run
+RUNTIME_RUN_DIR="${SISTER_RUNTIME_RUN_DIR:-$ROOT_DIR/.run}"
+mkdir -p -- "$RUNTIME_RUN_DIR"
 scripts/app/stop.sh "$ENV_NAME" --core-only >/dev/null
 
 if [[ -z "${SISTER_ECOSYSTEM_PROJECTION_FILE:-}" && -n "${SISTER_RESOLVED_DEPLOYMENT_FILE:-}" && -f "${SISTER_RESOLVED_DEPLOYMENT_FILE:-}" ]]; then
   if command -v jq >/dev/null 2>&1; then
-    PROJECTION_FILE="$ROOT_DIR/.run/ecosystem_projection.tsv"
+    PROJECTION_FILE="$RUNTIME_RUN_DIR/ecosystem_projection.tsv"
     scripts/app/render-ecosystem-projection.sh \
       "$SISTER_RESOLVED_DEPLOYMENT_FILE" "$PROJECTION_FILE"
     export SISTER_ECOSYSTEM_PROJECTION_FILE="$PROJECTION_FILE"
   fi
 fi
 
-LOG_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.log"
-PID_FILE="$ROOT_DIR/.run/sisterd-${ENV_NAME}.pid"
+LOG_FILE="$RUNTIME_RUN_DIR/sisterd-${ENV_NAME}.log"
+PID_FILE="$RUNTIME_RUN_DIR/sisterd-${ENV_NAME}.pid"
 
 SISTERD_ENV=(
   SISTER_ENV="$ENV_NAME"
@@ -56,6 +57,12 @@ SISTERD_ENV=(
   SISTER_EXTRA_CONNECT_SRC="${SISTER_EXTRA_CONNECT_SRC:-}"
   SISTER_ECOSYSTEM_PROJECTION_FILE="${SISTER_ECOSYSTEM_PROJECTION_FILE:-}"
   SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS="${SISTER_SUBSYSTEM_HEALTH_TIMEOUT_MS:-800}"
+  SISTER_RUNTIME_MODE="${SISTER_RUNTIME_MODE:-installed}"
+  SISTER_RUNTIME_INSTANCE_ID="${SISTER_RUNTIME_INSTANCE_ID:-installed}"
+  SISTER_RUNTIME_STATE_DIR="${SISTER_RUNTIME_STATE_DIR:-$ROOT_DIR/.state}"
+  SISTER_RUNTIME_RUN_DIR="$RUNTIME_RUN_DIR"
+  SISTER_RUNTIME_DATA_DIR="${SISTER_RUNTIME_DATA_DIR:-$ROOT_DIR/.state/data}"
+  SISTER_RUNTIME_CLEANUP_SCOPE="${SISTER_RUNTIME_CLEANUP_SCOPE:-installed}"
 )
 if command -v setsid >/dev/null 2>&1; then
   setsid env "${SISTERD_ENV[@]}" ./build/apps/sisterd/sisterd "$PORT" web >"$LOG_FILE" 2>&1 &

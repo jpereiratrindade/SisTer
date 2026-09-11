@@ -248,3 +248,9 @@ add_test(
     COMMAND
         ${Python3_EXECUTABLE}
         ${CMAKE_CURRENT_SOURCE_DIR}/sister_experience_visual_contract_test.py)
+
+add_test(
+    NAME dev_preview_runtime_contract_tests
+    COMMAND
+        ${Python3_EXECUTABLE}
+        ${CMAKE_CURRENT_SOURCE_DIR}/dev_preview_runtime_contract_test.py)
