@@ -21,7 +21,7 @@ if [[ -f "$COMPONENT_CONFIG" ]]; then
 fi
 
 RUNTIME_MODE="${SISTER_RUNTIME_MODE:-installed}"
-RUNTIME_RUN_DIR="$ROOT_DIR/.run"
+RUNTIME_RUN_DIR="${SISTER_RUNTIME_RUN_DIR:-$ROOT_DIR/.run}"
 PREVIEW_DB_PORT_FILE=""
 
 configure_preview_identity() {

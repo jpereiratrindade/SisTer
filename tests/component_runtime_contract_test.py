@@ -198,6 +198,7 @@ class ComponentRuntimeContractTest(unittest.TestCase):
         self.assertIn("SISTER_RESOLVED_DEPLOYMENT_FILE", runtime)
         self.assertIn(".components[] | select(.system_id == $id)", runtime)
         self.assertIn("SISTER_COMPONENT_CONFIG_FILE", runtime)
+        self.assertIn("SISTER_RUNTIME_RUN_DIR", runtime)
 
     def test_sibling_atmos_component_contract_if_present(self):
         atmos_path = ROOT.parent / "sister-atmos" / ".sister" / "component.json"
