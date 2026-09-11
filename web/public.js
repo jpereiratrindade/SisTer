@@ -83,10 +83,16 @@ function selectEcosystemContext(contextKey) {
 
 function initializeEcosystemExperience() {
   document.querySelectorAll("[data-system]").forEach((card) => {
-    card.addEventListener("click", () => openEcosystemSystem(card.dataset.system));
+    card.addEventListener("click", (event) => {
+      event.preventDefault();
+      openEcosystemSystem(card.dataset.system);
+    });
   });
   document.querySelectorAll("[data-context]").forEach((node) => {
-    node.addEventListener("click", () => selectEcosystemContext(node.dataset.context));
+    node.addEventListener("click", (event) => {
+      event.preventDefault();
+      selectEcosystemContext(node.dataset.context);
+    });
   });
 
   const dialog = publicQs("#system-dialog");
