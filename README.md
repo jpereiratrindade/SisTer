@@ -240,3 +240,9 @@ python3 scripts/validate_governance_repo.py
 python3 scripts/validate_tool_contracts.py
 ./scripts/run_quality.sh
 ```
+
+## Premissas de desenvolvimento
+
+**Simples, leve. Sempre pronto. Sempre incompleto!**
+
+[Significado e símbolos das premissas](docs/sister-principles/README.md).
